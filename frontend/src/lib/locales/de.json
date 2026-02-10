@@ -985,7 +985,17 @@
       "ai_disabled_success": "KI-Funktionen für diese Notiz deaktiviert",
       "ai_toggle_error": "Fehler beim Umschalten der KI-Funktionen",
       "completed_count": "{count} erledigt",
-      "completed_toggle": "{count} erledigte Aufgaben ein-/ausklappen"
+      "completed_toggle": "{count} erledigte Aufgaben ein-/ausklappen",
+      "find": {
+        "placeholder": "Im Note suchen...",
+        "replace_placeholder": "Ersetzen durch...",
+        "match_count": "{current} von {total}",
+        "no_matches": "Keine Treffer",
+        "case_sensitive": "Groß-/Kleinschreibung",
+        "replace": "Ersetzen",
+        "replace_all": "Alle ersetzen",
+        "close": "Suche schließen"
+      }
     },
     "version_history": {
       "title": "Versionshistorie",

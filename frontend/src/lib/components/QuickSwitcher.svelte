@@ -187,7 +187,8 @@
 
   function selectNote(id: string) {
     ui.setQuickSwitcherOpen(false);
-    goto(`/note/${id}`);
+    const highlightParam = query.trim() ? `?highlight=${encodeURIComponent(query.trim())}` : '';
+    goto(`/note/${id}${highlightParam}`);
   }
 
   async function createNewNote() {

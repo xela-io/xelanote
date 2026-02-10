@@ -985,7 +985,17 @@
       "ai_disabled_success": "AI features disabled for this note",
       "ai_toggle_error": "Failed to toggle AI features",
       "completed_count": "{count} completed",
-      "completed_toggle": "Toggle {count} completed tasks"
+      "completed_toggle": "Toggle {count} completed tasks",
+      "find": {
+        "placeholder": "Find in note...",
+        "replace_placeholder": "Replace with...",
+        "match_count": "{current} of {total}",
+        "no_matches": "No matches",
+        "case_sensitive": "Match case",
+        "replace": "Replace",
+        "replace_all": "Replace all",
+        "close": "Close search"
+      }
     },
     "version_history": {
       "title": "Version History",

@@ -27,6 +27,7 @@ import {
   setSpellLanguage as setSpellLanguageInternal,
   getSpellCheckState,
 } from './spell-check';
+import { createFindReplaceExtension } from './find-replace';
 
 // Wikilink decoration
 const wikilinkMatcher = /\[\[([^\]|]+)(\|[^\]]+)?\]\]/g;
@@ -352,6 +353,8 @@ export interface EditorConfig {
   onWikilinkClick?: (title: string) => void;
   onColorPicker?: () => void;
   onBeforeNewline?: (view: EditorView) => boolean; // Return true if handled (prevents default)
+  onFindReplace?: (options?: { replace?: boolean }) => void;
+  onExtensionsReady?: () => void;
 }
 
 // Lazy load editor extensions
@@ -458,6 +461,20 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
             return false;
           },
         },
+        {
+          key: 'Mod-f',
+          run: () => {
+            config.onFindReplace?.();
+            return true;
+          },
+        },
+        {
+          key: 'Mod-h',
+          run: () => {
+            config.onFindReplace?.({ replace: true });
+            return true;
+          },
+        },
       ])
     ),
     EditorView.updateListener.of((update) => {
@@ -497,6 +514,8 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
     dimLinesCompartment.of(emptyExtension),
     // Spell check compartment (disabled by default)
     spellCheckCompartment.of(createSpellCheckExtension({ enabled: false })),
+    // Find & Replace (search extension with hidden panel for custom UI)
+    createFindReplaceExtension(),
   ];
 
   const state = EditorState.create({
@@ -514,6 +533,7 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
     view.dispatch({
       effects: lazyCompartment.reconfigure(lazyExtensions),
     });
+    config.onExtensionsReady?.();
   });
 
   return view;

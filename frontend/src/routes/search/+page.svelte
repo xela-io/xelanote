@@ -222,7 +222,7 @@
           {#each virtualItems as virtualRow (virtualRow.key)}
             {@const result = results[virtualRow.index]}
             <a
-              href="/note/{result.id}"
+              href="/note/{result.id}?highlight={encodeURIComponent(query)}"
               class="block p-4 border border-border rounded-lg hover:bg-accent transition-colors"
               style="position: absolute; top: 0; left: 0; width: 100%; transform: translateY({virtualRow.start}px);"
             >

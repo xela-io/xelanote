@@ -651,6 +651,13 @@ html {
   text-decoration-style: dashed;
 }
 
+/* Preview Search Highlights */
+.markdown-preview mark.search-highlight {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 /* Color tag styling in editor */
 .cm-color-tag {
   background-color: var(--color-muted);

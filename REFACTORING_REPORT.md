@@ -488,6 +488,7 @@ frontend/src/lib/api/
 - `frontend/src/routes/settings/+page.svelte`: Migration-Stats-Logik nach `frontend/src/lib/routes/settings/migration-stats.ts` ausgelagert.
 - `frontend/src/routes/settings/+page.svelte`: 2FA + Backup-Code-Flow nach `frontend/src/lib/routes/settings/two-factor.ts` ausgelagert.
 - `frontend/src/routes/settings/+page.svelte`: Passwort-Change + Rewrap-Flow nach `frontend/src/lib/routes/settings/password-change.ts` ausgelagert.
+- `frontend/src/routes/settings/+page.svelte`: Security-Preferences-Flow nach `frontend/src/lib/routes/settings/security-preferences.ts` ausgelagert.
 
 ---
 

@@ -60,6 +60,12 @@
     handlePasswordChange,
     type PasswordFormState,
   } from '$lib/routes/settings/password-change';
+  import {
+    handleAutoLockTimeoutChange as handleAutoLockTimeoutChangeHelper,
+    handleSecurityLevelChange as handleSecurityLevelChangeHelper,
+    loadSecurityPreferences as loadSecurityPreferencesHelper,
+    type SecurityLevel,
+  } from '$lib/routes/settings/security-preferences';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -108,7 +114,6 @@
   let regeneratePassword = $state('');
 
   // Security preferences state
-  type SecurityLevel = 'paranoid' | 'balanced' | 'convenient';
   let securityLevel = $state<SecurityLevel>('balanced');
   let autoLockTimeout = $state(15);
   let isSavingSecurityLevel = $state(false);
@@ -449,114 +454,61 @@
   }
 
   async function loadSecurityPreferences() {
-    try {
-      const prefs = await api.getPreferences();
-      securityLevel = prefs.security_level as SecurityLevel;
-      autoLockTimeout = prefs.auto_lock_timeout;
-      webAuthnCredentials = prefs.webauthn_credentials || [];
-    } catch (err) {
-      console.error('Failed to load security preferences:', err);
-    }
+    await loadSecurityPreferencesHelper({
+      getPreferences: () => api.getPreferences(),
+      setSecurityLevel: (level) => {
+        securityLevel = level;
+      },
+      setAutoLockTimeout: (timeout) => {
+        autoLockTimeout = timeout;
+      },
+      setWebAuthnCredentials: (credentials) => {
+        webAuthnCredentials = credentials as WebAuthnCredential[];
+      },
+    });
   }
 
   async function handleSecurityLevelChange(newLevel: SecurityLevel) {
-    if (isSavingSecurityLevel) return;
-
-    // Show confirmation modal
-    let confirmMessage = '';
-    if (newLevel === 'paranoid' && securityLevel !== 'paranoid') {
-      confirmMessage = $_('page.settings.security.paranoid_confirm');
-    } else if (newLevel !== 'paranoid' && securityLevel === 'paranoid') {
-      confirmMessage = $_('page.settings.security.balanced_confirm');
-    }
-
-    if (confirmMessage) {
-      const confirmed = await dialog.confirm({
-        title: $_('dialog.confirm_title'),
-        message: confirmMessage,
-        confirmText: $_('common.confirm'),
-        cancelText: $_('dialog.cancel'),
-        variant: newLevel === 'paranoid' ? 'danger' : 'default',
-      });
-
-      if (!confirmed) return;
-    }
-
-    // Buffer old state for rollback
-    const oldSecurityLevel = securityLevel;
-    const oldAutoLockRunning = autoLockTimeout > 0;
-
-    isSavingSecurityLevel = true;
-
-    try {
-      // Update frontend encryption store (handles IndexedDB clear/persist)
-      await encryption.updateSecurityLevel(newLevel);
-
-      // Save to backend
-      const success = await settings.updateSecurityPreferences({ security_level: newLevel });
-
-      if (!success) {
-        throw new Error('Backend save failed');
-      }
-
-      // Update local state
-      securityLevel = newLevel;
-
-      // Handle auto-lock timer
-      if (newLevel === 'paranoid') {
-        // Stop timer (KEK not persisted), but keep autoLockTimeout value
-        autoLock.stopAutoLock();
-      } else if (oldAutoLockRunning) {
-        // Restart timer with existing timeout
-        autoLock.stopAutoLock();
-        autoLock.initAutoLock(autoLockTimeout);
-      }
-    } catch (err) {
-      // Rollback on failure
-      console.error('Failed to change security level:', err);
-      securityLevel = oldSecurityLevel;
-
-      // Attempt to rollback encryption store
-      try {
-        await encryption.updateSecurityLevel(oldSecurityLevel);
-      } catch (rollbackErr) {
-        console.error('Rollback failed:', rollbackErr);
-      }
-    } finally {
-      isSavingSecurityLevel = false;
-    }
+    await handleSecurityLevelChangeHelper(newLevel, {
+      getIsSaving: () => isSavingSecurityLevel,
+      setIsSaving: (value) => {
+        isSavingSecurityLevel = value;
+      },
+      getSecurityLevel: () => securityLevel,
+      getAutoLockTimeout: () => autoLockTimeout,
+      setSecurityLevel: (level) => {
+        securityLevel = level;
+      },
+      confirm: (options) => dialog.confirm(options),
+      updateSecurityLevel: (level) => encryption.updateSecurityLevel(level),
+      updateSecurityPreferences: (prefs) => settings.updateSecurityPreferences(prefs),
+      stopAutoLock: () => autoLock.stopAutoLock(),
+      initAutoLock: (timeout) => autoLock.initAutoLock(timeout),
+      texts: {
+        confirmTitle: $_('dialog.confirm_title'),
+        confirmCancel: $_('dialog.cancel'),
+        confirmLabel: $_('common.confirm'),
+        confirmParanoid: $_('page.settings.security.paranoid_confirm'),
+        confirmBalanced: $_('page.settings.security.balanced_confirm'),
+      },
+    });
   }
 
   async function handleAutoLockTimeoutChange() {
-    if (isSavingAutoLockTimeout) return;
-
-    // Buffer old state for rollback
-    const oldTimeout = autoLockTimeout;
-
-    isSavingAutoLockTimeout = true;
-
-    try {
-      // Save to backend
-      const success = await settings.updateSecurityPreferences({
-        auto_lock_timeout: autoLockTimeout,
-      });
-
-      if (!success) {
-        throw new Error('Backend save failed');
-      }
-
-      // Update auto-lock timer
-      autoLock.stopAutoLock();
-      if (autoLockTimeout > 0 && securityLevel !== 'paranoid') {
-        autoLock.initAutoLock(autoLockTimeout);
-      }
-    } catch (err) {
-      // Rollback on failure
-      console.error('Failed to change auto-lock timeout:', err);
-      autoLockTimeout = oldTimeout;
-    } finally {
-      isSavingAutoLockTimeout = false;
-    }
+    await handleAutoLockTimeoutChangeHelper({
+      getIsSaving: () => isSavingAutoLockTimeout,
+      setIsSaving: (value) => {
+        isSavingAutoLockTimeout = value;
+      },
+      getAutoLockTimeout: () => autoLockTimeout,
+      setAutoLockTimeout: (timeout) => {
+        autoLockTimeout = timeout;
+      },
+      getSecurityLevel: () => securityLevel,
+      updateSecurityPreferences: (prefs) => settings.updateSecurityPreferences(prefs),
+      stopAutoLock: () => autoLock.stopAutoLock(),
+      initAutoLock: (timeout) => autoLock.initAutoLock(timeout),
+    });
   }
 
   // Server URL handlers (Tauri only)

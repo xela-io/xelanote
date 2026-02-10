@@ -963,5 +963,5 @@ func (s *Server) signImageURL(baseURL string) (string, error) {
 		return "", fmt.Errorf("generate signature: %w", err)
 	}
 
-	return fmt.Sprintf("/api/uploads/%d/%s?sig=%s&expires=%d", userID, filename, sig, expires), nil
+	return fmt.Sprintf("/api/uploads/%d/%s?signature=%s&expires=%d", userID, filename, sig, expires), nil
 }

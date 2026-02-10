@@ -161,7 +161,11 @@ func (s *Server) getUserDetails(w http.ResponseWriter, r *http.Request) {
 
 // toggleUserAdmin sets the admin status of a user
 func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
-	adminID, _ := getUserID(r)
+	adminID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	idStr := chi.URLParam(r, "id")
 	targetID, err := strconv.Atoi(idStr)
@@ -204,7 +208,11 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 
 // deleteUserAdmin deletes a user
 func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
-	adminID, _ := getUserID(r)
+	adminID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	idStr := chi.URLParam(r, "id")
 	targetID, err := strconv.Atoi(idStr)
@@ -315,7 +323,11 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 
 // updateSettings updates system settings
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
-	adminID, _ := getUserID(r)
+	adminID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	var req UpdateSettingsRequest
 	if err := decodeJSON(w, r, &req); err != nil {

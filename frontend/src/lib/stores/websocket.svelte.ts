@@ -8,6 +8,7 @@ import * as tree from './tree.svelte';
 import * as searchIndex from './search-index.svelte';
 import * as encryption from './encryption.svelte';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { getWsBaseUrl } from '$lib/config';
 
 let ws: WebSocket | null = null;
 let connected = $state(false);
@@ -20,9 +21,9 @@ export function getConnected() {
   return connected;
 }
 
-const WS_URL = import.meta.env.DEV
-  ? 'ws://localhost:8080/api/ws'
-  : `wss://${typeof window !== 'undefined' ? window.location.host : ''}/api/ws`;
+function getWsUrl(): string {
+  return getWsBaseUrl();
+}
 
 export function connect() {
   const token = getAccessToken();
@@ -49,7 +50,7 @@ export function connect() {
 
   try {
     // Token is sent via HttpOnly cookie (set by auth flow), not query param
-    ws = new WebSocket(WS_URL);
+    ws = new WebSocket(getWsUrl());
   } catch (e) {
     console.error('WebSocket: Failed to create connection', e);
     connecting = false;

@@ -184,13 +184,14 @@ func (c *GeminiClient) Generate(ctx context.Context, prompt string, maxTokens in
 		return "", fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/%s:generateContent?key=%s", GeminiAPIURL, c.model, c.apiKey)
+	url := fmt.Sprintf("%s/%s:generateContent", GeminiAPIURL, c.model)
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("x-goog-api-key", c.apiKey)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
@@ -291,13 +292,14 @@ func (c *GeminiClient) GenerateWithImage(ctx context.Context, prompt string, ima
 		return "", fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/%s:generateContent?key=%s", GeminiAPIURL, c.model, c.apiKey)
+	url := fmt.Sprintf("%s/%s:generateContent", GeminiAPIURL, c.model)
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("x-goog-api-key", c.apiKey)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
@@ -344,11 +346,11 @@ func (c *GeminiClient) IsAvailable(ctx context.Context) bool {
 	}
 
 	// List models to verify the API key works
-	url := fmt.Sprintf("%s?key=%s", GeminiAPIURL, c.apiKey)
-	httpReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", GeminiAPIURL, nil)
 	if err != nil {
 		return false
 	}
+	httpReq.Header.Set("x-goog-api-key", c.apiKey)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {

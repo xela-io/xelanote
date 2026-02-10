@@ -85,14 +85,13 @@ type Server struct {
 
 // NewServer creates a new API server.
 func NewServer(noteService *service.NoteService, authService *service.AuthService, tfaService *service.TwoFactorService, fido2Service *service.FIDO2Service, graphService *service.GraphService, templateService *service.TemplateService, snippetService *service.SnippetService, userService *service.UserService, adminService *service.AdminService, activityService *service.ActivityService, settingsService *service.SettingsService, turnstileService *service.TurnstileService, summarizeService *service.SummarizeService, sharingService *service.SharingService, errorReportService *service.ErrorReportService, jobManager *jobs.JobManager, wsManager *websocket.Manager, logger *slog.Logger, jwtSecret []byte, dataDir string, allowedOrigins []string) *Server {
-	// Validate CORS configuration in production (SEC-003)
+	// Validate CORS configuration in non-development environments (SEC-003)
 	env := os.Getenv("XELANOTE_ENV")
-	if env == "production" && len(allowedOrigins) == 0 {
-		logger.Error("FATAL: CORS_ALLOWED_ORIGINS must be set in production mode",
+	if env != "" && env != "development" && env != "test" && env != "testing" && len(allowedOrigins) == 0 {
+		logger.Error("FATAL: CORS_ALLOWED_ORIGINS must be set in non-development environments",
 			slog.String("env", env),
 			slog.Int("allowed_origins_count", len(allowedOrigins)))
-		// Use log.Fatal instead of os.Exit for proper cleanup and log flushing
-		log.Fatal("CORS_ALLOWED_ORIGINS must be set in production mode")
+		log.Fatalf("CORS_ALLOWED_ORIGINS must be set when XELANOTE_ENV=%s", env)
 	}
 
 	// Use higher rate limits in test environment to allow E2E tests to run

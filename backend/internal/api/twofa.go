@@ -51,7 +51,11 @@ type RegenerateBackupCodesResponse struct {
 
 // setupTwoFactor handles POST /api/2fa/setup
 func (s *Server) setupTwoFactor(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	// Get user email for QR code
 	user, err := s.authService.GetUserByID(userID)
@@ -76,7 +80,11 @@ func (s *Server) setupTwoFactor(w http.ResponseWriter, r *http.Request) {
 
 // verifyTwoFactor handles POST /api/2fa/verify
 func (s *Server) verifyTwoFactor(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	var req TwoFactorVerifyRequest
 	if err := decodeJSON(w, r, &req); err != nil {
@@ -109,7 +117,11 @@ func (s *Server) verifyTwoFactor(w http.ResponseWriter, r *http.Request) {
 
 // disableTwoFactor handles DELETE /api/2fa
 func (s *Server) disableTwoFactor(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	var req TwoFactorDisableRequest
 	if err := decodeJSON(w, r, &req); err != nil {
@@ -193,7 +205,11 @@ func (s *Server) disableTwoFactor(w http.ResponseWriter, r *http.Request) {
 
 // getTwoFactorStatus handles GET /api/2fa/status
 func (s *Server) getTwoFactorStatus(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	status, err := s.tfaService.GetTwoFactorStatus(userID)
 	if err != nil {
@@ -225,7 +241,11 @@ func (s *Server) getTwoFactorStatus(w http.ResponseWriter, r *http.Request) {
 // regenerateBackupCodes handles POST /api/2fa/backup-codes/regenerate
 // SEC-009: Requires password re-authentication to prevent session-based attacks
 func (s *Server) regenerateBackupCodes(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	// SEC-009: Parse request body to get password
 	var req RegenerateBackupCodesRequest

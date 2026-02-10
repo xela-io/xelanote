@@ -45,7 +45,11 @@ func generatePendingLoginToken() (string, error) {
 
 // beginFIDO2Registration handles POST /api/2fa/fido2/register/begin
 func (s *Server) beginFIDO2Registration(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	user, err := s.authService.GetUserByID(userID)
 	if err != nil {
@@ -65,7 +69,11 @@ func (s *Server) beginFIDO2Registration(w http.ResponseWriter, r *http.Request) 
 
 // finishFIDO2Registration handles POST /api/2fa/fido2/register/finish
 func (s *Server) finishFIDO2Registration(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	// Read device_name from query parameter (body is the WebAuthn response)
 	deviceName := r.URL.Query().Get("device_name")
@@ -98,7 +106,11 @@ func (s *Server) finishFIDO2Registration(w http.ResponseWriter, r *http.Request)
 
 // listFIDO2Credentials handles GET /api/2fa/fido2/credentials
 func (s *Server) listFIDO2Credentials(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
 	creds, err := s.fido2Service.ListCredentials(userID)
 	if err != nil {
@@ -111,7 +123,11 @@ func (s *Server) listFIDO2Credentials(w http.ResponseWriter, r *http.Request) {
 
 // deleteFIDO2Credential handles DELETE /api/2fa/fido2/credentials/{id}
 func (s *Server) deleteFIDO2Credential(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(userIDKey).(int)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 	credIDStr := chi.URLParam(r, "id")
 	credID, err := strconv.ParseInt(credIDStr, 10, 64)
 	if err != nil {

@@ -90,9 +90,9 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Get the WebSocket base URL for real-time updates.
+ * Get the WebSocket URL for real-time updates.
  *
- * In Desktop (Tauri/Electron): returns "{serverUrl}/ws" with ws:// or wss:// protocol
+ * In Desktop (Tauri/Electron): returns "{serverUrl}/api/ws" with ws:// or wss:// protocol
  * In web: returns relative WebSocket URL
  */
 export function getWsBaseUrl(): string {
@@ -102,11 +102,11 @@ export function getWsBaseUrl(): string {
     if (typeof window === 'undefined') return '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = import.meta.env.DEV ? 'localhost:8080' : window.location.host;
-    return `${protocol}//${host}/ws`;
+    return `${protocol}//${host}/api/ws`;
   }
   // Desktop: convert https:// to wss:// or http:// to ws://
   const wsServer = server.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
-  return `${wsServer}/ws`;
+  return `${wsServer}/api/ws`;
 }
 
 /**

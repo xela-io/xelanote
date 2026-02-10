@@ -70,9 +70,7 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 - Frontend: `frontend/src/lib/api.ts`, `frontend/src/lib/components/Editor.svelte`, `frontend/src/lib/components/Sidebar.svelte`, `frontend/src/routes/settings/+page.svelte`, `frontend/src/lib/stores/notes.svelte.ts`
 
 **W-2: Fehlerbehandlung wird in produktivem Code teilweise ignoriert**
-- `backend/internal/api/admin.go` (User-Detail-Errors ignoriert)
-- `backend/internal/service/notes.go` (Snapshot-Errors ignoriert)
-- `backend/internal/db/*.go` (`LastInsertId`/`RowsAffected` Errors ignoriert)
+Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 **W-3: Harte Konfigurationen im Code statt Konfiguration/Flags**
 - `backend/cmd/server/main.go`: Worker-Count (4), Versions-Pruning (100)
@@ -148,6 +146,8 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
   - `backend/internal/api/notes.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
   - `backend/internal/db/notes.go`, `backend/internal/db/journal.go` pruefen RFC3339-Timestamps strikt (Parse-Errors werden retourniert).
   - `backend/internal/api/import.go` validiert File-Anzahl, leere Inhalte, Notiz-/Folder-Felder und begrenzt Error-Listen.
+  - `backend/internal/service/notes.go` loggt Snapshot-Query-Fehler (und snapshotet konservativ).
+  - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
 - Weitere `any`/unsaubere Casts (z.B. `history.svelte.ts` JSON parse, andere Stores).

@@ -158,8 +158,11 @@ func (s *NoteService) UpdateNote(userID int, id, title, content, folderPath stri
 
 	if contentChanged {
 		// Check if we should create a snapshot
-		lastSnapshot, _ := s.db.GetLatestVersionSnapshot(userID, id)
-		shouldSnapshot := lastSnapshot == nil ||
+		lastSnapshot, err := s.db.GetLatestVersionSnapshot(userID, id)
+		if err != nil {
+			s.logger.Warn("failed to load latest snapshot", "err", err, "note_id", id, "user_id", userID)
+		}
+		shouldSnapshot := err != nil || lastSnapshot == nil ||
 			time.Since(lastSnapshot.SnapshotAt) > snapshotThreshold
 
 		if shouldSnapshot {
@@ -1158,8 +1161,11 @@ func (s *NoteService) UpdateEncryptedNote(
 	if existingNote.ContentEncrypted {
 		// Always snapshot encrypted notes when updated (conservative approach)
 		// Could be optimized by comparing encrypted_content bytes, but that's fragile
-		lastSnapshot, _ := s.db.GetLatestVersionSnapshot(userID, noteID)
-		shouldSnapshot = lastSnapshot == nil ||
+		lastSnapshot, err := s.db.GetLatestVersionSnapshot(userID, noteID)
+		if err != nil {
+			s.logger.Warn("failed to load latest snapshot", "err", err, "note_id", noteID, "user_id", userID)
+		}
+		shouldSnapshot = err != nil || lastSnapshot == nil ||
 			time.Since(lastSnapshot.SnapshotAt) > snapshotThreshold
 	}
 
@@ -1259,8 +1265,11 @@ func (s *NoteService) DecryptNote(userID int, id, title, content string, expecte
 	}
 
 	// Create version snapshot before decryption
-	lastSnapshot, _ := s.db.GetLatestVersionSnapshot(userID, id)
-	shouldSnapshot := lastSnapshot == nil ||
+	lastSnapshot, err := s.db.GetLatestVersionSnapshot(userID, id)
+	if err != nil {
+		s.logger.Warn("failed to load latest snapshot", "err", err, "note_id", id, "user_id", userID)
+	}
+	shouldSnapshot := err != nil || lastSnapshot == nil ||
 		time.Since(lastSnapshot.SnapshotAt) > snapshotThreshold
 
 	if shouldSnapshot {

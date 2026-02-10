@@ -177,6 +177,16 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	targetUser, err := s.adminService.GetUserDetails(targetID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			respondError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "failed to load target user")
+		return
+	}
+
 	var req SetAdminRequest
 	if err := decodeJSON(w, r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
@@ -199,14 +209,7 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 	// Log the activity
 	ipAddress := getClientIPSafe(r)
 	userAgent := r.UserAgent()
-	targetUser, err := s.adminService.GetUserDetails(targetID)
-	if err != nil {
-		s.logger().Warn("failed to load target user details", "err", err, "target_id", targetID)
-	}
-	targetUsername := ""
-	if targetUser != nil {
-		targetUsername = targetUser.Username
-	}
+	targetUsername := targetUser.Username
 	s.activityService.LogUserAdminSet(adminID, targetID, req.IsAdmin, targetUsername, ipAddress, userAgent)
 
 	w.WriteHeader(http.StatusNoContent)
@@ -230,12 +233,14 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 	// Get username before deletion for logging
 	targetUser, err := s.adminService.GetUserDetails(targetID)
 	if err != nil {
-		s.logger().Warn("failed to load target user details", "err", err, "target_id", targetID)
+		if errors.Is(err, db.ErrNotFound) {
+			respondError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "failed to load target user")
+		return
 	}
-	targetUsername := ""
-	if targetUser != nil {
-		targetUsername = targetUser.Username
-	}
+	targetUsername := targetUser.Username
 
 	if err := s.adminService.DeleteUser(adminID, targetID); err != nil {
 		if errors.Is(err, service.ErrSelfDeletion) {

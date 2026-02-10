@@ -177,7 +177,7 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
   - Frontend: ESLint (flat), Prettier, markdownlint
   - Hooks: `lefthook.yml`
   - `.editorconfig` vorhanden
-- Kein zusaetzlicher Setup notwendig, daher keine Code- oder Config-Aenderungen in dieser Phase.
+- Import-Sortierung fuer Frontend via ESLint hinzugefuegt.
 
 ### Optional (nach Wunsch)
 - `lint-staged`/Husky zusaetzlich zu Lefthook (falls zusaetzliche Hook-Logik gewuenscht).

@@ -24,6 +24,11 @@ import {
   moveNote as moveNoteHelper,
 } from '$lib/stores/notes/mutations';
 import { renameCurrentNote as renameCurrentNoteHelper } from '$lib/stores/notes/rename';
+import {
+  handleRemoteCreate as handleRemoteCreateHelper,
+  handleRemoteDelete as handleRemoteDeleteHelper,
+  handleRemoteUpdate as handleRemoteUpdateHelper,
+} from '$lib/stores/notes/remote-updates';
 import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as autosave from '$lib/stores/autosave.svelte';
@@ -549,140 +554,62 @@ async function _handleRemoteUpdateAsync(remoteNote: Note) {
 }
 
 function _handleRemoteUpdateSync(remoteNote: Note) {
-  const localNote = currentNote;
-
-  // Skip WebSocket updates while save is in progress - they're likely our own echo
-  // The echo detection below won't work yet because lastSavedVersion isn't set until after API response
-  if (isSaving && localNote && localNote.id === remoteNote.id) {
-    console.log('[WebSocket] Update während Save ignoriert (potentielles Echo)', {
-      remoteVersion: remoteNote.version,
-      isSaving,
-    });
-    return;
-  }
-
-  // ENHANCED ECHO DETECTION: 2-second Grace Period
-  // Ignores WebSocket echoes even if user continues typing during save
-  const isEcho =
-    localNote &&
-    localNote.id === remoteNote.id &&
-    lastSavedVersion !== null &&
-    remoteNote.version === lastSavedVersion &&
-    lastSaveTimestamp !== null &&
-    Date.now() - lastSaveTimestamp < 2000; // 2s grace period
-
-  if (isEcho) {
-    console.log('[WebSocket] Echo erkannt, ignoriere', {
-      version: remoteNote.version,
-      timeSinceSave: Date.now() - (lastSaveTimestamp || 0),
-    });
-    lastSavedVersion = null;
-    lastSaveTimestamp = null;
-    return; // Echo → Ignore completely
-  }
-
-  // Decrypt remote note if encrypted
-  let processedNote = remoteNote;
-  if (remoteNote.content_encrypted && remoteNote.encrypted_content) {
-    // Only decrypt if encryption is unlocked
-    if (encryption.isEncryptionUnlocked()) {
-      try {
-        const encryptedPayload: EncryptedPayload = {
-          ciphertext: remoteNote.encrypted_content,
-          metadata: JSON.parse(remoteNote.encryption_metadata || '{}'),
-        };
-
-        const decrypted = encryption.decryptNote(
-          remoteNote.encrypted_title || null,
-          encryptedPayload
-        );
-
-        processedNote = {
-          ...remoteNote,
-          title: decrypted.title || remoteNote.title,
-          content: decrypted.content,
-        };
-      } catch (err) {
-        console.error('[WebSocket] Failed to decrypt remote note:', err);
-        // Don't update currentNote if decryption fails, but still update list
-        updateNoteInList(remoteNote);
-        return;
-      }
-    } else {
-      // Encryption locked - can't decrypt, only update list
-      console.log('[WebSocket] Encryption locked, skipping currentNote update');
-      updateNoteInList(remoteNote);
-      return;
-    }
-  }
-
-  // CONFLICT DETECTION: Only show warning for true conflicts
-  if (localNote && localNote.id === processedNote.id) {
-    const versionDiverged = processedNote.version !== localNote.version;
-
-    if (isDirty && versionDiverged) {
-      // TRUE CONFLICT: Local changes + Remote update from different source
-      const localChanges = localNote.content.length - processedNote.content.length;
-      const changeInfo = Math.abs(localChanges) > 0 ? ` (±${Math.abs(localChanges)} Zeichen)` : '';
-
-      console.warn('[Konflikt] Remote Update mit lokalen Änderungen', {
-        localVersion: localNote.version,
-        remoteVersion: processedNote.version,
-        localChanges,
-      });
-
-      toast.warning(
-        `Remote-Update erkannt (Version ${processedNote.version}). Du hast lokale Änderungen${changeInfo}. Speichern überschreibt Remote-Version.`,
-        {
-          label: 'Remote laden',
-          handler: () => loadNote(processedNote.id),
-        }
-      );
-      return;
-    }
-
-    // No conflict or no local changes → Accept update
-    if (!isDirty || !versionDiverged) {
-      currentNote = processedNote;
-      updateNoteInList(processedNote);
-      return;
-    }
-  }
-
-  // Different note → Update list only
-  if (!localNote || localNote.id !== processedNote.id) {
-    updateNoteInList(processedNote);
-  }
+  handleRemoteUpdateHelper(remoteNote, {
+    getCurrentNote: () => currentNote,
+    getIsSaving: () => isSaving,
+    getIsDirty: () => isDirty,
+    getLastSavedVersion: () => lastSavedVersion,
+    getLastSaveTimestamp: () => lastSaveTimestamp,
+    clearLastSaved: () => {
+      lastSavedVersion = null;
+      lastSaveTimestamp = null;
+    },
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    updateNoteInList: (note) => updateNoteInList(note),
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    decryptNote: (encryptedTitle, payload) =>
+      encryption.decryptNote(encryptedTitle, payload),
+    warn: (message, options) => toast.warning(message, options),
+    loadNote: (id) => {
+      void loadNote(id);
+    },
+  });
 }
 
 /**
  * Handle a remote note creation (from WebSocket)
  */
 export function handleRemoteCreate(note: Note) {
-  // Add to notes list if not already present
-  if (!notes.find((n) => n.id === note.id)) {
-    notes = [note, ...notes];
-    toast.info(`New note "${note.title}" created`);
-  }
+  handleRemoteCreateHelper(note, {
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    info: (message) => toast.info(message),
+  });
 }
 
 /**
  * Handle a remote note deletion (from WebSocket)
  */
 export function handleRemoteDelete(id: string) {
-  // Remove from notes list
-  notes = notes.filter((n) => n.id !== id);
-
-  // Clear current note if it was deleted
-  if (currentNote?.id === id) {
-    currentNote = null;
-    toast.info('This note was deleted');
-  } else {
-    const deletedNote = notes.find((n) => n.id === id);
-    if (deletedNote) {
-      toast.info(`Note "${deletedNote.title}" was deleted`);
-    }
-  }
+  handleRemoteDeleteHelper(id, {
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    info: (message) => toast.info(message),
+  });
 }
 
 /**

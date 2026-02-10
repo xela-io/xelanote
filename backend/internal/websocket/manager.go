@@ -24,6 +24,8 @@ type Manager struct {
 	register    chan *Connection
 	unregister  chan *Connection
 	logger      *slog.Logger
+	done        chan struct{}
+	stopOnce    sync.Once
 }
 
 // Connection represents a WebSocket connection
@@ -54,6 +56,7 @@ func NewManager(logger *slog.Logger) *Manager {
 		register:    make(chan *Connection),
 		unregister:  make(chan *Connection),
 		logger:      logger,
+		done:        make(chan struct{}),
 	}
 }
 
@@ -61,6 +64,8 @@ func NewManager(logger *slog.Logger) *Manager {
 func (m *Manager) Run() {
 	for {
 		select {
+		case <-m.done:
+			return
 		case conn := <-m.register:
 			m.mu.Lock()
 			m.connections[conn.UserID] = append(m.connections[conn.UserID], conn)
@@ -103,14 +108,40 @@ func (m *Manager) Run() {
 	}
 }
 
+// Stop shuts down the manager and closes all connections.
+func (m *Manager) Stop() {
+	m.stopOnce.Do(func() {
+		close(m.done)
+		m.mu.Lock()
+		for userID, conns := range m.connections {
+			for _, conn := range conns {
+				conn.closeOnce.Do(func() {
+					close(conn.Send)
+					conn.Conn.Close()
+				})
+			}
+			delete(m.connections, userID)
+		}
+		m.mu.Unlock()
+	})
+}
+
 // Register registers a new connection
 func (m *Manager) Register(conn *Connection) {
-	m.register <- conn
+	select {
+	case <-m.done:
+		return
+	case m.register <- conn:
+	}
 }
 
 // Unregister unregisters a connection
 func (m *Manager) Unregister(conn *Connection) {
-	m.unregister <- conn
+	select {
+	case <-m.done:
+		return
+	case m.unregister <- conn:
+	}
 }
 
 // BroadcastToUser sends a message to all connections of a user
@@ -120,7 +151,11 @@ func (m *Manager) BroadcastToUser(userID int, msg Message) {
 		m.logger.Error("Failed to marshal WebSocket message", "error", err)
 		return
 	}
-	m.broadcast <- BroadcastMessage{UserID: userID, Data: data}
+	select {
+	case <-m.done:
+		return
+	case m.broadcast <- BroadcastMessage{UserID: userID, Data: data}:
+	}
 }
 
 // GetConnectionCount returns the number of active connections

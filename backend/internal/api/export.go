@@ -17,37 +17,11 @@ func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get all notes for this user
-	var allNotes []struct {
-		Title      string
-		Content    string
-		FolderPath string
-	}
-
 	cursor := ""
-	for {
-		notes, nextCursor, err := s.noteService.ListNotes(userID, 100, cursor)
-		if err != nil {
-			s.respondInternalErr(w, "failed to export notes", err)
-			return
-		}
-
-		for _, n := range notes {
-			allNotes = append(allNotes, struct {
-				Title      string
-				Content    string
-				FolderPath string
-			}{
-				Title:      n.Title,
-				Content:    n.Content,
-				FolderPath: n.FolderPath,
-			})
-		}
-
-		if nextCursor == "" {
-			break
-		}
-		cursor = nextCursor
+	notes, nextCursor, err := s.noteService.ListNotes(userID, 100, cursor)
+	if err != nil {
+		s.respondInternalErr(w, "failed to export notes", err)
+		return
 	}
 
 	// Set headers for ZIP download
@@ -63,36 +37,48 @@ func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 	// Track filenames to avoid duplicates
 	usedNames := make(map[string]int)
 
-	for _, note := range allNotes {
-		// Build file path - sanitize folder path to prevent path traversal
-		folder := sanitizeFolderPath(note.FolderPath)
-		if folder != "" {
-			folder = folder + "/"
+	for {
+		for _, note := range notes {
+			// Build file path - sanitize folder path to prevent path traversal
+			folder := sanitizeFolderPath(note.FolderPath)
+			if folder != "" {
+				folder = folder + "/"
+			}
+
+			// Sanitize title for filename
+			safeName := sanitizeFilename(note.Title)
+			basePath := folder + safeName
+
+			// Handle duplicate names
+			finalPath := basePath + ".md"
+			if count, exists := usedNames[strings.ToLower(finalPath)]; exists {
+				usedNames[strings.ToLower(finalPath)] = count + 1
+				finalPath = fmt.Sprintf("%s_%d.md", basePath, count+1)
+			}
+			usedNames[strings.ToLower(finalPath)] = 1
+
+			// Create file in ZIP
+			fw, err := zw.Create(finalPath)
+			if err != nil {
+				s.logger().Error("failed to create zip entry", "path", finalPath, "error", err)
+				continue
+			}
+
+			// Write content (add YAML frontmatter for Obsidian compatibility)
+			content := fmt.Sprintf("---\ntitle: %q\n---\n\n%s", note.Title, note.Content)
+			if _, err := fw.Write([]byte(content)); err != nil {
+				s.logger().Error("failed to write zip content", "path", finalPath, "error", err)
+			}
 		}
 
-		// Sanitize title for filename
-		safeName := sanitizeFilename(note.Title)
-		basePath := folder + safeName
-
-		// Handle duplicate names
-		finalPath := basePath + ".md"
-		if count, exists := usedNames[strings.ToLower(finalPath)]; exists {
-			usedNames[strings.ToLower(finalPath)] = count + 1
-			finalPath = fmt.Sprintf("%s_%d.md", basePath, count+1)
+		if nextCursor == "" {
+			break
 		}
-		usedNames[strings.ToLower(finalPath)] = 1
-
-		// Create file in ZIP
-		fw, err := zw.Create(finalPath)
+		cursor = nextCursor
+		notes, nextCursor, err = s.noteService.ListNotes(userID, 100, cursor)
 		if err != nil {
-			s.logger().Error("failed to create zip entry", "path", finalPath, "error", err)
-			continue
-		}
-
-		// Write content (add YAML frontmatter for Obsidian compatibility)
-		content := fmt.Sprintf("---\ntitle: %q\n---\n\n%s", note.Title, note.Content)
-		if _, err := fw.Write([]byte(content)); err != nil {
-			s.logger().Error("failed to write zip content", "path", finalPath, "error", err)
+			s.logger().Error("failed to export notes page", "cursor", cursor, "error", err)
+			break
 		}
 	}
 }

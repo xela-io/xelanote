@@ -1,12 +1,10 @@
 package llm
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
@@ -32,7 +30,7 @@ type ClaudeClient struct {
 	maxTokens  int
 
 	// Cached availability result (avoids repeated API calls)
-	availableCache      *bool
+	availableCache       *bool
 	availableCacheExpiry time.Time
 }
 
@@ -165,44 +163,14 @@ func (c *ClaudeClient) Generate(ctx context.Context, prompt string, maxTokens in
 		},
 	}
 
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", ClaudeAPIURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", c.apiKey)
-	httpReq.Header.Set("anthropic-version", ClaudeAPIVersion)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", fmt.Errorf("failed to read error response: %w", err)
-		}
-
-		// Try to parse as Claude error response
-		var errResp ClaudeErrorResponse
-		if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {
-			return "", fmt.Errorf("claude API error (%s): %s", errResp.Error.Type, errResp.Error.Message)
-		}
-
-		return "", fmt.Errorf("claude returned status %d: %s", resp.StatusCode, string(body))
-	}
-
 	var claudeResp ClaudeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&claudeResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	err := doJSONRequest(ctx, c.httpClient, "POST", ClaudeAPIURL, map[string]string{
+		"Content-Type":      "application/json",
+		"x-api-key":         c.apiKey,
+		"anthropic-version": ClaudeAPIVersion,
+	}, req, &claudeResp, parseClaudeError, "claude")
+	if err != nil {
+		return "", err
 	}
 
 	// Extract text from content blocks
@@ -253,43 +221,14 @@ func (c *ClaudeClient) GenerateWithImage(ctx context.Context, prompt string, ima
 		},
 	}
 
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", ClaudeAPIURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", c.apiKey)
-	httpReq.Header.Set("anthropic-version", ClaudeAPIVersion)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", fmt.Errorf("failed to read error response: %w", err)
-		}
-
-		var errResp ClaudeErrorResponse
-		if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {
-			return "", fmt.Errorf("claude API error (%s): %s", errResp.Error.Type, errResp.Error.Message)
-		}
-
-		return "", fmt.Errorf("claude returned status %d: %s", resp.StatusCode, string(body))
-	}
-
 	var claudeResp ClaudeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&claudeResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	err := doJSONRequest(ctx, c.httpClient, "POST", ClaudeAPIURL, map[string]string{
+		"Content-Type":      "application/json",
+		"x-api-key":         c.apiKey,
+		"anthropic-version": ClaudeAPIVersion,
+	}, req, &claudeResp, parseClaudeError, "claude")
+	if err != nil {
+		return "", err
 	}
 
 	var result string
@@ -326,27 +265,16 @@ func (c *ClaudeClient) IsAvailable(ctx context.Context) bool {
 		},
 	}
 
-	reqBody, err := json.Marshal(req)
+	var claudeResp ClaudeResponse
+	err := doJSONRequest(ctx, c.httpClient, "POST", ClaudeAPIURL, map[string]string{
+		"Content-Type":      "application/json",
+		"x-api-key":         c.apiKey,
+		"anthropic-version": ClaudeAPIVersion,
+	}, req, &claudeResp, parseClaudeError, "claude")
 	if err != nil {
 		return false
 	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", ClaudeAPIURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return false
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", c.apiKey)
-	httpReq.Header.Set("anthropic-version", ClaudeAPIVersion)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-
-	available := resp.StatusCode == http.StatusOK
+	available := true
 	c.availableCache = &available
 	c.availableCacheExpiry = time.Now().Add(5 * time.Minute)
 	return available
@@ -364,3 +292,11 @@ func (c *ClaudeClient) Model() string {
 
 // Ensure ClaudeClient implements Provider interface.
 var _ Provider = (*ClaudeClient)(nil)
+
+func parseClaudeError(body []byte) error {
+	var errResp ClaudeErrorResponse
+	if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {
+		return fmt.Errorf("claude API error (%s): %s", errResp.Error.Type, errResp.Error.Message)
+	}
+	return nil
+}

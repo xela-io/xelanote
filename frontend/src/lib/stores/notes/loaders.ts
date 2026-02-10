@@ -10,7 +10,8 @@ export interface LoadNotesDeps {
 export async function loadNotes(deps: LoadNotesDeps) {
   deps.setLoading(true);
   try {
-    const result = await deps.listNotes({ limit: 1000 });
+    const NOTES_LIST_LIMIT = 1000;
+    const result = await deps.listNotes({ limit: NOTES_LIST_LIMIT });
     deps.setNotes(result.notes);
   } catch (err) {
     console.error('Failed to load notes:', err);
@@ -38,6 +39,9 @@ export interface LoadNoteDeps {
   setCurrentNote: (note: Note | null) => void;
   setBacklinks: (backlinks: Backlink[]) => void;
   setDirty: (dirty: boolean) => void;
+  offlineUnavailableMessage: string;
+  decryptFailedMessage: string;
+  defaultErrorMessage: string;
 }
 
 export async function loadNote(deps: LoadNoteDeps) {
@@ -56,7 +60,7 @@ export async function loadNote(deps: LoadNoteDeps) {
         note = { ...localNote };
         console.log('[NOTES] Using local note (offline), id:', note.id);
       } else {
-        throw new Error('Notiz offline nicht verfuegbar');
+        throw new Error(deps.offlineUnavailableMessage);
       }
     } else {
       note = await deps.getNote(deps.id);
@@ -96,7 +100,7 @@ export async function loadNote(deps: LoadNoteDeps) {
         note.content = content;
       } catch (decryptError) {
         console.error('[NOTES] Failed to decrypt note:', decryptError);
-        deps.setError('Failed to decrypt note - encryption key may be invalid');
+        deps.setError(deps.decryptFailedMessage);
         deps.setCurrentNote(null);
         deps.setIsLoading(false);
         return;
@@ -118,7 +122,7 @@ export async function loadNote(deps: LoadNoteDeps) {
       deps.setBacklinks([]);
     }
   } catch (err) {
-    deps.setError(err instanceof Error ? err.message : 'Failed to load note');
+    deps.setError(err instanceof Error ? err.message : deps.defaultErrorMessage);
     deps.setCurrentNote(null);
   } finally {
     deps.setIsLoading(false);

@@ -4,10 +4,12 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // Serve static files for SPA (if embedded).
-func setupStaticFiles(router *http.ServeMux) {
+func setupStaticFiles(router chi.Router) {
 	// setCacheHeaders sets Cache-Control based on the URL path.
 	// Vite-hashed files under /_app/immutable/ can be cached aggressively.
 	// All other files must revalidate on each request.

@@ -287,11 +287,9 @@
       notes.scheduleAutoSave();
     }
 
-    // @ts-expect-error CustomEvent handler cast
     document.addEventListener('spell-check-replace', handleSpellCheckReplace);
 
     return () => {
-      // @ts-expect-error CustomEvent handler cast
       document.removeEventListener('spell-check-replace', handleSpellCheckReplace);
     };
   });

@@ -32,7 +32,7 @@ func (s *Server) listTrash(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, NoteListResponse{
-		Notes:      ensureNotes(notes),
+		Notes:      ensureSlice(notes),
 		NextCursor: nextCursor,
 	})
 }

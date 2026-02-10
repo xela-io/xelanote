@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // CreateNote creates a new note and returns it.
 // ai_enabled is inherited from folder's ai_enabled_default, except for root notes (always false).
 func (db *DB) CreateNote(userID int, title, content, folderPath string) (*Note, error) {
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	// Determine ai_enabled based on folder default
@@ -143,7 +145,7 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 // If multiple notes with the same title exist (across folders), returns the most recently updated one.
 // Uses deterministic ordering (updated_at DESC, id ASC) for consistent wikilink resolution.
 func (db *DB) GetNoteByTitle(userID int, title string) (*Note, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	var note Note
 	var createdAt, updatedAt string
 
@@ -179,7 +181,7 @@ func (db *DB) GetNoteByTitle(userID int, title string) (*Note, error) {
 // GetNoteByTitleInFolder retrieves a note by title within a specific folder.
 // Uses deterministic ordering in case of legacy duplicates.
 func (db *DB) GetNoteByTitleInFolder(userID int, title, folderPath string) (*Note, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	var note Note
 	var createdAt, updatedAt string
 
@@ -214,7 +216,7 @@ func (db *DB) GetNoteByTitleInFolder(userID int, title, folderPath string) (*Not
 
 // GetNotesByTitle retrieves all notes with a given title across all folders.
 func (db *DB) GetNotesByTitle(userID int, title string) ([]Note, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 
 	rows, err := db.Query(`
 		SELECT id, title, content, folder_path, version, color, created_at, updated_at
@@ -254,7 +256,7 @@ func (db *DB) GetNotesByTitle(userID int, title string) ([]Note, error) {
 // If folderPath is empty, the folder_path is not changed.
 // Returns ErrVersionMismatch if the version doesn't match.
 func (db *DB) UpdateNote(userID int, id, title, content, folderPath string, expectedVersion int) (*Note, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	// If folderPath is provided, update it; otherwise keep the existing value
@@ -298,7 +300,7 @@ func (db *DB) UpdateNote(userID int, id, title, content, folderPath string, expe
 
 // UpdateNoteTitle updates only the title of a note
 func (db *DB) UpdateNoteTitle(userID int, id, newTitle string, expectedVersion int) (*Note, error) {
-	titleNorm := NormalizeTitle(newTitle)
+	titleNorm := utils.NormalizeTitle(newTitle)
 	now := time.Now().UTC()
 
 	result, err := db.Exec(`

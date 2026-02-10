@@ -232,23 +232,3 @@ func (s *NoteService) UpdateFolderEncryptionDefault(userID int, folderID int, en
 func (s *NoteService) GetFolderEncryptionDefault(userID int, folderID int) (bool, error) {
 	return s.db.GetFolderEncryptionDefault(userID, folderID)
 }
-
-// UpdateFolderAIEnabledDefault sets the default AI-enabled flag for a folder.
-func (s *NoteService) UpdateFolderAIEnabledDefault(userID int, folderID int, aiEnabled bool) error {
-	return s.db.UpdateFolderAIEnabledDefault(userID, folderID, aiEnabled)
-}
-
-// GetFolderAIEnabledDefault retrieves the default AI-enabled flag for a folder.
-func (s *NoteService) GetFolderAIEnabledDefault(userID int, folderID int) (bool, error) {
-	return s.db.GetFolderAIEnabledDefault(userID, folderID)
-}
-
-// UpdateFolderEncryptionDefault sets the default encryption flag for a folder.
-func (s *NoteService) UpdateFolderEncryptionDefault(userID int, folderID int, encrypted bool) error {
-	return s.db.UpdateFolderEncryptionDefault(userID, folderID, encrypted)
-}
-
-// GetFolderEncryptionDefault retrieves the default encryption flag for a folder.
-func (s *NoteService) GetFolderEncryptionDefault(userID int, folderID int) (bool, error) {
-	return s.db.GetFolderEncryptionDefault(userID, folderID)
-}

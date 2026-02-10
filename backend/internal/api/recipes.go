@@ -62,7 +62,7 @@ func (s *Server) listRecipes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"recipes": recipes,
+		"recipes": ensureSlice(recipes),
 	})
 }
 
@@ -619,12 +619,8 @@ func (s *Server) listSharedRecipes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if recipes == nil {
-		recipes = []db.SharedNote{}
-	}
-
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"recipes": recipes,
+		"recipes": ensureSlice(recipes),
 	})
 }
 
@@ -642,12 +638,8 @@ func (s *Server) listSharedCollections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if collections == nil {
-		collections = []db.SharedCollection{}
-	}
-
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"collections": collections,
+		"collections": ensureSlice(collections),
 	})
 }
 

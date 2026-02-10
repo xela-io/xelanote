@@ -27,6 +27,10 @@ declare global {
     };
     onTurnstileLoaded?: () => void;
   }
+
+  interface DocumentEventMap {
+    'spell-check-replace': CustomEvent<{ from: number; to: number; replacement: string }>;
+  }
 }
 
 export {};

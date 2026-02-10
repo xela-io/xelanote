@@ -119,3 +119,10 @@ func (s *TemplateService) DeleteTemplate(userID, templateID int) error {
 
 	return nil
 }
+
+// Close releases background resources held by the service.
+func (s *TemplateService) Close() {
+	if s.cache != nil {
+		s.cache.Close()
+	}
+}

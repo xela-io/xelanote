@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // RecipeMetadata holds metadata for a recipe note.
@@ -93,7 +95,7 @@ func (db *DB) CreateRecipeNote(userID int, title, content, folderPath string) (*
 	}
 
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	tx, err := db.Begin()
@@ -161,7 +163,7 @@ func (db *DB) CreateEncryptedRecipeNote(
 	}
 
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	tx, err := db.Begin()
@@ -1147,7 +1149,7 @@ func (db *DB) CreateRecipeNoteWithIngredients(
 	}
 
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	tx, err := db.Begin()

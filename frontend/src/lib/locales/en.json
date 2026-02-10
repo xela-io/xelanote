@@ -925,6 +925,15 @@
       },
       "conflict_warning": "Conflict: Note was externally modified (Remote Version {version}). Saving will overwrite remote changes.",
       "conflict_load_remote": "Load remote",
+      "autosave": {
+        "conflict_toast": "Auto-save conflict. Note was updated remotely.",
+        "conflict_message": "Conflict detected. Note was changed externally.",
+        "reload_label": "Reload",
+        "default_error": "Auto-save failed",
+        "offline_unavailable": "Note unavailable while offline",
+        "decrypt_failed": "Failed to decrypt note - encryption key may be invalid",
+        "load_failed": "Failed to load note"
+      },
       "error_delete": "Failed to delete note",
       "note_trashed": "Note moved to trash",
       "note_restored": "Note restored",

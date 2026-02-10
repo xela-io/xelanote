@@ -32,7 +32,7 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 
 		expectedDirectives := []string{
 			"default-src 'self'",
-			"script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+			"script-src 'self' 'wasm-unsafe-eval'",
 			"style-src 'self' 'unsafe-inline'",
 			"img-src 'self' data: blob:",
 			"connect-src 'self' ws: wss:",

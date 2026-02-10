@@ -33,9 +33,25 @@ type ImportResponse struct {
 	Errors         []string `json:"errors,omitempty"`
 }
 
+type FrontmatterTags []string
+
+func (t *FrontmatterTags) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.SequenceNode:
+		for _, node := range value.Content {
+			*t = append(*t, node.Value)
+		}
+	case yaml.ScalarNode:
+		if value.Value != "" {
+			*t = append(*t, value.Value)
+		}
+	}
+	return nil
+}
+
 type Frontmatter struct {
-	Title string   `yaml:"title"`
-	Tags  []string `yaml:"tags"`
+	Title string          `yaml:"title"`
+	Tags  FrontmatterTags `yaml:"tags"`
 }
 
 const maxImportErrors = 50
@@ -70,18 +86,18 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 	for _, file := range req.Files {
 		if file.Content == "" {
 			result.Skipped++
-			addImportError(&result, "Übersprungen (leerer Inhalt): "+file.Filename)
+			addImportError(&result, "Skipped (empty content): "+file.Filename)
 			continue
 		}
 		// Parse frontmatter and content
-		title, content := parseMarkdown(file.Content)
+		title, tags, content := parseMarkdown(file.Content)
 		if title == "" {
 			// Fallback: use filename without extension
 			title = strings.TrimSuffix(file.Filename, filepath.Ext(file.Filename))
 		}
 		if err := validateNoteFields(title, content, ""); err != nil {
 			result.Failed++
-			addImportError(&result, "Ungültige Notiz für "+file.Filename+": "+err.Error())
+			addImportError(&result, "Invalid note for "+file.Filename+": "+err.Error())
 			continue
 		}
 
@@ -98,12 +114,12 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 		existing, err := s.noteService.GetNoteByTitleInFolder(userID, title, folderPath)
 		if err != nil && !errors.Is(err, db.ErrNotFound) {
 			result.Failed++
-			addImportError(&result, "DB-Fehler für "+title+": "+err.Error())
+			addImportError(&result, "Database error for "+title+": "+err.Error())
 			continue
 		}
 		if existing != nil {
 			result.Skipped++
-			addImportError(&result, fmt.Sprintf("Übersprungen (existiert bereits in %s): %s", folderPath, title))
+			addImportError(&result, fmt.Sprintf("Skipped (already exists in %s): %s", folderPath, title))
 			continue
 		}
 
@@ -112,13 +128,13 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 			if err := s.ensureFolderPath(userID, folderPath, createdFolders); err != nil {
 				result.Failed++
 				result.Errors = append(result.Errors,
-					"Ordner-Fehler für "+title+": "+err.Error())
+					"Folder error for "+title+": "+err.Error())
 				continue
 			}
 		}
 		if err := validateNoteFields(title, content, folderPath); err != nil {
 			result.Failed++
-			addImportError(&result, "Ungültiger Ordnerpfad für "+title+": "+err.Error())
+			addImportError(&result, "Invalid folder path for "+title+": "+err.Error())
 			continue
 		}
 
@@ -126,8 +142,14 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 		note, err := s.noteService.CreateNote(userID, title, content, folderPath)
 		if err != nil {
 			result.Failed++
-			addImportError(&result, "Fehler beim Importieren von "+title+": "+err.Error())
+			addImportError(&result, "Failed to import "+title+": "+err.Error())
 			continue
+		}
+
+		if len(tags) > 0 {
+			if err := s.noteService.SetNoteTags(note.ID, userID, tags); err != nil {
+				addImportError(&result, "Tag error for "+title+": "+err.Error())
+			}
 		}
 
 		// Broadcast creation to WebSocket clients
@@ -155,17 +177,17 @@ func addImportError(result *ImportResponse, message string) {
 	result.Errors = append(result.Errors, message)
 }
 
-// parseMarkdown extracts title from YAML frontmatter
-func parseMarkdown(content string) (title, body string) {
+// parseMarkdown extracts title and tags from YAML frontmatter.
+func parseMarkdown(content string) (title string, tags []string, body string) {
 	// Check for YAML frontmatter
 	if !strings.HasPrefix(content, "---\n") {
-		return "", content
+		return "", nil, content
 	}
 
 	// Find closing ---
 	end := strings.Index(content[4:], "\n---\n")
 	if end == -1 {
-		return "", content
+		return "", nil, content
 	}
 
 	yamlContent := content[4 : end+4]
@@ -173,10 +195,18 @@ func parseMarkdown(content string) (title, body string) {
 
 	var fm Frontmatter
 	if err := yaml.Unmarshal([]byte(yamlContent), &fm); err != nil {
-		return "", content // Ignore parse errors
+		return "", nil, content // Ignore parse errors
 	}
 
-	return fm.Title, body
+	if len(fm.Tags) > 0 {
+		for _, tag := range fm.Tags {
+			trimmed := strings.TrimSpace(tag)
+			if trimmed != "" {
+				tags = append(tags, trimmed)
+			}
+		}
+	}
+	return fm.Title, tags, body
 }
 
 // ensureFolderPath creates folder hierarchy

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CAPTCHA</title>
-    <style>
+    <style nonce="__NONCE__">
         body {
             margin: 0;
             padding: 0;
@@ -18,7 +18,7 @@
 </head>
 <body>
     <div id="captcha-widget"></div>
-    <script>
+    <script nonce="__NONCE__">
         // Parse URL parameters
         const params = new URLSearchParams(window.location.search);
         const sitekey = params.get('sitekey');

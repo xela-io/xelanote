@@ -2,6 +2,8 @@ package db
 
 import (
 	"testing"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // Helper: create a test folder belonging to a user
@@ -20,7 +22,7 @@ func createTestNoteInFolder(t *testing.T, db *DB, noteID string, userID int, tit
 	_, err := db.Exec(`
 		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at)
 		VALUES (?, ?, ?, 'test content', ?, ?, datetime('now'), datetime('now'))
-	`, noteID, title, NormalizeTitle(title), folderPath, userID)
+	`, noteID, title, utils.NormalizeTitle(title), folderPath, userID)
 	if err != nil {
 		t.Fatalf("Failed to create test note %s: %v", noteID, err)
 	}

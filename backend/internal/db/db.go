@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	sqlite3 "github.com/mattn/go-sqlite3"
-	"github.com/xela-io/xelanote/internal/utils"
 )
 
 //go:embed schema.sql
@@ -162,6 +161,8 @@ func (db *DB) runMigrations() error {
 		"023_add_color_field.sql",
 		"024_folder_scoped_unique_title.sql",
 		"025_virtual_root.sql",
+		"026_notes_order_index.sql",
+		"027_graph_indexes.sql",
 		"028_note_summaries.sql",
 		"029_note_types_and_features.sql",
 		"030_ai_enabled_flags.sql",
@@ -214,13 +215,6 @@ func (db *DB) runMigrations() error {
 	}
 
 	return nil
-}
-
-// NormalizeTitle returns a normalized version of a title for matching.
-// This matches the title_norm column format.
-// Deprecated: Use utils.NormalizeTitle instead. This is kept for backwards compatibility.
-func NormalizeTitle(title string) string {
-	return utils.NormalizeTitle(title)
 }
 
 func registerEncryptedDriver(key string) {

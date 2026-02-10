@@ -41,3 +41,10 @@ func (s *NoteService) GetCache() *cache.Cache {
 func (s *NoteService) GetDB() *db.DB {
 	return s.db
 }
+
+// Close releases background resources held by the service.
+func (s *NoteService) Close() {
+	if s.cache != nil {
+		s.cache.Close()
+	}
+}

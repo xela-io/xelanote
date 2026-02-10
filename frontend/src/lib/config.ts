@@ -37,12 +37,6 @@ export function isDesktop(): boolean {
   return isTauri() || isElectron();
 }
 
-// Legacy constants - kept for backward compatibility but may have timing issues
-// Prefer using the function versions above for reliable detection
-export const IS_TAURI = typeof window !== 'undefined' && '__TAURI__' in window;
-export const IS_ELECTRON = typeof window !== 'undefined' && 'electronAPI' in window;
-export const IS_DESKTOP = IS_TAURI || IS_ELECTRON;
-
 // Server URL storage key (used in desktop apps)
 const SERVER_URL_KEY = 'xelanote_server_url';
 const DEFAULT_SERVER = 'https://xelanote.com';

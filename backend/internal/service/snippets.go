@@ -119,3 +119,10 @@ func (s *SnippetService) DeleteSnippet(userID, snippetID int) error {
 
 	return nil
 }
+
+// Close releases background resources held by the service.
+func (s *SnippetService) Close() {
+	if s.cache != nil {
+		s.cache.Close()
+	}
+}

@@ -24,6 +24,11 @@ var (
 	ErrInvalidInput                  = errors.New("invalid input")
 )
 
+const (
+	defaultBaseServings = 4
+	maxRecipeImages     = 50
+)
+
 // RecipeService handles recipe-specific business logic.
 type RecipeService struct {
 	db     *db.DB
@@ -354,7 +359,7 @@ func (s *RecipeService) GetScaledIngredients(callerUserID int, noteID string, ta
 		return nil, err
 	}
 
-	baseServings := 4 // Default (I5)
+	baseServings := defaultBaseServings
 	if meta != nil {
 		baseServings = meta.Servings
 	}
@@ -381,12 +386,12 @@ func (s *RecipeService) AddRecipeImage(callerUserID int, noteID string, imageURL
 		return nil, ErrInvalidImageURL
 	}
 
-	// Max 50 images
+	// Max recipe images
 	existing, err := s.db.GetRecipeImages(noteID)
 	if err != nil {
 		return nil, err
 	}
-	if len(existing) >= 50 {
+	if len(existing) >= maxRecipeImages {
 		return nil, ErrMaxImagesReached
 	}
 

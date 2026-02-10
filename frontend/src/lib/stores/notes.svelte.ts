@@ -1,5 +1,8 @@
 // Notes store using Svelte 5 runes
 
+import { get } from 'svelte/store';
+import { _ } from 'svelte-i18n';
+
 import type { Backlink, Note } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
@@ -161,6 +164,9 @@ export async function loadNote(id: string) {
     setDirty: (dirty) => {
       isDirty = dirty;
     },
+    offlineUnavailableMessage: get(_)('editor.autosave.offline_unavailable'),
+    decryptFailedMessage: get(_)('editor.autosave.decrypt_failed'),
+    defaultErrorMessage: get(_)('editor.autosave.load_failed'),
   });
 }
 
@@ -572,8 +578,8 @@ export async function triggerAutoSave() {
       if (!currentNote) return;
       try {
         await api.getNote(currentNote.id);
-        toast.warning('Auto-Save Konflikt. Notiz wurde remote geändert.', {
-          label: 'Neu laden',
+        toast.warning(get(_)('editor.autosave.conflict_toast'), {
+          label: get(_)('editor.autosave.reload_label'),
           handler: () => {
             if (currentNote) loadNote(currentNote.id);
           },
@@ -582,8 +588,8 @@ export async function triggerAutoSave() {
         console.error('Failed to fetch remote version:', err);
       }
     },
-    conflictMessage: 'Konflikt erkannt. Notiz wurde extern geändert.',
-    defaultError: 'Auto-save failed',
+    conflictMessage: get(_)('editor.autosave.conflict_message'),
+    defaultError: get(_)('editor.autosave.default_error'),
   });
 }
 

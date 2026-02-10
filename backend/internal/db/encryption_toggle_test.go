@@ -2,6 +2,8 @@ package db
 
 import (
 	"testing"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // Helper to create an encrypted test note
@@ -17,7 +19,7 @@ func createEncryptedTestNote(t *testing.T, db *DB, noteID string, userID int, ti
 			'wrapped_key_data', 1, '{"alg":"test"}',
 			'enc_summary', 1,
 			datetime('now'), datetime('now'))
-	`, noteID, title, NormalizeTitle(title), userID)
+	`, noteID, title, utils.NormalizeTitle(title), userID)
 	if err != nil {
 		t.Fatalf("Failed to create encrypted test note %s: %v", noteID, err)
 	}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // NoteShare represents a sharing record for a note.
@@ -502,7 +504,7 @@ func (db *DB) IsNoteEncrypted(noteID string) (bool, error) {
 // UpdateSharedNote updates a note via a share (editor role).
 // Only updates title, content, and version. Does NOT move the note.
 func (db *DB) UpdateSharedNote(noteID string, title, content string, expectedVersion int) (*SharedNote, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	result, err := db.Exec(`

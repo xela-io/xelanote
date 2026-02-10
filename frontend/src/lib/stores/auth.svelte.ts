@@ -1,4 +1,5 @@
 // Auth store for managing user authentication state
+import type { User as ApiUser } from '$lib/api';
 import * as api from '$lib/api';
 import { getServerUrl, isDesktop } from '$lib/config';
 import { fromBase64Standard } from '$lib/crypto/sodium';
@@ -11,13 +12,7 @@ import * as recipes from './recipes.svelte';
 import * as settings from './settings.svelte';
 import * as ui from './ui.svelte';
 
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  is_admin: boolean;
-  encryption_salt?: string;
-}
+export type User = ApiUser;
 
 interface AuthState {
   user: User | null;

@@ -138,3 +138,14 @@ func (s *NoteService) GetNote(userID int, id string) (*db.Note, error) {
 	s.cache.Set(key, note)
 	return note, nil
 }
+
+// UpdateNoteColor updates the color of a note.
+func (s *NoteService) UpdateNoteColor(userID int, noteID string, color *string) error {
+	if err := s.db.UpdateNoteColor(userID, noteID, color); err != nil {
+		return err
+	}
+
+	s.invalidateNoteCache(userID, noteID)
+	s.invalidateQuickSearchCache(userID)
+	return nil
+}

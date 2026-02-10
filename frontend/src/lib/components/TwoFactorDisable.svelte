@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AlertTriangle, Loader2 } from 'lucide-svelte';
+  import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import * as api from '$lib/api';
@@ -96,7 +97,7 @@
       <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
         <AlertTriangle size={20} class="text-amber-500 flex-shrink-0 mt-0.5" />
         <div class="text-sm text-amber-700 dark:text-amber-400">
-          {@html $_('dialog.twofa_disable.warning')}
+          {@html DOMPurify.sanitize($_('dialog.twofa_disable.warning'))}
         </div>
       </div>
 

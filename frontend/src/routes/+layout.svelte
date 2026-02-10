@@ -53,8 +53,10 @@
   let cleanupErrorHandler: (() => void) | null = null;
 
   // Early mobile detection: runs before onMount to prevent sidebar flash on mobile
+  const MOBILE_BREAKPOINT = 768;
+
   if (browser) {
-    const earlyMobile = window.innerWidth < 768;
+    const earlyMobile = window.innerWidth < MOBILE_BREAKPOINT;
     ui.setIsMobile(earlyMobile);
     if (earlyMobile) {
       ui.setSidebarOpen(false);
@@ -306,7 +308,7 @@
       handleBeforeUnloadHelper(e, {
         isDirty: () => notes.getIsDirty(),
         isSyncing: () => syncManager.getIsSyncing(),
-        warningMessage: 'Sie haben ungespeicherte Änderungen',
+        warningMessage: get(_)('editor.unsaved_warning'),
       });
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -430,7 +432,7 @@
           class="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
           style="border-color: var(--color-muted-foreground, #666);"
         ></div>
-        <p style="color: var(--color-muted-foreground, #888);">Laden...</p>
+        <p style="color: var(--color-muted-foreground, #888);">{$_('common.loading')}</p>
       </div>
     </div>
   {:else if isPublic}

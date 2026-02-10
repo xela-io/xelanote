@@ -42,9 +42,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if results == nil {
-		results = []db.SearchResult{}
-	}
+	results = ensureSlice(results)
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"results": results,
@@ -145,9 +143,7 @@ func (s *Server) quickSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if notes == nil {
-		notes = []db.Note{}
-	}
+	notes = ensureSlice(notes)
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"notes": notes,

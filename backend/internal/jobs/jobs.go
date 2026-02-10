@@ -51,6 +51,11 @@ type JobManager struct {
 	handlers map[JobType]JobHandler
 }
 
+const (
+	jobCleanupInterval = 5 * time.Minute
+	jobRetention       = 24 * time.Hour
+)
+
 // NewJobManager creates a new JobManager
 func NewJobManager(workers int) *JobManager {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -73,6 +78,7 @@ func (jm *JobManager) Start() {
 	for i := 0; i < jm.workers; i++ {
 		go jm.worker()
 	}
+	go jm.cleanupLoop()
 }
 
 // Stop stops the job manager
@@ -111,6 +117,32 @@ func (jm *JobManager) worker() {
 			return
 		case job := <-jm.queue:
 			jm.executeJob(job)
+		}
+	}
+}
+
+// cleanupLoop periodically removes completed/failed jobs to prevent unbounded growth.
+func (jm *JobManager) cleanupLoop() {
+	ticker := time.NewTicker(jobCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-jm.ctx.Done():
+			return
+		case <-ticker.C:
+			cutoff := time.Now().Add(-jobRetention)
+			jm.jobs.Range(func(key, value interface{}) bool {
+				job, ok := value.(*Job)
+				if !ok {
+					jm.jobs.Delete(key)
+					return true
+				}
+				if (job.Status == JobStatusCompleted || job.Status == JobStatusFailed) && job.UpdatedAt.Before(cutoff) {
+					jm.jobs.Delete(key)
+				}
+				return true
+			})
 		}
 	}
 }

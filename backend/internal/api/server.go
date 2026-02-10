@@ -83,22 +83,14 @@ type ServerConfig struct {
 	SummarizeService *service.SummarizeService
 	SharingService   *service.SharingService
 	ErrorReportSvc   *service.ErrorReportService
+	RecipeService    *service.RecipeService
+	RecipeSuggestSvc *service.RecipeSuggestionService
 	JobManager       *jobs.JobManager
 	WSManager        *websocket.Manager
 	Logger           *slog.Logger
 	JWTSecret        []byte
 	DataDir          string
 	AllowedOrigins   []string
-}
-
-// SetRecipeService sets the recipe service (called after server creation).
-func (s *Server) SetRecipeService(rs *service.RecipeService) {
-	s.recipeService = rs
-}
-
-// SetRecipeSuggestionService sets the recipe suggestion service (called after server creation).
-func (s *Server) SetRecipeSuggestionService(rss *service.RecipeSuggestionService) {
-	s.recipeSuggestionService = rss
 }
 
 // logger returns the server logger (returns no-op logger if nil for tests).

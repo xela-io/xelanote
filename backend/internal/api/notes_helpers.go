@@ -79,15 +79,6 @@ func validateNoteFields(title, content, folderPath string) error {
 	return nil
 }
 
-// ensureNotes returns an empty slice if notes is nil, otherwise returns notes unchanged.
-// This ensures JSON serialization produces [] instead of null.
-func ensureNotes(notes []db.Note) []db.Note {
-	if notes == nil {
-		return []db.Note{}
-	}
-	return notes
-}
-
 // validateClientLinks validates client-provided links and returns an error response if invalid.
 // Returns (linkTitles, true) on success, or (nil, false) if a validation error was sent.
 func validateClientLinks(w http.ResponseWriter, links []ClientLink) ([]string, bool) {

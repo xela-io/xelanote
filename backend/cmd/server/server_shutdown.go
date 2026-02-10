@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func setupGracefulShutdown(srv *http.Server, pruneCancel context.CancelFunc) {
+func setupGracefulShutdown(srv *http.Server, pruneCancel context.CancelFunc, cleanup func()) {
 	go func() {
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -24,6 +24,9 @@ func setupGracefulShutdown(srv *http.Server, pruneCancel context.CancelFunc) {
 
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Printf("Server shutdown error: %v", err)
+		}
+		if cleanup != nil {
+			cleanup()
 		}
 	}()
 }

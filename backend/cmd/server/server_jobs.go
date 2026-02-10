@@ -10,22 +10,25 @@ import (
 )
 
 func startJobManager(noteService *service.NoteService) *jobs.JobManager {
-	jobManager := jobs.NewJobManager(4) // 4 workers
+	const jobWorkerCount = 4
+	jobManager := jobs.NewJobManager(jobWorkerCount)
 	jobManager.RegisterHandler(jobs.JobTypeRenameNote, jobs.HandleRenameNoteJob(noteService))
 	jobManager.Start()
-	log.Println("Job manager started with 4 workers")
+	log.Printf("Job manager started with %d workers", jobWorkerCount)
 	return jobManager
 }
 
 // Start version pruning job (runs daily, keeps 100 versions per note).
 func startVersionPruner(noteService *service.NoteService) context.CancelFunc {
+	const maxVersionsToKeep = 100
+
 	pruneCtx, pruneCancel := context.WithCancel(context.Background())
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()
 
 		// Run once at startup
-		pruned, err := noteService.PruneAllVersions(100)
+		pruned, err := noteService.PruneAllVersions(maxVersionsToKeep)
 		if err != nil {
 			log.Printf("Version pruning failed: %v", err)
 		} else if pruned > 0 {
@@ -35,7 +38,7 @@ func startVersionPruner(noteService *service.NoteService) context.CancelFunc {
 		for {
 			select {
 			case <-ticker.C:
-				pruned, err := noteService.PruneAllVersions(100)
+				pruned, err := noteService.PruneAllVersions(maxVersionsToKeep)
 				if err != nil {
 					log.Printf("Version pruning failed: %v", err)
 				} else if pruned > 0 {

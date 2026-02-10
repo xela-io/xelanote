@@ -1,12 +1,10 @@
 package llm
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -183,44 +181,15 @@ func (c *GeminiClient) Generate(ctx context.Context, prompt string, maxTokens in
 		},
 	}
 
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
-	}
-
 	url := fmt.Sprintf("%s/%s:generateContent", GeminiAPIURL, c.model)
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-goog-api-key", c.apiKey)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", fmt.Errorf("failed to read error response: %w", err)
-		}
-
-		// Try to parse as Gemini error response
-		var errResp GeminiErrorResponse
-		if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {
-			return "", fmt.Errorf("gemini API error (%s): %s", errResp.Error.Status, errResp.Error.Message)
-		}
-
-		return "", fmt.Errorf("gemini returned status %d: %s", resp.StatusCode, string(body))
-	}
 
 	var geminiResp GeminiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	err := doJSONRequest(ctx, c.httpClient, "POST", url, map[string]string{
+		"Content-Type":   "application/json",
+		"x-goog-api-key": c.apiKey,
+	}, req, &geminiResp, parseGeminiError, "gemini")
+	if err != nil {
+		return "", err
 	}
 
 	// Extract text from candidates
@@ -294,43 +263,14 @@ func (c *GeminiClient) GenerateWithImage(ctx context.Context, prompt string, ima
 		},
 	}
 
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
-	}
-
 	url := fmt.Sprintf("%s/%s:generateContent", GeminiAPIURL, c.model)
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-goog-api-key", c.apiKey)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", fmt.Errorf("failed to read error response: %w", err)
-		}
-
-		var errResp GeminiErrorResponse
-		if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {
-			return "", fmt.Errorf("gemini API error (%s): %s", errResp.Error.Status, errResp.Error.Message)
-		}
-
-		return "", fmt.Errorf("gemini returned status %d: %s", resp.StatusCode, string(body))
-	}
-
 	var geminiResp GeminiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	err := doJSONRequest(ctx, c.httpClient, "POST", url, map[string]string{
+		"Content-Type":   "application/json",
+		"x-goog-api-key": c.apiKey,
+	}, req, &geminiResp, parseGeminiError, "gemini")
+	if err != nil {
+		return "", err
 	}
 
 	if len(geminiResp.Candidates) == 0 {
@@ -362,19 +302,13 @@ func (c *GeminiClient) IsAvailable(ctx context.Context) bool {
 	}
 
 	// List models to verify the API key works
-	httpReq, err := http.NewRequestWithContext(ctx, "GET", GeminiAPIURL, nil)
+	err := doJSONRequest(ctx, c.httpClient, "GET", GeminiAPIURL, map[string]string{
+		"x-goog-api-key": c.apiKey,
+	}, nil, nil, parseGeminiError, "gemini")
 	if err != nil {
 		return false
 	}
-	httpReq.Header.Set("x-goog-api-key", c.apiKey)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-
-	available := resp.StatusCode == http.StatusOK
+	available := true
 	c.availableCache = &available
 	c.availableCacheExpiry = time.Now().Add(5 * time.Minute)
 	return available
@@ -392,3 +326,11 @@ func (c *GeminiClient) Model() string {
 
 // Ensure GeminiClient implements Provider interface.
 var _ Provider = (*GeminiClient)(nil)
+
+func parseGeminiError(body []byte) error {
+	var errResp GeminiErrorResponse
+	if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {
+		return fmt.Errorf("gemini API error (%s): %s", errResp.Error.Status, errResp.Error.Message)
+	}
+	return nil
+}

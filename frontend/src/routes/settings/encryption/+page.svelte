@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AlertTriangle, Eye, Key, Lock, Shield } from 'lucide-svelte';
+  import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import * as encryption from '$lib/stores/encryption.svelte';
@@ -7,6 +8,7 @@
   const settings = $derived(encryption.getSettings());
   let showKeywordWarning = $state(false);
   let showTitleWarning = $state(false);
+  const sanitize = (value: string) => DOMPurify.sanitize(value);
 
   function toggleKeywords() {
     if (!settings.extractKeywords) {
@@ -103,7 +105,7 @@
           <div class="flex items-start gap-2 p-3 bg-primary/10 rounded-md">
             <AlertTriangle class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
             <p class="text-xs text-foreground">
-              {@html $_('page.settings.encryption.title_encryption_info')}
+              {@html sanitize($_('page.settings.encryption.title_encryption_info'))}
             </p>
           </div>
         </div>
@@ -140,10 +142,10 @@
                 {$_('page.settings.encryption.keyword_warning_title')}
               </p>
               <p class="mb-2">
-                {@html $_('page.settings.encryption.keyword_warning_text')}
+                {@html sanitize($_('page.settings.encryption.keyword_warning_text'))}
               </p>
               <p class="mb-1">
-                {@html $_('page.settings.encryption.keyword_warning_example')}
+                {@html sanitize($_('page.settings.encryption.keyword_warning_example'))}
               </p>
               <p class="text-red-900 dark:text-red-200 font-semibold">
                 {$_('page.settings.encryption.keyword_warning_final')}
@@ -179,10 +181,10 @@
           </h4>
           <ul class="list-disc list-inside space-y-1 text-sm text-muted-foreground">
             <li>
-              {@html $_('page.settings.encryption.protected_content')}
+              {@html sanitize($_('page.settings.encryption.protected_content'))}
             </li>
             <li>
-              {@html $_('page.settings.encryption.protected_title')}
+              {@html sanitize($_('page.settings.encryption.protected_title'))}
             </li>
           </ul>
         </div>
@@ -192,12 +194,12 @@
             {$_('page.settings.encryption.visible_heading')}
           </h4>
           <ul class="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-            <li>{@html $_('page.settings.encryption.visible_title')}</li>
-            <li>{@html $_('page.settings.encryption.visible_folders')}</li>
+            <li>{@html sanitize($_('page.settings.encryption.visible_title'))}</li>
+            <li>{@html sanitize($_('page.settings.encryption.visible_folders'))}</li>
             <li>
-              {@html $_('page.settings.encryption.visible_metadata')}
+              {@html sanitize($_('page.settings.encryption.visible_metadata'))}
             </li>
-            <li>{@html $_('page.settings.encryption.visible_keywords')}</li>
+            <li>{@html sanitize($_('page.settings.encryption.visible_keywords'))}</li>
           </ul>
         </div>
       </div>
@@ -240,7 +242,7 @@
             {$_('page.settings.encryption.password_loss_heading')}
           </h3>
           <p class="text-sm text-red-800 dark:text-red-300">
-            {@html $_('page.settings.encryption.password_loss_text')}
+            {@html sanitize($_('page.settings.encryption.password_loss_text'))}
           </p>
         </div>
       </div>
@@ -297,11 +299,11 @@
       </h3>
       <div class="space-y-3 mb-6">
         <p class="text-sm text-muted-foreground">
-          {@html $_('page.settings.encryption.modal_keyword_warning')}
+          {@html sanitize($_('page.settings.encryption.modal_keyword_warning'))}
         </p>
         <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
           <p class="text-xs text-yellow-900 dark:text-yellow-200">
-            {@html $_('page.settings.encryption.modal_keyword_example')}
+            {@html sanitize($_('page.settings.encryption.modal_keyword_example'))}
           </p>
         </div>
         <p class="text-sm font-semibold text-red-700 dark:text-red-400">

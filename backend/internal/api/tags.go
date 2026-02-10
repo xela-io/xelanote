@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 )
 
 // Tag API Request/Response types
@@ -29,9 +28,7 @@ func (s *Server) getAllTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Sicherstellen dass nie nil zurückgegeben wird
-	if tags == nil {
-		tags = []db.Tag{}
-	}
+	tags = ensureSlice(tags)
 
 	respondJSON(w, http.StatusOK, tags)
 }
@@ -67,9 +64,7 @@ func (s *Server) getNoteTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tags == nil {
-		tags = []db.Tag{}
-	}
+	tags = ensureSlice(tags)
 
 	respondJSON(w, http.StatusOK, tags)
 }
@@ -117,9 +112,7 @@ func (s *Server) setNoteTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tags == nil {
-		tags = []db.Tag{}
-	}
+	tags = ensureSlice(tags)
 
 	respondJSON(w, http.StatusOK, tags)
 }

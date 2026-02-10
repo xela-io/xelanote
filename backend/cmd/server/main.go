@@ -59,7 +59,7 @@ func main() {
 	postStartupMaintenance(core.activity, database)
 
 	// Cleanup old activity logs at startup
-	if cleaned, err := activityService.CleanupOldActivity(); err != nil {
+	if cleaned, err := core.activity.CleanupOldActivity(); err != nil {
 		log.Printf("Activity cleanup failed: %v", err)
 	} else if cleaned > 0 {
 		log.Printf("Cleaned up %d old activity logs", cleaned)
@@ -94,6 +94,8 @@ func main() {
 	env := checkEnvironment(logger)
 	fido2Service := initFIDO2Service(database, core.tfa, logger, env)
 	turnstileService := initTurnstileService(logger)
+	recipeService := service.NewRecipeService(database, core.note)
+	recipeSuggestionService := service.NewRecipeSuggestionService(database, providerRouter, recipeService)
 
 	// Create API server
 	allowedOrigins := parseAllowedOrigins(os.Getenv("CORS_ALLOWED_ORIGINS"))
@@ -113,6 +115,8 @@ func main() {
 		SummarizeService: summarizeService,
 		SharingService:   sharingService,
 		ErrorReportSvc:   errorReportService,
+		RecipeService:    recipeService,
+		RecipeSuggestSvc: recipeSuggestionService,
 		JobManager:       jobManager,
 		WSManager:        wsManager,
 		Logger:           logger,
@@ -120,10 +124,6 @@ func main() {
 		DataDir:          dataDir,
 		AllowedOrigins:   allowedOrigins,
 	})
-	recipeService := service.NewRecipeService(database, core.note)
-	server.SetRecipeService(recipeService)
-	recipeSuggestionService := service.NewRecipeSuggestionService(database, providerRouter, recipeService)
-	server.SetRecipeSuggestionService(recipeSuggestionService)
 	router := server.Router()
 
 	setupStaticFiles(router)
@@ -139,7 +139,14 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	setupGracefulShutdown(srv, pruneCancel)
+	cleanup := func() {
+		wsManager.Stop()
+		jobManager.Stop()
+		core.note.Close()
+		core.snippet.Close()
+		core.template.Close()
+	}
+	setupGracefulShutdown(srv, pruneCancel, cleanup)
 
 	// Start server
 	log.Printf("Starting server on %s", *addr)

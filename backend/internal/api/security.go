@@ -7,14 +7,13 @@ import "net/http"
 // Referrer-Policy, and Permissions-Policy.
 func securityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// CSP: 'unsafe-inline' required for SvelteKit adapter-static inline scripts
-		// and Svelte scoped styles. XSS mitigation: DOMPurify sanitizes all user HTML.
-		// Accepted risk per SEC-004 security audit. Hash-based CSP would require
-		// build-pipeline automation since inline script hashes change every build.
+		// CSP: Script inline is disallowed; use nonces where needed (e.g. captcha page).
+		// Style inline is still allowed for now (Svelte scoped styles).
+		// XSS mitigation: DOMPurify sanitizes all user HTML.
 		// 'wasm-unsafe-eval' needed for libsodium WebAssembly (E2E encryption)
 		// Cloudflare Turnstile requires: script-src, frame-src, connect-src for challenges.cloudflare.com
 		csp := "default-src 'self'; " +
-			"script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com; " +
+			"script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com; " +
 			"style-src 'self' 'unsafe-inline'; " +
 			"img-src 'self' data: blob:; " +
 			"connect-src 'self' ws: wss: https://challenges.cloudflare.com; " +

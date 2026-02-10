@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // CreateEncryptedNote creates a new encrypted note with wrapped DEK.
@@ -20,7 +22,7 @@ func (db *DB) CreateEncryptedNote(
 	folderPath string,
 ) (*Note, error) {
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	_, err := db.Exec(`
@@ -53,7 +55,7 @@ func (db *DB) CreateJournalNote(userID int, title, content, folderPath, journalD
 	}
 
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	_, err := db.Exec(`
@@ -103,7 +105,7 @@ func (db *DB) CreateEncryptedJournalNote(
 	}
 
 	id := uuid.New().String()
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	_, err := db.Exec(`
@@ -140,7 +142,7 @@ func (db *DB) UpdateEncryptedNote(
 	folderPath string,
 	expectedVersion int,
 ) (*Note, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	// Build SQL based on whether folderPath is provided
@@ -200,7 +202,7 @@ func (db *DB) UpdateEncryptedNote(
 // Requires the note to be currently encrypted (content_encrypted = 1).
 // Uses optimistic locking with version field.
 func (db *DB) DecryptNote(userID int, id, title, content string, expectedVersion int) (*Note, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
 	result, err := db.Exec(`

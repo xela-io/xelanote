@@ -205,18 +205,22 @@ function handleMessage(message: WebSocketMessage) {
 
 // Exponential backoff reconnect
 function scheduleReconnect() {
+  const BASE_RECONNECT_DELAY_MS = 1000;
+  const MAX_RECONNECT_DELAY_MS = 30000;
+  const MAX_RECONNECT_ATTEMPTS = 10;
+
   if (reconnectTimeout) {
     clearTimeout(reconnectTimeout);
     reconnectTimeout = null;
   }
 
   // Limit reconnect attempts
-  if (reconnectAttempts >= 10) {
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     console.log('WebSocket: Max reconnect attempts reached, giving up');
     return;
   }
 
-  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+  const delay = Math.min(BASE_RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY_MS);
   reconnectAttempts++;
 
   console.log(`WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);

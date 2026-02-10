@@ -2,6 +2,8 @@ package db
 
 import (
 	"testing"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // Helper to create a named test user
@@ -20,7 +22,7 @@ func createTestNote(t *testing.T, db *DB, noteID string, userID int, title strin
 	_, err := db.Exec(`
 		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at)
 		VALUES (?, ?, ?, 'test content', '/', ?, datetime('now'), datetime('now'))
-	`, noteID, title, NormalizeTitle(title), userID)
+	`, noteID, title, utils.NormalizeTitle(title), userID)
 	if err != nil {
 		t.Fatalf("Failed to create test note %s: %v", noteID, err)
 	}

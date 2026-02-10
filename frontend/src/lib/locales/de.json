@@ -925,6 +925,15 @@
       },
       "conflict_warning": "Konflikt: Notiz wurde extern geändert (Remote Version {version}). Speichern überschreibt Remote-Änderungen.",
       "conflict_load_remote": "Remote laden",
+      "autosave": {
+        "conflict_toast": "Auto-Speichern-Konflikt. Notiz wurde remote geändert.",
+        "conflict_message": "Konflikt erkannt. Notiz wurde extern geändert.",
+        "reload_label": "Neu laden",
+        "default_error": "Auto-Speichern fehlgeschlagen",
+        "offline_unavailable": "Notiz offline nicht verfügbar",
+        "decrypt_failed": "Notiz konnte nicht entschlüsselt werden - Schlüssel ungültig",
+        "load_failed": "Notiz konnte nicht geladen werden"
+      },
       "error_delete": "Notiz konnte nicht gelöscht werden",
       "note_trashed": "Notiz in den Papierkorb verschoben",
       "note_restored": "Notiz wiederhergestellt",

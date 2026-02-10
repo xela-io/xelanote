@@ -2,6 +2,8 @@ package db
 
 import (
 	"fmt"
+
+	"github.com/xela-io/xelanote/internal/utils"
 )
 
 // Link represents a resolved link between two notes.
@@ -68,7 +70,7 @@ func (db *DB) SetLinks(sourceID string, resolvedTargetIDs []string, unresolvedRe
 		defer stmt.Close()
 
 		for _, ref := range unresolvedRefs {
-			refNorm := NormalizeTitle(ref)
+			refNorm := utils.NormalizeTitle(ref)
 			if _, err := stmt.Exec(sourceID, ref, refNorm); err != nil {
 				return fmt.Errorf("failed to insert unresolved link: %w", err)
 			}
@@ -113,7 +115,7 @@ func (db *DB) GetBacklinks(userID int, noteID string) ([]Backlink, error) {
 // This is useful when a new note is created to resolve pending links.
 // Only returns notes owned by the specified user.
 func (db *DB) GetUnresolvedBacklinks(userID int, title string) ([]Backlink, error) {
-	titleNorm := NormalizeTitle(title)
+	titleNorm := utils.NormalizeTitle(title)
 
 	rows, err := db.Query(`
 		SELECT n.id, n.title
@@ -198,7 +200,7 @@ func (db *DB) GetUnresolvedOutgoingLinks(userID int, noteID string) ([]string, e
 // This is used when a new note is created that matches an existing unresolved link,
 // especially for encrypted notes where we can't re-parse the source content.
 func (db *DB) ResolveUnresolvedLink(sourceID string, targetTitle string, targetNoteID string) error {
-	titleNorm := NormalizeTitle(targetTitle)
+	titleNorm := utils.NormalizeTitle(targetTitle)
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -231,7 +233,7 @@ func (db *DB) ResolveUnresolvedLink(sourceID string, targetTitle string, targetN
 // Includes both resolved and unresolved links (by title).
 // Only returns notes owned by the specified user.
 func (db *DB) GetNotesLinkingTo(userID int, noteID string, noteTitle string) ([]string, error) {
-	titleNorm := NormalizeTitle(noteTitle)
+	titleNorm := utils.NormalizeTitle(noteTitle)
 
 	rows, err := db.Query(`
 		SELECT DISTINCT l.source_id

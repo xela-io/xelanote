@@ -8,8 +8,10 @@ import (
 
 // Cache is a thread-safe in-memory cache with TTL support
 type Cache struct {
-	items sync.Map
-	ttl   time.Duration
+	items    sync.Map
+	ttl      time.Duration
+	stopChan chan struct{}
+	stopOnce sync.Once
 }
 
 type cacheItem struct {
@@ -19,7 +21,10 @@ type cacheItem struct {
 
 // NewCache creates a new cache with the specified TTL
 func NewCache(ttl time.Duration) *Cache {
-	c := &Cache{ttl: ttl}
+	c := &Cache{
+		ttl:      ttl,
+		stopChan: make(chan struct{}),
+	}
 	go c.cleanupExpired() // Start cleanup goroutine
 	return c
 }
@@ -59,17 +64,29 @@ func (c *Cache) DeleteByPrefix(prefix string) {
 	})
 }
 
+// Close stops the cleanup goroutine.
+func (c *Cache) Close() {
+	c.stopOnce.Do(func() {
+		close(c.stopChan)
+	})
+}
+
 // cleanupExpired runs periodically to remove expired entries
 func (c *Cache) cleanupExpired() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		now := time.Now()
-		c.items.Range(func(key, value interface{}) bool {
-			if now.After(value.(cacheItem).expiration) {
-				c.items.Delete(key)
-			}
-			return true
-		})
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now()
+			c.items.Range(func(key, value interface{}) bool {
+				if now.After(value.(cacheItem).expiration) {
+					c.items.Delete(key)
+				}
+				return true
+			})
+		case <-c.stopChan:
+			return
+		}
 	}
 }

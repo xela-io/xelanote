@@ -21,6 +21,7 @@
     const days: { date: string; hasEntry: boolean; isToday: boolean }[] = [];
 
     for (let i = 29; i >= 0; i--) {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity
       const d = new Date(today + 'T00:00:00');
       d.setDate(d.getDate() - i);
       const dateStr = journal.formatDate(d);

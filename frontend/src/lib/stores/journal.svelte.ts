@@ -432,6 +432,7 @@ export function calculateStreaks(
  */
 export function getYearDatesSetForYear(year: number): Set<string> {
   void yearCacheVersion;
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   return yearCache.get(year) ?? new Set();
 }
 

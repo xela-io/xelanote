@@ -16,6 +16,8 @@ import {
   assertOnlineForParanoidMode,
   extractUniqueWikilinks,
 } from '$lib/stores/notes/helpers';
+import { loadNote as loadNoteHelper, loadNotes as loadNotesHelper } from '$lib/stores/notes/loaders';
+import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as autosave from '$lib/stores/autosave.svelte';
 import * as encryption from '$lib/stores/encryption.svelte';
@@ -96,108 +98,51 @@ export const getLastAutoSave = accessors.getLastAutoSave;
 export const getAutoSaveError = accessors.getAutoSaveError;
 
 export async function loadNotes() {
-  notesLoading = true;
-  try {
-    // MVP LIMIT: 1000 Notes - same as tree store
-    const result = await api.listNotes({ limit: 1000 });
-    notes = result.notes;
-  } catch (e) {
-    console.error('Failed to load notes:', e);
-  } finally {
-    notesLoading = false;
-  }
+  await loadNotesHelper({
+    listNotes: (options) => api.listNotes(options),
+    setNotes: (next) => {
+      notes = next;
+    },
+    setLoading: (value) => {
+      notesLoading = value;
+    },
+  });
 }
 
 export async function loadNote(id: string) {
-  isLoading = true;
-  error = null;
-  // Reset auto-save state when loading new note
-  autoSaveStatus = 'idle';
-  autoSaveError = null;
-  lastSavedVersion = null; // Reset echo tracker
-  try {
-    let note: Note;
-
-    // Offline fallback: use note from local notes[] array instead of server
-    if (!navigator.onLine) {
-      const localNote = notes.find((n) => n.id === id);
-      if (localNote) {
-        note = { ...localNote };
-        console.log('[NOTES] Using local note (offline), id:', note.id);
-      } else {
-        throw new Error('Notiz offline nicht verfuegbar');
-      }
-    } else {
-      note = await api.getNote(id);
-      console.log(
-        '[NOTES] Loaded note from API, id:',
-        note.id,
-        'content_encrypted:',
-        note.content_encrypted,
-        'encrypted_content (base64) length:',
-        note.encrypted_content?.length || 0,
-        'first 50 chars:',
-        note.encrypted_content?.substring(0, 50) || ''
-      );
-    }
-
-    // Decrypt if encrypted
-    if (note.content_encrypted && note.encrypted_content) {
-      if (!encryption.isEncryptionUnlocked()) {
-        error = 'ENCRYPTION_LOCKED';
-        currentNote = null;
-        isLoading = false;
-        // Don't logout - let UI handle re-authentication
-        throw new Error('ENCRYPTION_LOCKED');
-      }
-
-      try {
-        const encryptedPayload: EncryptedPayload = {
-          ciphertext: note.encrypted_content,
-          metadata: JSON.parse(note.encryption_metadata || '{}'),
-        };
-        console.log(
-          '[NOTES] Decrypting loaded note, wrapped_dek length:',
-          encryptedPayload.metadata.wrapped_dek?.length || 0
-        );
-
-        const { title, content } = encryption.decryptNote(
-          note.encrypted_title || null,
-          encryptedPayload
-        );
-
-        console.log('[NOTES] Note decrypted after load, content length:', content.length);
-        note.title = title || note.title; // Use decrypted title if available
-        note.content = content;
-      } catch (decryptError) {
-        console.error('[NOTES] Failed to decrypt note:', decryptError);
-        error = 'Failed to decrypt note - encryption key may be invalid';
-        currentNote = null;
-        isLoading = false;
-        return;
-      }
-    }
-
-    currentNote = note;
-    console.log('[NOTES] currentNote set after load, content length:', currentNote.content.length);
-    isDirty = false;
-    // Load backlinks (skip offline - not critical)
-    if (navigator.onLine) {
-      try {
-        const result = await api.getBacklinks(id);
-        currentNoteBacklinks = result.backlinks;
-      } catch {
-        // Backlinks not available offline
-      }
-    } else {
-      currentNoteBacklinks = [];
-    }
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to load note';
-    currentNote = null;
-  } finally {
-    isLoading = false;
-  }
+  await loadNoteHelper({
+    id,
+    isOnline: () => navigator.onLine,
+    getLocalNotes: () => notes,
+    getNote: (noteId) => api.getNote(noteId),
+    getBacklinks: (noteId) => api.getBacklinks(noteId),
+    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+    setIsLoading: (value) => {
+      isLoading = value;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    resetLastSaved: () => {
+      lastSavedVersion = null;
+    },
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    setBacklinks: (backlinks) => {
+      currentNoteBacklinks = backlinks;
+    },
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+  });
 }
 
 export async function createNote(
@@ -338,213 +283,59 @@ export async function createNote(
 }
 
 export async function saveNote() {
-  if (!currentNote || !isDirty) return;
-
-  // Prevent concurrent saves (guard against race conditions)
-  if (isSaving) {
-    console.log('Save already in progress, skipping...');
-    return;
-  }
-
-  // Cancel pending auto-save (manual save takes precedence)
-  if (autoSaveTimeout) {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = null;
-    autoSaveStatus = 'idle';
-  }
-
-  isSaving = true;
-  error = null;
-
-  // Track save start to detect if content changed during save
-  const saveStartCounter = ++saveInProgressCounter;
-
-  try {
-    assertOnlineForParanoidMode();
-
-    // Extract and deduplicate wiki-links from content (for graph view)
-    const uniqueLinks = extractUniqueWikilinks(currentNote.content);
-
-    let updated: api.Note;
-    let processedUpdate: api.Note;
-
-    // Check if note is plaintext (decrypted) - save without encryption
-    if (currentNote.content_encrypted === false) {
-      const payload: api.NotePayload = {
-        title: currentNote.title,
-        content: currentNote.content,
-        folder_path: currentNote.folder_path,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-      };
-
-      console.log(
-        '[NOTES] Saving plaintext note, current version:',
-        currentNote.version,
-        'id:',
-        currentNote.id,
-        'content length:',
-        currentNote.content.length,
-        'links:',
-        uniqueLinks.length
-      );
-      updated = await api.updateNote(currentNote.id, payload, currentNote.version);
-      processedUpdate = updated;
-    } else {
-      // Check if encryption is unlocked
-      if (!encryption.isEncryptionUnlocked()) {
-        error = 'Encryption locked - please re-login';
-        autoSaveStatus = 'error';
-        autoSaveError = 'Encryption locked - please re-login';
-        throw new Error('Encryption locked');
-      }
-
-      // Encrypt before sending
-      const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(
-        currentNote.title,
-        currentNote.content
-      );
-
-      const payload = {
-        title: encryptedTitle ? '' : currentNote.title, // Send empty string if title encrypted
-        encrypted_title: encryptedTitle,
-        title_encrypted: !!encryptedTitle,
-        encrypted_content: encryptedContent.ciphertext,
-        wrapped_dek: encryptedContent.metadata.wrapped_dek,
-        encryption_metadata: JSON.stringify(encryptedContent.metadata),
-        keywords: keywords,
-        folder_path: currentNote.folder_path,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-        due_dates: extractDueDatesDetailed(currentNote.content),
-      };
-
-      // Offline context: metadata for synthetic response (no plaintext)
-      // INVARIANT: payload is always complete (encrypted_content, wrapped_dek, folder_path, links)
-      const offlineContext: OfflineNoteContext = {
-        created_at: currentNote.created_at,
-        folder_path: currentNote.folder_path,
-        note_type: currentNote.note_type,
-        journal_date: currentNote.journal_date,
-        ai_enabled: currentNote.ai_enabled,
-        encryption_version: currentNote.encryption_version,
-      };
-
-      console.log(
-        '[NOTES] Saving note, current version:',
-        currentNote.version,
-        'id:',
-        currentNote.id,
-        'content length:',
-        currentNote.content.length,
-        'links:',
-        uniqueLinks.length
-      );
-      console.log(
-        '[NOTES] Payload encrypted_content (base64) length:',
-        encryptedContent.ciphertext.length,
-        'first 50 chars:',
-        encryptedContent.ciphertext.substring(0, 50)
-      );
-      updated = await api.updateNote(currentNote.id, payload, currentNote.version, offlineContext);
-      console.log(
-        '[NOTES] Save successful, backend returned version:',
-        updated.version,
-        'encrypted_content from backend length:',
-        updated.encrypted_content?.length || 0,
-        'first 50 chars:',
-        updated.encrypted_content?.substring(0, 50) || ''
-      );
-
-      // Decrypt the note we just saved (backend returns encrypted)
-      processedUpdate = updated;
-      if (updated.content_encrypted && updated.encrypted_content) {
-        try {
-          const encryptedPayload: EncryptedPayload = {
-            ciphertext: updated.encrypted_content,
-            metadata: JSON.parse(updated.encryption_metadata || '{}'),
-          };
-
-          const decrypted = encryption.decryptNote(
-            updated.encrypted_title || null,
-            encryptedPayload
-          );
-
-          processedUpdate = {
-            ...updated,
-            title: decrypted.title || updated.title,
-            content: decrypted.content,
-          };
-          console.log('[NOTES] Update decrypted, content length:', decrypted.content.length);
-        } catch (err) {
-          console.error('[NOTES] Failed to decrypt updated note:', err);
-          throw new Error('Failed to decrypt updated note');
-        }
-      }
-    }
-
-    currentNote = processedUpdate;
-    lastSavedVersion = processedUpdate.version; // Track to ignore WebSocket echo
-    lastSaveTimestamp = Date.now(); // Track save timestamp for grace period
-
-    // Update search index for encrypted notes
-    if (processedUpdate.content_encrypted) {
-      searchIndex.updateInIndex(processedUpdate.id, processedUpdate.title, processedUpdate.content);
-    }
-
-    // Only clear isDirty if no further changes happened during save
-    if (saveInProgressCounter === saveStartCounter) {
-      isDirty = false;
-    } else {
-      console.log('[Save] Weitere Änderungen während Save erkannt, isDirty bleibt true');
-    }
-
-    // Update in list
-    notes = notes.map((n) => (n.id === processedUpdate.id ? processedUpdate : n));
-
-    // Flush queued task events for THIS note after successful save
-    const noteEvents = taskEventQueue.getForNote(processedUpdate.id);
-    if (noteEvents.length > 0) {
-      taskEventQueue.clearForNote(processedUpdate.id);
-      for (const evt of noteEvents) {
-        const payload: api.TaskEventPayload = {
-          event_type: evt.eventType,
-          task_index: evt.taskIndex,
-        };
-        if (processedUpdate.content_encrypted) {
-          const encrypted = encryption.encryptTaskText(evt.taskText);
-          payload.encrypted_task_text = encrypted.ciphertext;
-          payload.wrapped_dek = encrypted.metadata.wrapped_dek;
-          payload.encryption_metadata = JSON.stringify(encrypted.metadata);
-        } else {
-          payload.task_text = evt.taskText.substring(0, 500);
-        }
-        api
-          .recordTaskEvent(processedUpdate.id, payload)
-          .catch((err) => console.warn('[TASK-EVENTS] Failed to record:', err));
-      }
-    }
-
-    // Show saved status (auto-resets after 3s)
-    autoSaveStatus = 'saved';
-    setTimeout(() => {
-      if (autoSaveStatus === 'saved') autoSaveStatus = 'idle';
-    }, 3000);
-
-    return processedUpdate;
-  } catch (e) {
-    if (e instanceof ApiError && e.status === 409) {
-      console.error(
-        '[NOTES] Save failed: Version conflict! Local version:',
-        currentNote?.version,
-        'Error:',
-        e.message
-      );
-    }
-    error = e instanceof Error ? e.message : 'Failed to save note';
-    autoSaveStatus = 'error';
-    throw e;
-  } finally {
-    isSaving = false;
-  }
+  return saveNoteHelper({
+    getCurrentNote: () => currentNote,
+    getIsDirty: () => isDirty,
+    getIsSaving: () => isSaving,
+    setIsSaving: (value) => {
+      isSaving = value;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    getAutoSaveTimeout: () => autoSaveTimeout,
+    setAutoSaveTimeout: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    incrementSaveCounter: () => ++saveInProgressCounter,
+    getSaveCounter: () => saveInProgressCounter,
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    updateNotes: (updater) => {
+      notes = updater(notes);
+    },
+    setLastSavedVersion: (version) => {
+      lastSavedVersion = version;
+    },
+    setLastSaveTimestamp: (timestamp) => {
+      lastSaveTimestamp = timestamp;
+    },
+    taskEventQueue,
+    assertOnline: () => assertOnlineForParanoidMode(),
+    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    encryptNote: (title, content) => encryption.encryptNote(title, content),
+    decryptNote: (encryptedTitle, payload) =>
+      encryption.decryptNote(encryptedTitle, payload),
+    encryptTaskText: (text) => encryption.encryptTaskText(text),
+    extractUniqueLinks: (content) => extractUniqueWikilinks(content),
+    extractDueDates: (content) => extractDueDatesDetailed(content),
+    updateNote: (id, payload, version, offlineContext) =>
+      api.updateNote(id, payload, version, offlineContext),
+    updateSearchIndex: (id, title, content) =>
+      searchIndex.updateInIndex(id, title, content),
+    recordTaskEvent: (noteId, payload) => api.recordTaskEvent(noteId, payload),
+    isConflictError: (err) => err instanceof ApiError && err.status === 409,
+  });
 }
 
 /**

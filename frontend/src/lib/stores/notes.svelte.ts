@@ -1,6 +1,6 @@
 // Notes store using Svelte 5 runes
 
-import type { Backlink, Job, Note, OfflineNoteContext } from '$lib/api';
+import type { Backlink, Job, Note } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
@@ -18,6 +18,10 @@ import {
   extractUniqueWikilinks,
 } from '$lib/stores/notes/helpers';
 import { loadNote as loadNoteHelper, loadNotes as loadNotesHelper } from '$lib/stores/notes/loaders';
+import {
+  deleteCurrentNote as deleteCurrentNoteHelper,
+  moveNote as moveNoteHelper,
+} from '$lib/stores/notes/mutations';
 import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as autosave from '$lib/stores/autosave.svelte';
@@ -400,26 +404,31 @@ export async function toggleEncryption(): Promise<void> {
 }
 
 export async function deleteCurrentNote() {
-  if (!currentNote) return;
-
-  assertOnlineForParanoidMode(true);
-
-  isLoading = true;
-  error = null;
-  try {
-    const deletedId = currentNote.id;
-    await api.deleteNote(currentNote.id, true);
-    notes = notes.filter((n) => n.id !== deletedId);
-    searchIndex.removeFromIndex(deletedId);
-    currentNote = null;
-    isDirty = false;
-    currentNoteBacklinks = [];
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to delete note';
-    throw e;
-  } finally {
-    isLoading = false;
-  }
+  await deleteCurrentNoteHelper({
+    getCurrentNote: () => currentNote,
+    assertOnline: () => assertOnlineForParanoidMode(true),
+    setIsLoading: (value) => {
+      isLoading = value;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    deleteNote: (id, soft) => api.deleteNote(id, soft),
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getNotes: () => notes,
+    removeFromSearchIndex: (id) => searchIndex.removeFromIndex(id),
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    setBacklinks: (backlinks) => {
+      currentNoteBacklinks = backlinks;
+    },
+  });
 }
 
 /**
@@ -564,117 +573,31 @@ export function clearCurrentNote() {
 }
 
 export async function moveNote(id: string, folderPath: string) {
-  assertOnlineForParanoidMode(true);
-
-  // Try to find note in local list first
-  let note = notes.find((n) => n.id === id);
-
-  // If not in list, load from backend (for sidebar drag-drop)
-  if (!note) {
-    console.log('[NOTES] Note not in local list, loading from backend for move');
-    try {
-      note = await api.getNote(id);
-      // Decrypt if encrypted
-      if (note.content_encrypted && note.encrypted_content) {
-        const encryptedPayload: EncryptedPayload = {
-          ciphertext: note.encrypted_content,
-          metadata: JSON.parse(note.encryption_metadata || '{}'),
-        };
-        const decrypted = encryption.decryptNote(note.encrypted_title || null, encryptedPayload);
-        note.content = decrypted.content;
-        note.title = decrypted.title || note.title;
-      }
-    } catch (err) {
-      console.error('[NOTES] Failed to load note for move:', err);
-      throw new Error('Note not found');
-    }
-  }
-
-  // Check if encryption is unlocked
-  if (!encryption.isEncryptionUnlocked()) {
-    error = 'Encryption locked - please re-login';
-    throw new Error('Encryption locked');
-  }
-
-  // Snapshot for rollback (optimistic UI pattern)
-  const snapshot = {
-    notesList: [...notes],
-    currentNote: currentNote ? { ...currentNote } : null,
-  };
-
-  // Optimistic UI update - apply changes immediately (if note is in list)
-  const optimisticUpdate = { ...note, folder_path: folderPath };
-  notes = notes.map((n) => (n.id === id ? optimisticUpdate : n));
-  if (currentNote?.id === id) {
-    currentNote = optimisticUpdate;
-  }
-  error = null;
-
-  try {
-    // Encrypt before sending
-    const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(
-      note.title,
-      note.content
-    );
-
-    // Extract and deduplicate wiki-links from content (for graph view)
-    const uniqueLinks = extractUniqueWikilinks(note.content);
-
-    const payload = {
-      title: encryptedTitle ? '' : note.title,
-      encrypted_title: encryptedTitle,
-      title_encrypted: !!encryptedTitle,
-      encrypted_content: encryptedContent.ciphertext,
-      wrapped_dek: encryptedContent.metadata.wrapped_dek,
-      encryption_metadata: JSON.stringify(encryptedContent.metadata),
-      keywords: keywords,
-      folder_path: folderPath,
-      links: uniqueLinks.map((l) => ({ target_title: l.title })),
-      due_dates: extractDueDatesDetailed(note.content),
-    };
-
-    // Offline context: metadata for synthetic response (no plaintext)
-    // INVARIANT: payload is always complete (encrypted_content, wrapped_dek, folder_path, links)
-    const offlineContext: OfflineNoteContext = {
-      created_at: note.created_at,
-      folder_path: folderPath,
-      note_type: note.note_type,
-      journal_date: note.journal_date,
-      ai_enabled: note.ai_enabled,
-      encryption_version: note.encryption_version,
-    };
-
-    // API call in background
-    const updated = await api.updateNote(id, payload, note.version, offlineContext);
-
-    // Decrypt the updated note
-    let processedUpdate = updated;
-    if (updated.content_encrypted && updated.encrypted_content) {
-      const encryptedPayload: EncryptedPayload = {
-        ciphertext: updated.encrypted_content,
-        metadata: JSON.parse(updated.encryption_metadata || '{}'),
-      };
-      const decrypted = encryption.decryptNote(updated.encrypted_title || null, encryptedPayload);
-      processedUpdate = {
-        ...updated,
-        title: decrypted.title || updated.title,
-        content: decrypted.content,
-      };
-    }
-
-    // Update with server response
-    notes = notes.map((n) => (n.id === processedUpdate.id ? processedUpdate : n));
-    if (currentNote?.id === id) {
-      currentNote = processedUpdate;
-    }
-    return processedUpdate;
-  } catch (e) {
-    // Revert to snapshot on error
-    notes = snapshot.notesList;
-    currentNote = snapshot.currentNote;
-    error = e instanceof Error ? e.message : 'Failed to move note';
-    throw e;
-  }
+  return moveNoteHelper({
+    id,
+    folderPath,
+    assertOnline: () => assertOnlineForParanoidMode(true),
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    getNote: (noteId) => api.getNote(noteId),
+    decryptNote: (encryptedTitle, payload) =>
+      encryption.decryptNote(encryptedTitle, payload),
+    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    encryptNote: (title, content) => encryption.encryptNote(title, content),
+    extractUniqueLinks: (content) => extractUniqueWikilinks(content),
+    extractDueDates: (content) => extractDueDatesDetailed(content),
+    updateNote: (noteId, payload, version, offlineContext) =>
+      api.updateNote(noteId, payload, version, offlineContext),
+  });
 }
 
 // ============================================================================

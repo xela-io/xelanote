@@ -491,6 +491,7 @@ frontend/src/lib/api/
 - `frontend/src/routes/settings/+page.svelte`: Security-Preferences-Flow nach `frontend/src/lib/routes/settings/security-preferences.ts` ausgelagert.
 - `frontend/src/routes/settings/+page.svelte`: Account-Email-Flow nach `frontend/src/lib/routes/settings/account-forms.ts` ausgelagert.
 - `frontend/src/routes/settings/+page.svelte`: Import/Export-Flow nach `frontend/src/lib/routes/settings/import-export.ts` ausgelagert.
+- `frontend/src/lib/stores/notes.svelte.ts`: Helper/Task-Queue nach `frontend/src/lib/stores/notes/helpers.ts` und `frontend/src/lib/stores/notes/task-events.ts` ausgelagert.
 
 ---
 

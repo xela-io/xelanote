@@ -1,75 +1,25 @@
 // Notes store using Svelte 5 runes
 
-import { SvelteDate, SvelteSet } from 'svelte/reactivity';
+import { SvelteDate } from 'svelte/reactivity';
 
 import type { Backlink, Job, Note, OfflineNoteContext } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
-import { extractDueDatesDetailed,extractWikilinks } from '$lib/editor/markdown';
+import { extractDueDatesDetailed } from '$lib/editor/markdown';
 import { hasPendingForNote } from '$lib/offline/offline-queue';
+import {
+  assertOnlineForParanoidMode,
+  extractUniqueWikilinks,
+} from '$lib/stores/notes/helpers';
+import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as autosave from '$lib/stores/autosave.svelte';
 import * as encryption from '$lib/stores/encryption.svelte';
 import * as foldersStore from '$lib/stores/folders.svelte';
 import * as searchIndex from '$lib/stores/search-index.svelte';
 import * as toast from '$lib/stores/toast.svelte';
 
-// --- Helper functions to reduce duplication ---
-
-/**
- * Extract wikilinks from content and deduplicate by normalized title.
- */
-function extractUniqueWikilinks(content: string) {
-  const rawLinks = extractWikilinks(content);
-  const seenTitles = new SvelteSet<string>();
-  return rawLinks.filter((l) => {
-    const norm = l.title.toLowerCase().trim();
-    if (seenTitles.has(norm)) return false;
-    seenTitles.add(norm);
-    return true;
-  });
-}
-
-/**
- * Decrypt an encrypted note response from the API in-place.
- * Returns true on success, false on failure (sets error message).
- */
-function _decryptNoteFields(note: Note): boolean {
-  try {
-    if (!note.encrypted_content) {
-      throw new Error('Missing encrypted content');
-    }
-    const encryptedPayload: EncryptedPayload = {
-      ciphertext: note.encrypted_content,
-      metadata: JSON.parse(note.encryption_metadata || '{}'),
-    };
-    const { title, content } = encryption.decryptNote(
-      note.encrypted_title || null,
-      encryptedPayload
-    );
-    note.title = title || note.title;
-    note.content = content;
-    return true;
-  } catch (decryptError) {
-    console.error('[NOTES] Failed to decrypt note:', decryptError);
-    return false;
-  }
-}
-
-/**
- * Guard for offline writes: throws if paranoid mode is active while offline.
- * If checkEncryptionLock is true, also throws if encryption is locked while offline.
- */
-function assertOnlineForParanoidMode(checkEncryptionLock = false): void {
-  if (!navigator.onLine) {
-    if (encryption.getSecurityLevel() === 'paranoid') {
-      throw new Error('Offline-Schreiben im Paranoid-Modus nicht verfuegbar');
-    }
-    if (checkEncryptionLock && !encryption.isEncryptionUnlocked()) {
-      throw new Error('Verschluesselung gesperrt - bitte online gehen');
-    }
-  }
-}
+const taskEventQueue = createTaskEventQueue();
 
 // Current note state
 let currentNote = $state<Note | null>(null);
@@ -96,43 +46,13 @@ let autoSaveError = $state<string | null>(null);
 let notes = $state<Note[]>([]);
 let notesLoading = $state(false);
 
-// Task event queue (flushed on save)
-interface PendingTaskEvent {
-  noteId: string;
-  taskText: string;
-  taskIndex: number;
-  eventType: 'completed' | 'reopened';
-}
-
-let pendingTaskEvents: PendingTaskEvent[] = [];
-
-// Restore from sessionStorage on module load (SSR-safe)
-if (typeof window !== 'undefined') {
-  try {
-    const stored = sessionStorage.getItem('pendingTaskEvents');
-    if (stored) pendingTaskEvents = JSON.parse(stored);
-  } catch {
-    /* ignore */
-  }
-}
-
-function persistTaskEventQueue() {
-  if (typeof window === 'undefined') return;
-  try {
-    sessionStorage.setItem('pendingTaskEvents', JSON.stringify(pendingTaskEvents));
-  } catch {
-    /* ignore */
-  }
-}
-
 export function queueTaskEvent(
   noteId: string,
   taskText: string,
   taskIndex: number,
   eventType: 'completed' | 'reopened'
 ) {
-  pendingTaskEvents.push({ noteId, taskText, taskIndex, eventType });
-  persistTaskEventQueue();
+  taskEventQueue.add({ noteId, taskText, taskIndex, eventType });
 }
 
 // Export functions to access and modify state
@@ -600,10 +520,9 @@ export async function saveNote() {
     notes = notes.map((n) => (n.id === processedUpdate.id ? processedUpdate : n));
 
     // Flush queued task events for THIS note after successful save
-    const noteEvents = pendingTaskEvents.filter((e) => e.noteId === processedUpdate.id);
+    const noteEvents = taskEventQueue.getForNote(processedUpdate.id);
     if (noteEvents.length > 0) {
-      pendingTaskEvents = pendingTaskEvents.filter((e) => e.noteId !== processedUpdate.id);
-      persistTaskEventQueue();
+      taskEventQueue.clearForNote(processedUpdate.id);
       for (const evt of noteEvents) {
         const payload: api.TaskEventPayload = {
           event_type: evt.eventType,

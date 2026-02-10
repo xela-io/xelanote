@@ -56,6 +56,10 @@
     loadTwoFactorStatus,
     requestBackupCodesRegeneration,
   } from '$lib/routes/settings/two-factor';
+  import {
+    handlePasswordChange,
+    type PasswordFormState,
+  } from '$lib/routes/settings/password-change';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -82,7 +86,7 @@
     error: '',
   });
 
-  const passwordForm = $state({
+  const passwordForm = $state<PasswordFormState>({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -424,141 +428,24 @@
   }
 
   async function handlePasswordSubmit(e: Event) {
-    e.preventDefault();
-    passwordForm.error = '';
-
-    if (!passwordForm.currentPassword) {
-      passwordForm.error = $_('page.settings.account.current_password_required');
-      return;
-    }
-
-    if (!passwordForm.newPassword) {
-      passwordForm.error = $_('page.settings.account.new_password_required');
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 8) {
-      passwordForm.error = $_('page.settings.account.new_password_min_length');
-      return;
-    }
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      passwordForm.error = $_('page.settings.account.passwords_do_not_match');
-      return;
-    }
-
-    passwordForm.isChanging = true;
-    passwordForm.reWrappingProgress = '';
-
-    try {
-      // Check if user has encrypted notes
-      const isEncryptionEnabled = encryption.isEncryptionUnlocked();
-      let reWrappedNoteDEKs: Record<string, string> | undefined = undefined;
-      let reWrappedVersionDEKs: Record<string, string> | undefined = undefined;
-
-      if (isEncryptionEnabled) {
-        // User has encryption enabled - need to re-wrap DEKs
-        try {
-          passwordForm.reWrappingProgress = 'Fetching encrypted notes...';
-
-          // Fetch all encrypted notes and versions
-          const encryptedNotes = await api.getAllEncryptedNotes();
-          const encryptedVersions = await api.getAllEncryptedVersions();
-
-          if (encryptedNotes.length > 0 || encryptedVersions.length > 0) {
-            passwordForm.reWrappingProgress = `Re-wrapping ${encryptedNotes.length} notes and ${encryptedVersions.length} versions...`;
-
-            // Get user's encryption salt
-            const currentUser = auth.getCurrentUser();
-            if (!currentUser?.encryption_salt) {
-              throw new Error('Encryption salt not available');
-            }
-
-            // Convert salt from base64 to Uint8Array
-            const saltBytes = Uint8Array.from(atob(currentUser.encryption_salt), (c) =>
-              c.charCodeAt(0)
-            );
-
-            // Perform DEK re-wrapping
-            const result = await e2eEncryption.reWrapAllDEKs(
-              encryptedNotes,
-              encryptedVersions,
-              passwordForm.currentPassword,
-              passwordForm.newPassword,
-              saltBytes
-            );
-
-            // Convert Maps to Records for API
-            reWrappedNoteDEKs = Object.fromEntries(result.notes);
-            reWrappedVersionDEKs = Object.fromEntries(result.versions);
-
-            passwordForm.reWrappingProgress = 'Validating re-wrapped keys...';
-          }
-        } catch (err) {
-          console.error('DEK re-wrapping failed:', err);
-          passwordForm.error = `Failed to re-wrap encryption keys: ${err instanceof Error ? err.message : 'Unknown error'}`;
-          passwordForm.isChanging = false;
-          passwordForm.reWrappingProgress = '';
-          return;
-        }
-      }
-
-      // Update password via API (with re-wrapped DEKs if applicable)
-      passwordForm.reWrappingProgress = 'Updating password...';
-      const response = await api.changePassword(
-        passwordForm.currentPassword,
-        passwordForm.newPassword,
-        reWrappedNoteDEKs,
-        reWrappedVersionDEKs
-      );
-
-      // Success! Clear form
-      passwordForm.currentPassword = '';
-      passwordForm.newPassword = '';
-      passwordForm.confirmPassword = '';
-      passwordForm.reWrappingProgress = '';
-
-      // Show success message with recovery key warning
-      if (response.recovery_key_invalidated === 'true') {
-        dialog.alert({
-          title: 'Password Changed',
-          message:
-            'Your password has been changed successfully.\n\nIMPORTANT: Your recovery key has been invalidated. Please generate a new recovery key if you want to be able to recover your account.',
-        });
-      } else {
-        dialog.alert({
-          title: 'Password Changed',
-          message: 'Your password has been changed successfully.',
-        });
-      }
-
-      // If encryption was enabled, update KEK with new password
-      const encryptionSalt = auth.getCurrentUser()?.encryption_salt;
-      if (isEncryptionEnabled && encryptionSalt) {
-        const saltBytes = Uint8Array.from(atob(encryptionSalt), (c) => c.charCodeAt(0));
-        await e2eEncryption.setupKEK(passwordForm.newPassword, saltBytes);
-      }
-    } catch (err) {
-      console.error('Password change failed:', err);
-      let errorMsg = 'Failed to change password';
-
-      if (err instanceof Error) {
-        if (err.message.includes('DEK re-wrapping required')) {
-          errorMsg = 'You have encrypted notes. Please try again.';
-        } else if (err.message.includes('incorrect password')) {
-          errorMsg = 'Incorrect current password';
-        } else if (err.message.includes('Unauthorized')) {
-          errorMsg = 'Incorrect current password';
-        } else {
-          errorMsg = err.message;
-        }
-      }
-
-      passwordForm.error = errorMsg;
-    } finally {
-      passwordForm.isChanging = false;
-      passwordForm.reWrappingProgress = '';
-    }
+    await handlePasswordChange(e, {
+      form: passwordForm,
+      setForm: updatePasswordForm,
+      validationMessages: {
+        currentPasswordRequired: $_('page.settings.account.current_password_required'),
+        newPasswordRequired: $_('page.settings.account.new_password_required'),
+        newPasswordMinLength: $_('page.settings.account.new_password_min_length'),
+        passwordsDoNotMatch: $_('page.settings.account.passwords_do_not_match'),
+      },
+      getEncryptionEnabled: () => encryption.isEncryptionUnlocked(),
+      getAllEncryptedNotes: () => api.getAllEncryptedNotes(),
+      getAllEncryptedVersions: () => api.getAllEncryptedVersions(),
+      getCurrentUser: () => auth.getCurrentUser(),
+      reWrapAllDEKs: (...args) => e2eEncryption.reWrapAllDEKs(...args),
+      changePassword: (...args) => api.changePassword(...args),
+      setupKEK: (...args) => e2eEncryption.setupKEK(...args),
+      alert: (options) => dialog.alert(options),
+    });
   }
 
   async function loadSecurityPreferences() {
@@ -2273,3 +2160,6 @@
     {/if}
   {/snippet}
 </BaseDialog>
+  const updatePasswordForm = (next: Partial<PasswordFormState>) => {
+    Object.assign(passwordForm, next);
+  };

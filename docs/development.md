@@ -243,7 +243,8 @@ frontend/
 │   │   ├── editor/          # Editor Utilities
 │   │   │   ├── codemirror.ts
 │   │   │   └── markdown.ts
-│   │   └── api.ts           # API Client
+│   │   ├── api/             # API Module (Client + Domains)
+│   │   └── api.ts           # API Facade (Re-Exports)
 │   ├── routes/              # SvelteKit Routes
 │   │   ├── +page.svelte     # Main Page
 │   │   ├── +layout.svelte   # Layout
@@ -267,6 +268,9 @@ frontend/
 - `+page.svelte`: Page Component
 - `+layout.svelte`: Layout Wrapper
 - `[id]/`: Dynamic Route Parameter
+
+**API Usage**:
+- Frontend Call-Sites nutzen `import * as api from '$lib/api'` (Facade).
 
 ---
 
@@ -1256,7 +1260,7 @@ Siehe [API Dokumentation](api.md) für Details:
 
 **Frontend**:
 - `frontend/src/lib/components/VersionHistoryDialog.svelte` - UI Component
-- `frontend/src/lib/api.ts` - API Client Functions
+- `frontend/src/lib/api/versions.ts` - API Client Functions (Versionen)
 
 ### Testing Version History
 

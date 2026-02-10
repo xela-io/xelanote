@@ -202,15 +202,51 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 ## Phase 3 Fortschritt (Frontend-Modularisierung)
 
 ### Status
-- **Start vorbereitet:** Modulgrenzen fuer `frontend/src/lib/api.ts` wurden festgelegt (Option A bestaetigt).
-- **Umsetzung begonnen:** Neues Typen-Modul geplant/angelegt (`frontend/src/lib/api/types.ts`).
-- **Abgebrochen vor Abschluss:** Umbau von `frontend/src/lib/api.ts` auf Re-Exports/Type-Auslagerung konnte noch nicht sauber applied werden.
+- **Abgeschlossen:** `frontend/src/lib/api.ts` ist jetzt reine Facade mit Re-Exports.
+- **Neue Module:** `api/client.ts`, `api/types.ts`, `api/notes.ts`, `api/search.ts`, `api/folders.ts`, `api/tags.ts`,
+  `api/auth.ts`, `api/uploads.ts`, `api/imports.ts`, `api/trash.ts`, `api/versions.ts`, `api/preferences.ts`,
+  `api/admin.ts`, `api/ai.ts`, `api/sharing.ts`, `api/recipes.ts`, `api/journal.ts`, `api/features.ts`,
+  `api/encryption.ts`, `api/config.ts`, `api/due-dates.ts`, `api/graph.ts`, `api/templates.ts`, `api/snippets.ts`.
+- **Typecheck:** Lauf angestossen; bestehende FE-Typfehler bleiben (nicht durch Modularisierung verursacht).
+
+### Modulstruktur (Snapshot)
+```
+frontend/src/lib/api/
+  admin.ts
+  ai.ts
+  auth.ts
+  client.ts
+  config.ts
+  due-dates.ts
+  encryption.ts
+  features.ts
+  folders.ts
+  graph.ts
+  imports.ts
+  journal.ts
+  notes.ts
+  preferences.ts
+  recipes.ts
+  search.ts
+  sharing.ts
+  snippets.ts
+  tags.ts
+  templates.ts
+  trash.ts
+  types.ts
+  uploads.ts
+  versions.ts
+```
+
+### How-To: Neues API-Modul hinzufuegen
+1. Neue Datei unter `frontend/src/lib/api/` anlegen (z.B. `foo.ts`) und Funktionen mit `request()` aus `api/client.ts` nutzen.
+2. Falls neue Response-Types benoetigt werden: in `api/types.ts` definieren.
+3. In `frontend/src/lib/api.ts` per `export * from './api/foo';` re-exporten.
+4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. `frontend/src/lib/api.ts` auf `export * from './api/types'` umstellen und lokale Interface-Definitionen entfernen.
-2. API-Funktionen Schritt fuer Schritt in Moduldateien aufteilen (auth, notes, folders, etc.) laut Option A.
-3. Re-Exports in `api.ts` als Facade beibehalten (keine Call-Site-Aenderung).
-4. Tests/Typecheck laufen lassen.
+1. FE-Typecheck-Fehler bereinigen (siehe Typecheck-Log).
+2. Lint/Format fuer neue Module im Frontend wurde ausgefuehrt (Prettier + ESLint --fix).
 
 ## Fortschritt
 

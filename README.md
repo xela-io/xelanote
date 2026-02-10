@@ -138,6 +138,14 @@ Full API documentation: `docs/api.md`.
 | `XELANOTE_ENV` | `development` | Set to `production` for secure cookies and hardened defaults |
 | `XELANOTE_DB_KEY` | — | SQLCipher encryption key for database-at-rest encryption |
 | `XELANOTE_DB_KEY_FILE` | — | Path to file containing the SQLCipher key |
+
+---
+
+## Frontend API Structure
+
+Frontend API calls live in `frontend/src/lib/api/`. The entry point is `frontend/src/lib/api.ts`,
+which re-exports the module APIs. Use `import * as api from '$lib/api'` at call sites.
+Modul-Snapshot: siehe `REFACTORING_REPORT.md`.
 | `TURNSTILE_SECRET_KEY` | — | Cloudflare Turnstile CAPTCHA secret |
 | `TURNSTILE_SITE_KEY` | — | Cloudflare Turnstile CAPTCHA site key |
 | `PPROF_ENABLED` | `false` | Enable Go pprof profiling endpoint |
@@ -169,4 +177,3 @@ Contributions are welcome. Please see `CONTRIBUTING.md` for workflow, style, and
 ## License
 
 This project is licensed under the MIT License. See `LICENSE` for details.
-

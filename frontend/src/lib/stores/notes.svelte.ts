@@ -34,7 +34,7 @@ function extractUniqueWikilinks(content: string) {
  * Decrypt an encrypted note response from the API in-place.
  * Returns true on success, false on failure (sets error message).
  */
-function decryptNoteFields(note: Note): boolean {
+function _decryptNoteFields(note: Note): boolean {
   try {
     const encryptedPayload: EncryptedPayload = {
       ciphertext: note.encrypted_content,

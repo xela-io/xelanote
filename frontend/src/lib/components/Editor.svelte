@@ -1,13 +1,12 @@
 <script lang="ts">
   import type { EditorView } from '@codemirror/view';
-  import { Link } from 'lucide-svelte';
   import { tick } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import type { AIAction, Tag } from '$lib/api';
+  import type { AIAction } from '$lib/api';
   import type { AITransformState } from '$lib/editor/ai-actions';
   import { ApiError } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
@@ -74,15 +73,12 @@
   import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
   import ColorPickerPopover from './ColorPickerPopover.svelte';
+  import EditorPanels from './editor/EditorPanels.svelte';
   import EditorToolbar from './editor/EditorToolbar.svelte';
   import EditorMoreMenu from './EditorMoreMenu.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
-  import LinkSuggestionsPanel from './LinkSuggestionsPanel.svelte';
   import ShareDialog from './ShareDialog.svelte';
-  import SummaryPanel from './SummaryPanel.svelte';
   import TableOfContents from './TableOfContents.svelte';
-  import TagEditor from './TagEditor.svelte';
-  import TagSuggestionsPanel from './TagSuggestionsPanel.svelte';
 
   interface Props {
     noteId: string;
@@ -92,8 +88,6 @@
 
   let editorView = $state<EditorView | undefined>(undefined);
   let renderedContent = $state('');
-  let currentTags = $state<Tag[]>([]);
-  let tagEditorRef: TagEditor | null = $state(null);
   let lastTaskClickTime = 0; // Timestamp-based debounce for task checkbox clicks
   let showMoveDialog = $state(false);
   let showVersionHistory = $state(false);
@@ -789,6 +783,30 @@
     editorView.focus();
   }
 
+  function handleInsertLink(term: string, targetTitle: string) {
+    if (editorView) {
+      // Editor mode: use CodeMirror
+      insertWikiLink(editorView, term, targetTitle);
+      notes.scheduleAutoSave();
+    } else {
+      // Preview mode: modify content directly
+      const content = notes.getCurrentNote()?.content || '';
+      const { newContent, found } = insertWikiLinkInContent(content, term, targetTitle);
+      if (found) {
+        notes.updateCurrentNoteContent(newContent);
+        notes.scheduleAutoSave();
+      }
+    }
+  }
+
+  function handleSummaryUpdated(summary: string) {
+    const currentNote = notes.getCurrentNote();
+    if (currentNote) {
+      currentNote.summary = summary;
+      currentNote.summary_generated_at = new Date().toISOString();
+    }
+  }
+
   // Upload Button Handler
   let fileInput: HTMLInputElement;
 
@@ -1125,106 +1143,15 @@
         {/if}
       </div>
 
-      <!-- Backlinks panel -->
-      {#if notes.getBacklinks().length > 0}
-        <div class="border-t border-border p-4">
-          <h3 class="text-sm font-medium flex items-center gap-2 mb-2">
-            <Link size={14} />
-            {$_('component.editor.backlinks_title', {
-              values: { count: notes.getBacklinks().length },
-            })}
-          </h3>
-          <div class="flex flex-wrap gap-2">
-            {#each notes.getBacklinks() as backlink (backlink.id)}
-              <a
-                href="/note/{backlink.id}"
-                class="text-sm px-2 py-1 bg-accent rounded-md hover:bg-accent/80"
-              >
-                {backlink.title}
-              </a>
-            {/each}
-          </div>
-        </div>
-      {/if}
-
-      <!-- Table of Contents is now rendered inside the preview container -->
-
-      <!-- AI Summary Panel -->
-      {#if notes.getCurrentNote()}
-        <div class="border-t border-border p-4">
-          <SummaryPanel
-            note={notes.getCurrentNote()!}
-            decryptedContent={notes.getCurrentNote()!.content_encrypted
-              ? notes.getCurrentNote()!.content
-              : undefined}
-            onSummaryUpdated={(summary) => {
-              // Update the note in the store with the new summary
-              const currentNote = notes.getCurrentNote();
-              if (currentNote) {
-                currentNote.summary = summary;
-                currentNote.summary_generated_at = new Date().toISOString();
-              }
-            }}
-          />
-        </div>
-      {/if}
-
-      <!-- Tag Suggestions Panel -->
-      {#if notes.getCurrentNote() && FEATURE_FLAGS.tagSuggestions}
-        <div class="border-t border-border p-4">
-          <TagSuggestionsPanel
-            noteId={notes.getCurrentNote()!.id}
-            isEncrypted={notes.getCurrentNote()!.content_encrypted || false}
-            plaintextContent={notes.getCurrentNote()!.content_encrypted
-              ? notes.getCurrentNote()!.content
-              : undefined}
-            existingTagNames={currentTags.map((t) => t.name)}
-            onAddTag={async (tagName) => {
-              if (tagEditorRef) {
-                tagEditorRef.setInputValue(tagName);
-                tagEditorRef.focusInput();
-              }
-            }}
-          />
-        </div>
-      {/if}
-
-      <!-- Link Suggestions Panel -->
-      {#if notes.getCurrentNote() && FEATURE_FLAGS.linkSuggestions}
-        <div class="border-t border-border p-4">
-          <LinkSuggestionsPanel
-            noteId={notes.getCurrentNote()!.id}
-            isEncrypted={notes.getCurrentNote()!.content_encrypted || false}
-            plaintextContent={notes.getCurrentNote()!.content}
-            onInsertLink={(term, targetTitle) => {
-              if (editorView) {
-                // Editor mode: use CodeMirror
-                insertWikiLink(editorView, term, targetTitle);
-                notes.scheduleAutoSave();
-              } else {
-                // Preview mode: modify content directly
-                const content = notes.getCurrentNote()?.content || '';
-                const { newContent, found } = insertWikiLinkInContent(content, term, targetTitle);
-                if (found) {
-                  notes.updateCurrentNoteContent(newContent);
-                  notes.scheduleAutoSave();
-                }
-              }
-            }}
-          />
-        </div>
-      {/if}
-
-      <!-- Tag editor panel -->
-      <div class="border-t border-border p-4">
-        <TagEditor
-          bind:this={tagEditorRef}
-          noteId={notes.getCurrentNote()!.id}
-          onTagsChanged={(tags) => {
-            currentTags = tags;
-          }}
-        />
-      </div>
+      <EditorPanels
+        note={notes.getCurrentNote()!}
+        backlinks={notes.getBacklinks()}
+        showTagSuggestions={FEATURE_FLAGS.tagSuggestions}
+        showLinkSuggestions={FEATURE_FLAGS.linkSuggestions}
+        {editorView}
+        onInsertLink={handleInsertLink}
+        onSummaryUpdated={handleSummaryUpdated}
+      />
     {:else}
       <div class="flex-1 flex items-center justify-center text-muted-foreground h-full">
         {$_('component.editor.empty_state')}

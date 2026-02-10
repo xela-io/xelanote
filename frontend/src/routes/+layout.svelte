@@ -26,6 +26,7 @@
   import { initSodium } from '$lib/crypto/sodium';
   import { initOfflineDatabase } from '$lib/offline/offline-queue';
   import * as syncManager from '$lib/offline/sync-manager.svelte';
+  import { initializeApp } from '$lib/routes/layout/initialize';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
@@ -115,168 +116,97 @@
     let unsubscribeTokenUpdate: (() => void) | null = null;
 
     const initializeAsync = async () => {
-      // Initialize IndexedDB for KEK persistence
-      try {
-        await initKEKDatabase();
-      } catch (_err) {
-        // Already handled by initKEKDatabase() → forced paranoid mode
-        console.warn('IndexedDB unavailable, using paranoid mode');
-      }
-
-      // Initialize IndexedDB for offline queue
-      try {
-        await initOfflineDatabase();
-        await syncManager.initSyncManager();
-        // Wire up api.ts callback for pending count updates
-        setApiOfflineCallback(syncManager.updatePendingCount);
-        // Wire up temp-ID URL rewriting
-        syncManager.setOnTempIdResolved((tempId, realId) => {
-          if (window.location.pathname === `/note/${tempId}`) {
-            goto(`/note/${realId}`, { replaceState: true });
+      const result = await initializeApp({
+        initKEKDatabase,
+        initOfflineDatabase,
+        initSodium,
+        setApiOfflineCallback,
+        syncManager: {
+          initSyncManager: syncManager.initSyncManager,
+          updatePendingCount: syncManager.updatePendingCount,
+          setOnTempIdResolved: syncManager.setOnTempIdResolved,
+          getPendingCount: syncManager.getPendingCount,
+          startSync: syncManager.startSync,
+        },
+        auth: {
+          initAuth: auth.initAuth,
+          addTokenUpdateListener: auth.addTokenUpdateListener,
+          getTokenExpiry: auth.getTokenExpiry,
+          getTokenIssuedAt: auth.getTokenIssuedAt,
+          getCurrentUser: auth.getCurrentUser,
+          isAuthenticated: auth.isAuthenticated,
+        },
+        tokenRefresh: {
+          init: tokenRefresh.init,
+          stop: tokenRefresh.stop,
+        },
+        encryption: {
+          isEncryptionUnlocked: encryption.isEncryptionUnlocked,
+          setSecurityLevel: encryption.setSecurityLevel,
+          tryRestoreKEK: encryption.tryRestoreKEK,
+        },
+        autoLock: {
+          initAutoLock: autoLock.initAutoLock,
+        },
+        api: {
+          getPreferences: api.getPreferences,
+          getCurrentUser: api.getCurrentUser,
+          getConfig: api.getConfig,
+        },
+        clearPersistedKEK,
+        notes: {
+          loadNotes: notes.loadNotes,
+        },
+        settings: {
+          loadPreferences: settings.loadPreferences,
+          loadVirtualTreePreference: settings.loadVirtualTreePreference,
+        },
+        websocket: {
+          connect: websocket.connect,
+        },
+        features: {
+          detectGraphFeature: features.detectGraphFeature,
+        },
+        errorReporter: {
+          initErrorHandler: errorReporter.initErrorHandler,
+          setServiceAvailable: errorReporter.setServiceAvailable,
+        },
+        history: {
+          loadHistory: history.loadHistory,
+        },
+        ui: {
+          initTheme: ui.initTheme,
+          initPreviewTheme: ui.initPreviewTheme,
+          initSidebarWidth: ui.initSidebarWidth,
+          initSplitPosition: ui.initSplitPosition,
+        },
+        autosave: {
+          initAutoSaveSettings: autosave.initAutoSaveSettings,
+        },
+        goto,
+        publicRoutes,
+        setAuthInitialized: (value) => {
+          authInitialized = value;
+        },
+        setShowUnlockModal: (value) => {
+          showUnlockModal = value;
+        },
+        registerActivityListeners: () => {
+          if (!activityListenersRegistered) {
+            registerActivityListeners();
           }
-        });
-      } catch (err) {
-        console.warn('Offline queue initialization failed:', err);
-      }
-
-      // Initialize libsodium WASM (required for crypto operations)
-      if (browser) {
-        await initSodium();
-      }
-
-      // Initialize auth from sessionStorage (must run in onMount to avoid hydration mismatch)
-      await auth.initAuth();
-      authInitialized = true;
-
-      // Register listener for token updates (for proactive token refresh + activity listeners)
-      unsubscribeTokenUpdate = auth.addTokenUpdateListener((exp, iat) => {
-        // exp=0 signals logout -> stop token refresh + unregister activity listeners
-        if (exp === 0) {
-          console.log('[Layout] Token cleared (logout), stopping token-refresh');
-          tokenRefresh.stop();
-          unregisterActivityListeners();
-          return;
-        }
-
-        // Login or token refresh -> ensure activity listeners are registered
-        if (!activityListenersRegistered) {
-          registerActivityListeners();
-        }
-
-        console.log('[Layout] Token updated, re-initializing token-refresh');
-        tokenRefresh.init(exp, iat > 0 ? iat : undefined);
+        },
+        unregisterActivityListeners: () => {
+          if (activityListenersRegistered) {
+            unregisterActivityListeners();
+          }
+        },
       });
-
-      // Init token refresh immediately if tokens already available
-      const tokenExpiry = auth.getTokenExpiry();
-      const tokenIssued = auth.getTokenIssuedAt();
-
-      if (tokenExpiry > 0) {
-        tokenRefresh.init(tokenExpiry, tokenIssued > 0 ? tokenIssued : undefined);
-      } else {
-        console.log('[Layout] Tokens not yet available, waiting for update');
-      }
-
-      // ✅ Try to restore KEK from IndexedDB (respecting security level)
-      const user = auth.getCurrentUser();
-      if (user && !encryption.isEncryptionUnlocked()) {
-        // SECURITY FIX: Check security level BEFORE restoring KEK
-        // In paranoid mode, KEK must never be auto-restored
-        let securityLevel = 'balanced'; // Default fallback
-        try {
-          const prefs = await api.getPreferences();
-          securityLevel = prefs.security_level || 'balanced';
-          encryption.setSecurityLevel(securityLevel as 'paranoid' | 'balanced' | 'convenient');
-        } catch (_err) {
-          console.warn('Could not load security preferences, using default');
-        }
-
-        if (securityLevel === 'paranoid') {
-          // Paranoid mode: Never restore KEK, clear any stale data
-          await clearPersistedKEK(user.id);
-
-          // Show unlock modal immediately if user has encryption enabled
-          const currentUser = await api.getCurrentUser();
-          if (currentUser.encryption_salt) {
-            showUnlockModal = true;
-          }
-        } else {
-          // Balanced/Convenient: Try to restore KEK
-          const restored = await encryption.tryRestoreKEK(user.id);
-          if (restored) {
-            // Initialize auto-lock timer after KEK restore
-            try {
-              const prefs = await api.getPreferences();
-              const autoLockTimeout = prefs.auto_lock_timeout || 15;
-              autoLock.initAutoLock(autoLockTimeout);
-            } catch {
-              autoLock.initAutoLock(15); // Default: 15 minutes
-            }
-          }
-        }
-      }
-
-      // Check if we need to redirect after auth initialization
-      const currentPath = window.location.pathname;
-      const isPublicRoute = publicRoutes.some((route) => currentPath.startsWith(route));
-
-      if (auth.isAuthenticated() && isPublicRoute) {
-        // User is logged in but on login/register page → redirect to home
-        goto('/');
-      } else if (!auth.isAuthenticated() && !isPublicRoute) {
-        // User is not logged in and on protected page → redirect to login
-        goto('/login');
-      }
-
-      // Initialize theme
-      ui.initTheme();
-      ui.initPreviewTheme();
-      ui.initSidebarWidth();
-      ui.initSplitPosition();
-
-      // Initialize auto-save settings
-      autosave.initAutoSaveSettings();
-
-      // Load command history from localStorage
-      history.loadHistory();
-
-      // Load virtual tree preference from localStorage
-      settings.loadVirtualTreePreference();
-
-      // Only load notes, preferences, and connect WebSocket if authenticated
-      if (auth.isAuthenticated()) {
-        notes.loadNotes();
-        settings.loadPreferences();
-        websocket.connect();
-
-        // Start sync if pending operations exist (e.g. after app restart while offline)
-        if (navigator.onLine && syncManager.getPendingCount() > 0) {
-          console.log('[Layout] Pending offline ops found, starting sync');
-          syncManager.startSync().catch((err) => {
-            console.error('[Layout] Initial sync failed:', err);
-          });
-        }
-      }
-
-      // Initialize error reporting (before config load to catch early errors)
-      cleanupErrorHandler = errorReporter.initErrorHandler();
-      try {
-        const config = await api.getConfig();
-        errorReporter.setServiceAvailable(config.error_reporting_enabled ?? false);
-      } catch {
-        // Config error — feature stays disabled
-      }
-
-      // Detect optional features
-      features.detectGraphFeature();
+      unsubscribeTokenUpdate = result.unsubscribeTokenUpdate;
+      cleanupErrorHandler = result.cleanupErrorHandler;
 
       // Global keyboard shortcuts (only when authenticated)
       document.addEventListener('keydown', handleKeydown);
-
-      // Global activity listeners for auto-lock timer
-      if (auth.isAuthenticated()) {
-        registerActivityListeners();
-      }
     };
 
     function handleResize() {

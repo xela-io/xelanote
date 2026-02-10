@@ -405,9 +405,10 @@ frontend/src/lib/api/
 
 | Datei | Zeilen | Verantwortlichkeiten |
 |-------|--------|---------------------|
-| `backend/internal/api/notes.go` | 1843 | CRUD, Encryption, Versions, WebSocket, ETag, Links |
+| `backend/internal/api/notes.go` | 1843 | CRUD, Encryption, Versions, WebSocket, Links |
 | `backend/internal/api/notes_ai.go` | neu | LLM/Summary/AI-Endpoints |
 | `backend/internal/api/notes_trash.go` | neu | Trash-Endpoints |
+| `backend/internal/api/notes_helpers.go` | neu | Validation, ETag, request types, helper utils |
 | `backend/internal/service/notes.go` | 1512 | Business-Logik fuer alle Note-Operationen |
 | `backend/internal/db/notes.go` | 1529 | Alle Note-DB-Queries |
 | `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |

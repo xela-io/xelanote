@@ -1,0 +1,51 @@
+[
+  {
+    "name": "german_umlauts",
+    "input": "[[Übersicht]]",
+    "expected": [
+      {"target_title": "Übersicht", "span_start": 0, "span_end": 14}
+    ]
+  },
+  {
+    "name": "emoji",
+    "input": "[[📝 Notes]]",
+    "expected": [
+      {"target_title": "📝 Notes", "span_start": 0, "span_end": 14}
+    ]
+  },
+  {
+    "name": "chinese",
+    "input": "[[笔记]]",
+    "expected": [
+      {"target_title": "笔记", "span_start": 0, "span_end": 10}
+    ]
+  },
+  {
+    "name": "japanese_with_alias",
+    "input": "[[日本語|Japanese]]",
+    "expected": [
+      {"target_title": "日本語", "alias": "Japanese", "span_start": 0, "span_end": 22}
+    ]
+  },
+  {
+    "name": "mixed_scripts",
+    "input": "[[Café Übung 日本]]",
+    "expected": [
+      {"target_title": "Café Übung 日本", "span_start": 0, "span_end": 23}
+    ]
+  },
+  {
+    "name": "cyrillic",
+    "input": "[[Заметки]]",
+    "expected": [
+      {"target_title": "Заметки", "span_start": 0, "span_end": 18}
+    ]
+  },
+  {
+    "name": "arabic",
+    "input": "[[ملاحظات]]",
+    "expected": [
+      {"target_title": "ملاحظات", "span_start": 0, "span_end": 18}
+    ]
+  }
+]

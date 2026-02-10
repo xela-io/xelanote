@@ -1,0 +1,85 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run lint:md
+      - run: npm run typecheck
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          cache: true
+      - name: Install sqlite3 dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - name: gofmt check
+        working-directory: backend
+        run: |
+          files="$(find . -name '*.go' -not -path './vendor/*')"
+          if [ -n "$files" ]; then
+            test -z "$(gofmt -l $files)" || (echo "gofmt needed"; exit 1)
+          fi
+      - name: go vet
+        working-directory: backend
+        run: CGO_ENABLED=1 go vet -tags "fts5 sqlite_crypt" ./...
+      - name: typecheck (compile only)
+        working-directory: backend
+        run: CGO_ENABLED=1 go test -run TestNonexistent -tags "fts5 sqlite_crypt" ./...
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config .lychee.toml "README.md" "docs/**/*.md" "CHANGELOG.md"
+          fail: true
+
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check CHANGELOG was updated
+        run: |
+          # Skip check for docs-only or test-only changes
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          ONLY_DOCS=$(echo "$CHANGED" | grep -cvE '\.(md|txt)$|^docs/' || true)
+          ONLY_TESTS=$(echo "$CHANGED" | grep -cvE '_test\.(go|ts|js)$|\.spec\.(ts|js)$|^frontend/tests/' || true)
+
+          if [ "$ONLY_DOCS" -eq 0 ] || [ "$ONLY_TESTS" -eq 0 ]; then
+            echo "Docs-only or test-only change, skipping CHANGELOG check"
+            exit 0
+          fi
+
+          if echo "$CHANGED" | grep -q '^CHANGELOG.md$'; then
+            echo "CHANGELOG.md was updated"
+          else
+            echo "::warning::CHANGELOG.md was not updated. Please add an entry under [Unreleased] if this change is user-facing."
+          fi

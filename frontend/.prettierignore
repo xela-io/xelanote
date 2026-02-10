@@ -1,0 +1,9 @@
+node_modules
+build
+dist
+dist-electron
+.svelte-kit
+.vite
+coverage
+static/generated
+src-tauri/target

@@ -1,0 +1,50 @@
+# lychee link checker configuration
+# Docs: https://lychee.cli.rs/configuration/
+
+# Exclude patterns
+exclude = [
+  # Localhost / internal URLs
+  "http://localhost",
+  "http://127\\.0\\.0\\.1",
+  "https?://10\\.",
+  "https?://192\\.168\\.",
+
+  # Private infrastructure
+  "https://notes\\.over-cloud\\.de",
+  "https://git\\.over-cloud\\.de",
+
+  # Placeholder URLs
+  "https://SERVER-URL",
+  "https://your-server",
+
+  # Mail addresses (mailto:)
+  "^mailto:",
+]
+
+# Accept these status codes as OK
+accept = [200, 204, 301, 302, 403, 429]
+
+# Timeout per request (seconds)
+timeout = 15
+
+# Max retries
+max_retries = 2
+
+# Max concurrent requests (be nice to servers)
+max_concurrency = 4
+
+# Skip these file patterns
+exclude_path = [
+  "node_modules",
+  "archive",
+  ".cache",
+  "frontend/build",
+  "frontend/.svelte-kit",
+  "SALT_BUG_FIX.md",
+  "ENCRYPTION_DEBUG_LOG.md",
+  "LIBSODIUM_ROLLBACK.md",
+]
+
+# Cache results for 1 day
+cache = true
+max_cache_age = "1d"

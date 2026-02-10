@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <rect width="1600" height="1000" fill="#0b0f17" />
+  <circle cx="450" cy="500" r="120" fill="#1f2937" stroke="#60a5fa" stroke-width="4" />
+  <circle cx="900" cy="300" r="90" fill="#1f2937" stroke="#f59e0b" stroke-width="4" />
+  <circle cx="1050" cy="700" r="70" fill="#1f2937" stroke="#34d399" stroke-width="4" />
+  <line x1="560" y1="460" x2="820" y2="350" stroke="#64748b" stroke-width="3" />
+  <line x1="900" y1="390" x2="1010" y2="640" stroke="#64748b" stroke-width="3" />
+  <line x1="530" y1="560" x2="990" y2="680" stroke="#64748b" stroke-width="3" />
+  <text x="120" y="140" font-family="Arial, sans-serif" font-size="28" fill="#e2e8f0">Graph screenshot placeholder</text>
+  <text x="120" y="180" font-family="Arial, sans-serif" font-size="18" fill="#94a3b8">Replace with a real graph view capture</text>
+</svg>

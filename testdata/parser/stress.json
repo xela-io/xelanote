@@ -1,0 +1,25 @@
+[
+  {
+    "name": "many_links_in_paragraph",
+    "input": "This paragraph mentions [[A]], [[B]], [[C]], [[D]], [[E]], [[F]], [[G]], [[H]], [[I]], and [[J]] in sequence.",
+    "expected": [
+      {"target_title": "A", "span_start": 24, "span_end": 29},
+      {"target_title": "B", "span_start": 31, "span_end": 36},
+      {"target_title": "C", "span_start": 38, "span_end": 43},
+      {"target_title": "D", "span_start": 45, "span_end": 50},
+      {"target_title": "E", "span_start": 52, "span_end": 57},
+      {"target_title": "F", "span_start": 59, "span_end": 64},
+      {"target_title": "G", "span_start": 66, "span_end": 71},
+      {"target_title": "H", "span_start": 73, "span_end": 78},
+      {"target_title": "I", "span_start": 80, "span_end": 85},
+      {"target_title": "J", "span_start": 91, "span_end": 96}
+    ]
+  },
+  {
+    "name": "long_title",
+    "input": "[[This Is A Very Long Note Title That Contains Many Words And Should Still Be Parsed Correctly]]",
+    "expected": [
+      {"target_title": "This Is A Very Long Note Title That Contains Many Words And Should Still Be Parsed Correctly", "span_start": 0, "span_end": 96}
+    ]
+  }
+]

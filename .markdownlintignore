@@ -1,0 +1,11 @@
+node_modules/
+archive/
+.cache/
+frontend/node_modules/
+frontend/build/
+frontend/.svelte-kit/
+SALT_BUG_FIX.md
+ENCRYPTION_DEBUG_LOG.md
+LIBSODIUM_ROLLBACK.md
+REPORT.md
+TODO.md

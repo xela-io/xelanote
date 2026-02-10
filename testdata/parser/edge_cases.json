@@ -1,0 +1,48 @@
+[
+  {
+    "name": "unclosed_link",
+    "input": "[[Unclosed",
+    "expected": []
+  },
+  {
+    "name": "newline_in_link",
+    "input": "[[Multi\nLine]]",
+    "expected": []
+  },
+  {
+    "name": "single_bracket",
+    "input": "[Not a link]",
+    "expected": []
+  },
+  {
+    "name": "empty_input",
+    "input": "",
+    "expected": []
+  },
+  {
+    "name": "pipe_no_alias",
+    "input": "[[Note|]]",
+    "expected": [
+      {"target_title": "Note", "span_start": 0, "span_end": 9}
+    ]
+  },
+  {
+    "name": "pipe_no_title",
+    "input": "[[|Alias]]",
+    "expected": []
+  },
+  {
+    "name": "multiple_pipes",
+    "input": "[[A|B|C]]",
+    "expected": [
+      {"target_title": "A", "alias": "B|C", "span_start": 0, "span_end": 9}
+    ]
+  },
+  {
+    "name": "brackets_inside",
+    "input": "[[Note [with] brackets]]",
+    "expected": [
+      {"target_title": "Note [with] brackets", "span_start": 0, "span_end": 24}
+    ]
+  }
+]

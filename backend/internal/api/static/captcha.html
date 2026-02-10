@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPTCHA</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 65px;
+        }
+    </style>
+</head>
+<body>
+    <div id="captcha-widget"></div>
+    <script>
+        // Parse URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const sitekey = params.get('sitekey');
+        const theme = params.get('theme') || 'auto';
+
+        if (!sitekey) {
+            console.error('CAPTCHA: sitekey parameter required');
+        }
+
+        // Listen for reset commands from parent
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'captcha-reset' && window.turnstile && window._widgetId) {
+                window.turnstile.reset(window._widgetId);
+            }
+        });
+
+        // Load Turnstile SDK
+        var script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady';
+        script.async = true;
+        document.head.appendChild(script);
+
+        // Render widget when SDK is ready
+        window.onTurnstileReady = function() {
+            if (!sitekey) return;
+            window._widgetId = window.turnstile.render('#captcha-widget', {
+                sitekey: sitekey,
+                theme: theme,
+                callback: function(token) {
+                    window.parent.postMessage({ type: 'captcha-token', token: token }, '*');
+                },
+                'expired-callback': function() {
+                    window.parent.postMessage({ type: 'captcha-expired' }, '*');
+                },
+                'error-callback': function() {
+                    window.parent.postMessage({ type: 'captcha-error' }, '*');
+                }
+            });
+        };
+    </script>
+</body>
+</html>

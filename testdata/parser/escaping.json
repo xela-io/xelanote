@@ -1,0 +1,19 @@
+[
+  {
+    "name": "escaped_bracket",
+    "input": "\\[[Not a link]]",
+    "expected": []
+  },
+  {
+    "name": "escaped_then_real",
+    "input": "\\[[Escaped]] [[Real]]",
+    "expected": [
+      {"target_title": "Real", "span_start": 13, "span_end": 21}
+    ]
+  },
+  {
+    "name": "double_backslash",
+    "input": "\\\\[[Link]]",
+    "expected": []
+  }
+]

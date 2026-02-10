@@ -1,0 +1,223 @@
+/**
+ * Electron Main Process
+ *
+ * Entry point for the Electron desktop app.
+ * Handles window creation, IPC, and security.
+ */
+
+import { app, BrowserWindow, session, protocol, net } from 'electron';
+import { join } from 'path';
+import { pathToFileURL } from 'url';
+import { registerIpcHandlers } from './modules/ipc-handlers';
+import { createMainWindow } from './windows/main-window';
+
+// Linux compatibility - handle GPU/Wayland issues and shared memory problems
+// Electron 33+ has known issues with GPU process on some systems
+if (process.platform === 'linux') {
+  // Completely disable GPU acceleration
+  app.disableHardwareAcceleration();
+
+  // Disable all sandboxing to avoid /tmp shared memory issues
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-setuid-sandbox');
+
+  // Disable GPU-related features
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-gpu-compositing');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+
+  // Use home directory instead of /tmp for shared memory
+  const userDataPath = app.getPath('userData');
+  app.commandLine.appendSwitch('disk-cache-dir', `${userDataPath}/cache`);
+
+  // Disable dev shm usage
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
+}
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (process.platform === 'win32') {
+  app.setAppUserModelId(app.getName());
+}
+
+// Prevent multiple instances
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  process.exit(0);
+}
+
+let mainWindow: BrowserWindow | null = null;
+
+// Determine if we're in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
+// Register custom protocol for serving static files in production
+// This allows absolute paths like /_app/... to resolve correctly from the build directory
+if (!isDev) {
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: 'app',
+      privileges: {
+        standard: true,
+        secure: true,
+        supportFetchAPI: true,
+        corsEnabled: true,
+      },
+    },
+  ]);
+}
+
+// Create window when Electron has finished initialization
+app.whenReady().then(async () => {
+  console.log('[Main] Electron app is ready');
+
+  // In production, register the protocol handler that serves files from the build directory
+  if (!isDev) {
+    const buildPath = join(app.getAppPath(), 'build');
+    console.log('[Main] Registering app:// protocol for:', buildPath);
+
+    protocol.handle('app', (request) => {
+      // Parse the URL and get the path
+      const url = new URL(request.url);
+      let filePath = url.pathname;
+
+      // Default to index.html for root path
+      if (filePath === '/' || filePath === '') {
+        filePath = '/index.html';
+      }
+
+      // Remove leading slash and construct full path
+      const fullPath = join(buildPath, filePath);
+      console.log(`[Protocol] ${request.url} -> ${fullPath}`);
+
+      // Return the file using net.fetch with file:// URL
+      return net.fetch(pathToFileURL(fullPath).toString());
+    });
+  }
+
+  // Set Content Security Policy
+  // In development, allow localhost dev server and Vite's HMR
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    // Skip CSP modification for dev server responses - let SvelteKit handle its own CSP
+    if (isDev && details.url.startsWith('http://localhost:')) {
+      callback({ responseHeaders: details.responseHeaders });
+      return;
+    }
+
+    // Production CSP - allow app:// protocol and WebAssembly
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          [
+            "default-src 'self' app:",
+            "script-src 'self' app: 'unsafe-inline' 'wasm-unsafe-eval'",
+            "style-src 'self' app: 'unsafe-inline'",
+            "connect-src 'self' app: https: wss:",
+            "img-src 'self' app: data: blob: https:",
+            "font-src 'self' app: data:",
+            'frame-src https: http://localhost:*',
+          ].join('; '),
+        ],
+      },
+    });
+  });
+
+  // In production, bypass CORS for API requests to xelanote.com
+  // The app:// origin is not a valid HTTP origin, so the backend would reject preflight requests
+  if (!isDev) {
+    // Modify outgoing requests to remove Origin header for API calls
+    session.defaultSession.webRequest.onBeforeSendHeaders(
+      { urls: ['https://xelanote.com/*'] },
+      (details, callback) => {
+        // Remove Origin header so the request appears to come from same origin
+        delete details.requestHeaders['Origin'];
+        callback({ requestHeaders: details.requestHeaders });
+      }
+    );
+
+    // Add CORS headers to responses from xelanote.com
+    session.defaultSession.webRequest.onHeadersReceived(
+      { urls: ['https://xelanote.com/*'] },
+      (details, callback) => {
+        const responseHeaders = {
+          ...details.responseHeaders,
+          'Access-Control-Allow-Origin': ['*'],
+          'Access-Control-Allow-Methods': ['GET, POST, PUT, DELETE, PATCH, OPTIONS'],
+          'Access-Control-Allow-Headers': ['Content-Type, Authorization, X-Client-Type'],
+          'Access-Control-Allow-Credentials': ['true'],
+        };
+        callback({ responseHeaders });
+      }
+    );
+  }
+
+  // Register IPC handlers
+  registerIpcHandlers();
+
+  // Create the main window
+  console.log('[Main] Creating main window...');
+  mainWindow = createMainWindow();
+  console.log('[Main] Main window created');
+
+  // Handle second instance
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+});
+
+// Quit when all windows are closed, except on macOS
+app.on('window-all-closed', () => {
+  console.log('[Main] All windows closed');
+  if (process.platform !== 'darwin') {
+    console.log('[Main] Quitting app...');
+    app.quit();
+  }
+});
+
+// On macOS, re-create a window when dock icon is clicked
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    mainWindow = createMainWindow();
+  }
+});
+
+// Log when app is about to quit
+app.on('before-quit', () => {
+  console.log('[Main] App is about to quit');
+});
+
+// Security: Disable navigation to unknown origins
+app.on('web-contents-created', (_, contents) => {
+  contents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+
+    // Allow app:// protocol (our custom protocol)
+    if (parsedUrl.protocol === 'app:') {
+      return;
+    }
+
+    const allowedOrigins = ['localhost', '127.0.0.1'];
+
+    // In production, allow the app's own origin
+    if (process.env.NODE_ENV === 'production') {
+      allowedOrigins.push('xelanote.com');
+    }
+
+    if (!allowedOrigins.includes(parsedUrl.hostname)) {
+      event.preventDefault();
+      console.warn(`Blocked navigation to: ${navigationUrl}`);
+    }
+  });
+
+  // Disable new window creation
+  contents.setWindowOpenHandler(() => {
+    return { action: 'deny' };
+  });
+});
+
+// Export for type checking
+export { mainWindow };

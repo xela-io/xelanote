@@ -1,0 +1,376 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Changed
+
+- Repository ist nun oeffentlich auf GitHub verfuegbar
+
+### Security
+
+- Alte Git-History bereinigt und alle Production-Secrets rotiert
+
+### Added
+
+- Einzelne Notizen koennen jetzt direkt als Markdown-Datei exportiert werden (ueber das Drei-Punkte-Menue im Editor)
+- Demo-Datenbank-Generator mit Beispieluser, Notizen, Rezepten, Journal-Eintraegen und allen Features fuer Screenshots (`make demo-db`)
+- CONTRIBUTING.md, CODE_OF_CONDUCT.md, Issue- und PR-Templates fuer klarere Projektbeitraege
+- SVG-Platzhalter fuer Banner und Screenshots in der Dokumentation
+- GolangCI-Lint Konfiguration fuer zusaetzliche Go-Qualitaetschecks
+
+### Changed
+
+- Versionshistorie speichert jetzt bis zu 100 Versionen pro Notiz statt bisher 30
+- GitHub CI um Prettier-, Markdownlint- und strengere ESLint-Checks erweitert fuer Paritaet mit Forgejo Quality Gates
+- README neu strukturiert mit klaren Sections, Codebeispielen, Badges und Screenshot-Platzhaltern
+- .gitignore um Coverage- und Playwright-Reports ergaenzt
+
+### Changed
+
+- README komplett ueberarbeitet: Professionelle Struktur mit Badges, "Why xelanote"-Sektion, Feature-Kategorien, ausfuehrliche Contributing-Anleitung und Development-Kommandos
+
+### Security
+
+- Infrastruktur-Details (IP-Adressen, SSH-Ports, Benutzernamen) in der Dokumentation durch Platzhalter ersetzt
+- Versehentlich committed node_modules aus dem archive-Verzeichnis entfernt (442 Dateien)
+- .gitignore gehaertet: Private Keys, Zertifikate, Claude Code Konfiguration und node_modules global ausgeschlossen
+
+### Added
+
+- Faelligkeiten-Uebersicht: Neue Seite zeigt alle `@due()`-Termine ueber alle Notizen hinweg, gruppiert nach Status (ueberfaellig, heute, bald, zukunft) mit Toggle fuer erledigte Aufgaben
+- Changelog-Dialog: Klick auf die Versionsnummer in der Seitenleiste oeffnet den vollstaendigen Changelog als formatierten Dialog
+- Faelligkeitsdaten-Syntax: `@due(YYYY-MM-DD)` ueberall im Markdown-Text erzeugt farbige Badges (rot=ueberfaellig, orange=heute/bald, grau=Zukunft) und wird im Editor hervorgehoben
+- Client-seitige Volltextsuche ueber entschluesselte Notizen: Bei entsperrtem Vault werden verschluesselte Notizen im Browser durchsuchbar (MiniSearch-Index im RAM, automatischer Aufbau bei Unlock, sofortige Zerstoerung bei Lock)
+- Volltextsuche fuer verschluesselte Notizen: Suche findet jetzt auch verschluesselte Notizen ueber deren Keywords (opt-in). Ergebnisse zeigen Lock-Icon, entschluesselte Titel (wenn Vault entsperrt) und gematchte Keywords
+- `decryptTitle()` im Encryption-Store fuer isolierte Titel-Entschluesselung (z.B. in Suchergebnissen)
+- Schnellsuche (Strg+P) durchsucht jetzt auch verschluesselte Notizen ueber den Client-seitigen Index und zeigt Kontext-Snippets mit hervorgehobenen Treffern an
+
+### Fixed
+
+- Papierkorb zeigte die Anzahl geloeschter Notizen an, aber die Notizliste blieb leer (Virtualizer-Deadlock durch fehlende Container-Hoehe)
+- Endgueltiges Loeschen einzelner Notizen aus dem Papierkorb schlug immer mit 404 fehl
+- Papierkorb-Badge in der Seitenleiste aktualisierte sich nicht beim Loeschen ueber das Kontextmenue im Notizbaum
+- Wiederhergestellte Notizen erschienen erst nach manuellem Seiten-Reload in der Seitenleiste
+- Inhaltsverzeichnis (TOC) war auf mobilen Geraeten transparent und ueberlagerte den Seiteninhalt unleserlich
+- Inhaltsverzeichnis-Button scrollte beim Herunterscrollen aus dem Sichtfeld statt oben fixiert zu bleiben
+- Split-View wurde auf mobilen Geraeten trotz fehlender Buttons angezeigt, wenn der gespeicherte Editor-Modus "split" war
+- Volltextsuche fuer verschluesselte Notizen lieferte veraltete oder falsche Treffer, weil die FTS-Trigger-Korrektur nie ausgefuehrt wurde
+- Keywords fuer verschluesselte Notizen wurden nie gespeichert, weil die Preference-Abfrage eine nicht existierende Tabellenstruktur verwendete
+- Verschluesselungs-Einstellungen (Keyword-Extraktion, Titel-Verschluesselung) wurden nur lokal gespeichert und nie an den Server uebermittelt
+- Schnellsuche (Strg+P) fand keine verschluesselten Notizen, weil nur Plaintext-Titel durchsucht wurden
+
+### Changed
+
+- Alle ESLint-Warnings (260+) auf null reduziert: Fehlende each-Keys, ungenutzte Variablen, explizite any-Typen, nicht-reaktive Svelte-5-Objekte und unsaubere Regex-Escapes behoben
+- ESLint-Schwelle in CI und Makefile von 700 auf 0 gesenkt, neue Warnings werden ab sofort blockiert
+- Alle API-Fehlerantworten verwenden jetzt einheitlich JSON-Format statt gemischtem Plain-Text/JSON
+- Backend-Code: Duplizierte Validierungslogik fuer Notiz-Felder, Journal-Feature-Checks und ETag-Parsing in wiederverwendbare Hilfsfunktionen konsolidiert
+- Journal und Rezepte sind jetzt standardmaessig fuer alle Nutzer aktiviert (bestehende und neue)
+- Inhaltsverzeichnis (TOC) ist jetzt ein Floating-Button oben rechts im Preview statt ganz unten versteckt. Oeffnet sich als Dropdown-Overlay, bleibt beim Scrollen sticky sichtbar, responsive fuer Mobile.
+- Upload-Button in der Editor-Toolbar verwendet jetzt ein Bild-Icon (ImagePlus) statt des generischen Upload-Pfeils fuer bessere Erkennbarkeit
+- Tests fuer Account-Lockout verwenden jetzt eine kontrollierte Uhr (keine echten Sleeps mehr)
+- Quality-Checks dokumentiert und Make-Targets fuer `fmt-check`, `typecheck` und `quality` ergaenzt (Format, Lint, Typecheck in einem Lauf)
+- UI-A11y und Svelte-Deprecation Fixes (Dialog-Fokus, Tastatur-Handling, Slot-Rendering, Labels/ARIA)
+- Pre-commit Hooks (lefthook) pruefen automatisch gofmt, go vet, ESLint, Prettier und Markdownlint vor jedem Commit
+- Markdown-Linting mit markdownlint-cli2 fuer README und Docs-Verzeichnis eingerichtet (strukturelle Regeln)
+- Link-Checking mit lychee in der GitHub Actions Quality-Pipeline ergaenzt
+- Forgejo Staging-Deployment fuehrt jetzt Backend-Tests und Frontend-Lint vor dem Deploy aus
+- CHANGELOG-Aktualisierung wird in Pull Requests automatisch geprueft (Warning bei fehlender Aenderung)
+
+### Security
+
+- JSON Body-Size Limits: `http.MaxBytesReader` erhaelt jetzt korrekt den `ResponseWriter` (verhindert Panic bei Ueberschreitung), Standard 1MB Limit fuer alle Endpoints, 16MB fuer Note-Content und Import
+- User-Enumeration verhindert: Sharing-Fehlermeldungen enthalten keine Benutzernamen mehr ("unable to share with specified user" statt "user not found: username")
+- IV-Validierung: Verschluesselte Titel muessen jetzt ein gueltiges Base64-IV-Feld enthalten
+- Crypto Debug-Logs (libsodium Version, Key-Derivation) nur noch im DEV-Modus sichtbar
+- Request-Context wird jetzt an alle Such-Queries durchgereicht (ermoeglicht Timeout/Abbruch bei Client-Disconnect)
+
+### Fixed
+
+- FTS5-Trigger fuer `note_keywords` DELETE/UPDATE verwendeten falsche Syntax fuer external-content Tabellen (Migration 041)
+- Tag- und Link-Vorschlaege zeigen jetzt korrekt "AI features not enabled for this note" statt generischer Fehlermeldungen wenn KI fuer eine Notiz deaktiviert ist
+- Suchfenster (Quick Switcher) laesst sich jetzt durch Klick ausserhalb wieder schliessen
+- Journal-Kalender crasht nicht mehr beim Anzeigen von Monaten ohne Eintraege (TypeError auf null wurde behoben)
+- Android PWA: Sidebar-Buttons reagieren wieder auf Taps (setPointerCapture wurde zu frueh aufgerufen und blockierte click-Events in Chrome)
+- Journal-Ordner in der Sidebar kann jetzt aufgeklappt werden: loadTree() laedt Journal-Notizen separat nach, da sie vom Standard-API-Query (note_type='note') ausgeschlossen werden
+- Enter auf checked Tasks springt nicht mehr unerwartet nach oben. Standard-Enter-Verhalten wiederhergestellt, Auto-Sort nur noch bei Checkbox-Toggle.
+- Flaky Tests: Lockout, FIDO2-Session-Store und Upload-Signaturen sind jetzt deterministisch (keine sleeps, keine timing races)
+
+### Added
+
+- Dedizierte Journal-Seite (`/journal`): Kalender + Eintraege-Liste mit Desktop 2-Spalten-Layout und Mobile-Responsive Collapsible-Kalender
+- Journal-Button in Sidebar ersetzt inline Mini-Kalender (konsistent mit Recipes-Button)
+- Neuer Backend-Endpoint `GET /journal/entries` fuer die Eintraege-Liste
+- KI-gestuetzte Rezeptvorschlaege: Aehnliche Rezepte finden, Rezepte anhand von Zutaten vorschlagen und generierte Rezepte direkt speichern
+- Neue Backend-Tests fuer UpdateNoteTitle (Versioning + Normalisierung) und GetNotesByIDs (Edge Cases)
+- Foto-Upload fuer Zutatenerkennung: Kuehlschrankfoto hochladen und die KI erkennt automatisch die vorhandenen Zutaten
+- Vision-API-Support fuer Claude und Gemini Bildverarbeitung
+- Erledigungszeitpunkte fuer Tasks werden automatisch erfasst (Grundlage fuer kuenftige Statistiken)
+- Dedizierte Bildergalerie fuer Rezepte mit Batch-Upload, Bildunterschriften und Sortierung
+- Erledigte Todo-Items werden in aufklappbare Gruppe zusammengefasst (Standard: eingeklappt), damit der Fokus auf offenen Aufgaben liegt. Collapse-State bleibt ueber Re-Renders erhalten.
+- Kochbuch-Sharing: Ganze Rezeptsammlungen (Collections) koennen mit anderen Benutzern geteilt werden (Viewer/Editor-Rollen)
+- Collection-Share Berechtigungsmodell: 3-Tier Prioritaetskette (note_shares > folder_shares > collection_shares), nur additiv (R1), hoechste Prioritaet gewinnt (R2), Dedup (R3)
+- Verschluesselungs-Guard (R4): Sharing wird blockiert wenn Collection verschluesselte Rezepte enthaelt, verschluesselte Rezepte koennen nicht zu geteilten Collections hinzugefuegt werden
+- Typ-Enforcement (R5): Collections enthalten ausschliesslich Rezepte (note_type='recipe'), Service-Layer und DB-Queries filtern explizit
+- Geteilte Rezepte Ansicht: /recipes Seite zeigt "Geteilte Rezepte" Sektion mit Rolle-Badge und Herkunftsinfo
+- Geteilte Kochbuecher Seite: /shared/collection/[id] zeigt Rezepte einer geteilten Collection mit Header, Rolle-Badge und Owner-Info
+- ShareCollectionDialog: User-Suche (300ms Debounce), Rollenauswahl, bestehende Shares verwalten (analog ShareFolderDialog)
+- SharedWithMeList: Neue "Geteilte Kochbuecher" Sektion zwischen Ordnern und Notizen
+- RecipeCollectionList: Share-Button (Users Icon) pro Collection auf Hover
+- DB-Migration 038_recipe_collection_shares.sql mit recipe_collection_shares Tabelle (UNIQUE constraint, ON DELETE CASCADE, 3 Indexes)
+- GetSharePermission() um 3. Branch (collection_shares) erweitert
+- SharedNote um note_type Feld erweitert (omitempty, COALESCE fuer Altdaten)
+- GetSharedRecipesForUser(): 3-fach UNION Query mit NOT EXISTS Dedup
+- 7 neue Backend-API-Endpunkte fuer Collection-Sharing und Shared-Recipes/Collections
+- 7 neue Frontend-API-Funktionen und Store-Erweiterungen (recipes.svelte.ts, sharing.svelte.ts)
+- 13 neue DB-Tests fuer Collection-Sharing (CRUD, Dedup, Prioritaet, Verschluesselung, Cascade)
+- Neue i18n Keys (de.json + en.json) fuer Collection-Sharing UI
+- Rezept-Feature: Notizen koennen als Rezepte erstellt werden (note_type='recipe') mit strukturierten Zutaten, Portionen, Zubereitungszeit, Schwierigkeit und Quell-URL
+- Rezept-Zutaten: Strukturierte Zutatenliste mit Mengen, Einheiten, Gruppen, optional/skalierbar Flags und Drag-Reorder
+- Portionen-Skalierung: Server- und Client-seitige Berechnung skalierter Zutatenmengen mit konsistenter Rundung (2 Dezimalstellen)
+- Rezept-Kochbuecher (Collections): Owner-only Sammlungen mit Name, Beschreibung und Farbe zur Organisation von Rezepten
+- Optimistic Locking: Rezept-Metadata und Zutaten-Updates verwenden expected_updated_at zur Konflikterkennung (409 bei Mismatch)
+- Rezept-Encryption: Verschluesselte Rezepte serialisieren Metadata + Zutaten in den encrypted payload, Entschluesselung stellt sie wieder her
+- Rezept-Sharing: Nutzt bestehendes Note-Sharing (Editor kann Metadata+Zutaten bearbeiten mit Owner-user_id, Viewer nur lesen+skalieren)
+- RecipeEditor mit 3 Tabs (Zutaten/Anleitung/Vorschau), Viewer-Modus fuer Shared-Viewer, Encrypted-Modus fuer verschluesselte Rezepte
+- Rezept-Button in Sidebar (Feature-Flag-gesteuert), /recipes Uebersichtsseite, Settings-Toggle
+- 12 neue API-Endpoints fuer Rezepte (CRUD Metadata, Ingredients, Collections, Scaling)
+- DB-Migration 037_recipes.sql mit recipe_metadata, recipe_ingredients, recipe_collections, recipe_collection_items Tabellen
+- WebSocket-Events fuer Rezept-Aenderungen (recipe.metadata.updated, recipe.ingredients.updated)
+- ~100 neue i18n Keys (de.json + en.json) fuer Rezept-UI
+- Feature-State Reset bei Logout (Journal + Rezepte) verhindert State-Leaking zwischen Benutzern
+- Error Reporting via Forgejo: Automatische JS-Fehlerberichte und manuelles Feedback als Forgejo-Issues (Token bleibt serverseitig, Repo bleibt privat)
+- Feedback-Button in der Sidebar (mobile, desktop expanded, desktop collapsed) mit FeedbackDialog
+- Opt-out Toggle fuer automatische Fehlerberichte in Settings > Editor > Feature Toggles
+- Fingerprint-basierte Deduplizierung: gleicher Fehler wird als Kommentar am bestehenden Issue angefuegt statt neues Issue
+- Client-seitiges Rate-Limiting (3 Reports/5 Min) und Session-Dedup
+- Backend Rate-Limiting (5/Stunde) und 16KB Body-Limit fuer Error Reports
+- Konfiguration ueber FORGEJO_URL, FORGEJO_REPO, FORGEJO_API_TOKEN (Feature deaktiviert wenn leer)
+- /api/config liefert `error_reporting_enabled` fuer Frontend-Feature-Detection
+- 10 Frontend-Tests (normalizeMessage, computeFingerprint, Dedup) und 19 Backend-Tests (Service + Handler)
+- Folder Sharing: Ganze Ordner koennen mit anderen Benutzern geteilt werden (Viewer/Editor-Rollen), alle Notizen darin sind implizit geteilt
+- Shared Note Placements: Empfaenger koennen geteilte Notizen in eigene Ordner einordnen, ohne Ownership zu aendern
+- ShareFolderDialog mit User-Suche, Rollen-Auswahl und Encryption-Warnungen
+- SharedWithMeList zeigt jetzt geteilte Ordner (mit NoteCount und Rollen-Badge) vor einzelnen Notizen, gruppiert nach Besitzer
+- Dedizierte `/shared/folder/{id}` Seite fuer Notizen in geteilten Ordnern
+- "Teilen"-Option im Ordner-Kontextmenue (nicht fuer Root und Journal)
+- Notizen haben jetzt dieselben Kontextmenue-Optionen wie Ordner in der Seitenleiste: Umbenennen, Teilen, Farbe, Loeschen
+- RenameNoteDialog: Notizen koennen direkt aus der Seitenleiste umbenannt werden (ohne Editor oeffnen)
+- Git pre-commit Hook: Nicht-blockierende Erinnerung wenn CHANGELOG.md nicht im Commit enthalten ist
+- 8 neue API-Endpoints fuer Folder Sharing und Placements (CRUD fuer Folder-Shares, geteilte Ordner und deren Notizen, Placement-Verwaltung)
+- DB-Migration `036_shared_note_placements.sql` mit Placements-Tabelle und Folder-Shares-Index
+- Permission-Chain: `note_shares` hat Vorrang vor `folder_shares`, implizite Vererbung fuer Ordner-Notizen
+- Defense-in-Depth: Share-Validierung auf Service-, DB- und Query-Ebene (UNION mit aktivem Share-Check)
+- Placement-Cleanup bei Share-Entzug (Note und Folder) + Belt-and-Suspenders UNION-Check
+- 22 neue DB-Tests fuer Folder-Sharing, Placements, Permission-Chain und Edge Cases
+- 17 neue i18n Keys in en.json und de.json fuer Folder-Sharing-UI
+- Encryption Toggle: Einzelne Notizen koennen ueber das More-Menu im Editor entschluesselt und wieder verschluesselt werden
+- Folder Encryption Default: Ordner koennen als "unverschluesselt" markiert werden, neue Notizen darin werden ohne Verschluesselung erstellt
+- 3 neue API-Endpoints fuer Encryption Toggle (`POST /api/notes/{id}/decrypt`, `GET/PUT /api/folders/{id}/encryption-default`)
+- DB-Migration `035_encryption_toggle.sql` mit `encryption_default` Spalte fuer Folders
+- 7 neue DB-Tests fuer Encryption Toggle (DecryptNote, VersionMismatch, EncryptNoteRemovesShares, FolderEncryptionDefault, etc.)
+- Automatische Share-Entfernung beim Verschluesseln einer Notiz (Business-Regel: verschluesselte Notizen sind nicht teilbar)
+- Note Sharing (Phase 1 MVP): Notizen koennen mit anderen Benutzern geteilt werden (Viewer- und Editor-Rollen)
+- 8 neue API-Endpoints fuer Sharing (CRUD fuer Shares, geteilte Notizen abrufen/bearbeiten, User-Suche)
+- ShareNoteDialog mit User-Suche (Debounce), Rollen-Auswahl und Share-Verwaltung
+- SharedWithMeList: Gruppierte Anzeige geteilter Notizen nach Owner mit Rollen-Badges
+- "Geteilt mit mir" Button in Sidebar mit Count-Badge (Mobile + Desktop + Collapsed)
+- "Teilen" Menuepunkt im EditorMoreMenu (disabled bei verschluesselten Notizen)
+- Dedizierte `/shared` Seite fuer geteilte Notizen
+- DB-Migration `034_note_sharing.sql` mit `note_shares` und `folder_shares` Tabellen (Phase 2 vorbereitet)
+- 22 neue i18n Keys in en.json und de.json fuer Sharing-UI
+- 10 DB-Tests fuer Sharing-Layer
+
+### Security
+
+- Encryption-Guard: Verschluesselung kann nicht auf geteilten Ordnern aktiviert werden (Share-Entzug erforderlich)
+- Ordner mit `encryption_default=true` oder verschluesselten Notizen koennen nicht geteilt werden
+- Verschluesselte Notizen in geteilten Ordnern werden aus der Anzeige gefiltert (Defense-in-Depth)
+- SSE-Nachrichten werden jetzt sicher als JSON serialisiert, um Injection zu verhindern
+- HTTP-Server-Timeouts schuetzen jetzt gegen Slowloris-Angriffe
+- Account-Lockout nutzt jetzt hybrides IP- und Account-Tracking gegen verteilte Brute-Force-Angriffe
+- WebSocket lehnt leere Origin-Header im Produktionsmodus ab
+- Klartextinhalt wird nicht mehr als URL-Query-Parameter gesendet
+- Benutzerkennungen werden in Logs jetzt gehasht statt im Klartext ausgegeben
+- Docker-Container hat jetzt ein PID-Limit zum Schutz gegen Fork-Bomben
+
+### Fixed
+
+- Panic/500 bei Hash-ETag-Requests wenn Notiz geloescht wurde: `db.GetNote` gibt jetzt `ErrNotFound` statt `(nil, nil)` zurueck, verhindert nil-Dereferenz in Update- und Decrypt-Handlern
+- Stille Teilergebnisse bei Such-Queries: `rows.Err()` wird jetzt nach Iteration in Search, QuickSearch und FilteredSearch geprueft
+
+### Changed
+
+- Sidebar-Aktionen (Farbe, Umbenennen, Löschen) über Kontextmenü statt Inline-Buttons erreichbar
+- Breadcrumb-Navigation (Haus-Symbol + Pfad) wird auf Mobilgeräten nicht mehr angezeigt
+- MobileHeader (Logo-Leiste) wird auf Notiz-Seiten auf Mobilgeräten ausgeblendet für mehr Platz
+- Hamburger-Menü ist in der Editor-Toolbar auf Mobilgeräten immer sichtbar
+- Speicher-Indikator erscheint direkt neben dem Notiztitel auf Mobilgeräten
+- Focus-Mode-Button wird auf Mobilgeräten nicht mehr angezeigt
+
+### Fixed
+
+- Touch-Ziele auf Mobilgeräten sind jetzt groß genug zum zuverlässigen Antippen
+- Aktions-Buttons in der Notizbaumansicht sind auf Touch-Geräten jetzt sichtbar
+- Benachrichtigungen und Dialoge laufen auf schmalen Bildschirmen nicht mehr über
+- QuickSwitcher und Login-Seite sind auf Mobilgeräten besser nutzbar
+- Page refresh on a selected note now stays on that note instead of redirecting to the start page
+- Sidebar correctly highlights the selected note after page refresh
+- Split View wurde auf Mobilgeräten nicht automatisch deaktiviert
+- Mobile layout was broken due to sidebar rendering in desktop mode on small screens
+
+### Added
+
+- Hardware Security Keys (FIDO2/WebAuthn) als zweite 2FA-Methode neben Authenticator App
+- Security Key Management in den Einstellungen (Registrierung, Benennung, Löschung)
+- Methodenauswahl beim Login (Security Key, Authenticator App, Backup Code)
+- All action icons (trash, settings, theme, logout) now visible in collapsed sidebar
+- Resizable sidebar and editor/preview split view via drag handle
+- AI Actions for text transformation via LLM integration
+- CodeMirror plugins, syntax theming, and scrollable toolbar
+- Unified "Create Note" dialog on start page (consistent with sidebar)
+- Auto-focus in "Create Folder" dialog
+- LLM-based note summaries with Ollama integration (auto-scheduler and manual generation)
+- Interactive image resizing via drag & drop in Markdown preview
+- Client-side wiki-link extraction for E2E-encrypted notes (enables backlinks)
+- Cross-folder drag & drop: notes can be moved between folders by dropping onto notes in the target folder
+- Drag & drop task list reordering
+- Internationalization (i18n) for all dialogs, editor, markdown guide, and admin page (~604 keys per locale)
+- Security badges on login page (E2E Encrypted, Zero-Knowledge, Open Source)
+- New themes: Dark Pastels, Gruvbox Light, Gruvbox Dark (12 themes total)
+- Global graph visualization of notes and connections (`/graph`, `Ctrl+G`)
+- Mobile-optimized version history with tab navigation
+- Text wrapping for mobile view in editor and preview
+- Responsive two-row toolbar layout for mobile
+- iOS autocorrect, autocapitalize, and spellcheck support in editor
+- Trash with soft-delete, restore, and permanent delete
+- Undo/Redo system with Command Pattern (`Ctrl+Z` / `Ctrl+Shift+Z`)
+- Toast notification system
+- Auto-save with 2s debounce and visual status indicators
+- Backend pprof profiling endpoint (opt-in via `PPROF_ENABLED`)
+- CodeMirror code-splitting (-42% login page bundle size)
+- Forgejo Actions CI/CD pipeline for automatic staging deployment on push to main (with auto-rollback, health checks, and security-hardened containers)
+
+### Changed
+
+- Editor-Toolbar aufgeräumt: selten genutzte Aktionen (Löschen, Verschieben, Textfarbe, Einrücken, KI-Toggle) ins More-Menü verschoben
+- Auto-Save-Statustext entfernt, nur noch Icon-Feedback in der Toolbar
+- More-Menü komplett lokalisiert (war vorher nur auf Deutsch)
+- Split-View-Modus auf Mobile deaktiviert zugunsten von Edit/Preview-Umschaltung
+- Sidebar-Layout komplett überarbeitet: Erstellungs-Buttons im Header, Suchzeile über dem Baum, Papierkorb als Tree-Item
+- Import/Export von der Sidebar in die Einstellungen verschoben (neuer "Daten"-Tab)
+- Theme-Umschalter in der Seitenleiste vereinfacht zu einem direkten Toggle-Button mit Sonne/Mond-Icons
+- Gruvbox Aqua theme consistency across entire frontend
+- Documentation restructured: planning docs moved to `docs/planning/`, cross-references added, new testing guide and environment variables reference
+
+### Fixed
+
+- Reordering notes in the root folder had no effect because display_order was ignored for root-level notes
+- Spell checker was accessible even when AI functions were disabled for a note
+- Firefox iOS keyboard detection not hiding header/breadcrumbs when typing
+- Auth/token refresh bugs causing unexpected logouts and memory leaks
+- Summary display not updating after regeneration (Svelte 5 reactivity)
+- Encrypted note versions not decrypted in version history dialog
+- Action buttons hidden on folders with long names (CSS flexbox truncation)
+- Missing `parent_id` for root-level folders during markdown import
+- Theme selection not persisting on page refresh (client-server sync)
+- Rename with refactor broken due to non-existent column reference
+- Trash page crash on NULL `deleted_at` values in legacy data
+- Svelte 5 `$effect` orphan error when used in stores
+- Infinite loop and browser freeze from reactive auto-save chain
+- SSR hydration mismatch from premature auth initialization
+- Login/register/logout race conditions from reactive navigation guards
+- Auto-save toggle not triggering for already-dirty notes
+- N+1 query problem in rename feature (batch query optimization)
+- iOS keyboard closing on autosave due to editor unmounting
+- CodeMirror text selection color not applying when editor focused
+- AI Actions dropdown rendered outside overflow container
+
+### Security
+
+- CSRF token validation restored after SameSite=Strict migration
+- Constant-time login comparison to prevent user enumeration via timing
+- Generic error messages on registration to prevent user enumeration
+- Security event logging for 9 event types (login, password change, 2FA, etc.)
+- ETag version hashing with SHA256 instead of raw version integer
+- TOCTOU race condition fix in upload quota enforcement
+- IDOR vulnerability fix in backlinks endpoint (cross-user data leakage)
+- Comprehensive `user_id` filtering added to all link queries
+
+## [0.5.0] - 2026-01-17
+
+### Fixed
+
+- Search crash on whitespace-only queries
+- Stale UI data after note rename (missing fresh data fetch)
+- Broken wikilink navigation (used titles instead of note IDs)
+- Concurrent save race condition on rapid `Ctrl+S`
+- Dirty state indicator not clearing after successful save
+
+### Security
+
+- XSS prevention in wikilink rendering via HTML escaping
+- Path traversal fix in export API (`../../etc` directory traversal)
+
+## [0.4.0] - 2026-01-17
+
+### Added
+
+- Multi-user authentication system with JWT (access + refresh tokens)
+- User registration and login pages
+- Multi-user data isolation (all queries filtered by `user_id`)
+- Protected routes with automatic redirect to login
+- Database migrations for users table and user ownership
+
+### Fixed
+
+- SQL parameter count mismatch in multi-user queries
+- Frontend store synchronization (tree store vs notes store limit mismatch)
+
+## [0.3.0] - 2026-01-17
+
+### Added
+
+- Folder rename with validation dialog
+- Drag & drop folder reordering with custom display order
+- Virtual root pattern for cleaner folder tree
+- Database migration for `display_order` fields
+
+### Fixed
+
+- Root-level folder creation bug (path "/" not handled correctly)
+- Legacy database repair for orphaned folders with NULL `parent_id`
+- Nested button HTML validation warning in folder tree
+
+## [0.2.0] - 2026-01-XX
+
+### Added
+
+- Unified tree with folders and notes in one sidebar
+- Drag & drop for notes and folders
+- Expand/collapse state with localStorage persistence
+- Parent-child folder hierarchy with unlimited nesting
+- Note counts per folder
+- Database migration for folders table
+
+## [0.1.0] - 2025-XX-XX
+
+### Added
+
+- Basic note-taking application with Markdown editor
+- Full-text search via SQLite FTS5
+- Note versioning with history
+- Backlinks via wiki-links
+- Path-based folder system
+
+[Unreleased]: https://github.com/xela-io/xelanote/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/xela-io/xelanote/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/xela-io/xelanote/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/xela-io/xelanote/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/xela-io/xelanote/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/xela-io/xelanote/releases/tag/v0.1.0

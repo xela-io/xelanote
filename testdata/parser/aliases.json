@@ -1,0 +1,51 @@
+[
+  {
+    "name": "simple_alias",
+    "input": "[[Target|Display Text]]",
+    "expected": [
+      {"target_title": "Target", "alias": "Display Text", "span_start": 0, "span_end": 23}
+    ]
+  },
+  {
+    "name": "alias_with_special_chars",
+    "input": "[[Note (2024)|2024 Note]]",
+    "expected": [
+      {"target_title": "Note (2024)", "alias": "2024 Note", "span_start": 0, "span_end": 25}
+    ]
+  },
+  {
+    "name": "alias_longer_than_target",
+    "input": "[[A|A very long display text for a short title]]",
+    "expected": [
+      {"target_title": "A", "alias": "A very long display text for a short title", "span_start": 0, "span_end": 48}
+    ]
+  },
+  {
+    "name": "target_longer_than_alias",
+    "input": "[[A Very Long Note Title That Is Hard To Read|Short]]",
+    "expected": [
+      {"target_title": "A Very Long Note Title That Is Hard To Read", "alias": "Short", "span_start": 0, "span_end": 53}
+    ]
+  },
+  {
+    "name": "alias_with_numbers",
+    "input": "[[Meeting 2024-01-15|Jan 15th Meeting]]",
+    "expected": [
+      {"target_title": "Meeting 2024-01-15", "alias": "Jan 15th Meeting", "span_start": 0, "span_end": 39}
+    ]
+  },
+  {
+    "name": "empty_alias",
+    "input": "[[Title|]]",
+    "expected": [
+      {"target_title": "Title", "span_start": 0, "span_end": 10}
+    ]
+  },
+  {
+    "name": "whitespace_in_alias",
+    "input": "[[Note|  Spaced  ]]",
+    "expected": [
+      {"target_title": "Note", "alias": "Spaced", "span_start": 0, "span_end": 19}
+    ]
+  }
+]

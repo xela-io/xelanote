@@ -1,0 +1,84 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Database
+*.db
+*.db-*
+data/
+
+# Dependencies (all locations)
+**/node_modules/
+frontend/build/
+!frontend/build/icons/
+frontend/.svelte-kit/
+frontend/dist/
+frontend/.vite/
+frontend/.turbo/
+frontend/bundle-stats.html
+frontend/playwright-report/
+frontend/coverage/
+
+# Electron Desktop App
+frontend/dist-electron/
+frontend/release/
+frontend/src-tauri/target/
+
+# Backend Static (built frontend)
+backend/cmd/server/static/*
+!backend/cmd/server/static/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+.cache/
+
+# Backend compiled binaries
+backend/xelanote
+backend/server
+
+# Test artifacts
+frontend/test-results/
+
+# Private Keys / Certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Claude Code (contains tool permissions with embedded tokens)
+.claude/
+CLAUDE.md
+
+# Archive
+archive/
+frontend/dev-dist/

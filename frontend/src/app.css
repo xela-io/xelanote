@@ -1,0 +1,1321 @@
+@import 'tailwindcss';
+
+/* ===== Mobile Safari Fixes ===== */
+
+/* Dynamic Viewport Height with Fallback for Safari <15.4 */
+@layer utilities {
+  .h-screen-safe {
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Modern browsers */
+  }
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+/* Safe Area Insets for iPhone Notch/Home-Indicator */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0);
+}
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Touch-friendly button sizing - only on touch devices */
+@media (pointer: coarse) {
+  .toolbar-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Scrollable toolbar with fade indicator */
+.toolbar-scroll-wrapper {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+.toolbar-scroll-wrapper::after {
+  content: '›';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2.5rem;
+  background: linear-gradient(to right, transparent, var(--color-background) 50%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--scroll-fade, 0);
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.25rem;
+  font-size: 1.25rem;
+  color: var(--color-muted-foreground);
+}
+.toolbar-buttons {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.toolbar-buttons::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent double-tap zoom - only for non-draggable elements */
+button:not([draggable='true']):not(.drag-handle),
+a:not([draggable='true']),
+input[type='checkbox'],
+input[type='radio'] {
+  touch-action: manipulation;
+}
+
+/* Explicitly allow all touch gestures for drag handles */
+.drag-handle,
+[draggable='true'] {
+  touch-action: auto;
+}
+
+/* Prevent text selection during touch drag & drop */
+body.touch-drag-active,
+body.touch-drag-active * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Scrollbar styling - MUST come before @theme */
+html,
+body,
+* {
+  scrollbar-width: thin !important;
+}
+
+/* Dark mode scrollbar colors */
+.theme-gruvbox-dark,
+.theme-gruvbox-dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent !important;
+}
+
+/* WebKit scrollbar styling for Electron/Chrome */
+.theme-gruvbox-dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.theme-gruvbox-dark ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.theme-gruvbox-dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.theme-gruvbox-dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Light mode scrollbar colors */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overflow: auto !important;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  width: 0px !important;
+  height: 0px !important;
+}
+
+.scrollbar-none::-webkit-scrollbar-track {
+  display: none !important;
+}
+
+.scrollbar-none::-webkit-scrollbar-thumb {
+  display: none !important;
+}
+
+/* Gruvbox Light - warm retro colors (Default Theme) */
+@theme {
+  /* Colors - using Tailwind v4 CSS variables */
+  --color-background: oklch(97% 0.03 85);
+  --color-foreground: oklch(24% 0.02 60);
+  --color-card: oklch(95% 0.03 85);
+  --color-card-foreground: oklch(24% 0.02 60);
+  --color-popover: oklch(95% 0.03 85);
+  --color-popover-foreground: oklch(24% 0.02 60);
+  --color-primary: oklch(38% 0.1 230);
+  --color-primary-foreground: oklch(97% 0.03 85);
+  --color-secondary: oklch(92% 0.03 85);
+  --color-secondary-foreground: oklch(24% 0.02 60);
+  --color-muted: oklch(92% 0.03 85);
+  --color-muted-foreground: oklch(38% 0.08 60);
+  --color-accent: oklch(92% 0.04 160);
+  --color-accent-foreground: oklch(24% 0.02 60);
+  --color-destructive: oklch(30% 0.16 25);
+  --color-destructive-foreground: oklch(97% 0.03 85);
+  --color-success: oklch(45% 0.1 160);
+  --color-success-foreground: oklch(97% 0.03 85);
+  --color-warning: oklch(55% 0.14 70);
+  --color-warning-foreground: oklch(97% 0.03 85);
+  --color-border: oklch(88% 0.03 85);
+  --color-input: oklch(88% 0.03 85);
+  --color-ring: oklch(38% 0.1 230);
+  --color-selection: oklch(82% 0.04 85);
+  --color-selection-foreground: oklch(15% 0.02 60);
+  --color-sidebar-background: oklch(95% 0.03 85);
+  --color-sidebar-foreground: oklch(38% 0.08 60);
+  --color-sidebar-primary: oklch(38% 0.1 230);
+  --color-sidebar-primary-foreground: oklch(97% 0.03 85);
+  --color-sidebar-accent: oklch(92% 0.04 160);
+  --color-sidebar-accent-foreground: oklch(24% 0.02 60);
+  --color-sidebar-border: oklch(88% 0.03 85);
+  --color-sidebar-ring: oklch(38% 0.1 230);
+
+  /* Border radius */
+  --radius: 0.5rem;
+
+  /* Fonts */
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+}
+
+/* Gruvbox Light - explicit class (same as default) */
+.theme-gruvbox-light {
+  --color-background: oklch(97% 0.03 85);
+  --color-foreground: oklch(24% 0.02 60);
+  --color-card: oklch(95% 0.03 85);
+  --color-card-foreground: oklch(24% 0.02 60);
+  --color-popover: oklch(95% 0.03 85);
+  --color-popover-foreground: oklch(24% 0.02 60);
+  --color-primary: oklch(38% 0.1 230);
+  --color-primary-foreground: oklch(97% 0.03 85);
+  --color-secondary: oklch(92% 0.03 85);
+  --color-secondary-foreground: oklch(24% 0.02 60);
+  --color-muted: oklch(92% 0.03 85);
+  --color-muted-foreground: oklch(38% 0.08 60);
+  --color-accent: oklch(92% 0.04 160);
+  --color-accent-foreground: oklch(24% 0.02 60);
+  --color-destructive: oklch(30% 0.16 25);
+  --color-destructive-foreground: oklch(97% 0.03 85);
+  --color-success: oklch(45% 0.1 160);
+  --color-success-foreground: oklch(97% 0.03 85);
+  --color-warning: oklch(55% 0.14 70);
+  --color-warning-foreground: oklch(97% 0.03 85);
+  --color-border: oklch(88% 0.03 85);
+  --color-input: oklch(88% 0.03 85);
+  --color-ring: oklch(38% 0.1 230);
+  --color-selection: oklch(82% 0.04 85);
+  --color-selection-foreground: oklch(15% 0.02 60);
+  --color-sidebar-background: oklch(95% 0.03 85);
+  --color-sidebar-foreground: oklch(38% 0.08 60);
+  --color-sidebar-primary: oklch(38% 0.1 230);
+  --color-sidebar-primary-foreground: oklch(97% 0.03 85);
+  --color-sidebar-accent: oklch(92% 0.04 160);
+  --color-sidebar-accent-foreground: oklch(24% 0.02 60);
+  --color-sidebar-border: oklch(88% 0.03 85);
+  --color-sidebar-ring: oklch(38% 0.1 230);
+}
+
+/* Gruvbox Dark - warm retro colors */
+.theme-gruvbox-dark {
+  --color-background: oklch(22% 0.02 60);
+  --color-foreground: oklch(95% 0.03 85);
+  --color-card: oklch(24% 0.02 60);
+  --color-card-foreground: oklch(95% 0.03 85);
+  --color-popover: oklch(24% 0.02 60);
+  --color-popover-foreground: oklch(95% 0.03 85);
+  --color-primary: oklch(72% 0.1 155);
+  --color-primary-foreground: oklch(22% 0.02 60);
+  --color-secondary: oklch(30% 0.02 60);
+  --color-secondary-foreground: oklch(95% 0.03 85);
+  --color-muted: oklch(30% 0.02 60);
+  --color-muted-foreground: oklch(78% 0.1 75);
+  --color-accent: oklch(28% 0.06 155);
+  --color-accent-foreground: oklch(95% 0.03 85);
+  --color-destructive: oklch(65% 0.18 25);
+  --color-destructive-foreground: oklch(97% 0.03 85);
+  --color-success: oklch(75% 0.1 160);
+  --color-success-foreground: oklch(22% 0.02 60);
+  --color-warning: oklch(78% 0.14 70);
+  --color-warning-foreground: oklch(22% 0.02 60);
+  --color-border: oklch(30% 0.02 60);
+  --color-input: oklch(30% 0.02 60);
+  --color-ring: oklch(72% 0.1 155);
+  --color-selection: oklch(38% 0.04 60);
+  --color-selection-foreground: oklch(90% 0.03 85);
+  --color-sidebar-background: oklch(20% 0.02 60);
+  --color-sidebar-foreground: oklch(72% 0.12 155);
+  --color-sidebar-primary: oklch(72% 0.1 155);
+  --color-sidebar-primary-foreground: oklch(22% 0.02 60);
+  --color-sidebar-accent: oklch(30% 0.06 155);
+  --color-sidebar-accent-foreground: oklch(95% 0.03 85);
+  --color-sidebar-border: oklch(30% 0.02 60);
+  --color-sidebar-ring: oklch(72% 0.1 155);
+}
+
+/* Legacy CSS variable aliases (removal target: next major refactor or v2.0) */
+.theme-gruvbox-light,
+.theme-gruvbox-dark,
+:root {
+  --bg-primary: var(--color-background);
+  --bg-secondary: var(--color-card);
+  --text-primary: var(--color-foreground);
+  --text-secondary: var(--color-muted-foreground);
+  --text-tertiary: var(--color-muted-foreground);
+  --text-muted: var(--color-muted-foreground);
+  --border: var(--color-border);
+  --border-color: var(--color-border);
+  --border-hover: var(--color-border);
+  --accent: var(--color-primary);
+  --accent-primary: var(--color-primary);
+  --accent-light: color-mix(in oklch, var(--color-primary), transparent 80%);
+  --accent-dark: color-mix(in oklch, var(--color-primary), black 15%);
+  --accent-hover: color-mix(in oklch, var(--color-primary), black 10%);
+  --accent-foreground: var(--color-primary-foreground);
+  --error: var(--color-destructive);
+  --error-bg: color-mix(in oklch, var(--color-destructive), transparent 85%);
+  --info: var(--color-primary);
+  --info-bg: color-mix(in oklch, var(--color-primary), transparent 85%);
+}
+
+/* Hide native number input spinners (white arrows don't match dark themes) */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* Text selection styles - uses theme-specific selection colors */
+::selection {
+  background-color: var(--color-selection);
+  color: var(--color-selection-foreground);
+}
+
+::-moz-selection {
+  background-color: var(--color-selection);
+  color: var(--color-selection-foreground);
+}
+
+/* ===== Animation Keyframes ===== */
+
+/* Entrance animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Exit animations */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Loading animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Collapse/Expand animations */
+@keyframes heightExpand {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
+
+@keyframes heightCollapse {
+  from {
+    max-height: 500px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+/* Tooltip/Popover animations */
+@keyframes popIn {
+  from {
+    transform: scale(0.8) translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popOut {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.8) translateY(-8px);
+    opacity: 0;
+  }
+}
+
+/* ===== Global Transition Styles ===== */
+
+/* Smooth color transitions on all interactive elements */
+button,
+[role='button'],
+[role='menuitem'],
+a {
+  transition:
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth shadow transitions for cards and elevated elements */
+.card,
+[role='dialog'],
+.surface,
+.popover {
+  transition:
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth focus ring transitions */
+:focus-visible {
+  transition:
+    outline-offset 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    outline-width 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsible items collapse/expand animation */
+.collapsible {
+  transition:
+    max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth theme transitions */
+html {
+  transition:
+    background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Animation Utility Classes ===== */
+
+/* Entrance animations - use these classes for appearing elements */
+.animate-fade-in {
+  animation: fadeIn 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animate-slide-up {
+  animation: slideUp 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animate-slide-down {
+  animation: slideDown 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animate-slide-right {
+  animation: slideRight 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animate-slide-left {
+  animation: slideLeft 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animate-scale-up {
+  animation: scaleUp 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Exit animations */
+.animate-fade-out {
+  animation: fadeOut 200ms cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+
+/* Loading animations */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+/* Popover/Tooltip animations */
+.animate-pop-in {
+  animation: popIn 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.animate-pop-out {
+  animation: popOut 200ms cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+
+/* CodeMirror customization */
+.cm-editor {
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 1rem; /* 16px on mobile to prevent iOS auto-zoom */
+}
+
+/* Desktop: smaller font for more compact view */
+@media (min-width: 768px) {
+  .cm-editor {
+    font-size: 0.9rem; /* 14.4px on tablet and above */
+  }
+}
+
+.cm-editor .cm-content {
+  padding: 1rem;
+  /* Fallback, falls EditorView.lineWrapping fehlt */
+  white-space: pre-wrap;
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+/* CodeMirror text selection - ensures consistent selection colors on mobile Safari/iOS
+   where the native ::selection is used instead of CodeMirror's drawSelection layer */
+.cm-editor ::selection,
+.cm-editor *::selection {
+  background-color: var(--color-selection) !important;
+  color: var(--color-selection-foreground) !important;
+}
+
+.cm-editor ::-moz-selection,
+.cm-editor *::-moz-selection {
+  background-color: var(--color-selection) !important;
+  color: var(--color-selection-foreground) !important;
+}
+
+/* Task bracket styling in editor - [ ] and [x] checkboxes */
+.cm-editor .cm-task-bracket,
+.cm-editor .cm-task-bracket span {
+  color: var(--color-success) !important;
+}
+
+/* Due date syntax highlighting in editor */
+.cm-due-date {
+  background-color: var(--color-muted);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Wikilink styling in editor */
+.cm-wikilink {
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cm-wikilink-unresolved {
+  color: var(--color-destructive);
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+/* Color tag styling in editor */
+.cm-color-tag {
+  background-color: var(--color-muted);
+  border-radius: 0.125rem;
+  padding: 0 0.125rem;
+  opacity: 0.7;
+}
+
+/* Named color classes for markdown preview */
+.text-color-primary {
+  color: var(--color-primary);
+}
+
+.text-color-destructive {
+  color: var(--color-destructive);
+}
+
+.text-color-accent {
+  color: var(--color-accent-foreground);
+}
+
+.text-color-muted {
+  color: var(--color-muted-foreground);
+}
+
+.text-color-secondary {
+  color: var(--color-secondary-foreground);
+}
+
+/* Markdown preview styling */
+.markdown-preview {
+  padding: 1rem;
+  line-height: 1.7;
+  /* Text wrapping für alle Geräte */
+  overflow-wrap: anywhere;
+  word-wrap: break-word; /* Fallback für ältere Safari/Chromium */
+  word-break: normal;
+  /* Apply theme colors when a theme class is present */
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.markdown-preview h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Headings: Text wrapping für lange Überschriften */
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  overflow-wrap: anywhere;
+  word-wrap: break-word; /* Fallback */
+}
+
+.markdown-preview p {
+  margin-bottom: 1rem;
+}
+
+.markdown-preview a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  /* URLs umbrechen, aber Lesbarkeit bewahren */
+  overflow-wrap: anywhere;
+  word-wrap: break-word; /* Fallback */
+  word-break: normal; /* Nicht break-all - zu aggressiv für Link-Text */
+}
+
+.markdown-preview a.wikilink-resolved {
+  color: var(--color-primary);
+}
+
+.markdown-preview a.wikilink-unresolved {
+  color: var(--color-destructive);
+  text-decoration-style: dashed;
+}
+
+.markdown-preview :not(pre) > code {
+  background-color: var(--color-muted);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  /* Inline-Code umbrechen, aber Formatierung bewahren */
+  overflow-wrap: anywhere;
+  word-wrap: break-word; /* Fallback */
+  white-space: pre-wrap; /* Erhält Leerzeichen & Zeilenumbrüche */
+}
+
+.markdown-preview pre {
+  background-color: var(--color-muted);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-preview ul {
+  list-style-type: disc;
+}
+
+.markdown-preview ol {
+  list-style-type: decimal;
+}
+
+.markdown-preview li {
+  margin-bottom: 0.25rem;
+}
+
+/* Remove extra margin from paragraphs inside list items */
+.markdown-preview li p {
+  margin-bottom: 0;
+}
+
+.markdown-preview blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 1rem;
+}
+
+/* Horizontal rules - subtler appearance */
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid var(--color-muted-foreground);
+  margin: 1.5rem 0;
+  opacity: 0.6;
+}
+
+/* List markers - brighter for better readability */
+.markdown-preview ul li::marker,
+.markdown-preview ol li::marker {
+  color: var(--color-muted-foreground);
+}
+
+/* Brighter markers for dark theme */
+.theme-gruvbox-dark .markdown-preview ul li::marker,
+.theme-gruvbox-dark .markdown-preview ol li::marker {
+  color: oklch(80% 0.01 264) !important;
+  opacity: 1 !important;
+}
+
+.markdown-preview mark {
+  background-color: oklch(90% 0.15 100);
+  padding: 0.125rem;
+}
+
+/* Images - responsive and contained */
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+}
+
+/* ===== Resizable Image Wrapper ===== */
+.markdown-preview .resizable-image-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.markdown-preview .resizable-image-wrapper img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0; /* Override default img margin */
+}
+
+/* Resize Handle - bottom right corner */
+.markdown-preview .resize-handle {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  opacity: 0;
+  cursor: nwse-resize;
+  transition: opacity 150ms ease;
+  z-index: 10;
+}
+
+.markdown-preview .resizable-image-wrapper:hover .resize-handle {
+  opacity: 0.6;
+}
+
+.markdown-preview .resize-handle:hover {
+  opacity: 1 !important;
+}
+
+/* Active Resize State */
+.markdown-preview .resizable-image-wrapper.resizing {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.markdown-preview .resizable-image-wrapper.resizing img {
+  pointer-events: none;
+}
+
+/* Touch devices: Handle always visible for discoverability */
+@media (pointer: coarse) {
+  .markdown-preview .resize-handle {
+    opacity: 0.5;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Tabellen: Responsive wrapping (vorsorgend für zukünftigen Support) */
+.markdown-preview table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-preview thead,
+.markdown-preview tbody,
+.markdown-preview tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.markdown-preview td,
+.markdown-preview th {
+  overflow-wrap: anywhere;
+  word-wrap: break-word; /* Fallback */
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+}
+
+/* Due Date Badges (global - used in markdown preview and due-dates overview page) */
+.due-date {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.due-date-overdue {
+  background-color: color-mix(in oklch, var(--color-destructive) 15%, transparent);
+  color: var(--color-destructive);
+  border: 1px solid color-mix(in oklch, var(--color-destructive) 30%, transparent);
+}
+
+.due-date-today {
+  background-color: color-mix(in oklch, var(--color-warning) 15%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in oklch, var(--color-warning) 30%, transparent);
+  font-weight: 600;
+}
+
+.due-date-soon {
+  background-color: color-mix(in oklch, var(--color-warning) 10%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in oklch, var(--color-warning) 20%, transparent);
+}
+
+.due-date-future {
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-border);
+}
+
+/* Markdown-preview-specific overrides */
+.markdown-preview .due-date {
+  font-size: 0.8em;
+  vertical-align: baseline;
+}
+
+.markdown-preview .task-list-item-checked .due-date {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+/* Task Lists (Checkboxes) */
+
+/* Compact task lists - reduce line height and margins */
+.markdown-preview .contains-task-list {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.markdown-preview .task-list-item {
+  list-style-type: none;
+  margin-left: 0;
+  margin-bottom: 0.125rem;
+  position: relative;
+  padding-left: 2.25rem; /* Space for drag-handle + checkbox */
+}
+
+.markdown-preview .task-list-item-checkbox {
+  position: absolute;
+  left: 1.25rem; /* After drag-handle */
+  top: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+/* Plugin adds .task-list-item-checked class for completed items */
+.markdown-preview .task-list-item-checked {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Touch devices: larger checkboxes for easier tapping */
+@media (pointer: coarse) {
+  .markdown-preview .task-list-item {
+    padding-left: 2.5rem; /* More space for larger checkbox */
+  }
+
+  .markdown-preview .task-list-item-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    top: 0.1rem;
+  }
+}
+
+/* ===== Task Drag & Drop Styling ===== */
+
+/* Drag Handle */
+.markdown-preview .drag-handle {
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: grab;
+  padding: 2px 4px;
+  color: var(--color-muted-foreground);
+  transition:
+    opacity 150ms ease,
+    color 150ms ease;
+  border-radius: 2px;
+}
+
+.markdown-preview .drag-handle:hover {
+  opacity: 1 !important;
+  color: var(--color-foreground);
+  background-color: var(--color-accent);
+}
+
+.markdown-preview .drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Show handle on task item hover */
+.markdown-preview .task-list-item:hover .drag-handle {
+  opacity: 0.6;
+}
+
+/* Mobile: Handle always visible for discoverability */
+@media (pointer: coarse) {
+  .markdown-preview .drag-handle {
+    opacity: 0.5;
+  }
+}
+
+/* Drag States */
+.markdown-preview .task-drag-ghost {
+  opacity: 0.4;
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+.markdown-preview .task-drag-chosen {
+  background: var(--color-selection);
+  border-radius: 4px;
+}
+
+.markdown-preview .task-drag-active {
+  cursor: grabbing !important;
+}
+
+/* ===== Completed Tasks Collapsible Group ===== */
+
+.completed-tasks-wrapper {
+  list-style: none;
+  margin-top: 0.5rem;
+  padding-left: 0;
+}
+
+.completed-tasks-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.25rem;
+}
+
+.completed-tasks-summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  color: var(--color-muted-foreground);
+  padding: 0.25rem 0;
+  user-select: none;
+}
+
+.completed-tasks-summary::-webkit-details-marker {
+  display: none;
+}
+
+.completed-tasks-summary::marker {
+  display: none;
+  content: '';
+}
+
+.completed-tasks-summary .chevron-icon {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+details.completed-tasks-group[open] .chevron-icon {
+  transform: rotate(90deg);
+}
+
+.completed-tasks-inner {
+  margin-left: 0;
+  padding-left: 0;
+  margin-bottom: 0;
+  line-height: 1.4;
+  list-style: none;
+}
+
+.completed-tasks-inner .task-list-item {
+  position: relative;
+  padding-left: 2.25rem;
+  margin-bottom: 0.125rem;
+}
+
+/* Drag-Handles in collapsed group hidden - drag does not work there */
+.completed-tasks-inner .drag-handle {
+  display: none;
+}
+
+/* Touch optimization */
+@media (pointer: coarse) {
+  .completed-tasks-summary {
+    padding: 0.5rem 0;
+    min-height: 44px;
+  }
+  .completed-tasks-inner .task-list-item {
+    padding-left: 2.5rem;
+  }
+}
+
+/* Hide scrollbar while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  overflow-y: scroll; /* Force scrollbar, then hide it */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.scrollbar-hide {
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* For settings page - hide scrollbar on outer container */
+[style*='scrollbar-width: none']::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slide-up animation for mobile bottom sheet */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-bottom-sheet {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* ===== Tauri Custom Titlebar ===== */
+.titlebar {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+  background-color: var(--color-sidebar-background);
+  border-bottom: 1px solid var(--color-border);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.titlebar-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+  pointer-events: none; /* Allow drag through text */
+}
+
+.titlebar-buttons {
+  display: flex;
+}
+
+.titlebar-buttons button {
+  width: 46px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.titlebar-buttons button:hover {
+  background-color: var(--color-accent);
+}
+
+.titlebar-buttons button.close:hover {
+  background-color: #e81123;
+  color: white;
+}
+
+.titlebar-buttons button:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+.titlebar-buttons svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ===== Accessibility: Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== Screen Reader Only (visually hidden but accessible) ===== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* When focused, make visible again */
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: initial;
+  margin: initial;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ===== CodeMirror Autocomplete Styling ===== */
+.cm-tooltip-autocomplete {
+  background-color: var(--color-popover) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 0.5rem !important;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;
+}
+
+.cm-tooltip-autocomplete > ul {
+  max-height: 200px !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.875rem !important;
+}
+
+.cm-tooltip-autocomplete > ul > li {
+  padding: 0.5rem 0.75rem !important;
+  color: var(--color-popover-foreground) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background-color: var(--color-accent) !important;
+  color: var(--color-accent-foreground) !important;
+}
+
+.cm-tooltip-autocomplete .cm-completionLabel {
+  flex: 1 !important;
+  font-weight: 500 !important;
+}
+
+.cm-tooltip-autocomplete .cm-completionDetail {
+  color: var(--color-muted-foreground) !important;
+  font-size: 0.75rem !important;
+  opacity: 0.8 !important;
+}
+
+.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail {
+  color: var(--color-accent-foreground) !important;
+  opacity: 0.7 !important;
+}

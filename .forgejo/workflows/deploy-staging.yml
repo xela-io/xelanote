@@ -1,0 +1,241 @@
+# NOTE: Paths (ENV_FILE, DOCKER_NETWORK, ports) are environment-specific.
+# Adjust for your infrastructure before using.
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+env:
+  DOCKER_NETWORK: nginx_default
+  ENV_FILE: /home/container/.xelanote.env
+  IMAGE_NAME: xelanote
+
+jobs:
+  deploy:
+    runs-on: staging
+    timeout-minutes: 15
+
+    steps:
+      # UPDATE CHECKSUM - verify at: https://code.forgejo.org/actions/checkout/releases/tag/v4
+      - name: Checkout
+        uses: https://code.forgejo.org/actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Quality gate (backend)
+        run: |
+          set -euo pipefail
+          echo "--- Running backend tests in Docker ---"
+          docker run --rm -v "$PWD/backend:/app" -w /app golang:1.24-alpine sh -c \
+            "apk add --no-cache gcc musl-dev sqlite-dev >/dev/null 2>&1 && \
+             echo '--- go vet ---' && CGO_ENABLED=1 go vet -tags 'fts5' ./... && \
+             echo '--- go test ---' && CGO_ENABLED=1 go test -tags 'fts5' -count=1 ./..."
+          echo "Backend tests passed"
+
+      - name: Quality gate (frontend)
+        run: |
+          set -euo pipefail
+          echo "--- Running frontend lint in Docker ---"
+          docker run --rm -v "$PWD:/repo" -w /repo/frontend node:20-alpine sh -c \
+            "npm ci --ignore-scripts >/dev/null 2>&1 && \
+             echo '--- eslint (errors only) ---' && npx eslint --no-warn-ignored --max-warnings 0 . && \
+             echo '--- prettier ---' && npm run format:check && \
+             echo '--- markdownlint ---' && npm run lint:md"
+          echo "Frontend lint passed"
+
+      - name: Pre-flight checks
+        run: |
+          set -euo pipefail
+
+          echo "--- Checking env-file ---"
+          if [ ! -r "$ENV_FILE" ]; then
+            echo "::error::ENV_FILE not found or not readable: $ENV_FILE"
+            exit 1
+          fi
+
+          echo "--- Validating required variables ---"
+          REQUIRED_VARS="JWT_SECRET CORS_ALLOWED_ORIGINS XELANOTE_DB XELANOTE_ENV"
+          for var in $REQUIRED_VARS; do
+            val=$(grep "^${var}=" "$ENV_FILE" | head -1 | cut -d'=' -f2-)
+            if [ -z "$val" ]; then
+              echo "::error::Required variable $var is missing or empty in $ENV_FILE"
+              exit 1
+            fi
+          done
+
+          echo "--- Checking JWT_SECRET length ---"
+          JWT_LEN=$(grep "^JWT_SECRET=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '[:space:]' | wc -c)
+          if [ "$JWT_LEN" -lt 64 ]; then
+            echo "::error::JWT_SECRET must be at least 64 characters (found: $JWT_LEN)"
+            exit 1
+          fi
+
+          echo "--- Checking Docker daemon ---"
+          if ! docker info > /dev/null 2>&1; then
+            echo "::error::Docker daemon is not reachable"
+            exit 1
+          fi
+
+          echo "--- Checking Docker network ---"
+          if ! docker network inspect "$DOCKER_NETWORK" > /dev/null 2>&1; then
+            echo "::error::Docker network '$DOCKER_NETWORK' does not exist"
+            exit 1
+          fi
+
+          echo "--- Reading previous image for rollback ---"
+          PREV_IMAGE=$(docker inspect "$IMAGE_NAME" --format '{{.Config.Image}}' 2>/dev/null || echo "")
+          if [ -n "$PREV_IMAGE" ]; then
+            echo "Previous image: $PREV_IMAGE"
+          else
+            echo "::warning::No previous container found (first deploy?)"
+          fi
+          echo "PREV_IMAGE=$PREV_IMAGE" >> "$GITHUB_ENV"
+
+          echo "All pre-flight checks passed"
+
+      - name: Build image
+        run: |
+          set -euo pipefail
+
+          SHA=$(echo "${{ github.sha }}" | cut -c1-12)
+          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "$SHA")
+          echo "Building image with tag: $SHA (version: $VERSION)"
+
+          docker build --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$SHA" -t "$IMAGE_NAME:latest" .
+
+          echo "IMAGE_TAG=$SHA" >> "$GITHUB_ENV"
+
+      - name: Prepare run flags
+        run: |
+          set -euo pipefail
+
+          RUN_FLAGS="--detach \
+            --name $IMAGE_NAME \
+            --restart unless-stopped \
+            -p 127.0.0.1:8081:8080 \
+            --network $DOCKER_NETWORK \
+            -v xelanote_xelanote-data:/app/data \
+            --env-file $ENV_FILE \
+            --memory=512m --cpus=1 --pids-limit=200 \
+            --security-opt no-new-privileges --cap-drop ALL \
+            --read-only --tmpfs /tmp \
+            --log-driver json-file --log-opt max-size=10m --log-opt max-file=3"
+
+          echo "RUN_FLAGS<<EOF" >> "$GITHUB_ENV"
+          echo "$RUN_FLAGS" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Stop old container
+        run: |
+          set -euo pipefail
+
+          if docker ps -a --format '{{.Names}}' | grep -q "^${IMAGE_NAME}$"; then
+            echo "Stopping old container (30s grace period)..."
+            docker stop --timeout 30 "$IMAGE_NAME" || true
+            docker rm "$IMAGE_NAME" || true
+          else
+            echo "No existing container to stop"
+          fi
+
+      - name: Start new container
+        run: |
+          set -euo pipefail
+
+          echo "Starting container with image: $IMAGE_NAME:$IMAGE_TAG"
+          docker run $RUN_FLAGS "$IMAGE_NAME:$IMAGE_TAG"
+
+      - name: Health check
+        id: healthcheck
+        run: |
+          set -euo pipefail
+
+          echo "Waiting for container to become healthy..."
+          MAX_ATTEMPTS=30
+          SLEEP_SECONDS=2
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            RESPONSE=$(curl -fsS http://localhost:8081/health 2>/dev/null || echo "")
+            if [ "$RESPONSE" = "ok" ]; then
+              echo "Health check passed on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i/$MAX_ATTEMPTS: not ready (response: '$RESPONSE')"
+            sleep $SLEEP_SECONDS
+          done
+
+          echo "::error::Health check failed after $MAX_ATTEMPTS attempts ($(( MAX_ATTEMPTS * SLEEP_SECONDS ))s)"
+          exit 1
+
+      - name: Auto-rollback on failure
+        if: failure() && steps.healthcheck.outcome == 'failure' && env.PREV_IMAGE != ''
+        run: |
+          set -euo pipefail
+
+          echo "::warning::Health check failed - rolling back to $PREV_IMAGE"
+
+          docker stop --timeout 5 "$IMAGE_NAME" 2>/dev/null || true
+          docker rm "$IMAGE_NAME" 2>/dev/null || true
+
+          echo "Starting rollback container with: $PREV_IMAGE"
+          docker run $RUN_FLAGS "$PREV_IMAGE"
+
+          echo "Rollback container started. Verifying health..."
+          sleep 5
+          RESPONSE=$(curl -fsS http://localhost:8081/health 2>/dev/null || echo "")
+          if [ "$RESPONSE" = "ok" ]; then
+            echo "Rollback successful - previous version is healthy"
+          else
+            echo "::error::Rollback container also unhealthy (response: '$RESPONSE')"
+          fi
+
+          echo "::error::Deployment failed - rolled back to $PREV_IMAGE"
+          exit 1
+
+      - name: Cleanup old images and cache
+        if: success()
+        run: |
+          set -euo pipefail
+
+          # Keep only the 3 most recent SHA-tagged xelanote images
+          KEEP=3
+          OLD_IMAGES=$(docker images "$IMAGE_NAME" --format '{{.Tag}} {{.CreatedAt}}' \
+            | grep -v latest \
+            | sort -k2 -r \
+            | tail -n +$((KEEP + 1)) \
+            | awk '{print "'"$IMAGE_NAME"':" $1}')
+
+          if [ -n "$OLD_IMAGES" ]; then
+            echo "Removing old images (keeping $KEEP most recent):"
+            echo "$OLD_IMAGES"
+            echo "$OLD_IMAGES" | xargs docker rmi 2>/dev/null || true
+          else
+            echo "No old images to remove"
+          fi
+
+          # Prune dangling images
+          docker image prune -f
+
+          # Prune build cache older than 24h, keep max 2GB
+          docker builder prune --filter "until=24h" --keep-storage=2GB -f
+
+          # Clean runner cache (checkout artifacts older than 7 days)
+          find /var/lib/forgejo-runner/.cache -type d -mindepth 2 -maxdepth 2 -mtime +7 -exec rm -rf {} + 2>/dev/null || true
+
+          echo "Cleanup complete"
+          df -h / | tail -1
+
+      - name: Summary
+        if: always()
+        run: |
+          SHA=$(echo "${{ github.sha }}" | cut -c1-12)
+          echo "## Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | \`$IMAGE_NAME:$SHA\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Status | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| URL | https://<STAGING_URL> |" >> "$GITHUB_STEP_SUMMARY"

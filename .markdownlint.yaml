@@ -1,0 +1,16 @@
+# markdownlint configuration for xelanote
+# Docs: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+#
+# Strategy: Start with structural rules that catch real problems.
+# Cosmetic/whitespace rules disabled until one-time cleanup.
+
+default: false  # Disable all rules by default, then enable selectively
+
+# --- Enabled: structural rules that catch real issues ---
+MD001: true   # no-missing-heading-levels (h1 -> h3 without h2)
+MD003:         # heading-style
+  style: atx
+MD009: true   # no-trailing-spaces
+MD011: true   # no-reversed-links
+MD025: true   # single-h1
+MD038: true   # no-space-in-code

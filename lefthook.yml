@@ -1,0 +1,27 @@
+# lefthook.yml - Git hooks for xelanote
+# Install: lefthook install
+# Docs: https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    gofmt:
+      glob: "backend/**/*.go"
+      run: cd backend && test -z "$(gofmt -l {staged_files})" || (echo "gofmt needed on:"; gofmt -l {staged_files}; exit 1)
+
+    go-vet:
+      glob: "backend/**/*.go"
+      run: cd backend && CGO_ENABLED=1 go vet -tags "fts5 sqlite_crypt" ./...
+
+    eslint:
+      glob: "frontend/src/**/*.{ts,svelte,js}"
+      run: cd frontend && npx eslint {staged_files}
+
+    prettier:
+      glob: "frontend/src/**/*.{ts,svelte,js,css}"
+      run: cd frontend && npx prettier --check {staged_files}
+
+    markdownlint:
+      glob: "**/*.md"
+      exclude: "node_modules|archive|.cache|SALT_BUG_FIX.md|ENCRYPTION_DEBUG_LOG.md|LIBSODIUM_ROLLBACK.md"
+      run: cd frontend && npx markdownlint-cli2 {staged_files}

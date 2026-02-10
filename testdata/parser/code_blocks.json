@@ -1,0 +1,52 @@
+[
+  {
+    "name": "link_in_code_fence",
+    "input": "```\n[[Link]]\n```",
+    "expected": []
+  },
+  {
+    "name": "link_in_code_fence_with_lang",
+    "input": "```javascript\n[[Link]]\n```",
+    "expected": []
+  },
+  {
+    "name": "link_before_fence",
+    "input": "[[Before]]\n```\n[[Inside]]\n```",
+    "expected": [
+      {"target_title": "Before", "span_start": 0, "span_end": 10}
+    ]
+  },
+  {
+    "name": "link_after_fence",
+    "input": "```\n[[Inside]]\n```\n[[After]]",
+    "expected": [
+      {"target_title": "After", "span_start": 19, "span_end": 28}
+    ]
+  },
+  {
+    "name": "inline_code_single",
+    "input": "Use `[[Link]]` here",
+    "expected": []
+  },
+  {
+    "name": "inline_code_double",
+    "input": "Use ``[[Link]]`` here",
+    "expected": []
+  },
+  {
+    "name": "link_after_inline_code",
+    "input": "`code` [[Link]]",
+    "expected": [
+      {"target_title": "Link", "span_start": 7, "span_end": 15}
+    ]
+  },
+  {
+    "name": "mixed_code_and_links",
+    "input": "[[A]] `x` [[B]] ```\n[[C]]\n``` [[D]]",
+    "expected": [
+      {"target_title": "A", "span_start": 0, "span_end": 5},
+      {"target_title": "B", "span_start": 10, "span_end": 15},
+      {"target_title": "D", "span_start": 30, "span_end": 35}
+    ]
+  }
+]

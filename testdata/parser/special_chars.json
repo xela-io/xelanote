@@ -1,0 +1,93 @@
+[
+  {
+    "name": "parentheses",
+    "input": "[[Note (Draft)]]",
+    "expected": [
+      {"target_title": "Note (Draft)", "span_start": 0, "span_end": 16}
+    ]
+  },
+  {
+    "name": "hyphen",
+    "input": "[[2024-01-15]]",
+    "expected": [
+      {"target_title": "2024-01-15", "span_start": 0, "span_end": 14}
+    ]
+  },
+  {
+    "name": "underscore",
+    "input": "[[my_note_title]]",
+    "expected": [
+      {"target_title": "my_note_title", "span_start": 0, "span_end": 17}
+    ]
+  },
+  {
+    "name": "colon",
+    "input": "[[Project: Alpha]]",
+    "expected": [
+      {"target_title": "Project: Alpha", "span_start": 0, "span_end": 18}
+    ]
+  },
+  {
+    "name": "ampersand",
+    "input": "[[Tom & Jerry]]",
+    "expected": [
+      {"target_title": "Tom & Jerry", "span_start": 0, "span_end": 15}
+    ]
+  },
+  {
+    "name": "at_sign",
+    "input": "[[@mention]]",
+    "expected": [
+      {"target_title": "@mention", "span_start": 0, "span_end": 12}
+    ]
+  },
+  {
+    "name": "hash",
+    "input": "[[#tag]]",
+    "expected": [
+      {"target_title": "#tag", "span_start": 0, "span_end": 8}
+    ]
+  },
+  {
+    "name": "single_bracket_in_content",
+    "input": "[[Note [1]]]",
+    "expected": [
+      {"target_title": "Note [1", "span_start": 0, "span_end": 11}
+    ]
+  },
+  {
+    "name": "quotes",
+    "input": "[[\"Quoted Title\"]]",
+    "expected": [
+      {"target_title": "\"Quoted Title\"", "span_start": 0, "span_end": 18}
+    ]
+  },
+  {
+    "name": "apostrophe",
+    "input": "[[John's Notes]]",
+    "expected": [
+      {"target_title": "John's Notes", "span_start": 0, "span_end": 16}
+    ]
+  },
+  {
+    "name": "forward_slash",
+    "input": "[[Path/To/Note]]",
+    "expected": [
+      {"target_title": "Path/To/Note", "span_start": 0, "span_end": 16}
+    ]
+  },
+  {
+    "name": "question_mark",
+    "input": "[[What is this?]]",
+    "expected": [
+      {"target_title": "What is this?", "span_start": 0, "span_end": 17}
+    ]
+  },
+  {
+    "name": "exclamation",
+    "input": "[[Important!]]",
+    "expected": [
+      {"target_title": "Important!", "span_start": 0, "span_end": 14}
+    ]
+  }
+]

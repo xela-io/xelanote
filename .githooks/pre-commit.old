@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pre-commit hook: Warn (non-blocking) if CHANGELOG.md is not part of the commit.
+
+staged_files=$(git diff --cached --name-only)
+
+# Skip if no files staged or merge commit
+if [ -z "$staged_files" ] || [ -f ".git/MERGE_HEAD" ]; then
+    exit 0
+fi
+
+# CHANGELOG.md is included - all good
+if echo "$staged_files" | grep -q "^CHANGELOG.md$"; then
+    exit 0
+fi
+
+# Non-blocking reminder
+echo ""
+echo "REMINDER: CHANGELOG.md is not included in this commit."
+echo "If this contains user-facing changes, consider updating the changelog."
+echo ""
+exit 0

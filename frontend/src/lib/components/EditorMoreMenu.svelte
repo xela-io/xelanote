@@ -1,0 +1,275 @@
+<script lang="ts">
+  import {
+    Trash2,
+    FolderInput,
+    Palette,
+    HelpCircle,
+    Save,
+    Sparkles,
+    Indent,
+    Outdent,
+    Share2,
+    Lock,
+    LockOpen,
+    Download,
+  } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+  import * as autosave from '$lib/stores/autosave.svelte';
+  import { FEATURE_FLAGS } from '$lib/config';
+
+  interface Props {
+    onDelete: () => void;
+    onMove: () => void;
+    onExport: () => void;
+    onColorPicker: () => void;
+    onHelp: () => void;
+    onIndent: () => void;
+    onOutdent: () => void;
+    onAIToggle: () => void;
+    onShare?: () => void;
+    onEncryptionToggle?: () => void;
+    aiEnabled: boolean;
+    isEncrypted?: boolean;
+    onClose: () => void;
+    triggerRect?: {
+      top: number;
+      right: number;
+      bottom: number;
+      left: number;
+      width: number;
+      height: number;
+    } | null;
+  }
+
+  const {
+    onDelete,
+    onMove,
+    onExport,
+    onColorPicker,
+    onHelp,
+    onIndent,
+    onOutdent,
+    onAIToggle,
+    onShare,
+    onEncryptionToggle,
+    aiEnabled,
+    isEncrypted = false,
+    onClose,
+    triggerRect = null,
+  }: Props = $props();
+
+  // Compute desktop position from trigger button rect
+  const desktopStyle = $derived.by(() => {
+    if (!triggerRect) return '';
+    const top = triggerRect.bottom + 4;
+    const right = window.innerWidth - triggerRect.right;
+    return `top: ${top}px; right: ${right}px;`;
+  });
+
+  function handleAutoSaveToggle() {
+    autosave.setAutoSaveEnabled(!autosave.getAutoSaveEnabled());
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') onClose();
+  }
+
+  function handleBackdropClick() {
+    onClose();
+  }
+
+  function handleMenuClick(e: MouseEvent) {
+    e.stopPropagation();
+  }
+</script>
+
+<!-- Backdrop -->
+<div
+  class="fixed inset-0 z-40 bg-black/50 sm:bg-transparent"
+  onclick={handleBackdropClick}
+  onkeydown={handleKeydown}
+  tabindex="-1"
+  role="presentation"
+></div>
+
+<!-- Menu: Bottom sheet on mobile, fixed-positioned near button on desktop -->
+<div
+  class="fixed z-50 bg-background p-4
+		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
+		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
+  style={desktopStyle}
+  role="menu"
+  aria-label={$_('component.editor.toolbar.more_options')}
+  tabindex="-1"
+  onkeydown={handleKeydown}
+  onclick={handleMenuClick}
+>
+  <!-- Mobile handle -->
+  <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
+
+  <div class="space-y-1">
+    <button
+      type="button"
+      onclick={() => {
+        onIndent();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Indent size={18} />
+      {$_('component.editor.toolbar.indent')}
+    </button>
+
+    <button
+      type="button"
+      onclick={() => {
+        onOutdent();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Outdent size={18} />
+      {$_('component.editor.toolbar.outdent')}
+    </button>
+
+    <hr class="my-2 border-border" />
+
+    {#if FEATURE_FLAGS.colorSyntax}
+      <button
+        type="button"
+        onclick={() => {
+          onColorPicker();
+          onClose();
+        }}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+        role="menuitem"
+      >
+        <Palette size={18} />
+        {$_('component.editor.toolbar.color')}
+      </button>
+    {/if}
+
+    {#if onEncryptionToggle}
+      <button
+        type="button"
+        onclick={() => {
+          onEncryptionToggle();
+          onClose();
+        }}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+        role="menuitem"
+      >
+        {#if isEncrypted}
+          <LockOpen size={18} />
+          {$_('component.editor.toolbar.decrypt_note')}
+        {:else}
+          <Lock size={18} />
+          {$_('component.editor.toolbar.encrypt_note')}
+        {/if}
+      </button>
+    {/if}
+
+    {#if onShare}
+      <button
+        type="button"
+        onclick={() => {
+          onShare();
+          onClose();
+        }}
+        disabled={isEncrypted}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        role="menuitem"
+      >
+        <Share2 size={18} />
+        {$_('component.editor.toolbar.share')}
+      </button>
+    {/if}
+
+    <button
+      type="button"
+      onclick={() => {
+        onExport();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Download size={18} />
+      {$_('component.editor.toolbar.export_note')}
+    </button>
+
+    <button
+      type="button"
+      onclick={() => {
+        onMove();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <FolderInput size={18} />
+      {$_('component.editor.toolbar.move')}
+    </button>
+
+    <button
+      type="button"
+      onclick={() => {
+        onDelete();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left text-destructive hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Trash2 size={18} />
+      {$_('component.editor.toolbar.delete_note')}
+    </button>
+
+    <hr class="my-2 border-border" />
+
+    <button
+      type="button"
+      onclick={() => {
+        onAIToggle();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      class:text-primary={aiEnabled}
+      role="menuitem"
+    >
+      <Sparkles size={18} />
+      {aiEnabled
+        ? $_('component.editor.toolbar.ai_disable')
+        : $_('component.editor.toolbar.ai_enable')}
+    </button>
+
+    <button
+      type="button"
+      onclick={() => {
+        onHelp();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <HelpCircle size={18} />
+      {$_('component.editor.toolbar.help')}
+    </button>
+
+    <button
+      type="button"
+      onclick={() => {
+        handleAutoSaveToggle();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Save size={18} />
+      {autosave.getAutoSaveEnabled()
+        ? $_('component.editor.toolbar.autosave_disable')
+        : $_('component.editor.toolbar.autosave_enable')}
+    </button>
+  </div>
+</div>

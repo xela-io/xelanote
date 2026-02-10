@@ -1,0 +1,57 @@
+[
+  {
+    "name": "simple_link",
+    "input": "[[Note]]",
+    "expected": [
+      {"target_title": "Note", "span_start": 0, "span_end": 8}
+    ]
+  },
+  {
+    "name": "link_with_alias",
+    "input": "[[Note|Display]]",
+    "expected": [
+      {"target_title": "Note", "alias": "Display", "span_start": 0, "span_end": 16}
+    ]
+  },
+  {
+    "name": "multiple_links",
+    "input": "See [[A]] and [[B]] here",
+    "expected": [
+      {"target_title": "A", "span_start": 4, "span_end": 9},
+      {"target_title": "B", "span_start": 14, "span_end": 19}
+    ]
+  },
+  {
+    "name": "link_with_spaces",
+    "input": "[[My Long Title]]",
+    "expected": [
+      {"target_title": "My Long Title", "span_start": 0, "span_end": 17}
+    ]
+  },
+  {
+    "name": "whitespace_trimmed",
+    "input": "[[  Trimmed  ]]",
+    "expected": [
+      {"target_title": "Trimmed", "span_start": 0, "span_end": 15}
+    ]
+  },
+  {
+    "name": "empty_link_ignored",
+    "input": "[[]]",
+    "expected": []
+  },
+  {
+    "name": "whitespace_only_ignored",
+    "input": "[[   ]]",
+    "expected": []
+  },
+  {
+    "name": "consecutive_links",
+    "input": "[[A]][[B]][[C]]",
+    "expected": [
+      {"target_title": "A", "span_start": 0, "span_end": 5},
+      {"target_title": "B", "span_start": 5, "span_end": 10},
+      {"target_title": "C", "span_start": 10, "span_end": 15}
+    ]
+  }
+]

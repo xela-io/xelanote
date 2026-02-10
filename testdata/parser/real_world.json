@@ -1,0 +1,42 @@
+[
+  {
+    "name": "typical_note",
+    "input": "# Meeting Notes\n\nDiscussed [[Project Alpha]] with the team.\n\nSee also:\n- [[Architecture Decision]]\n- [[Technical Debt|Tech Debt List]]\n\n```javascript\nconst link = '[[Not a Link]]';\n```\n\nNext meeting: [[2024-01-15 Meeting]]",
+    "expected": [
+      {"target_title": "Project Alpha", "span_start": 27, "span_end": 44},
+      {"target_title": "Architecture Decision", "span_start": 73, "span_end": 98},
+      {"target_title": "Technical Debt", "alias": "Tech Debt List", "span_start": 101, "span_end": 134},
+      {"target_title": "2024-01-15 Meeting", "span_start": 200, "span_end": 222}
+    ]
+  },
+  {
+    "name": "markdown_heavy",
+    "input": "# Title\n\n**Bold [[Link1]]** and *italic [[Link2]]*\n\n> Quote with [[Link3]]\n\n1. First [[Item1]]\n2. Second [[Item2]]",
+    "expected": [
+      {"target_title": "Link1", "span_start": 16, "span_end": 25},
+      {"target_title": "Link2", "span_start": 40, "span_end": 49},
+      {"target_title": "Link3", "span_start": 65, "span_end": 74},
+      {"target_title": "Item1", "span_start": 85, "span_end": 94},
+      {"target_title": "Item2", "span_start": 105, "span_end": 114}
+    ]
+  },
+  {
+    "name": "dense_links",
+    "input": "[[A]], [[B]], [[C]], [[D]], [[E]]",
+    "expected": [
+      {"target_title": "A", "span_start": 0, "span_end": 5},
+      {"target_title": "B", "span_start": 7, "span_end": 12},
+      {"target_title": "C", "span_start": 14, "span_end": 19},
+      {"target_title": "D", "span_start": 21, "span_end": 26},
+      {"target_title": "E", "span_start": 28, "span_end": 33}
+    ]
+  },
+  {
+    "name": "links_in_table",
+    "input": "| Name | Link |\n|------|------|\n| A | [[Page A]] |\n| B | [[Page B]] |",
+    "expected": [
+      {"target_title": "Page A", "span_start": 38, "span_end": 48},
+      {"target_title": "Page B", "span_start": 57, "span_end": 67}
+    ]
+  }
+]

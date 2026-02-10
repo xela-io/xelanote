@@ -304,7 +304,11 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Decode Base64 encrypted content (already validated)
-		encryptedBlob, _ := base64.StdEncoding.DecodeString(req.EncryptedContent)
+		encryptedBlob, err := base64.StdEncoding.DecodeString(req.EncryptedContent)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid encrypted content")
+			return
+		}
 
 		// Create encrypted note (journal, recipe, or regular)
 		if req.NoteType == "journal" {
@@ -481,7 +485,11 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Decode Base64 encrypted content (already validated)
-		encryptedBlob, _ := base64.StdEncoding.DecodeString(req.EncryptedContent)
+		encryptedBlob, err := base64.StdEncoding.DecodeString(req.EncryptedContent)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid encrypted content")
+			return
+		}
 
 		// Update encrypted note
 		note, err = s.noteService.UpdateEncryptedNote(
@@ -550,7 +558,11 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast update to WebSocket clients
-	payload, _ := json.Marshal(note)
+	payload, err := json.Marshal(note)
+	if err != nil {
+		s.respondInternalErr(w, "failed to encode note update", err)
+		return
+	}
 	s.wsManager.BroadcastToUser(userID, websocket.Message{
 		Type:    "note.updated",
 		Payload: payload,

@@ -43,6 +43,7 @@
   import { registerPwaUpdates } from '$lib/routes/layout/pwa';
   import { createLayoutInteractions } from '$lib/routes/layout/interactions';
   import { createViewportHandlers } from '$lib/routes/layout/viewport';
+  import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -385,10 +386,15 @@
 
   // Warn about unsaved changes when navigating (only if auto-save is disabled)
   beforeNavigate(({ cancel }) => {
-    if (!autosave.getAutoSaveEnabled() && notes.getIsDirty()) {
-      if (!confirm($_('editor.unsaved_warning'))) {
-        cancel();
-      }
+    if (
+      shouldBlockNavigation({
+        autosaveEnabled: () => autosave.getAutoSaveEnabled(),
+        isDirty: () => notes.getIsDirty(),
+        confirm: (message) => confirm(message),
+        getUnsavedMessage: () => $_('editor.unsaved_warning'),
+      })
+    ) {
+      cancel();
     }
   });
 </script>

@@ -9,6 +9,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import type { AIAction, Tag } from '$lib/api';
+  import type { AITransformState } from '$lib/editor/ai-actions';
   import { ApiError } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
@@ -28,7 +29,8 @@
     uploadImages,
   } from '$lib/editor/image-upload';
   import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
-  import { extractHeadings,renderMarkdown } from '$lib/editor/markdown';
+  import { applyAITransform as applyAITransformToEditor, prepareAITransform } from '$lib/editor/ai-actions';
+  import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { taskCollapse } from '$lib/editor/task-collapse';
   import { taskSortable } from '$lib/editor/task-sortable';
@@ -82,15 +84,7 @@
   let showAIActionsDropdown = $state(false);
   let aiActionsTriggerRect = $state<DOMRect | null>(null);
   let showAITransformDialog = $state(false);
-  let aiTransformState = $state<{
-    action: AIAction;
-    customPrompt?: string;
-    originalText: string;
-    selectionFrom: number;
-    selectionTo: number;
-    isFullContent: boolean;
-    initialContentHash: string;
-  } | null>(null);
+  let aiTransformState = $state<AITransformState | null>(null);
   // Find & Replace state
   let showFindReplace = $state(false);
   let findReplaceQuery = $state('');
@@ -375,18 +369,6 @@
     }
   }
 
-  // Client-side hash for conflict detection (first 16 hex chars of SHA-256)
-  async function computeContentHash(content: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(content);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray
-      .slice(0, 8)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-
   // Open AI Actions dropdown
   function handleAIActionsClick(rect: DOMRect) {
     const currentNote = notes.getCurrentNote();
@@ -410,64 +392,24 @@
     const currentNote = notes.getCurrentNote();
     if (!currentNote || !editorView) return;
 
-    // Get selection or full content
-    const selection = editorView.state.selection.main;
-    const hasSelection = selection.from !== selection.to;
-
-    let textToTransform: string;
-    let selectionFrom: number;
-    let selectionTo: number;
-    let isFullContent: boolean;
-
-    if (hasSelection) {
-      // Transform selected text
-      textToTransform = editorView.state.doc.sliceString(selection.from, selection.to);
-      selectionFrom = selection.from;
-      selectionTo = selection.to;
-      isFullContent = false;
-    } else {
-      // Transform entire note content
-      textToTransform = currentNote.content;
-      selectionFrom = 0;
-      selectionTo = editorView.state.doc.length;
-      isFullContent = true;
-    }
-
-    // Validate content length
-    if (textToTransform.trim().length < 10) {
-      toast.error($_('error.ai_transform.too_short'));
-      return;
-    }
-
-    // Compute hash for conflict detection
-    const initialContentHash = await computeContentHash(currentNote.content);
-
-    // Store state and open dialog
-    aiTransformState = {
-      action,
-      customPrompt,
-      originalText: textToTransform,
-      selectionFrom,
-      selectionTo,
-      isFullContent,
-      initialContentHash,
-    };
-    showAITransformDialog = true;
+    await prepareAITransform(action, customPrompt, {
+      getCurrentContent: () => currentNote.content,
+      getEditorView: () => editorView,
+      setDialogOpen: (open) => {
+        showAITransformDialog = open;
+      },
+      setTransformState: (state) => {
+        aiTransformState = state;
+      },
+      showError: () => {
+        toast.error($_('error.ai_transform.too_short'));
+      },
+    });
   }
 
   // Apply transformed content from dialog
   function applyAITransform(transformedText: string) {
-    if (!editorView || !aiTransformState) return;
-
-    const { selectionFrom, selectionTo } = aiTransformState;
-
-    editorView.dispatch({
-      changes: {
-        from: selectionFrom,
-        to: selectionTo,
-        insert: transformedText,
-      },
-    });
+    applyAITransformToEditor(editorView, aiTransformState, transformedText);
 
     // Schedule auto-save
     notes.scheduleAutoSave();

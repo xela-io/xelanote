@@ -80,6 +80,9 @@ func TestSharingService_ShareFolderValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create folder: %v", err)
 	}
+	if err := database.UpdateFolderEncryptionDefault(owner.ID, folder.ID, false); err != nil {
+		t.Fatalf("failed to ensure folder encryption default is false: %v", err)
+	}
 
 	t.Run("should reject self-share", func(t *testing.T) {
 		_, err := service.ShareFolder(owner.ID, folder.ID, owner.Username, "viewer")

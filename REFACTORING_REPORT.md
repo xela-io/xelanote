@@ -183,6 +183,22 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 - `lint-staged`/Husky zusaetzlich zu Lefthook (falls zusaetzliche Hook-Logik gewuenscht).
 - Import-Sortierung (Go: `gofumpt`/`goimports`, Frontend: `eslint-plugin-simple-import-sort`).
 
+## Phase 2.1 Fortschritt (Backend Reliability Pass)
+
+### Erledigt
+- **Encrypted note decode/marshal guardrails**
+  - `backend/internal/api/notes.go` (Base64-Decode Fehler + JSON Marshal Fehler behandelt)
+
+- **LLM Client: Error Body Read Handling**
+  - `backend/internal/llm/claude.go`
+  - `backend/internal/llm/gemini.go`
+
+- **Error Report Service: Error Body Read Handling**
+  - `backend/internal/service/errorreport.go`
+
+### Offen
+- Weitere Error-Handling-Hotspots (z.B. `api/journal.go`, `db/*` RowsAffected/LastInsertId).
+
 ## Fortschritt
 
 | Phase | Beschreibung | Commit | Status |

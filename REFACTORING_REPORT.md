@@ -484,6 +484,8 @@ frontend/src/lib/api/
 - `frontend/src/lib/components/Sidebar.svelte`: Drag/Drop + Touch-Reorder nach `frontend/src/lib/components/sidebar/sidebar-dnd.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Create/Logout Actions nach `frontend/src/lib/components/sidebar/sidebar-actions.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Escape-Handler nach `frontend/src/lib/components/sidebar/sidebar-escape.ts` ausgelagert.
+- `frontend/src/routes/settings/+page.svelte`: Claude/Gemini-API-Key-Flow nach `frontend/src/lib/routes/settings/ai-keys.ts` ausgelagert.
+- `frontend/src/routes/settings/+page.svelte`: Migration-Stats-Logik nach `frontend/src/lib/routes/settings/migration-stats.ts` ausgelagert.
 
 ---
 

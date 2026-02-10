@@ -39,6 +39,16 @@
   import { getDefaultServerUrl,getServerUrl, isTauri, setServerUrl } from '$lib/config';
   import { e2eEncryption } from '$lib/crypto/e2e';
   import type { WebAuthnCredential } from '$lib/crypto/webauthn';
+  import {
+    deleteApiKey,
+    loadApiKeyStatus,
+    saveApiKey,
+    type ApiKeyFormState,
+  } from '$lib/routes/settings/ai-keys';
+  import {
+    loadMigrationStats as loadMigrationStatsHelper,
+    type MigrationStats,
+  } from '$lib/routes/settings/migration-stats';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -95,13 +105,13 @@
   let webAuthnCredentials = $state<WebAuthnCredential[]>([]);
 
   // Migration statistics state
-  let migrationStats = $state<{ total: number; encrypted: number; plaintext: number } | null>(null);
+  let migrationStats = $state<MigrationStats | null>(null);
   let isLoadingMigrationStats = $state(false);
 
   // Claude API Key state (BYOK)
   let claudeApiKeyStatus = $state<api.ClaudeAPIKeyStatus | null>(null);
   let isLoadingClaudeKeyStatus = $state(false);
-  const claudeKeyForm = $state({
+  const claudeKeyForm = $state<ApiKeyFormState>({
     apiKey: '',
     showKey: false,
     error: '',
@@ -112,7 +122,7 @@
   // Gemini API Key state (BYOK)
   let geminiApiKeyStatus = $state<api.GeminiAPIKeyStatus | null>(null);
   let isLoadingGeminiKeyStatus = $state(false);
-  const geminiKeyForm = $state({
+  const geminiKeyForm = $state<ApiKeyFormState>({
     apiKey: '',
     showKey: false,
     error: '',
@@ -171,152 +181,118 @@
     features.loadRecipeFeature();
   });
 
+  const updateClaudeKeyForm = (next: Partial<ApiKeyFormState>) => {
+    Object.assign(claudeKeyForm, next);
+  };
+
+  const updateGeminiKeyForm = (next: Partial<ApiKeyFormState>) => {
+    Object.assign(geminiKeyForm, next);
+  };
+
   async function loadClaudeApiKeyStatus() {
-    isLoadingClaudeKeyStatus = true;
-    try {
-      claudeApiKeyStatus = await api.getClaudeAPIKeyStatus();
-    } catch (err) {
-      console.error('Failed to load Claude API key status:', err);
-      claudeApiKeyStatus = null;
-    } finally {
-      isLoadingClaudeKeyStatus = false;
-    }
+    await loadApiKeyStatus({
+      getStatus: () => api.getClaudeAPIKeyStatus(),
+      setStatus: (status) => {
+        claudeApiKeyStatus = status;
+      },
+      setLoading: (value) => {
+        isLoadingClaudeKeyStatus = value;
+      },
+      errorContext: 'Claude',
+    });
   }
 
   async function loadGeminiApiKeyStatus() {
-    isLoadingGeminiKeyStatus = true;
-    try {
-      geminiApiKeyStatus = await api.getGeminiAPIKeyStatus();
-    } catch (err) {
-      console.error('Failed to load Gemini API key status:', err);
-      geminiApiKeyStatus = null;
-    } finally {
-      isLoadingGeminiKeyStatus = false;
-    }
+    await loadApiKeyStatus({
+      getStatus: () => api.getGeminiAPIKeyStatus(),
+      setStatus: (status) => {
+        geminiApiKeyStatus = status;
+      },
+      setLoading: (value) => {
+        isLoadingGeminiKeyStatus = value;
+      },
+      errorContext: 'Gemini',
+    });
   }
 
   async function handleSaveClaudeApiKey(e: Event) {
-    e.preventDefault();
-    claudeKeyForm.error = '';
-
-    if (!claudeKeyForm.apiKey.trim()) {
-      claudeKeyForm.error = $_('page.settings.ai.api_key_required');
-      return;
-    }
-
-    if (!claudeKeyForm.apiKey.startsWith('sk-ant-')) {
-      claudeKeyForm.error = $_('page.settings.ai.claude_key_invalid_format');
-      return;
-    }
-
-    claudeKeyForm.isSaving = true;
-    try {
-      await api.setClaudeAPIKey(claudeKeyForm.apiKey.trim());
-      claudeKeyForm.apiKey = '';
-      claudeKeyForm.showKey = false;
-      await loadClaudeApiKeyStatus();
-    } catch (err) {
-      console.error('Failed to save Claude API key:', err);
-      claudeKeyForm.error = $_('page.settings.ai.api_key_save_failed');
-    } finally {
-      claudeKeyForm.isSaving = false;
-    }
+    await saveApiKey(e, {
+      form: claudeKeyForm,
+      setForm: updateClaudeKeyForm,
+      validate: (value) => {
+        if (!value) return $_('page.settings.ai.api_key_required');
+        if (!value.startsWith('sk-ant-')) {
+          return $_('page.settings.ai.claude_key_invalid_format');
+        }
+        return null;
+      },
+      save: (value) => api.setClaudeAPIKey(value),
+      reloadStatus: loadClaudeApiKeyStatus,
+      saveError: $_('page.settings.ai.api_key_save_failed'),
+    });
   }
 
   async function handleDeleteClaudeApiKey() {
-    const confirmed = await dialog.confirm({
-      title: $_('page.settings.ai.delete_claude_key_title'),
-      message: $_('page.settings.ai.delete_claude_key_confirm'),
-      confirmText: $_('common.delete'),
-      cancelText: $_('common.cancel'),
-      variant: 'danger',
+    await deleteApiKey({
+      confirm: () =>
+        dialog.confirm({
+          title: $_('page.settings.ai.delete_claude_key_title'),
+          message: $_('page.settings.ai.delete_claude_key_confirm'),
+          confirmText: $_('common.delete'),
+          cancelText: $_('common.cancel'),
+          variant: 'danger',
+        }),
+      setForm: updateClaudeKeyForm,
+      deleteKey: () => api.deleteClaudeAPIKey(),
+      reloadStatus: loadClaudeApiKeyStatus,
     });
-
-    if (!confirmed) return;
-
-    claudeKeyForm.isDeleting = true;
-    try {
-      await api.deleteClaudeAPIKey();
-      await loadClaudeApiKeyStatus();
-    } catch (err) {
-      console.error('Failed to delete Claude API key:', err);
-    } finally {
-      claudeKeyForm.isDeleting = false;
-    }
   }
 
   async function handleSaveGeminiApiKey(e: Event) {
-    e.preventDefault();
-    geminiKeyForm.error = '';
-
-    if (!geminiKeyForm.apiKey.trim()) {
-      geminiKeyForm.error = $_('page.settings.ai.api_key_required');
-      return;
-    }
-
-    if (!geminiKeyForm.apiKey.startsWith('AIza')) {
-      geminiKeyForm.error = $_('page.settings.ai.gemini_key_invalid_format');
-      return;
-    }
-
-    geminiKeyForm.isSaving = true;
-    try {
-      await api.setGeminiAPIKey(geminiKeyForm.apiKey.trim());
-      geminiKeyForm.apiKey = '';
-      geminiKeyForm.showKey = false;
-      await loadGeminiApiKeyStatus();
-    } catch (err) {
-      console.error('Failed to save Gemini API key:', err);
-      geminiKeyForm.error = $_('page.settings.ai.api_key_save_failed');
-    } finally {
-      geminiKeyForm.isSaving = false;
-    }
+    await saveApiKey(e, {
+      form: geminiKeyForm,
+      setForm: updateGeminiKeyForm,
+      validate: (value) => {
+        if (!value) return $_('page.settings.ai.api_key_required');
+        if (!value.startsWith('AIza')) {
+          return $_('page.settings.ai.gemini_key_invalid_format');
+        }
+        return null;
+      },
+      save: (value) => api.setGeminiAPIKey(value),
+      reloadStatus: loadGeminiApiKeyStatus,
+      saveError: $_('page.settings.ai.api_key_save_failed'),
+    });
   }
 
   async function handleDeleteGeminiApiKey() {
-    const confirmed = await dialog.confirm({
-      title: $_('page.settings.ai.delete_gemini_key_title'),
-      message: $_('page.settings.ai.delete_gemini_key_confirm'),
-      confirmText: $_('common.delete'),
-      cancelText: $_('common.cancel'),
-      variant: 'danger',
+    await deleteApiKey({
+      confirm: () =>
+        dialog.confirm({
+          title: $_('page.settings.ai.delete_gemini_key_title'),
+          message: $_('page.settings.ai.delete_gemini_key_confirm'),
+          confirmText: $_('common.delete'),
+          cancelText: $_('common.cancel'),
+          variant: 'danger',
+        }),
+      setForm: updateGeminiKeyForm,
+      deleteKey: () => api.deleteGeminiAPIKey(),
+      reloadStatus: loadGeminiApiKeyStatus,
     });
-
-    if (!confirmed) return;
-
-    geminiKeyForm.isDeleting = true;
-    try {
-      await api.deleteGeminiAPIKey();
-      await loadGeminiApiKeyStatus();
-    } catch (err) {
-      console.error('Failed to delete Gemini API key:', err);
-    } finally {
-      geminiKeyForm.isDeleting = false;
-    }
   }
 
   async function loadMigrationStats() {
-    isLoadingMigrationStats = true;
-    try {
-      const result = await api.listNotes({ limit: 10000 });
-      const notes = result.notes;
-      const encrypted = notes.filter(
-        (n) => n.content_encrypted && n.encryption_version === 1
-      ).length;
-      const plaintext = notes.filter(
-        (n) => !n.content_encrypted || n.encryption_version === 0
-      ).length;
-      migrationStats = {
-        total: notes.length,
-        encrypted,
-        plaintext,
-      };
-    } catch (err) {
-      console.error('Failed to load migration stats:', err);
-      migrationStats = null;
-    } finally {
-      isLoadingMigrationStats = false;
-    }
+    await loadMigrationStatsHelper({
+      listNotes: (options) => api.listNotes(options),
+      isEncrypted: (note) => note.content_encrypted && note.encryption_version === 1,
+      isPlaintext: (note) => !note.content_encrypted || note.encryption_version === 0,
+      setStats: (stats) => {
+        migrationStats = stats;
+      },
+      setLoading: (value) => {
+        isLoadingMigrationStats = value;
+      },
+    });
   }
 
   async function load2FAStatus() {

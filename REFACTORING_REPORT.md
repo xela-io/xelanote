@@ -188,6 +188,12 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Dokumentation fuer neuere Refactorings**
   - Modul-Snapshot + How-To in `REFACTORING_REPORT.md` sowie API-Struktur in `README.md`/`docs/development.md`.
 
+- **Frontend Quality Gates ausgefuehrt**
+  - `npm run lint` (nach Auto-Fix) sauber.
+  - `npm run format` (Prettier) ausgefuehrt.
+  - `make test-frontend` (Vitest) gruen.
+  - `npm run typecheck` (svelte-check) gruen, Warnungen bereinigt.
+
 ### Offen
 - Keine (optional abgeschlossen).
 

@@ -22,6 +22,12 @@
   import type { DropPosition,TouchDragData } from '$lib/actions/touchdrag';
   import { touchdrag } from '$lib/actions/touchdrag';
   import { getConfig } from '$lib/api';
+  import {
+    handleSidebarResizeDblClick,
+    handleSidebarResizeEnd,
+    handleSidebarResizeMove,
+    handleSidebarResizeStart,
+  } from '$lib/components/sidebar/sidebar-resize';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -60,30 +66,77 @@
   let startWidth = 0;
 
   function handleResizeStart(e: PointerEvent) {
-    if (ui.getIsMobile()) return;
-    e.preventDefault();
-    isResizing = true;
-    startX = e.clientX;
-    startWidth = ui.getSidebarWidth();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
+    handleSidebarResizeStart(e, {
+      getIsMobile: ui.getIsMobile,
+      getSidebarWidth: ui.getSidebarWidth,
+      setSidebarWidth: ui.setSidebarWidth,
+      setActive: (value) => {
+        isResizing = value;
+      },
+      setStartX: (value) => {
+        startX = value;
+      },
+      setStartWidth: (value) => {
+        startWidth = value;
+      },
+    });
   }
 
   function handleResizeMove(e: PointerEvent) {
     if (!isResizing) return;
-    const delta = e.clientX - startX;
-    ui.setSidebarWidth(startWidth + delta);
+    handleSidebarResizeMove(
+      e,
+      {
+        getIsMobile: ui.getIsMobile,
+        getSidebarWidth: ui.getSidebarWidth,
+        setSidebarWidth: ui.setSidebarWidth,
+        setActive: (value) => {
+          isResizing = value;
+        },
+        setStartX: (value) => {
+          startX = value;
+        },
+        setStartWidth: (value) => {
+          startWidth = value;
+        },
+      },
+      startX,
+      startWidth
+    );
   }
 
   function handleResizeEnd() {
-    isResizing = false;
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
+    handleSidebarResizeEnd({
+      getIsMobile: ui.getIsMobile,
+      getSidebarWidth: ui.getSidebarWidth,
+      setSidebarWidth: ui.setSidebarWidth,
+      setActive: (value) => {
+        isResizing = value;
+      },
+      setStartX: (value) => {
+        startX = value;
+      },
+      setStartWidth: (value) => {
+        startWidth = value;
+      },
+    });
   }
 
   function handleResizeDblClick() {
-    ui.setSidebarWidth(256);
+    handleSidebarResizeDblClick({
+      getIsMobile: ui.getIsMobile,
+      getSidebarWidth: ui.getSidebarWidth,
+      setSidebarWidth: ui.setSidebarWidth,
+      setActive: (value) => {
+        isResizing = value;
+      },
+      setStartX: (value) => {
+        startX = value;
+      },
+      setStartWidth: (value) => {
+        startWidth = value;
+      },
+    });
   }
 
   // Responsive icon sizes: 20px on mobile, 18px on desktop

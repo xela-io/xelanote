@@ -2,11 +2,13 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { getJournalFeatureEnabled, getJournalFeatureLoaded } from '$lib/stores/features.svelte';
+  import { closeSidebarOnMobile } from '$lib/stores/ui.svelte';
 
   const isEnabled = $derived(getJournalFeatureEnabled() && getJournalFeatureLoaded());
 
   function handleClick() {
     goto('/journal');
+    closeSidebarOnMobile();
   }
 </script>
 

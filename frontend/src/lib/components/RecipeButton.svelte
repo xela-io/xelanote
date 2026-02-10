@@ -2,11 +2,13 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { getRecipeFeatureEnabled, getRecipeFeatureLoaded } from '$lib/stores/features.svelte';
+  import { closeSidebarOnMobile } from '$lib/stores/ui.svelte';
 
   const isEnabled = $derived(getRecipeFeatureEnabled() && getRecipeFeatureLoaded());
 
   function handleClick() {
     goto('/recipes');
+    closeSidebarOnMobile();
   }
 </script>
 

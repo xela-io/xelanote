@@ -10,6 +10,20 @@ import * as encryption from './encryption.svelte';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 import { getWsBaseUrl } from '$lib/config';
 
+type WebSocketMessage = { type: string; payload: unknown };
+type NoteEventPayload = {
+  id: string;
+  title?: string;
+  content_encrypted?: boolean;
+  encrypted_content?: string;
+  encryption_metadata?: string | null;
+  encrypted_title?: string | null;
+};
+
+function asNoteEventPayload(payload: unknown): NoteEventPayload {
+  return payload as NoteEventPayload;
+}
+
 let ws: WebSocket | null = null;
 let connected = $state(false);
 let connecting = false; // Guard against concurrent connection attempts
@@ -96,61 +110,69 @@ export function connect() {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebSocket protocol payloads vary by message type
-function handleMessage(message: { type: string; payload: any }) {
+function handleMessage(message: WebSocketMessage) {
   console.log('WebSocket: Message received', message.type);
 
   switch (message.type) {
     case 'note.updated':
       notes.handleRemoteUpdate(message.payload);
       tree.loadTree();
-      if (message.payload.content_encrypted && encryption.isEncryptionUnlocked()) {
+      {
+        const notePayload = asNoteEventPayload(message.payload);
+        if (notePayload.content_encrypted && encryption.isEncryptionUnlocked()) {
         try {
-          const payload: EncryptedPayload = {
-            ciphertext: message.payload.encrypted_content,
-            metadata: JSON.parse(message.payload.encryption_metadata || '{}'),
+          const encryptedPayload: EncryptedPayload = {
+            ciphertext: notePayload.encrypted_content,
+            metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
           };
           const decrypted = encryption.decryptNote(
-            message.payload.encrypted_title || null,
-            payload
+            notePayload.encrypted_title || null,
+            encryptedPayload
           );
           searchIndex.updateInIndex(
-            message.payload.id,
-            decrypted.title || message.payload.title || '',
+            notePayload.id,
+            decrypted.title || notePayload.title || '',
             decrypted.content
           );
         } catch {
           /* silent - index repairs on next build */
+        }
         }
       }
       break;
     case 'note.created':
       notes.handleRemoteCreate(message.payload);
       tree.loadTree();
-      if (message.payload.content_encrypted && encryption.isEncryptionUnlocked()) {
+      {
+        const notePayload = asNoteEventPayload(message.payload);
+        if (notePayload.content_encrypted && encryption.isEncryptionUnlocked()) {
         try {
-          const payload: EncryptedPayload = {
-            ciphertext: message.payload.encrypted_content,
-            metadata: JSON.parse(message.payload.encryption_metadata || '{}'),
+          const encryptedPayload: EncryptedPayload = {
+            ciphertext: notePayload.encrypted_content,
+            metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
           };
           const decrypted = encryption.decryptNote(
-            message.payload.encrypted_title || null,
-            payload
+            notePayload.encrypted_title || null,
+            encryptedPayload
           );
           searchIndex.addToIndex(
-            message.payload.id,
-            decrypted.title || message.payload.title || '',
+            notePayload.id,
+            decrypted.title || notePayload.title || '',
             decrypted.content
           );
         } catch {
           /* silent */
         }
+        }
       }
       break;
     case 'note.deleted':
-      notes.handleRemoteDelete(message.payload.id);
-      tree.loadTree();
-      searchIndex.removeFromIndex(message.payload.id);
+      {
+        const notePayload = asNoteEventPayload(message.payload);
+        notes.handleRemoteDelete(notePayload.id);
+        tree.loadTree();
+        searchIndex.removeFromIndex(notePayload.id);
+      }
       break;
     case 'recipe.metadata.updated':
       recipes.handleRemoteMetadataUpdate(message.payload);

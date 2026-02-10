@@ -415,6 +415,7 @@ frontend/src/lib/api/
 | `backend/internal/service/notes.go` | 1512 | Business-Logik (restliche Note-Operationen) |
 | `backend/internal/service/notes_helpers.go` | neu | Note-Service Helper/Validation/Cache-Keys |
 | `backend/internal/service/notes_crud.go` | neu | Note-Service CRUD |
+| `backend/internal/service/notes_folders.go` | neu | Folder-Operationen + Defaults |
 | `backend/internal/db/notes.go` | 1529 | Alle Note-DB-Queries |
 | `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |
 

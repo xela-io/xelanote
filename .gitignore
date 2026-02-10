@@ -78,6 +78,7 @@ frontend/test-results/
 # Claude Code (contains tool permissions with embedded tokens)
 .claude/
 CLAUDE.md
+.git.old/
 
 # Archive
 archive/

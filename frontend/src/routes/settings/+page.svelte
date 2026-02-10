@@ -66,6 +66,10 @@
     loadSecurityPreferences as loadSecurityPreferencesHelper,
     type SecurityLevel,
   } from '$lib/routes/settings/security-preferences';
+  import {
+    handleEmailSubmit as handleEmailSubmitHelper,
+    type EmailFormState,
+  } from '$lib/routes/settings/account-forms';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -86,7 +90,7 @@
   let importing = $state(false);
 
   // Form states
-  const emailForm = $state({
+  const emailForm = $state<EmailFormState>({
     newEmail: '',
     password: '',
     error: '',
@@ -407,29 +411,19 @@
   }
 
   async function handleEmailSubmit(e: Event) {
-    e.preventDefault();
-    emailForm.error = '';
-
-    if (!emailForm.newEmail.trim()) {
-      emailForm.error = $_('page.settings.account.email_required');
-      return;
-    }
-
-    if (!emailForm.password) {
-      emailForm.error = $_('page.settings.account.password_required');
-      return;
-    }
-
-    const result = await settings.changeEmail(emailForm.newEmail.trim(), emailForm.password);
-
-    if (result.success) {
-      emailForm.newEmail = '';
-      emailForm.password = '';
-      // Reload user info
-      window.location.reload();
-    } else {
-      emailForm.error = result.error || $_('page.settings.account.change_email_failed');
-    }
+    await handleEmailSubmitHelper(e, {
+      form: emailForm,
+      setForm: (next) => {
+        Object.assign(emailForm, next);
+      },
+      changeEmail: (newEmail, password) => settings.changeEmail(newEmail, password),
+      reload: () => window.location.reload(),
+      validationMessages: {
+        emailRequired: $_('page.settings.account.email_required'),
+        passwordRequired: $_('page.settings.account.password_required'),
+        changeEmailFailed: $_('page.settings.account.change_email_failed'),
+      },
+    });
   }
 
   async function handlePasswordSubmit(e: Event) {

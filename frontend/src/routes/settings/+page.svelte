@@ -313,7 +313,7 @@
   async function loadMigrationStats() {
     await loadMigrationStatsHelper({
       listNotes: (options) => api.listNotes(options),
-      isEncrypted: (note) => note.content_encrypted && note.encryption_version === 1,
+      isEncrypted: (note) => Boolean(note.content_encrypted) && note.encryption_version === 1,
       isPlaintext: (note) => !note.content_encrypted || note.encryption_version === 0,
       setStats: (stats) => {
         migrationStats = stats;

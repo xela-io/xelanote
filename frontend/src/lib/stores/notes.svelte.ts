@@ -372,7 +372,6 @@ export function updateCurrentNoteContent(content: string) {
     setNotes: (nextNotes) => {
       notes = nextNotes;
     },
-    getIsDirty: () => isDirty,
     setDirty: (dirty) => {
       isDirty = dirty;
     },
@@ -412,7 +411,6 @@ export function updateCurrentNoteTitle(title: string) {
     setNotes: (nextNotes) => {
       notes = nextNotes;
     },
-    getIsDirty: () => isDirty,
     setDirty: (dirty) => {
       isDirty = dirty;
     },
@@ -452,7 +450,6 @@ export function updateCurrentNoteAIEnabled(aiEnabled: boolean) {
     setNotes: (nextNotes) => {
       notes = nextNotes;
     },
-    getIsDirty: () => isDirty,
     setDirty: (dirty) => {
       isDirty = dirty;
     },
@@ -492,7 +489,6 @@ export function clearCurrentNote() {
     setNotes: (nextNotes) => {
       notes = nextNotes;
     },
-    getIsDirty: () => isDirty,
     setDirty: (dirty) => {
       isDirty = dirty;
     },
@@ -725,7 +721,6 @@ export function replaceTempId(tempId: string, realNote: Note) {
     setNotes: (nextNotes) => {
       notes = nextNotes;
     },
-    getIsDirty: () => isDirty,
     setDirty: (dirty) => {
       isDirty = dirty;
     },

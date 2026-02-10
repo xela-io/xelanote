@@ -8,7 +8,7 @@ export interface TriggerAutoSaveDeps {
   setStatus: (status: AutoSaveStatus) => void;
   setError: (error: string | null) => void;
   setLastAutoSave: (date: Date | null) => void;
-  saveNote: () => Promise<void>;
+  saveNote: () => Promise<unknown>;
   isConflictError: (err: unknown) => boolean;
   handleConflict: () => Promise<void>;
   conflictMessage: string;

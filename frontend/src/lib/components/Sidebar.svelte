@@ -27,9 +27,9 @@
     handleLogout as handleLogoutAction,
   } from '$lib/components/sidebar/sidebar-actions';
   import {
-    handleDropZoneDragLeave,
-    handleDropZoneDragOver,
-    handleDropZoneDrop,
+    handleDropZoneDragLeave as handleDropZoneDragLeaveAction,
+    handleDropZoneDragOver as handleDropZoneDragOverAction,
+    handleDropZoneDrop as handleDropZoneDropAction,
     handleTouchDrop as handleTouchDropAction,
   } from '$lib/components/sidebar/sidebar-dnd';
   import { handleSidebarEscape } from '$lib/components/sidebar/sidebar-escape';
@@ -183,19 +183,19 @@
 
   // Drop zone handlers for moving folders to top-level
   function handleDropZoneDragOver(e: DragEvent) {
-    handleDropZoneDragOver(e, (active) => {
+    handleDropZoneDragOverAction(e, (active) => {
       isDropZoneActive = active;
     });
   }
 
   function handleDropZoneDragLeave() {
-    handleDropZoneDragLeave((active) => {
+    handleDropZoneDragLeaveAction((active) => {
       isDropZoneActive = active;
     });
   }
 
   async function handleDropZoneDrop(e: DragEvent) {
-    await handleDropZoneDrop(
+    await handleDropZoneDropAction(
       e,
       {
         moveFolder: tree.moveFolder,
@@ -204,10 +204,12 @@
         reorderFolders: tree.reorderFolders,
         reorderNotes: tree.reorderNotes,
         findParentOfNodeById: tree.findParentOfNodeById,
-        getFolderChildren: (parent) =>
-          parent.children.filter((c) => c.type === 'folder') as tree.FolderTreeNode[],
-        getNoteChildren: (parent) =>
-          parent.children.filter((c) => c.type === 'note') as tree.NoteTreeNode[],
+        getFolderChildren: (parent: tree.FolderTreeNode) =>
+          parent.children.filter(
+            (c): c is tree.FolderTreeNode => c.type === 'folder'
+          ),
+        getNoteChildren: (parent: tree.FolderTreeNode) =>
+          parent.children.filter((c): c is tree.NoteTreeNode => c.type === 'note'),
         alert: dialog.alert,
         strings: {
           errorTitle: $_('common.error'),
@@ -238,10 +240,12 @@
         reorderFolders: tree.reorderFolders,
         reorderNotes: tree.reorderNotes,
         findParentOfNodeById: tree.findParentOfNodeById,
-        getFolderChildren: (parent) =>
-          parent.children.filter((c) => c.type === 'folder') as tree.FolderTreeNode[],
-        getNoteChildren: (parent) =>
-          parent.children.filter((c) => c.type === 'note') as tree.NoteTreeNode[],
+        getFolderChildren: (parent: tree.FolderTreeNode) =>
+          parent.children.filter(
+            (c): c is tree.FolderTreeNode => c.type === 'folder'
+          ),
+        getNoteChildren: (parent: tree.FolderTreeNode) =>
+          parent.children.filter((c): c is tree.NoteTreeNode => c.type === 'note'),
         alert: dialog.alert,
         strings: {
           errorTitle: $_('common.error'),

@@ -4,12 +4,12 @@ import { ApiError, getNote, updateNoteAIEnabled } from '$lib/api';
 
 interface SaveNoteDeps {
   editorView?: EditorView;
-  saveNote: () => Promise<void>;
+  saveNote: () => Promise<unknown>;
   getCurrentNoteId: () => string | undefined;
-  reloadNote: (id: string) => Promise<void>;
+  reloadNote: (id: string) => Promise<unknown>;
   toast: {
-    warning: (message: string, opts?: { label?: string; handler?: () => void }) => void;
-    error: (message: string) => void;
+    warning: (message: string, action?: { label: string; handler: () => void }) => string;
+    error: (message: string) => string;
   };
   strings: {
     conflictWarning: (version: number) => string;
@@ -36,9 +36,9 @@ interface AIToggleDeps {
   updateCurrentAI: (value: boolean) => void;
   reloadTree: () => Promise<void>;
   toast: {
-    success: (message: string) => void;
-    info: (message: string) => void;
-    error: (message: string) => void;
+    success: (message: string) => string;
+    info: (message: string) => string;
+    error: (message: string) => string;
   };
   strings: {
     enabled: string;

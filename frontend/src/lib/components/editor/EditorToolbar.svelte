@@ -34,7 +34,7 @@
   export let editorView: EditorView | undefined;
   export let isMobile = false;
   export let editorMode: EditorMode = 'edit';
-  export let autoSaveStatus: 'saving' | 'saved' | 'error' | 'idle' = 'idle';
+  export let autoSaveStatus: 'saving' | 'saved' | 'error' | 'idle' | 'pending' = 'idle';
   export let autoSaveEnabled = false;
   export let isDirty = false;
   export let isSaving = false;

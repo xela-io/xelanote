@@ -333,7 +333,7 @@
     await handleAIToggleAction({
       getCurrentNote: () => {
         const note = notes.getCurrentNote();
-        return note ? { id: note.id, ai_enabled: note.ai_enabled } : null;
+        return note ? { id: note.id, ai_enabled: note.ai_enabled ?? false } : null;
       },
       updateCurrentAI: notes.updateCurrentNoteAIEnabled,
       reloadTree: tree.loadTree,
@@ -462,8 +462,6 @@
         deleteConfirmMessage: $_('dialog.delete_note_confirm'),
         deleteConfirmText: $_('common.delete'),
         cancelText: $_('dialog.cancel'),
-        createMissingMessage: $_('dialog.create_missing_note'),
-        createMissingConfirmText: $_('common.confirm'),
         deleteError: $_('component.editor.error_delete'),
         noteTrashed: $_('component.editor.note_trashed'),
         noteRestored: $_('component.editor.note_restored'),

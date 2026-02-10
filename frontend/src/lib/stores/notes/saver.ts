@@ -1,4 +1,4 @@
-import type { Note, OfflineNoteContext } from '$lib/api';
+import type { Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 import type { TaskEventQueue } from '$lib/stores/notes/task-events';
 
@@ -36,7 +36,7 @@ export interface SaveNoteDeps {
   ) => { title: string | null; content: string };
   encryptTaskText: (text: string) => { ciphertext: string; metadata: { wrapped_dek?: string } };
   extractUniqueLinks: (content: string) => { title: string }[];
-  extractDueDates: (content: string) => unknown[];
+  extractDueDates: (content: string) => NotePayload['due_dates'];
   updateNote: (
     id: string,
     payload: any,

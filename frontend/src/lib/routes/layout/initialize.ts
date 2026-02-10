@@ -27,7 +27,7 @@ export interface InitializeAppDeps {
   encryption: {
     isEncryptionUnlocked: () => boolean;
     setSecurityLevel: (level: 'paranoid' | 'balanced' | 'convenient') => void;
-    tryRestoreKEK: (userId: string) => Promise<boolean>;
+    tryRestoreKEK: (userId: number) => Promise<boolean>;
   };
   autoLock: {
     initAutoLock: (minutes: number) => void;
@@ -37,7 +37,7 @@ export interface InitializeAppDeps {
     getCurrentUser: () => Promise<{ encryption_salt?: string }>;
     getConfig: () => Promise<{ error_reporting_enabled?: boolean }>;
   };
-  clearPersistedKEK: (userId: string) => Promise<void>;
+  clearPersistedKEK: (userId: number) => Promise<void>;
   notes: {
     loadNotes: () => void;
   };

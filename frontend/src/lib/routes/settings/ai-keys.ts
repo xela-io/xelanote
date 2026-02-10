@@ -30,8 +30,8 @@ export interface ApiKeySaveDeps {
   form: ApiKeyFormState;
   setForm: (next: Partial<ApiKeyFormState>) => void;
   validate: (value: string) => string | null;
-  save: (value: string) => Promise<void>;
-  reloadStatus: () => Promise<void>;
+  save: (value: string) => Promise<unknown>;
+  reloadStatus: () => Promise<unknown>;
   saveError: string;
 }
 
@@ -62,8 +62,8 @@ export async function saveApiKey(e: Event, deps: ApiKeySaveDeps) {
 export interface ApiKeyDeleteDeps {
   confirm: () => Promise<boolean>;
   setForm: (next: Partial<ApiKeyFormState>) => void;
-  deleteKey: () => Promise<void>;
-  reloadStatus: () => Promise<void>;
+  deleteKey: () => Promise<unknown>;
+  reloadStatus: () => Promise<unknown>;
 }
 
 export async function deleteApiKey(deps: ApiKeyDeleteDeps) {

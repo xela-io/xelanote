@@ -51,10 +51,10 @@ interface DeleteDeps {
   incrementTrash: () => void;
   decrementTrash: () => void;
   toast: {
-    error: (message: string) => void;
-    success: (message: string) => void;
-    warning: (message: string, opts?: { label?: string; handler?: () => void }) => void;
-    undoToast: (message: string, handler: () => Promise<void>) => void;
+    error: (message: string) => string;
+    success: (message: string) => string;
+    warning: (message: string, action?: { label: string; handler: () => void }) => string;
+    undoToast: (message: string, handler: () => Promise<void>) => string;
   };
   strings: CommonStrings & {
     deleteConfirmMessage: string;

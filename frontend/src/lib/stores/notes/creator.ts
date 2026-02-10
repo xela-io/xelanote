@@ -22,7 +22,7 @@ export interface CreateNoteDeps {
     payload: EncryptedPayload
   ) => { title: string | null; content: string };
   extractUniqueLinks: (content: string) => { title: string }[];
-  extractDueDates: (content: string) => unknown[];
+  extractDueDates: (content: string) => NotePayload['due_dates'];
   createNote: (payload: NotePayload, offlineContext?: OfflineNoteContext) => Promise<Note>;
   addToSearchIndex: (id: string, title: string, content: string) => void;
   setCurrentNote: (note: Note | null) => void;

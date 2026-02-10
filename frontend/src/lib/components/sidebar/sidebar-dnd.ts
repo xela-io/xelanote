@@ -1,18 +1,19 @@
 import type { DropPosition, TouchDragData } from '$lib/actions/touchdrag';
+import type { FolderTreeNode, NoteTreeNode } from '$lib/stores/tree.svelte';
 import { validateDrop } from '$lib/utils/tree-drop-validation';
 
 interface SidebarDndDeps {
   moveFolder: (id: number, path: string) => Promise<void>;
-  moveNote: (id: string, path: string) => Promise<void>;
+  moveNote: (id: string, path: string) => Promise<unknown>;
   loadTree: () => Promise<void>;
   reorderFolders: (parentID: number | null, folderIds: number[]) => Promise<void>;
   reorderNotes: (folderPath: string, noteIds: string[]) => Promise<void>;
   findParentOfNodeById: (
     type: 'folder' | 'note',
     id: string | number
-  ) => { id?: number; path?: string; children: unknown[] } | null;
-  getFolderChildren: (parent: { children: unknown[] }) => Array<{ id: number }>;
-  getNoteChildren: (parent: { children: unknown[] }) => Array<{ id: string }>;
+  ) => FolderTreeNode | null;
+  getFolderChildren: (parent: FolderTreeNode) => FolderTreeNode[];
+  getNoteChildren: (parent: FolderTreeNode) => NoteTreeNode[];
   alert: (opts: { title: string; message: string; variant: 'danger' | 'warning' }) => Promise<void>;
   strings: {
     errorTitle: string;

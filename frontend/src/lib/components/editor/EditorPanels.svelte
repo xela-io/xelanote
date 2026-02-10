@@ -10,13 +10,23 @@
   import TagEditor from '../TagEditor.svelte';
   import TagSuggestionsPanel from '../TagSuggestionsPanel.svelte';
 
-  export let note: Note;
-  export let backlinks: Backlink[] = [];
-  export let showTagSuggestions = false;
-  export let showLinkSuggestions = false;
-  export let editorView: EditorView | undefined;
-  export let onInsertLink: (term: string, targetTitle: string) => void;
-  export let onSummaryUpdated: (summary: string) => void;
+  const {
+    note,
+    backlinks = [],
+    showTagSuggestions = false,
+    showLinkSuggestions = false,
+    editorView,
+    onInsertLink,
+    onSummaryUpdated,
+  } = $props<{
+    note: Note;
+    backlinks?: Backlink[];
+    showTagSuggestions?: boolean;
+    showLinkSuggestions?: boolean;
+    editorView?: EditorView;
+    onInsertLink: (term: string, targetTitle: string) => void;
+    onSummaryUpdated: (summary: string) => void;
+  }>();
 
   let currentTags = $state<Tag[]>([]);
   let tagEditorRef: TagEditor | null = $state(null);

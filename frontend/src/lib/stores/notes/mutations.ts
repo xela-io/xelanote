@@ -1,4 +1,4 @@
-import type { Backlink, Note, OfflineNoteContext } from '$lib/api';
+import type { Backlink, Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 
 export interface DeleteNoteDeps {
@@ -63,7 +63,7 @@ export interface MoveNoteDeps {
     keywords: string[];
   };
   extractUniqueLinks: (content: string) => { title: string }[];
-  extractDueDates: (content: string) => unknown[];
+  extractDueDates: (content: string) => NotePayload['due_dates'];
   updateNote: (
     id: string,
     payload: any,

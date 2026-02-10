@@ -481,6 +481,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/components/Editor.svelte`: CodeMirror-Init/Action nach `frontend/src/lib/editor/editor-init.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Resize-Handler nach `frontend/src/lib/components/sidebar/sidebar-resize.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: onMount-Init nach `frontend/src/lib/components/sidebar/sidebar-init.ts` ausgelagert.
+- `frontend/src/lib/components/Sidebar.svelte`: Drag/Drop + Touch-Reorder nach `frontend/src/lib/components/sidebar/sidebar-dnd.ts` ausgelagert.
 
 ---
 

@@ -19,9 +19,15 @@
 
   import { goto } from '$app/navigation';
   import { swipe } from '$lib/actions/swipe';
-  import type { DropPosition,TouchDragData } from '$lib/actions/touchdrag';
+  import type { DropPosition, TouchDragData } from '$lib/actions/touchdrag';
   import { touchdrag } from '$lib/actions/touchdrag';
   import { initSidebarOnMount } from '$lib/components/sidebar/sidebar-init';
+  import {
+    handleDropZoneDragLeave,
+    handleDropZoneDragOver,
+    handleDropZoneDrop,
+    handleTouchDrop as handleTouchDropAction,
+  } from '$lib/components/sidebar/sidebar-dnd';
   import {
     handleSidebarResizeDblClick,
     handleSidebarResizeEnd,
@@ -39,7 +45,6 @@
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import { validateDrop } from '$lib/utils/tree-drop-validation';
 
   import ChangelogDialog from './ChangelogDialog.svelte';
   import CreateFolderDialog from './CreateFolderDialog.svelte';
@@ -172,43 +177,42 @@
 
   // Drop zone handlers for moving folders to top-level
   function handleDropZoneDragOver(e: DragEvent) {
-    if (e.dataTransfer?.types.includes('application/x-xelanote-item')) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      isDropZoneActive = true;
-    }
+    handleDropZoneDragOver(e, (active) => {
+      isDropZoneActive = active;
+    });
   }
 
   function handleDropZoneDragLeave() {
-    isDropZoneActive = false;
+    handleDropZoneDragLeave((active) => {
+      isDropZoneActive = active;
+    });
   }
 
   async function handleDropZoneDrop(e: DragEvent) {
-    e.preventDefault();
-    isDropZoneActive = false;
-
-    const data = e.dataTransfer?.getData('application/x-xelanote-item');
-    if (!data) return;
-
-    try {
-      const dragData = JSON.parse(data);
-
-      if (dragData.type === 'folder') {
-        // Move folder to root level (parent_id = 1, path = "/")
-        await tree.moveFolder(dragData.id, '/');
-      } else if (dragData.type === 'note') {
-        // Move note to root folder
-        await notes.moveNote(dragData.id, '/');
-        await tree.loadTree();
+    await handleDropZoneDrop(
+      e,
+      {
+        moveFolder: tree.moveFolder,
+        moveNote: notes.moveNote,
+        loadTree: tree.loadTree,
+        reorderFolders: tree.reorderFolders,
+        reorderNotes: tree.reorderNotes,
+        findParentOfNodeById: tree.findParentOfNodeById,
+        getFolderChildren: (parent) =>
+          parent.children.filter((c) => c.type === 'folder') as tree.FolderTreeNode[],
+        getNoteChildren: (parent) =>
+          parent.children.filter((c) => c.type === 'note') as tree.NoteTreeNode[],
+        alert: dialog.alert,
+        strings: {
+          errorTitle: $_('common.error'),
+          errorMovingTopLevel: $_('page.sidebar.error_moving_to_top_level'),
+          moveError: $_('component.tree.move_error'),
+        },
+      },
+      (active) => {
+        isDropZoneActive = active;
       }
-    } catch (err) {
-      console.error('Failed to move to top level:', err);
-      await dialog.alert({
-        title: $_('common.error'),
-        message: $_('page.sidebar.error_moving_to_top_level'),
-        variant: 'danger',
-      });
-    }
+    );
   }
 
   // Touch Drag & Drop handler - bridges touch events to existing store functions
@@ -217,138 +221,30 @@
     targetData: TouchDragData,
     position: DropPosition
   ) {
-    const validation = validateDrop(
+    await handleTouchDropAction(
+      dragData,
+      targetData,
+      position,
       {
-        type: dragData.type,
-        id: dragData.id,
-        path: dragData.path,
-        folder_path: dragData.folder_path,
+        moveFolder: tree.moveFolder,
+        moveNote: notes.moveNote,
+        loadTree: tree.loadTree,
+        reorderFolders: tree.reorderFolders,
+        reorderNotes: tree.reorderNotes,
+        findParentOfNodeById: tree.findParentOfNodeById,
+        getFolderChildren: (parent) =>
+          parent.children.filter((c) => c.type === 'folder') as tree.FolderTreeNode[],
+        getNoteChildren: (parent) =>
+          parent.children.filter((c) => c.type === 'note') as tree.NoteTreeNode[],
+        alert: dialog.alert,
+        strings: {
+          errorTitle: $_('common.error'),
+          errorMovingTopLevel: $_('page.sidebar.error_moving_to_top_level'),
+          moveError: $_('component.tree.move_error'),
+        },
       },
-      {
-        type: targetData.type,
-        id: targetData.id,
-        path: targetData.path,
-        folder_path: targetData.folder_path,
-      },
-      position
+      (key) => $_(key)
     );
-
-    if (!validation.valid) {
-      if (validation.errorKey) {
-        await dialog.alert({
-          title: $_('common.error'),
-          message: $_(validation.errorKey),
-          variant: 'warning',
-        });
-      }
-      return;
-    }
-
-    try {
-      // Root drop zone: move to top level
-      if (targetData.type === 'root-dropzone') {
-        if (dragData.type === 'folder') {
-          await tree.moveFolder(Number(dragData.id), '/');
-        } else {
-          await notes.moveNote(dragData.id, '/');
-          await tree.loadTree();
-        }
-        return;
-      }
-
-      // Reorder: same-type siblings at before/after positions
-      if (position === 'before' || position === 'after') {
-        // Folder reorder (siblings)
-        if (dragData.type === 'folder' && targetData.type === 'folder') {
-          const reordered = await handleTouchFolderReorder(
-            Number(dragData.id),
-            Number(targetData.id),
-            position
-          );
-          if (reordered) return;
-          // Not siblings - fall through to move into folder
-        }
-
-        // Note reorder (same folder)
-        if (dragData.type === 'note' && targetData.type === 'note') {
-          if (dragData.folder_path === targetData.folder_path) {
-            await handleTouchNoteReorder(dragData.id, targetData.id, position);
-            return;
-          }
-          // Cross-folder: move note to target note's folder
-          await notes.moveNote(dragData.id, targetData.folder_path!);
-          await tree.loadTree();
-          return;
-        }
-      }
-
-      // Move into folder
-      if (targetData.type === 'folder') {
-        if (dragData.type === 'note') {
-          await notes.moveNote(dragData.id, targetData.path!);
-          await tree.loadTree();
-        } else if (dragData.type === 'folder') {
-          await tree.moveFolder(Number(dragData.id), targetData.path!);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to move:', err);
-      await dialog.alert({
-        title: $_('common.error'),
-        message: $_('component.tree.move_error'),
-        variant: 'danger',
-      });
-    }
-  }
-
-  async function handleTouchFolderReorder(
-    draggedId: number,
-    targetId: number,
-    position: 'before' | 'after'
-  ): Promise<boolean> {
-    const parent = tree.findParentOfNodeById('folder', targetId);
-    if (!parent) return false;
-
-    const draggedParent = tree.findParentOfNodeById('folder', draggedId);
-    if (!draggedParent || draggedParent !== parent) return false; // Not siblings
-
-    const siblings = parent.children.filter((c) => c.type === 'folder') as tree.FolderTreeNode[];
-    const draggedIndex = siblings.findIndex((s) => s.id === draggedId);
-    const targetIndex = siblings.findIndex((s) => s.id === targetId);
-    if (draggedIndex === -1 || targetIndex === -1) return false;
-
-    const newOrder = [...siblings];
-    const [draggedItem] = newOrder.splice(draggedIndex, 1);
-    const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
-    newOrder.splice(draggedIndex < targetIndex ? insertIndex - 1 : insertIndex, 0, draggedItem);
-
-    const folderIds = newOrder.map((s) => s.id).filter((id) => id !== 0);
-    const parentID: number | null = parent.id === 0 ? 1 : parent.id || null;
-    await tree.reorderFolders(parentID, folderIds);
-    return true;
-  }
-
-  async function handleTouchNoteReorder(
-    draggedId: string,
-    targetId: string,
-    position: 'before' | 'after'
-  ) {
-    const parent = tree.findParentOfNodeById('note', targetId);
-    if (!parent) return;
-
-    const siblings = parent.children.filter((c) => c.type === 'note') as tree.NoteTreeNode[];
-    const draggedIndex = siblings.findIndex((s) => s.id === draggedId);
-    const targetIndex = siblings.findIndex((s) => s.id === targetId);
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    const newOrder = [...siblings];
-    const [draggedItem] = newOrder.splice(draggedIndex, 1);
-    const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
-    newOrder.splice(draggedIndex < targetIndex ? insertIndex - 1 : insertIndex, 0, draggedItem);
-
-    const noteIds = newOrder.map((s) => s.id);
-    const folderPath = parent.path || '/';
-    await tree.reorderNotes(folderPath, noteIds);
   }
 
   function handleCreateNote() {

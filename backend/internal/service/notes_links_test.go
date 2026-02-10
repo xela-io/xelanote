@@ -158,6 +158,74 @@ func TestUpdateLinksFromClient_UnresolvedCleanup(t *testing.T) {
 	}
 }
 
+func TestGetBacklinks_ExcludesDeletedSource(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "user")
+
+	target, err := service.CreateNote(user.ID, "Target", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create target: %v", err)
+	}
+	source, err := service.CreateNote(user.ID, "Source", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create source: %v", err)
+	}
+
+	if err := service.UpdateLinksFromClient(user.ID, source.ID, []string{"Target"}); err != nil {
+		t.Fatalf("UpdateLinksFromClient failed: %v", err)
+	}
+
+	backlinks, err := service.GetBacklinks(user.ID, target.ID)
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	if len(backlinks) != 1 {
+		t.Fatalf("expected 1 backlink, got %d", len(backlinks))
+	}
+
+	if err := service.DeleteNote(user.ID, source.ID); err != nil {
+		t.Fatalf("failed to delete source: %v", err)
+	}
+
+	backlinks, err = service.GetBacklinks(user.ID, target.ID)
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	if len(backlinks) != 0 {
+		t.Fatalf("expected 0 backlinks after deleting source, got %d", len(backlinks))
+	}
+}
+
+func TestGetBacklinks_IsUserScoped(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user1 := createTestUser(t, database, "user1")
+	user2 := createTestUser(t, database, "user2")
+
+	target, err := service.CreateNote(user1.ID, "SharedTitle", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create target: %v", err)
+	}
+
+	source, err := service.CreateNote(user2.ID, "Source", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create source: %v", err)
+	}
+
+	if err := service.UpdateLinksFromClient(user2.ID, source.ID, []string{"SharedTitle"}); err != nil {
+		t.Fatalf("UpdateLinksFromClient failed: %v", err)
+	}
+
+	backlinks, err := service.GetBacklinks(user1.ID, target.ID)
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	if len(backlinks) != 0 {
+		t.Fatalf("expected 0 backlinks across users, got %d", len(backlinks))
+	}
+}
+
 func TestUpdateLinksFromClient_EmptyTitlesSkipped(t *testing.T) {
 	database := setupTestDB(t)
 	service := NewNoteService(database)

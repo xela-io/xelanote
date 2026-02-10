@@ -182,7 +182,7 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 
 - **Backend-Service Tests: Notes Link-Resolution**
   - `backend/internal/service/notes_links_test.go`
-  - Abdeckung: Unresolved-Links Cleanup (keine spaetere Backlink-Resolution nach Entfernen).
+  - Abdeckung: Unresolved-Links Cleanup, Backlinks ignorieren geloeschte Source-Notes, User-Scoped Backlinks.
   - Hinweis: Tests laufen mit `-tags "fts5"` (SQLite FTS5 erforderlich).
 
 ### Offen

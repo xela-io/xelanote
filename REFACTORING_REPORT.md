@@ -477,6 +477,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/components/Editor.svelte`: Panels (Backlinks/Summary/Tags/Links) nach `frontend/src/lib/components/editor/EditorPanels.svelte` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Preview-Click/TOC-Handler nach `frontend/src/lib/editor/preview-interactions.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Note-Actions (Export/Delete/Wikilink) nach `frontend/src/lib/editor/note-actions.ts` ausgelagert.
+- `frontend/src/lib/components/Editor.svelte`: Save/Title/AutoSave/AI/Encryption-Handler nach `frontend/src/lib/editor/editor-actions.ts` ausgelagert.
 
 ---
 

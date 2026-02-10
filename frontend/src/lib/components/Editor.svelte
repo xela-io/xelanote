@@ -8,7 +8,6 @@
   import { page } from '$app/stores';
   import type { AIAction } from '$lib/api';
   import type { AITransformState } from '$lib/editor/ai-actions';
-  import { ApiError } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
   import {
@@ -49,6 +48,13 @@
     handleSplitResizeStart,
   } from '$lib/editor/split-resize';
   import { indentSelection, outdentSelection } from '$lib/editor/indentation';
+  import {
+    handleAutoSaveToggle as handleAutoSaveToggleAction,
+    handleAIToggle as handleAIToggleAction,
+    handleEncryptionToggle as handleEncryptionToggleAction,
+    handleSaveNote as handleSaveNoteAction,
+    handleTitleInput as handleTitleInputAction,
+  } from '$lib/editor/editor-actions';
   import {
     exportNoteMarkdown,
     handleDeleteNote,
@@ -302,121 +308,74 @@
   });
 
   async function handleSave() {
-    try {
-      // Remember if editor had focus before save
-      const hadFocus = editorView?.hasFocus;
-
-      await notes.saveNote();
-
-      // Restore focus after save (prevents keyboard from closing on mobile)
-      if (hadFocus && editorView) {
-        editorView.focus();
-      }
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 409) {
-        // Version conflict detected
-        const noteId = notes.getCurrentNote()?.id;
-        if (noteId) {
-          try {
-            const latest = await api.getNote(noteId);
-            toast.warning(
-              $_('component.editor.conflict_warning', { values: { version: latest.version } }),
-              {
-                label: $_('component.editor.conflict_load_remote'),
-                handler: () => notes.loadNote(noteId),
-              }
-            );
-          } catch (fetchErr) {
-            toast.error($_('component.editor.status.error_remote'));
-            console.error('Failed to fetch remote version:', fetchErr);
-          }
-        }
-      } else {
-        toast.error($_('component.editor.status.error'));
-        console.error('Failed to save:', e);
-      }
-    }
+    await handleSaveNoteAction({
+      editorView,
+      saveNote: notes.saveNote,
+      getCurrentNoteId: () => notes.getCurrentNote()?.id,
+      reloadNote: notes.loadNote,
+      toast,
+      strings: {
+        conflictWarning: (version) =>
+          $_('component.editor.conflict_warning', { values: { version } }),
+        conflictLoadRemote: $_('component.editor.conflict_load_remote'),
+        errorRemote: $_('component.editor.status.error_remote'),
+        errorSave: $_('component.editor.status.error'),
+      },
+    });
   }
 
   function handleTitleInput(e: Event) {
-    const title = (e.currentTarget as HTMLInputElement).value;
-    notes.updateCurrentNoteTitle(title);
-    // Schedule auto-save after title change
-    notes.scheduleAutoSave();
+    handleTitleInputAction(e, {
+      updateTitle: notes.updateCurrentNoteTitle,
+      scheduleAutoSave: notes.scheduleAutoSave,
+    });
   }
 
   function handleAutoSaveToggle() {
-    // Toggle auto-save
-    autosave.setAutoSaveEnabled(!autosave.getAutoSaveEnabled());
-
-    // If we just enabled auto-save and the note is dirty, schedule auto-save immediately
-    if (autosave.getAutoSaveEnabled() && notes.getIsDirty()) {
-      notes.scheduleAutoSave();
-    }
+    handleAutoSaveToggleAction({
+      getAutoSaveEnabled: autosave.getAutoSaveEnabled,
+      setAutoSaveEnabled: autosave.setAutoSaveEnabled,
+      getIsDirty: notes.getIsDirty,
+      scheduleAutoSave: notes.scheduleAutoSave,
+    });
   }
 
   async function handleAIToggle() {
-    const currentNote = notes.getCurrentNote();
-    if (!currentNote) return;
-
-    const newValue = !currentNote.ai_enabled;
-
-    try {
-      await api.updateNoteAIEnabled(currentNote.id, newValue);
-      // Update the local note state
-      notes.updateCurrentNoteAIEnabled(newValue);
-      // Update the tree to reflect the AI badge change
-      await tree.loadTree();
-
-      if (newValue) {
-        toast.success($_('component.editor.ai_enabled_success'));
-      } else {
-        toast.info($_('component.editor.ai_disabled_success'));
-      }
-    } catch (e) {
-      console.error('Failed to toggle AI enabled:', e);
-      toast.error($_('component.editor.ai_toggle_error'));
-    }
+    await handleAIToggleAction({
+      getCurrentNote: () => {
+        const note = notes.getCurrentNote();
+        return note ? { id: note.id, ai_enabled: note.ai_enabled } : null;
+      },
+      updateCurrentAI: notes.updateCurrentNoteAIEnabled,
+      reloadTree: tree.loadTree,
+      toast,
+      strings: {
+        enabled: $_('component.editor.ai_enabled_success'),
+        disabled: $_('component.editor.ai_disabled_success'),
+        error: $_('component.editor.ai_toggle_error'),
+      },
+    });
   }
 
   async function handleEncryptionToggle() {
-    const currentNote = notes.getCurrentNote();
-    if (!currentNote) return;
-
-    const isCurrentlyEncrypted = currentNote.content_encrypted !== false;
-
-    if (isCurrentlyEncrypted) {
-      // Decrypt
-      const confirmed = await dialog.confirm({
-        title: $_('component.editor.encryption_toggle.decrypt_confirm_title'),
-        message: $_('component.editor.encryption_toggle.decrypt_confirm_message'),
-        confirmText: $_('component.editor.toolbar.decrypt_note'),
-        cancelText: $_('dialog.cancel'),
-      });
-      if (!confirmed) return;
-    } else {
-      // Encrypt
-      const confirmed = await dialog.confirm({
-        title: $_('component.editor.encryption_toggle.encrypt_confirm_title'),
-        message: $_('component.editor.encryption_toggle.encrypt_confirm_message'),
-        confirmText: $_('component.editor.toolbar.encrypt_note'),
-        cancelText: $_('dialog.cancel'),
-        variant: 'danger',
-      });
-      if (!confirmed) return;
-    }
-
-    try {
-      await notes.toggleEncryption();
-      if (isCurrentlyEncrypted) {
-        toast.success($_('component.editor.encryption_toggle.decrypted_success'));
-      } else {
-        toast.success($_('component.editor.encryption_toggle.encrypted_success'));
-      }
-    } catch (e) {
-      console.error('Failed to toggle encryption:', e);
-      toast.error($_('component.editor.encryption_toggle.error'));
-    }
+    await handleEncryptionToggleAction({
+      getIsEncrypted: () => notes.getCurrentNote()?.content_encrypted !== false,
+      confirm: dialog.confirm,
+      toggleEncryption: notes.toggleEncryption,
+      toast,
+      strings: {
+        decryptTitle: $_('component.editor.encryption_toggle.decrypt_confirm_title'),
+        decryptMessage: $_('component.editor.encryption_toggle.decrypt_confirm_message'),
+        decryptConfirm: $_('component.editor.toolbar.decrypt_note'),
+        encryptTitle: $_('component.editor.encryption_toggle.encrypt_confirm_title'),
+        encryptMessage: $_('component.editor.encryption_toggle.encrypt_confirm_message'),
+        encryptConfirm: $_('component.editor.toolbar.encrypt_note'),
+        cancel: $_('dialog.cancel'),
+        decrypted: $_('component.editor.encryption_toggle.decrypted_success'),
+        encrypted: $_('component.editor.encryption_toggle.encrypted_success'),
+        error: $_('component.editor.encryption_toggle.error'),
+      },
+    });
   }
 
   // Open AI Actions dropdown

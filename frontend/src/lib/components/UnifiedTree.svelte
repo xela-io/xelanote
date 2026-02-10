@@ -56,17 +56,13 @@
   let showColorPicker = $state(false);
   let ColorPickerDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
 
-  // Share folder dialog state
-  let showShareFolderDialog = $state(false);
-  let ShareFolderDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  // Share dialog state (unified for note + folder)
+  let showShareDialog = $state(false);
+  let ShareDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
 
   // Rename note dialog state
   let showRenameNoteDialog = $state(false);
   let RenameNoteDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
-
-  // Share note dialog state
-  let showShareNoteDialog = $state(false);
-  let ShareNoteDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
 
   // Derived selection state
   const isSelected = $derived.by(() => {
@@ -202,22 +198,18 @@
   // Share handler
   function handleShare() {
     if (node.type === 'folder' && node.path !== '/' && node.path !== '/Journal') {
-      showShareFolderDialog = true;
+      showShareDialog = true;
     } else if (node.type === 'note') {
-      showShareNoteDialog = true;
+      showShareDialog = true;
     }
   }
 
-  function closeShareFolderDialog() {
-    showShareFolderDialog = false;
+  function closeShareDialog() {
+    showShareDialog = false;
   }
 
   function closeRenameNoteDialog() {
     showRenameNoteDialog = false;
-  }
-
-  function closeShareNoteDialog() {
-    showShareNoteDialog = false;
   }
 
   // Drag Start Handlers
@@ -475,22 +467,16 @@
     ColorPickerDialogComponent = module.default;
   }
 
-  async function loadShareFolderDialog() {
-    if (ShareFolderDialogComponent) return;
-    const module = await import('./ShareFolderDialog.svelte');
-    ShareFolderDialogComponent = module.default;
+  async function loadShareDialog() {
+    if (ShareDialogComponent) return;
+    const module = await import('./ShareDialog.svelte');
+    ShareDialogComponent = module.default;
   }
 
   async function loadRenameNoteDialog() {
     if (RenameNoteDialogComponent) return;
     const module = await import('./RenameNoteDialog.svelte');
     RenameNoteDialogComponent = module.default;
-  }
-
-  async function loadShareNoteDialog() {
-    if (ShareNoteDialogComponent) return;
-    const module = await import('./ShareNoteDialog.svelte');
-    ShareNoteDialogComponent = module.default;
   }
 
   $effect(() => {
@@ -512,20 +498,14 @@
   });
 
   $effect(() => {
-    if (showShareFolderDialog) {
-      loadShareFolderDialog();
+    if (showShareDialog) {
+      loadShareDialog();
     }
   });
 
   $effect(() => {
     if (showRenameNoteDialog) {
       loadRenameNoteDialog();
-    }
-  });
-
-  $effect(() => {
-    if (showShareNoteDialog) {
-      loadShareNoteDialog();
     }
   });
 </script>
@@ -693,11 +673,13 @@
   {/if}
 {/if}
 
-<!-- Share folder dialog -->
-{#if node.type === 'folder' && showShareFolderDialog}
-  {#if ShareFolderDialogComponent}
-    <ShareFolderDialogComponent folderId={node.id} onClose={closeShareFolderDialog} />
-  {/if}
+<!-- Share dialog (note or folder) -->
+{#if showShareDialog && ShareDialogComponent}
+  <ShareDialogComponent
+    resourceType={node.type === 'folder' ? 'folder' : 'note'}
+    resourceId={node.id}
+    onClose={closeShareDialog}
+  />
 {/if}
 
 <!-- Rename note dialog -->
@@ -709,13 +691,6 @@
       currentTitle={node.title}
       onClose={closeRenameNoteDialog}
     />
-  {/if}
-{/if}
-
-<!-- Share note dialog -->
-{#if node.type === 'note' && showShareNoteDialog}
-  {#if ShareNoteDialogComponent}
-    <ShareNoteDialogComponent noteId={node.id} onClose={closeShareNoteDialog} />
   {/if}
 {/if}
 

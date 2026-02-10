@@ -7,7 +7,7 @@
   import * as features from '$lib/stores/features.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
-  import ShareCollectionDialog from '$lib/components/ShareCollectionDialog.svelte';
+  import ShareDialog from '$lib/components/ShareDialog.svelte';
   import RecipeSuggestionDialog from '$lib/components/RecipeSuggestionDialog.svelte';
   import type { RecipeCollection } from '$lib/api';
   import { Eye, Edit, Users as UsersIcon, ArrowLeft, Pencil, Trash2, Users } from 'lucide-svelte';
@@ -421,8 +421,9 @@
 />
 
 {#if sharingCollectionId !== null}
-  <ShareCollectionDialog
-    collectionId={sharingCollectionId}
+  <ShareDialog
+    resourceType="collection"
+    resourceId={sharingCollectionId}
     onClose={() => (sharingCollectionId = null)}
   />
 {/if}

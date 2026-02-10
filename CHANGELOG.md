@@ -9,45 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Find-in-Note & Search-Highlight: Ctrl+F oeffnet eine VS-Code-artige Suchleiste direkt im Editor (basierend auf @codemirror/search mit eigenem Svelte-UI-Panel)
+- Suchen & Ersetzen: Ctrl+H oeffnet die Replace-Zeile mit Einzel- und Alle-Ersetzen-Funktionalitaet
+- Suchkontext aus Volltextsuche: Klick auf ein Suchergebnis oeffnet die Notiz mit `?highlight=` Parameter und hebt den Suchbegriff automatisch hervor
+- Preview-Highlighting: Suchbegriffe werden auch im Markdown-Preview sicher hervorgehoben (TreeWalker auf Text-Nodes, kein innerHTML)
 - HTTP gzip-Kompression fuer alle Text-Responses (~65% kleinere JS/CSS/JSON-Payloads)
 - Cache-Control Header fuer statische Assets (immutable-Caching fuer Vite-gehashte Dateien, Revalidierung fuer den Rest)
 - Default `Cache-Control: no-store` fuer API-Responses (verhindert Caching verschluesselter Daten durch Proxies)
-
-### Changed
-
-- Repository ist nun oeffentlich auf GitHub verfuegbar
-
-### Security
-
-- Alte Git-History bereinigt und alle Production-Secrets rotiert
-
-### Added
-
 - Einzelne Notizen koennen jetzt direkt als Markdown-Datei exportiert werden (ueber das Drei-Punkte-Menue im Editor)
 - Demo-Datenbank-Generator mit Beispieluser, Notizen, Rezepten, Journal-Eintraegen und allen Features fuer Screenshots (`make demo-db`)
 - CONTRIBUTING.md, CODE_OF_CONDUCT.md, Issue- und PR-Templates fuer klarere Projektbeitraege
 - SVG-Platzhalter fuer Banner und Screenshots in der Dokumentation
 - GolangCI-Lint Konfiguration fuer zusaetzliche Go-Qualitaetschecks
-
-### Changed
-
-- Versionshistorie speichert jetzt bis zu 100 Versionen pro Notiz statt bisher 30
-- GitHub CI um Prettier-, Markdownlint- und strengere ESLint-Checks erweitert fuer Paritaet mit Forgejo Quality Gates
-- README neu strukturiert mit klaren Sections, Codebeispielen, Badges und Screenshot-Platzhaltern
-- .gitignore um Coverage- und Playwright-Reports ergaenzt
-
-### Changed
-
-- README komplett ueberarbeitet: Professionelle Struktur mit Badges, "Why xelanote"-Sektion, Feature-Kategorien, ausfuehrliche Contributing-Anleitung und Development-Kommandos
-
-### Security
-
-- Infrastruktur-Details (IP-Adressen, SSH-Ports, Benutzernamen) in der Dokumentation durch Platzhalter ersetzt
-- Versehentlich committed node_modules aus dem archive-Verzeichnis entfernt (442 Dateien)
-- .gitignore gehaertet: Private Keys, Zertifikate, Claude Code Konfiguration und node_modules global ausgeschlossen
-
-### Added
-
 - Faelligkeiten-Uebersicht: Neue Seite zeigt alle `@due()`-Termine ueber alle Notizen hinweg, gruppiert nach Status (ueberfaellig, heute, bald, zukunft) mit Toggle fuer erledigte Aufgaben
 - Changelog-Dialog: Klick auf die Versionsnummer in der Seitenleiste oeffnet den vollstaendigen Changelog als formatierten Dialog
 - Faelligkeitsdaten-Syntax: `@due(YYYY-MM-DD)` ueberall im Markdown-Text erzeugt farbige Badges (rot=ueberfaellig, orange=heute/bald, grau=Zukunft) und wird im Editor hervorgehoben
@@ -55,60 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Volltextsuche fuer verschluesselte Notizen: Suche findet jetzt auch verschluesselte Notizen ueber deren Keywords (opt-in). Ergebnisse zeigen Lock-Icon, entschluesselte Titel (wenn Vault entsperrt) und gematchte Keywords
 - `decryptTitle()` im Encryption-Store fuer isolierte Titel-Entschluesselung (z.B. in Suchergebnissen)
 - Schnellsuche (Strg+P) durchsucht jetzt auch verschluesselte Notizen ueber den Client-seitigen Index und zeigt Kontext-Snippets mit hervorgehobenen Treffern an
-
-### Fixed
-
-- Papierkorb zeigte die Anzahl geloeschter Notizen an, aber die Notizliste blieb leer (Virtualizer-Deadlock durch fehlende Container-Hoehe)
-- Endgueltiges Loeschen einzelner Notizen aus dem Papierkorb schlug immer mit 404 fehl
-- Papierkorb-Badge in der Seitenleiste aktualisierte sich nicht beim Loeschen ueber das Kontextmenue im Notizbaum
-- Wiederhergestellte Notizen erschienen erst nach manuellem Seiten-Reload in der Seitenleiste
-- Inhaltsverzeichnis (TOC) war auf mobilen Geraeten transparent und ueberlagerte den Seiteninhalt unleserlich
-- Inhaltsverzeichnis-Button scrollte beim Herunterscrollen aus dem Sichtfeld statt oben fixiert zu bleiben
-- Split-View wurde auf mobilen Geraeten trotz fehlender Buttons angezeigt, wenn der gespeicherte Editor-Modus "split" war
-- Volltextsuche fuer verschluesselte Notizen lieferte veraltete oder falsche Treffer, weil die FTS-Trigger-Korrektur nie ausgefuehrt wurde
-- Keywords fuer verschluesselte Notizen wurden nie gespeichert, weil die Preference-Abfrage eine nicht existierende Tabellenstruktur verwendete
-- Verschluesselungs-Einstellungen (Keyword-Extraktion, Titel-Verschluesselung) wurden nur lokal gespeichert und nie an den Server uebermittelt
-- Schnellsuche (Strg+P) fand keine verschluesselten Notizen, weil nur Plaintext-Titel durchsucht wurden
-
-### Changed
-
-- Alle ESLint-Warnings (260+) auf null reduziert: Fehlende each-Keys, ungenutzte Variablen, explizite any-Typen, nicht-reaktive Svelte-5-Objekte und unsaubere Regex-Escapes behoben
-- ESLint-Schwelle in CI und Makefile von 700 auf 0 gesenkt, neue Warnings werden ab sofort blockiert
-- Alle API-Fehlerantworten verwenden jetzt einheitlich JSON-Format statt gemischtem Plain-Text/JSON
-- Backend-Code: Duplizierte Validierungslogik fuer Notiz-Felder, Journal-Feature-Checks und ETag-Parsing in wiederverwendbare Hilfsfunktionen konsolidiert
-- Journal und Rezepte sind jetzt standardmaessig fuer alle Nutzer aktiviert (bestehende und neue)
-- Inhaltsverzeichnis (TOC) ist jetzt ein Floating-Button oben rechts im Preview statt ganz unten versteckt. Oeffnet sich als Dropdown-Overlay, bleibt beim Scrollen sticky sichtbar, responsive fuer Mobile.
-- Upload-Button in der Editor-Toolbar verwendet jetzt ein Bild-Icon (ImagePlus) statt des generischen Upload-Pfeils fuer bessere Erkennbarkeit
-- Tests fuer Account-Lockout verwenden jetzt eine kontrollierte Uhr (keine echten Sleeps mehr)
-- Quality-Checks dokumentiert und Make-Targets fuer `fmt-check`, `typecheck` und `quality` ergaenzt (Format, Lint, Typecheck in einem Lauf)
-- UI-A11y und Svelte-Deprecation Fixes (Dialog-Fokus, Tastatur-Handling, Slot-Rendering, Labels/ARIA)
-- Pre-commit Hooks (lefthook) pruefen automatisch gofmt, go vet, ESLint, Prettier und Markdownlint vor jedem Commit
-- Markdown-Linting mit markdownlint-cli2 fuer README und Docs-Verzeichnis eingerichtet (strukturelle Regeln)
-- Link-Checking mit lychee in der GitHub Actions Quality-Pipeline ergaenzt
-- Forgejo Staging-Deployment fuehrt jetzt Backend-Tests und Frontend-Lint vor dem Deploy aus
-- CHANGELOG-Aktualisierung wird in Pull Requests automatisch geprueft (Warning bei fehlender Aenderung)
-
-### Security
-
-- JSON Body-Size Limits: `http.MaxBytesReader` erhaelt jetzt korrekt den `ResponseWriter` (verhindert Panic bei Ueberschreitung), Standard 1MB Limit fuer alle Endpoints, 16MB fuer Note-Content und Import
-- User-Enumeration verhindert: Sharing-Fehlermeldungen enthalten keine Benutzernamen mehr ("unable to share with specified user" statt "user not found: username")
-- IV-Validierung: Verschluesselte Titel muessen jetzt ein gueltiges Base64-IV-Feld enthalten
-- Crypto Debug-Logs (libsodium Version, Key-Derivation) nur noch im DEV-Modus sichtbar
-- Request-Context wird jetzt an alle Such-Queries durchgereicht (ermoeglicht Timeout/Abbruch bei Client-Disconnect)
-
-### Fixed
-
-- FTS5-Trigger fuer `note_keywords` DELETE/UPDATE verwendeten falsche Syntax fuer external-content Tabellen (Migration 041)
-- Tag- und Link-Vorschlaege zeigen jetzt korrekt "AI features not enabled for this note" statt generischer Fehlermeldungen wenn KI fuer eine Notiz deaktiviert ist
-- Suchfenster (Quick Switcher) laesst sich jetzt durch Klick ausserhalb wieder schliessen
-- Journal-Kalender crasht nicht mehr beim Anzeigen von Monaten ohne Eintraege (TypeError auf null wurde behoben)
-- Android PWA: Sidebar-Buttons reagieren wieder auf Taps (setPointerCapture wurde zu frueh aufgerufen und blockierte click-Events in Chrome)
-- Journal-Ordner in der Sidebar kann jetzt aufgeklappt werden: loadTree() laedt Journal-Notizen separat nach, da sie vom Standard-API-Query (note_type='note') ausgeschlossen werden
-- Enter auf checked Tasks springt nicht mehr unerwartet nach oben. Standard-Enter-Verhalten wiederhergestellt, Auto-Sort nur noch bei Checkbox-Toggle.
-- Flaky Tests: Lockout, FIDO2-Session-Store und Upload-Signaturen sind jetzt deterministisch (keine sleeps, keine timing races)
-
-### Added
-
 - Dedizierte Journal-Seite (`/journal`): Kalender + Eintraege-Liste mit Desktop 2-Spalten-Layout und Mobile-Responsive Collapsible-Kalender
 - Journal-Button in Sidebar ersetzt inline Mini-Kalender (konsistent mit Recipes-Button)
 - Neuer Backend-Endpoint `GET /journal/entries` fuer die Eintraege-Liste
@@ -191,49 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DB-Migration `034_note_sharing.sql` mit `note_shares` und `folder_shares` Tabellen (Phase 2 vorbereitet)
 - 22 neue i18n Keys in en.json und de.json fuer Sharing-UI
 - 10 DB-Tests fuer Sharing-Layer
-
-### Security
-
-- Encryption-Guard: Verschluesselung kann nicht auf geteilten Ordnern aktiviert werden (Share-Entzug erforderlich)
-- Ordner mit `encryption_default=true` oder verschluesselten Notizen koennen nicht geteilt werden
-- Verschluesselte Notizen in geteilten Ordnern werden aus der Anzeige gefiltert (Defense-in-Depth)
-- SSE-Nachrichten werden jetzt sicher als JSON serialisiert, um Injection zu verhindern
-- HTTP-Server-Timeouts schuetzen jetzt gegen Slowloris-Angriffe
-- Account-Lockout nutzt jetzt hybrides IP- und Account-Tracking gegen verteilte Brute-Force-Angriffe
-- WebSocket lehnt leere Origin-Header im Produktionsmodus ab
-- Klartextinhalt wird nicht mehr als URL-Query-Parameter gesendet
-- Benutzerkennungen werden in Logs jetzt gehasht statt im Klartext ausgegeben
-- Docker-Container hat jetzt ein PID-Limit zum Schutz gegen Fork-Bomben
-
-### Fixed
-
-- Panic/500 bei Hash-ETag-Requests wenn Notiz geloescht wurde: `db.GetNote` gibt jetzt `ErrNotFound` statt `(nil, nil)` zurueck, verhindert nil-Dereferenz in Update- und Decrypt-Handlern
-- Stille Teilergebnisse bei Such-Queries: `rows.Err()` wird jetzt nach Iteration in Search, QuickSearch und FilteredSearch geprueft
-
-### Changed
-
-- Sidebar-Aktionen (Farbe, Umbenennen, Löschen) über Kontextmenü statt Inline-Buttons erreichbar
-- Breadcrumb-Navigation (Haus-Symbol + Pfad) wird auf Mobilgeräten nicht mehr angezeigt
-- MobileHeader (Logo-Leiste) wird auf Notiz-Seiten auf Mobilgeräten ausgeblendet für mehr Platz
-- Hamburger-Menü ist in der Editor-Toolbar auf Mobilgeräten immer sichtbar
-- Speicher-Indikator erscheint direkt neben dem Notiztitel auf Mobilgeräten
-- Focus-Mode-Button wird auf Mobilgeräten nicht mehr angezeigt
-
-### Fixed
-
-- Touch-Ziele auf Mobilgeräten sind jetzt groß genug zum zuverlässigen Antippen
-- Aktions-Buttons in der Notizbaumansicht sind auf Touch-Geräten jetzt sichtbar
-- Benachrichtigungen und Dialoge laufen auf schmalen Bildschirmen nicht mehr über
-- QuickSwitcher und Login-Seite sind auf Mobilgeräten besser nutzbar
-- Page refresh on a selected note now stays on that note instead of redirecting to the start page
-- Sidebar correctly highlights the selected note after page refresh
-- Split View wurde auf Mobilgeräten nicht automatisch deaktiviert
-- Mobile layout was broken due to sidebar rendering in desktop mode on small screens
-
-### Added
-
 - Hardware Security Keys (FIDO2/WebAuthn) als zweite 2FA-Methode neben Authenticator App
-- Security Key Management in den Einstellungen (Registrierung, Benennung, Löschung)
+- Security Key Management in den Einstellungen (Registrierung, Benennung, Loeschung)
 - Methodenauswahl beim Login (Security Key, Authenticator App, Backup Code)
 - All action icons (trash, settings, theme, logout) now visible in collapsed sidebar
 - Resizable sidebar and editor/preview split view via drag handle
@@ -264,18 +142,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Editor-Toolbar aufgeräumt: selten genutzte Aktionen (Löschen, Verschieben, Textfarbe, Einrücken, KI-Toggle) ins More-Menü verschoben
+- Repository ist nun oeffentlich auf GitHub verfuegbar
+- Versionshistorie speichert jetzt bis zu 100 Versionen pro Notiz statt bisher 30
+- GitHub CI um Prettier-, Markdownlint- und strengere ESLint-Checks erweitert fuer Paritaet mit Forgejo Quality Gates
+- README neu strukturiert mit klaren Sections, Codebeispielen, Badges und Screenshot-Platzhaltern
+- .gitignore um Coverage- und Playwright-Reports ergaenzt
+- README komplett ueberarbeitet: Professionelle Struktur mit Badges, "Why xelanote"-Sektion, Feature-Kategorien, ausfuehrliche Contributing-Anleitung und Development-Kommandos
+- Alle ESLint-Warnings (260+) auf null reduziert: Fehlende each-Keys, ungenutzte Variablen, explizite any-Typen, nicht-reaktive Svelte-5-Objekte und unsaubere Regex-Escapes behoben
+- ESLint-Schwelle in CI und Makefile von 700 auf 0 gesenkt, neue Warnings werden ab sofort blockiert
+- Alle API-Fehlerantworten verwenden jetzt einheitlich JSON-Format statt gemischtem Plain-Text/JSON
+- Backend-Code: Duplizierte Validierungslogik fuer Notiz-Felder, Journal-Feature-Checks und ETag-Parsing in wiederverwendbare Hilfsfunktionen konsolidiert
+- Journal und Rezepte sind jetzt standardmaessig fuer alle Nutzer aktiviert (bestehende und neue)
+- Inhaltsverzeichnis (TOC) ist jetzt ein Floating-Button oben rechts im Preview statt ganz unten versteckt. Oeffnet sich als Dropdown-Overlay, bleibt beim Scrollen sticky sichtbar, responsive fuer Mobile.
+- Upload-Button in der Editor-Toolbar verwendet jetzt ein Bild-Icon (ImagePlus) statt des generischen Upload-Pfeils fuer bessere Erkennbarkeit
+- Tests fuer Account-Lockout verwenden jetzt eine kontrollierte Uhr (keine echten Sleeps mehr)
+- Quality-Checks dokumentiert und Make-Targets fuer `fmt-check`, `typecheck` und `quality` ergaenzt (Format, Lint, Typecheck in einem Lauf)
+- UI-A11y und Svelte-Deprecation Fixes (Dialog-Fokus, Tastatur-Handling, Slot-Rendering, Labels/ARIA)
+- Pre-commit Hooks (lefthook) pruefen automatisch gofmt, go vet, ESLint, Prettier und Markdownlint vor jedem Commit
+- Markdown-Linting mit markdownlint-cli2 fuer README und Docs-Verzeichnis eingerichtet (strukturelle Regeln)
+- Link-Checking mit lychee in der GitHub Actions Quality-Pipeline ergaenzt
+- Forgejo Staging-Deployment fuehrt jetzt Backend-Tests und Frontend-Lint vor dem Deploy aus
+- CHANGELOG-Aktualisierung wird in Pull Requests automatisch geprueft (Warning bei fehlender Aenderung)
+- Sidebar-Aktionen (Farbe, Umbenennen, Loeschen) ueber Kontextmenue statt Inline-Buttons erreichbar
+- Breadcrumb-Navigation (Haus-Symbol + Pfad) wird auf Mobilgeraeten nicht mehr angezeigt
+- MobileHeader (Logo-Leiste) wird auf Notiz-Seiten auf Mobilgeraeten ausgeblendet fuer mehr Platz
+- Hamburger-Menue ist in der Editor-Toolbar auf Mobilgeraeten immer sichtbar
+- Speicher-Indikator erscheint direkt neben dem Notiztitel auf Mobilgeraeten
+- Focus-Mode-Button wird auf Mobilgeraeten nicht mehr angezeigt
+- Editor-Toolbar aufgeraeumt: selten genutzte Aktionen (Loeschen, Verschieben, Textfarbe, Einruecken, KI-Toggle) ins More-Menue verschoben
 - Auto-Save-Statustext entfernt, nur noch Icon-Feedback in der Toolbar
-- More-Menü komplett lokalisiert (war vorher nur auf Deutsch)
+- More-Menue komplett lokalisiert (war vorher nur auf Deutsch)
 - Split-View-Modus auf Mobile deaktiviert zugunsten von Edit/Preview-Umschaltung
-- Sidebar-Layout komplett überarbeitet: Erstellungs-Buttons im Header, Suchzeile über dem Baum, Papierkorb als Tree-Item
+- Sidebar-Layout komplett ueberarbeitet: Erstellungs-Buttons im Header, Suchzeile ueber dem Baum, Papierkorb als Tree-Item
 - Import/Export von der Sidebar in die Einstellungen verschoben (neuer "Daten"-Tab)
 - Theme-Umschalter in der Seitenleiste vereinfacht zu einem direkten Toggle-Button mit Sonne/Mond-Icons
 - Gruvbox Aqua theme consistency across entire frontend
 - Documentation restructured: planning docs moved to `docs/planning/`, cross-references added, new testing guide and environment variables reference
+- Drei fast identische Sharing-Dialoge (Note, Folder, Collection) zu einem generischen `ShareDialog.svelte` konsolidiert (~400 Zeilen Duplikation eliminiert)
+- Konfliktierendes `backend/Dockerfile` entfernt, SQLCipher-Anleitung als Kommentar im Root-Dockerfile dokumentiert
+- Staging-Workflow auf node:22 aktualisiert (war node:20, inkonsistent mit Root-Dockerfile)
+- CORS-Dokumentation korrigiert: `CORS_ALLOWED_ORIGINS` ist in Production _required_ (log.Fatal), nicht nur "recommended"
+- Fehlende Env-Vars `GEMINI_MODEL` und `XELANOTE_API_KEY_SECRET` in `.env.example` ergaenzt
+- Salt-Deletion-Testanleitung von TODO.md nach `docs/runbooks/salt-deletion-test.md` verschoben
+- CI: Env-Var-Sync-Check hinzugefuegt (`scripts/check-env-sync.sh`) — vergleicht Go-Source, Docs und `.env.example`
+- CI: Bundle-Size-Tracking hinzugefuegt (`scripts/check-bundle-size.sh`, Budget: 3600 KB)
 
 ### Fixed
 
+- `versions.go` restoreVersion verwendete rohen Integer-ETag statt gehashtem ETag und unterstuetzte keine neuen Hash-ETags
+- Papierkorb zeigte die Anzahl geloeschter Notizen an, aber die Notizliste blieb leer (Virtualizer-Deadlock durch fehlende Container-Hoehe)
+- Endgueltiges Loeschen einzelner Notizen aus dem Papierkorb schlug immer mit 404 fehl
+- Papierkorb-Badge in der Seitenleiste aktualisierte sich nicht beim Loeschen ueber das Kontextmenue im Notizbaum
+- Wiederhergestellte Notizen erschienen erst nach manuellem Seiten-Reload in der Seitenleiste
+- Inhaltsverzeichnis (TOC) war auf mobilen Geraeten transparent und ueberlagerte den Seiteninhalt unleserlich
+- Inhaltsverzeichnis-Button scrollte beim Herunterscrollen aus dem Sichtfeld statt oben fixiert zu bleiben
+- Split-View wurde auf Mobilgeraeten trotz fehlender Buttons angezeigt, wenn der gespeicherte Editor-Modus "split" war
+- Volltextsuche fuer verschluesselte Notizen lieferte veraltete oder falsche Treffer, weil die FTS-Trigger-Korrektur nie ausgefuehrt wurde
+- Keywords fuer verschluesselte Notizen wurden nie gespeichert, weil die Preference-Abfrage eine nicht existierende Tabellenstruktur verwendete
+- Verschluesselungs-Einstellungen (Keyword-Extraktion, Titel-Verschluesselung) wurden nur lokal gespeichert und nie an den Server uebermittelt
+- Schnellsuche (Strg+P) fand keine verschluesselten Notizen, weil nur Plaintext-Titel durchsucht wurden
+- FTS5-Trigger fuer `note_keywords` DELETE/UPDATE verwendeten falsche Syntax fuer external-content Tabellen (Migration 041)
+- Tag- und Link-Vorschlaege zeigen jetzt korrekt "AI features not enabled for this note" statt generischer Fehlermeldungen wenn KI fuer eine Notiz deaktiviert ist
+- Suchfenster (Quick Switcher) laesst sich jetzt durch Klick ausserhalb wieder schliessen
+- Journal-Kalender crasht nicht mehr beim Anzeigen von Monaten ohne Eintraege (TypeError auf null wurde behoben)
+- Android PWA: Sidebar-Buttons reagieren wieder auf Taps (setPointerCapture wurde zu frueh aufgerufen und blockierte click-Events in Chrome)
+- Journal-Ordner in der Sidebar kann jetzt aufgeklappt werden: loadTree() laedt Journal-Notizen separat nach, da sie vom Standard-API-Query (note_type='note') ausgeschlossen werden
+- Enter auf checked Tasks springt nicht mehr unerwartet nach oben. Standard-Enter-Verhalten wiederhergestellt, Auto-Sort nur noch bei Checkbox-Toggle.
+- Flaky Tests: Lockout, FIDO2-Session-Store und Upload-Signaturen sind jetzt deterministisch (keine sleeps, keine timing races)
+- Panic/500 bei Hash-ETag-Requests wenn Notiz geloescht wurde: `db.GetNote` gibt jetzt `ErrNotFound` statt `(nil, nil)` zurueck, verhindert nil-Dereferenz in Update- und Decrypt-Handlern
+- Stille Teilergebnisse bei Such-Queries: `rows.Err()` wird jetzt nach Iteration in Search, QuickSearch und FilteredSearch geprueft
+- Touch-Ziele auf Mobilgeraeten sind jetzt gross genug zum zuverlaessigen Antippen
+- Aktions-Buttons in der Notizbaumansicht sind auf Touch-Geraeten jetzt sichtbar
+- Benachrichtigungen und Dialoge laufen auf schmalen Bildschirmen nicht mehr ueber
+- QuickSwitcher und Login-Seite sind auf Mobilgeraeten besser nutzbar
+- Page refresh on a selected note now stays on that note instead of redirecting to the start page
+- Sidebar correctly highlights the selected note after page refresh
+- Split View wurde auf Mobilgeraeten nicht automatisch deaktiviert
+- Mobile layout was broken due to sidebar rendering in desktop mode on small screens
 - Reordering notes in the root folder had no effect because display_order was ignored for root-level notes
 - Spell checker was accessible even when AI functions were disabled for a note
 - Firefox iOS keyboard detection not hiding header/breadcrumbs when typing
@@ -299,6 +242,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Alte Git-History bereinigt und alle Production-Secrets rotiert
+- Infrastruktur-Details (IP-Adressen, SSH-Ports, Benutzernamen) in der Dokumentation durch Platzhalter ersetzt
+- Versehentlich committed node_modules aus dem archive-Verzeichnis entfernt (442 Dateien)
+- .gitignore gehaertet: Private Keys, Zertifikate, Claude Code Konfiguration und node_modules global ausgeschlossen
+- JSON Body-Size Limits: `http.MaxBytesReader` erhaelt jetzt korrekt den `ResponseWriter` (verhindert Panic bei Ueberschreitung), Standard 1MB Limit fuer alle Endpoints, 16MB fuer Note-Content und Import
+- User-Enumeration verhindert: Sharing-Fehlermeldungen enthalten keine Benutzernamen mehr ("unable to share with specified user" statt "user not found: username")
+- IV-Validierung: Verschluesselte Titel muessen jetzt ein gueltiges Base64-IV-Feld enthalten
+- Crypto Debug-Logs (libsodium Version, Key-Derivation) nur noch im DEV-Modus sichtbar
+- Request-Context wird jetzt an alle Such-Queries durchgereicht (ermoeglicht Timeout/Abbruch bei Client-Disconnect)
+- Encryption-Guard: Verschluesselung kann nicht auf geteilten Ordnern aktiviert werden (Share-Entzug erforderlich)
+- Ordner mit `encryption_default=true` oder verschluesselten Notizen koennen nicht geteilt werden
+- Verschluesselte Notizen in geteilten Ordnern werden aus der Anzeige gefiltert (Defense-in-Depth)
+- SSE-Nachrichten werden jetzt sicher als JSON serialisiert, um Injection zu verhindern
+- HTTP-Server-Timeouts schuetzen jetzt gegen Slowloris-Angriffe
+- Account-Lockout nutzt jetzt hybrides IP- und Account-Tracking gegen verteilte Brute-Force-Angriffe
+- WebSocket lehnt leere Origin-Header im Produktionsmodus ab
+- Klartextinhalt wird nicht mehr als URL-Query-Parameter gesendet
+- Benutzerkennungen werden in Logs jetzt gehasht statt im Klartext ausgegeben
+- Docker-Container hat jetzt ein PID-Limit zum Schutz gegen Fork-Bomben
 - CSRF token validation restored after SameSite=Strict migration
 - Constant-time login comparison to prevent user enumeration via timing
 - Generic error messages on registration to prevent user enumeration

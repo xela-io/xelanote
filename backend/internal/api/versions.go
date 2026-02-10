@@ -204,9 +204,8 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentVersion, err := strconv.Atoi(ifMatch)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid If-Match header")
+	currentVersion, ok2 := s.resolveETagVersion(w, userID, noteID, ifMatch)
+	if !ok2 {
 		return
 	}
 
@@ -224,6 +223,6 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("ETag", strconv.Itoa(note.Version))
+	w.Header().Set("ETag", generateETag(note.ID, note.Version))
 	respondJSON(w, http.StatusOK, note)
 }

@@ -7,7 +7,7 @@ Complete reference for all environment variables used by xelanote.
 | Variable | Description |
 |----------|-------------|
 | `JWT_SECRET` | HMAC-SHA256 signing key for JWT tokens. **Min. 64 characters.** Generate with `openssl rand -hex 32`. Server refuses to start without this. |
-| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed origins (e.g., `https://notes.example.com`). **Strongly recommended in production** (server starts without it but allows all origins). |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed origins (e.g., `https://notes.example.com`). **Required when `XELANOTE_ENV=production`** (server refuses to start). In development, allows all origins with a warning. |
 
 ## Optional - Application
 

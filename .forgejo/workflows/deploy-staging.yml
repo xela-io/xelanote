@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "--- Running frontend lint in Docker ---"
-          docker run --rm -v "$PWD:/repo" -w /repo/frontend node:20-alpine sh -c \
+          docker run --rm -v "$PWD:/repo" -w /repo/frontend node:22-alpine sh -c \
             "npm ci --ignore-scripts >/dev/null 2>&1 && \
              echo '--- eslint (errors only) ---' && npx eslint --no-warn-ignored --max-warnings 0 . && \
              echo '--- prettier ---' && npm run format:check && \

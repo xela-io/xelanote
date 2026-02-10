@@ -55,11 +55,14 @@
   import { FEATURE_FLAGS } from '$lib/config';
   import ColorPickerPopover from './ColorPickerPopover.svelte';
   import EditorMoreMenu from './EditorMoreMenu.svelte';
-  import ShareNoteDialog from './ShareNoteDialog.svelte';
+  import ShareDialog from './ShareDialog.svelte';
   import TagEditor from './TagEditor.svelte';
   import TagSuggestionsPanel from './TagSuggestionsPanel.svelte';
   import LinkSuggestionsPanel from './LinkSuggestionsPanel.svelte';
   import SpellCheckToggle from './SpellCheckToggle.svelte';
+  import FindReplaceBar from './FindReplaceBar.svelte';
+  import { sanitizeSearchQuery, clearSearch } from '$lib/editor/find-replace';
+  import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
   import type { Tag, AIAction } from '$lib/api';
@@ -67,6 +70,7 @@
   import TableOfContents from './TableOfContents.svelte';
   import SummaryPanel from './SummaryPanel.svelte';
 
+  import { page } from '$app/stores';
   import { taskCollapse } from '$lib/editor/task-collapse';
   import { taskSortable } from '$lib/editor/task-sortable';
   import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
@@ -103,6 +107,14 @@
     isFullContent: boolean;
     initialContentHash: string;
   } | null>(null);
+  // Find & Replace state
+  let showFindReplace = $state(false);
+  let findReplaceQuery = $state('');
+  let findReplaceShowReplace = $state(false);
+  let findReplaceCaseSensitive = $state(false);
+  let pendingHighlightQuery = $state<string | null>(null);
+  let editorExtensionsReady = $state(false);
+
   let MoveToFolderDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
   let markdownGuideDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
   let MarkdownGuideDropdownComponent = $state<Component<Record<string, unknown>> | null>(null);
@@ -215,6 +227,16 @@
       onBeforeNewline: (view) => {
         return handleNewlineWithTaskReorder(view);
       },
+      onFindReplace: (options) => {
+        openFindReplace(undefined, options);
+      },
+      onExtensionsReady: () => {
+        editorExtensionsReady = true;
+        if (pendingHighlightQuery) {
+          openFindReplace(pendingHighlightQuery);
+          pendingHighlightQuery = null;
+        }
+      },
     };
 
     editorView = createEditor(node, config);
@@ -224,6 +246,7 @@
       destroy() {
         editorView?.destroy();
         editorView = undefined;
+        editorExtensionsReady = false;
       },
     };
   }
@@ -1357,6 +1380,38 @@
     editorView.focus();
   }
 
+  function openFindReplace(query?: string, options?: { replace?: boolean }) {
+    findReplaceQuery = query ?? '';
+    findReplaceShowReplace = options?.replace ?? false;
+
+    // If editor has selection and no query provided, use selected text
+    if (!query && editorView) {
+      const selection = editorView.state.selection.main;
+      if (selection.from !== selection.to) {
+        findReplaceQuery = editorView.state.doc.sliceString(selection.from, selection.to);
+      }
+    }
+
+    showFindReplace = true;
+  }
+
+  function closeFindReplace() {
+    if (showFindReplace) {
+      showFindReplace = false;
+      findReplaceQuery = '';
+      findReplaceShowReplace = false;
+      if (editorView) {
+        clearSearch(editorView);
+      }
+      // Remove ?highlight= from URL
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('highlight')) {
+        url.searchParams.delete('highlight');
+        window.history.replaceState(window.history.state, '', url.toString());
+      }
+    }
+  }
+
   async function loadMoveToFolderDialog() {
     if (MoveToFolderDialogComponent) return;
     const module = await import('./MoveToFolderDialog.svelte');
@@ -1402,6 +1457,41 @@
   $effect(() => {
     if (ui.getMarkdownGuideDropdownOpen()) {
       loadMarkdownGuideDropdown();
+    }
+  });
+
+  // Close FindReplaceBar when note changes (not on initial mount).
+  // MUST be declared BEFORE the URL highlight effect: Svelte 5 runs effects
+  // in declaration order, so close runs first, then re-open with ?highlight=.
+  let prevNoteId: string | null = null;
+  $effect(() => {
+    if (prevNoteId !== null && prevNoteId !== noteId) {
+      // Inline close without clearing pendingHighlightQuery
+      showFindReplace = false;
+      findReplaceQuery = '';
+      findReplaceShowReplace = false;
+      if (editorView) {
+        clearSearch(editorView);
+      }
+    }
+    prevNoteId = noteId;
+  });
+
+  // URL highlight param: open FindReplaceBar when ?highlight= is present
+  $effect(() => {
+    const query = $page.url.searchParams.get('highlight');
+    if (query) {
+      const sanitized = sanitizeSearchQuery(query);
+      const isPreviewOnly = ui.getEditorMode() === 'preview';
+
+      if (isPreviewOnly || (editorExtensionsReady && editorView)) {
+        // Preview mode: no editor needed, just open bar for preview highlights
+        // Edit/Split mode with ready editor: open immediately
+        openFindReplace(sanitized);
+      } else {
+        // Edit/Split mode, editor not yet ready → defer until onExtensionsReady
+        pendingHighlightQuery = sanitized;
+      }
     }
   });
 </script>
@@ -1687,6 +1777,24 @@
         {notes.getError()}
       </div>
     {:else if notes.getCurrentNote()}
+      <!-- Editor / Preview area (relative for FindReplaceBar positioning) -->
+      <div class="relative">
+        <!-- Find & Replace Bar -->
+        {#if showFindReplace}
+          <FindReplaceBar
+            {editorView}
+            initialQuery={findReplaceQuery}
+            showReplace={findReplaceShowReplace}
+            isReadOnly={ui.getEditorMode() === 'preview'}
+            onClose={closeFindReplace}
+            onQueryChange={(query, cs) => {
+              findReplaceQuery = query;
+              findReplaceCaseSensitive = cs;
+            }}
+          />
+        {/if}
+      </div>
+
       <!-- Editor / Preview area -->
       <div class="flex min-h-0" bind:this={splitContainerRef}>
         <!-- Editor -->
@@ -1749,6 +1857,7 @@
                 }}
                 use:taskSortable={{ onReorder: handleTaskReorder }}
                 use:imageResize={{ onResize: handleImageResize }}
+                use:highlightSearchTerms={{ query: showFindReplace ? findReplaceQuery : '', caseSensitive: findReplaceCaseSensitive }}
               >
                 {@html renderedContent}
               </div>
@@ -1958,8 +2067,9 @@
 
 <!-- Share Note Dialog -->
 {#if showShareDialog && notes.getCurrentNote()}
-  <ShareNoteDialog
-    noteId={notes.getCurrentNote()!.id}
+  <ShareDialog
+    resourceType="note"
+    resourceId={notes.getCurrentNote()!.id}
     isEncrypted={notes.getCurrentNote()!.content_encrypted ?? false}
     onClose={() => (showShareDialog = false)}
   />

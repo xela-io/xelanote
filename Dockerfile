@@ -14,6 +14,8 @@ RUN npm run build
 # Stage 2: Build Backend
 FROM golang:1.24-alpine AS backend-builder
 
+# For SQLCipher support: replace "gcc musl-dev" with "gcc musl-dev sqlcipher-dev",
+# change build tags to "fts5 sqlite_crypt", and add "sqlcipher" to runtime stage.
 RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app

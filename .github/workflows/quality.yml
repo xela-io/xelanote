@@ -22,6 +22,10 @@ jobs:
       - run: npm run lint
       - run: npm run lint:md
       - run: npm run typecheck
+      - name: Bundle size check
+        run: |
+          npm run build
+          bash ../scripts/check-bundle-size.sh
 
   backend:
     runs-on: ubuntu-latest
@@ -58,6 +62,13 @@ jobs:
         with:
           args: --config .lychee.toml "README.md" "docs/**/*.md" "CHANGELOG.md"
           fail: true
+
+  env-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check env var sync
+        run: bash scripts/check-env-sync.sh
 
   changelog:
     if: github.event_name == 'pull_request'

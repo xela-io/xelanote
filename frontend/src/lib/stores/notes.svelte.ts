@@ -13,6 +13,7 @@ import {
   triggerAutoSave as triggerAutoSaveHelper,
 } from '$lib/stores/notes/auto-save';
 import { createNote as createNoteHelper } from '$lib/stores/notes/creator';
+import { toggleEncryption as toggleEncryptionHelper } from '$lib/stores/notes/encryption-toggle';
 import {
   assertOnlineForParanoidMode,
   extractUniqueWikilinks,
@@ -256,151 +257,45 @@ export async function saveNote() {
  * Encrypt: encrypts content and sends encrypted payload.
  */
 export async function toggleEncryption(): Promise<void> {
-  if (!currentNote) return;
-
-  // Prevent concurrent operations
-  if (isSaving) {
-    console.log('[NOTES] Save in progress, skipping encryption toggle');
-    return;
-  }
-
-  // Cancel pending auto-save
-  if (autoSaveTimeout) {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = null;
-    autoSaveStatus = 'idle';
-  }
-
-  isSaving = true;
-  error = null;
-
-  try {
-    if (currentNote.content_encrypted !== false) {
-      // Currently encrypted → decrypt
-      console.log('[NOTES] Decrypting note:', currentNote.id);
-
-      // For recipe notes: extract recipe data from decrypted content
-      let recipeData:
-        | { recipe_metadata?: api.RecipeMetadata; recipe_ingredients?: api.RecipeIngredient[] }
-        | undefined;
-      if (currentNote.note_type === 'recipe' && currentNote.content) {
-        try {
-          const parsed = JSON.parse(currentNote.content);
-          if (parsed.recipe_metadata || parsed.recipe_ingredients) {
-            recipeData = {
-              recipe_metadata: parsed.recipe_metadata,
-              recipe_ingredients: parsed.recipe_ingredients,
-            };
-            // Use the actual note content from the parsed payload
-            currentNote = { ...currentNote, content: parsed.content ?? '' };
-          }
-        } catch {
-          // Content is not JSON (legacy), no recipe data to restore
-        }
-      }
-
-      const decrypted = await api.decryptNote(
-        currentNote.id,
-        currentNote.title,
-        currentNote.content,
-        currentNote.version,
-        recipeData
-      );
-
-      currentNote = decrypted;
-      lastSavedVersion = decrypted.version;
-      lastSaveTimestamp = Date.now();
-      isDirty = false;
-
-      // Remove from client search index (now plaintext, server handles search)
-      searchIndex.removeFromIndex(decrypted.id);
-
-      // Update in list
-      notes = notes.map((n) => (n.id === decrypted.id ? decrypted : n));
-    } else {
-      // Currently plaintext → encrypt
-      console.log('[NOTES] Encrypting note:', currentNote.id);
-
-      if (!encryption.isEncryptionUnlocked()) {
-        throw new Error('Encryption locked - please re-login');
-      }
-
-      // For recipe notes: load metadata+ingredients and serialize into content
-      let contentToEncrypt = currentNote.content;
-      if (currentNote.note_type === 'recipe') {
-        try {
-          const detail = await api.getRecipeDetail(currentNote.id);
-          if (detail.metadata || (detail.ingredients && detail.ingredients.length > 0)) {
-            contentToEncrypt = JSON.stringify({
-              content: currentNote.content,
-              recipe_metadata: detail.metadata,
-              recipe_ingredients: detail.ingredients,
-            });
-          }
-        } catch (err) {
-          console.warn(
-            '[NOTES] Failed to load recipe data for encryption, encrypting content only:',
-            err
-          );
-        }
-      }
-
-      const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(
-        currentNote.title,
-        contentToEncrypt
-      );
-
-      // Extract links
-      const uniqueLinks = extractUniqueWikilinks(currentNote.content);
-
-      const payload: api.NotePayload = {
-        title: encryptedTitle ? '' : currentNote.title,
-        encrypted_title: encryptedTitle,
-        title_encrypted: !!encryptedTitle,
-        encrypted_content: encryptedContent.ciphertext,
-        wrapped_dek: encryptedContent.metadata.wrapped_dek,
-        encryption_metadata: JSON.stringify(encryptedContent.metadata),
-        keywords: keywords,
-        folder_path: currentNote.folder_path,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-      };
-
-      const updated = await api.updateNote(currentNote.id, payload, currentNote.version);
-
-      // Decrypt response back into memory
-      let processedUpdate = updated;
-      if (updated.content_encrypted && updated.encrypted_content) {
-        const encryptedPayload: EncryptedPayload = {
-          ciphertext: updated.encrypted_content,
-          metadata: JSON.parse(updated.encryption_metadata || '{}'),
-        };
-
-        const dec = encryption.decryptNote(updated.encrypted_title || null, encryptedPayload);
-
-        processedUpdate = {
-          ...updated,
-          title: dec.title || updated.title,
-          content: dec.content,
-        };
-      }
-
-      currentNote = processedUpdate;
-      lastSavedVersion = processedUpdate.version;
-      lastSaveTimestamp = Date.now();
-      isDirty = false;
-
-      // Add to client search index (now encrypted, server can't search)
-      searchIndex.addToIndex(processedUpdate.id, processedUpdate.title, processedUpdate.content);
-
-      // Update in list
-      notes = notes.map((n) => (n.id === processedUpdate.id ? processedUpdate : n));
-    }
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to toggle encryption';
-    throw e;
-  } finally {
-    isSaving = false;
-  }
+  return toggleEncryptionHelper({
+    getCurrentNote: () => currentNote,
+    getIsSaving: () => isSaving,
+    setIsSaving: (value) => {
+      isSaving = value;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getNotes: () => notes,
+    setLastSavedVersion: (version) => {
+      lastSavedVersion = version;
+    },
+    setLastSaveTimestamp: (timestamp) => {
+      lastSaveTimestamp = timestamp;
+    },
+    cancelAutoSave: () => cancelAutoSave(),
+    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    encryptNote: (noteTitle, noteContent) => encryption.encryptNote(noteTitle, noteContent),
+    decryptNote: (encryptedTitle, payload) =>
+      encryption.decryptNote(encryptedTitle, payload),
+    extractUniqueLinks: (content) => extractUniqueWikilinks(content),
+    updateNote: (noteId, payload, version) => api.updateNote(noteId, payload, version),
+    decryptNoteApi: (noteId, noteTitle, noteContent, version, recipeData) =>
+      api.decryptNote(noteId, noteTitle, noteContent, version, recipeData),
+    getRecipeDetail: (noteId) => api.getRecipeDetail(noteId),
+    removeFromSearchIndex: (noteId) => searchIndex.removeFromIndex(noteId),
+    addToSearchIndex: (noteId, noteTitle, noteContent) =>
+      searchIndex.addToIndex(noteId, noteTitle, noteContent),
+  });
 }
 
 export async function deleteCurrentNote() {

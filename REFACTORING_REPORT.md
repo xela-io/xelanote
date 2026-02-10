@@ -401,14 +401,18 @@ frontend/src/lib/api/
 
 ---
 
-#### W-2: God-Files im Backend -- OFFEN
+#### W-2: God-Files im Backend -- IN ARBEIT
 
 | Datei | Zeilen | Verantwortlichkeiten |
 |-------|--------|---------------------|
-| `backend/internal/api/notes.go` | 1843 | CRUD, Encryption, Versions, AI, Trash, WebSocket, ETag, Links |
+| `backend/internal/api/notes.go` | 1843 | CRUD, Encryption, Versions, WebSocket, ETag, Links |
+| `backend/internal/api/notes_ai.go` | neu | LLM/Summary/AI-Endpoints |
+| `backend/internal/api/notes_trash.go` | neu | Trash-Endpoints |
 | `backend/internal/service/notes.go` | 1512 | Business-Logik fuer alle Note-Operationen |
 | `backend/internal/db/notes.go` | 1529 | Alle Note-DB-Queries |
 | `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |
+
+**Status:** Erste Entzerrung (AI/Trash aus `notes.go` ausgelagert). Weitere Aufteilung offen.
 
 ---
 

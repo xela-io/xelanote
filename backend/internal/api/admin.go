@@ -199,7 +199,10 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 	// Log the activity
 	ipAddress := getClientIPSafe(r)
 	userAgent := r.UserAgent()
-	targetUser, _ := s.adminService.GetUserDetails(targetID)
+	targetUser, err := s.adminService.GetUserDetails(targetID)
+	if err != nil {
+		s.logger().Warn("failed to load target user details", "err", err, "target_id", targetID)
+	}
 	targetUsername := ""
 	if targetUser != nil {
 		targetUsername = targetUser.Username
@@ -225,7 +228,10 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get username before deletion for logging
-	targetUser, _ := s.adminService.GetUserDetails(targetID)
+	targetUser, err := s.adminService.GetUserDetails(targetID)
+	if err != nil {
+		s.logger().Warn("failed to load target user details", "err", err, "target_id", targetID)
+	}
 	targetUsername := ""
 	if targetUser != nil {
 		targetUsername = targetUser.Username

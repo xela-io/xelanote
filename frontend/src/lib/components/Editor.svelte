@@ -36,6 +36,12 @@
   } from '$lib/editor/image-upload';
   import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
   import { applyAITransform as applyAITransformToEditor, prepareAITransform } from '$lib/editor/ai-actions';
+  import {
+    handleSplitResizeDblClick,
+    handleSplitResizeEnd,
+    handleSplitResizeMove,
+    handleSplitResizeStart,
+  } from '$lib/editor/split-resize';
   import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { taskCollapse } from '$lib/editor/task-collapse';
@@ -108,29 +114,45 @@
   let isSplitResizing = $state(false);
   let splitContainerRef: HTMLDivElement | null = $state(null);
 
-  function handleSplitResizeStart(e: PointerEvent) {
-    e.preventDefault();
-    isSplitResizing = true;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
+  function handleSplitResizeStartLocal(e: PointerEvent) {
+    handleSplitResizeStart(e, {
+      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
+      setSplitPosition: (pos) => ui.setSplitPosition(pos),
+      setActive: (active) => {
+        isSplitResizing = active;
+      },
+    });
   }
 
-  function handleSplitResizeMove(e: PointerEvent) {
-    if (!isSplitResizing || !splitContainerRef) return;
-    const rect = splitContainerRef.getBoundingClientRect();
-    const pos = ((e.clientX - rect.left) / rect.width) * 100;
-    ui.setSplitPosition(pos);
+  function handleSplitResizeMoveLocal(e: PointerEvent) {
+    if (!isSplitResizing) return;
+    handleSplitResizeMove(e, {
+      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
+      setSplitPosition: (pos) => ui.setSplitPosition(pos),
+      setActive: (active) => {
+        isSplitResizing = active;
+      },
+    });
   }
 
-  function handleSplitResizeEnd() {
-    isSplitResizing = false;
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
+  function handleSplitResizeEndLocal() {
+    handleSplitResizeEnd({
+      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
+      setSplitPosition: (pos) => ui.setSplitPosition(pos),
+      setActive: (active) => {
+        isSplitResizing = active;
+      },
+    });
   }
 
-  function handleSplitResizeDblClick() {
-    ui.setSplitPosition(50);
+  function handleSplitResizeDblClickLocal() {
+    handleSplitResizeDblClick({
+      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
+      setSplitPosition: (pos) => ui.setSplitPosition(pos),
+      setActive: (active) => {
+        isSplitResizing = active;
+      },
+    });
   }
 
   // Title to ID mapping for wikilink URLs
@@ -1175,11 +1197,11 @@
           <div
             class="split-resize-handle"
             class:active={isSplitResizing}
-            onpointerdown={handleSplitResizeStart}
-            onpointermove={handleSplitResizeMove}
-            onpointerup={handleSplitResizeEnd}
-            onpointercancel={handleSplitResizeEnd}
-            ondblclick={handleSplitResizeDblClick}
+            onpointerdown={handleSplitResizeStartLocal}
+            onpointermove={handleSplitResizeMoveLocal}
+            onpointerup={handleSplitResizeEndLocal}
+            onpointercancel={handleSplitResizeEndLocal}
+            ondblclick={handleSplitResizeDblClickLocal}
           ></div>
         {/if}
 

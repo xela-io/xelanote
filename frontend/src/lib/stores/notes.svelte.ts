@@ -13,6 +13,60 @@ import * as foldersStore from '$lib/stores/folders.svelte';
 import { extractWikilinks, extractDueDatesDetailed } from '$lib/editor/markdown';
 import { hasPendingForNote } from '$lib/offline/offline-queue';
 
+// --- Helper functions to reduce duplication ---
+
+/**
+ * Extract wikilinks from content and deduplicate by normalized title.
+ */
+function extractUniqueWikilinks(content: string) {
+  const rawLinks = extractWikilinks(content);
+  const seenTitles = new SvelteSet<string>();
+  return rawLinks.filter((l) => {
+    const norm = l.title.toLowerCase().trim();
+    if (seenTitles.has(norm)) return false;
+    seenTitles.add(norm);
+    return true;
+  });
+}
+
+/**
+ * Decrypt an encrypted note response from the API in-place.
+ * Returns true on success, false on failure (sets error message).
+ */
+function decryptNoteFields(note: Note): boolean {
+  try {
+    const encryptedPayload: EncryptedPayload = {
+      ciphertext: note.encrypted_content,
+      metadata: JSON.parse(note.encryption_metadata || '{}'),
+    };
+    const { title, content } = encryption.decryptNote(
+      note.encrypted_title || null,
+      encryptedPayload
+    );
+    note.title = title || note.title;
+    note.content = content;
+    return true;
+  } catch (decryptError) {
+    console.error('[NOTES] Failed to decrypt note:', decryptError);
+    return false;
+  }
+}
+
+/**
+ * Guard for offline writes: throws if paranoid mode is active while offline.
+ * If checkEncryptionLock is true, also throws if encryption is locked while offline.
+ */
+function assertOnlineForParanoidMode(checkEncryptionLock = false): void {
+  if (!navigator.onLine) {
+    if (encryption.getSecurityLevel() === 'paranoid') {
+      throw new Error('Offline-Schreiben im Paranoid-Modus nicht verfuegbar');
+    }
+    if (checkEncryptionLock && !encryption.isEncryptionUnlocked()) {
+      throw new Error('Verschluesselung gesperrt - bitte online gehen');
+    }
+  }
+}
+
 // Current note state
 let currentNote = $state<Note | null>(null);
 let currentNoteBacklinks = $state<Backlink[]>([]);
@@ -250,12 +304,7 @@ export async function createNote(
   isLoading = true;
   error = null;
   try {
-    // Offline gating: Paranoid mode blocks offline writes
-    if (!navigator.onLine) {
-      if (encryption.getSecurityLevel() === 'paranoid') {
-        throw new Error('Offline-Schreiben im Paranoid-Modus nicht verfuegbar');
-      }
-    }
+    assertOnlineForParanoidMode();
 
     // Check folder encryption_default
     const allFolders = foldersStore.getFolders();
@@ -272,14 +321,7 @@ export async function createNote(
       console.log('[NOTES] Creating plaintext note (folder encryption_default=false)');
 
       // Extract and deduplicate wiki-links from content (for graph view)
-      const rawLinks = extractWikilinks(content);
-      const seenTitles = new SvelteSet<string>();
-      const uniqueLinks = rawLinks.filter((l) => {
-        const norm = l.title.toLowerCase().trim();
-        if (seenTitles.has(norm)) return false;
-        seenTitles.add(norm);
-        return true;
-      });
+      const uniqueLinks = extractUniqueWikilinks(content);
 
       const payload: api.NotePayload = {
         title,
@@ -311,14 +353,7 @@ export async function createNote(
       const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(title, content);
 
       // Extract and deduplicate wiki-links from content (for graph view)
-      const rawLinks = extractWikilinks(content);
-      const seenTitles = new SvelteSet<string>();
-      const uniqueLinks = rawLinks.filter((l) => {
-        const norm = l.title.toLowerCase().trim();
-        if (seenTitles.has(norm)) return false;
-        seenTitles.add(norm);
-        return true;
-      });
+      const uniqueLinks = extractUniqueWikilinks(content);
 
       const payload: api.NotePayload = {
         title: encryptedTitle ? '' : title, // Send empty string if title encrypted
@@ -420,22 +455,10 @@ export async function saveNote() {
   const saveStartCounter = ++saveInProgressCounter;
 
   try {
-    // Offline gating: Paranoid mode blocks offline writes
-    if (!navigator.onLine) {
-      if (encryption.getSecurityLevel() === 'paranoid') {
-        throw new Error('Offline-Schreiben im Paranoid-Modus nicht verfuegbar');
-      }
-    }
+    assertOnlineForParanoidMode();
 
     // Extract and deduplicate wiki-links from content (for graph view)
-    const rawLinks = extractWikilinks(currentNote.content);
-    const seenTitles = new SvelteSet<string>();
-    const uniqueLinks = rawLinks.filter((l) => {
-      const norm = l.title.toLowerCase().trim();
-      if (seenTitles.has(norm)) return false;
-      seenTitles.add(norm);
-      return true;
-    });
+    const uniqueLinks = extractUniqueWikilinks(currentNote.content);
 
     let updated: api.Note;
     let processedUpdate: api.Note;
@@ -721,14 +744,7 @@ export async function toggleEncryption(): Promise<void> {
       );
 
       // Extract links
-      const rawLinks = extractWikilinks(currentNote.content);
-      const seenTitles = new SvelteSet<string>();
-      const uniqueLinks = rawLinks.filter((l) => {
-        const norm = l.title.toLowerCase().trim();
-        if (seenTitles.has(norm)) return false;
-        seenTitles.add(norm);
-        return true;
-      });
+      const uniqueLinks = extractUniqueWikilinks(currentNote.content);
 
       const payload: api.NotePayload = {
         title: encryptedTitle ? '' : currentNote.title,
@@ -783,15 +799,7 @@ export async function toggleEncryption(): Promise<void> {
 export async function deleteCurrentNote() {
   if (!currentNote) return;
 
-  // Offline gating: Paranoid mode blocks offline writes
-  if (!navigator.onLine) {
-    if (encryption.getSecurityLevel() === 'paranoid') {
-      throw new Error('Offline-Schreiben im Paranoid-Modus nicht verfuegbar');
-    }
-    if (!encryption.isEncryptionUnlocked()) {
-      throw new Error('Verschluesselung gesperrt - bitte online gehen');
-    }
-  }
+  assertOnlineForParanoidMode(true);
 
   isLoading = true;
   error = null;
@@ -953,15 +961,7 @@ export function clearCurrentNote() {
 }
 
 export async function moveNote(id: string, folderPath: string) {
-  // Offline gating: Paranoid mode blocks offline writes
-  if (!navigator.onLine) {
-    if (encryption.getSecurityLevel() === 'paranoid') {
-      throw new Error('Offline-Schreiben im Paranoid-Modus nicht verfuegbar');
-    }
-    if (!encryption.isEncryptionUnlocked()) {
-      throw new Error('Verschluesselung gesperrt - bitte online gehen');
-    }
-  }
+  assertOnlineForParanoidMode(true);
 
   // Try to find note in local list first
   let note = notes.find((n) => n.id === id);
@@ -1015,14 +1015,7 @@ export async function moveNote(id: string, folderPath: string) {
     );
 
     // Extract and deduplicate wiki-links from content (for graph view)
-    const rawLinks = extractWikilinks(note.content);
-    const seenTitles = new SvelteSet<string>();
-    const uniqueLinks = rawLinks.filter((l) => {
-      const norm = l.title.toLowerCase().trim();
-      if (seenTitles.has(norm)) return false;
-      seenTitles.add(norm);
-      return true;
-    });
+    const uniqueLinks = extractUniqueWikilinks(note.content);
 
     const payload = {
       title: encryptedTitle ? '' : note.title,

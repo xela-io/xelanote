@@ -67,7 +67,7 @@ func (s *Server) setupTwoFactor(w http.ResponseWriter, r *http.Request) {
 	// Generate TOTP setup
 	setup, err := s.tfaService.GenerateTOTPSetup(userID, user.Email)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to generate TOTP setup", err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (s *Server) disableTwoFactor(w http.ResponseWriter, r *http.Request) {
 	// Check if 2FA is enabled
 	status, err := s.tfaService.GetTwoFactorStatus(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get 2FA status", err)
 		return
 	}
 
@@ -188,7 +188,7 @@ func (s *Server) disableTwoFactor(w http.ResponseWriter, r *http.Request) {
 
 	// Disable 2FA
 	if err := s.tfaService.DisableTwoFactor(userID); err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to disable 2FA", err)
 		return
 	}
 
@@ -213,7 +213,7 @@ func (s *Server) getTwoFactorStatus(w http.ResponseWriter, r *http.Request) {
 
 	status, err := s.tfaService.GetTwoFactorStatus(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get 2FA status", err)
 		return
 	}
 

@@ -57,7 +57,7 @@ func (s *Server) listRecipes(w http.ResponseWriter, r *http.Request) {
 
 	recipes, err := s.recipeService.ListRecipes(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list recipes", err)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (s *Server) getRecipeDetail(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "recipe not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get recipe detail", err)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (s *Server) getScaledIngredients(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "recipe not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get scaled ingredients", err)
 		return
 	}
 
@@ -239,7 +239,7 @@ func (s *Server) listRecipeCollections(w http.ResponseWriter, r *http.Request) {
 
 	collections, err := s.recipeService.ListCollections(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list recipe collections", err)
 		return
 	}
 
@@ -319,7 +319,7 @@ func (s *Server) deleteRecipeCollection(w http.ResponseWriter, r *http.Request) 
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to delete recipe collection", err)
 		return
 	}
 
@@ -385,7 +385,7 @@ func (s *Server) removeRecipeFromCollection(w http.ResponseWriter, r *http.Reque
 			respondError(w, http.StatusNotFound, "not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to remove recipe from collection", err)
 		return
 	}
 
@@ -411,7 +411,7 @@ func (s *Server) listCollectionItems(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list collection items", err)
 		return
 	}
 
@@ -511,7 +511,7 @@ func (s *Server) getCollectionShares(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "only the collection owner can view shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get collection shares", err)
 		return
 	}
 
@@ -596,7 +596,7 @@ func (s *Server) removeCollectionShare(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "only the collection owner can manage shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to remove collection share", err)
 		return
 	}
 
@@ -615,7 +615,7 @@ func (s *Server) listSharedRecipes(w http.ResponseWriter, r *http.Request) {
 
 	recipes, err := s.recipeService.ListSharedRecipes(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list shared recipes", err)
 		return
 	}
 
@@ -638,7 +638,7 @@ func (s *Server) listSharedCollections(w http.ResponseWriter, r *http.Request) {
 
 	collections, err := s.recipeService.GetSharedCollectionsForUser(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list shared collections", err)
 		return
 	}
 
@@ -671,7 +671,7 @@ func (s *Server) listSharedCollectionItems(w http.ResponseWriter, r *http.Reques
 			respondError(w, http.StatusForbidden, "no access to this collection")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list shared collection items", err)
 		return
 	}
 
@@ -753,7 +753,7 @@ func (s *Server) removeFromSharedCollection(w http.ResponseWriter, r *http.Reque
 			respondError(w, http.StatusNotFound, "not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to remove from shared collection", err)
 		return
 	}
 
@@ -810,7 +810,7 @@ func (s *Server) addRecipeImage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrInvalidImageURL):
 			respondError(w, http.StatusBadRequest, err.Error())
 		default:
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to add recipe image", err)
 		}
 		return
 	}
@@ -848,7 +848,7 @@ func (s *Server) updateRecipeImageCaption(w http.ResponseWriter, r *http.Request
 		case errors.Is(err, db.ErrNotFound):
 			respondError(w, http.StatusNotFound, "image not found")
 		default:
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to update recipe image caption", err)
 		}
 		return
 	}
@@ -880,7 +880,7 @@ func (s *Server) deleteRecipeImage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, db.ErrNotFound):
 			respondError(w, http.StatusNotFound, "image not found")
 		default:
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to delete recipe image", err)
 		}
 		return
 	}

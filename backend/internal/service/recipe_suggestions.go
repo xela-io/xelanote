@@ -177,7 +177,7 @@ func (s *RecipeSuggestionService) FindSimilarRecipes(
 
 	// Parse JSON response
 	var results []SimilarRecipeResult
-	if err := json.Unmarshal([]byte(cleanJSONResponse(response)), &results); err != nil {
+	if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(response)), &results); err != nil {
 		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
 	}
 
@@ -249,7 +249,7 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 			s.logger.Warn("ingredient match LLM call failed", slog.String("error", err.Error()))
 		} else {
 			var matches []IngredientMatchResult
-			if err := json.Unmarshal([]byte(cleanJSONResponse(matchResp)), &matches); err != nil {
+			if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(matchResp)), &matches); err != nil {
 				s.logger.Warn("failed to parse ingredient match response", slog.String("error", err.Error()))
 			} else {
 				// Validate note_ids
@@ -280,7 +280,7 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 		var genResult struct {
 			Recipes []GeneratedRecipe `json:"recipes"`
 		}
-		if err := json.Unmarshal([]byte(cleanJSONResponse(genResp)), &genResult); err != nil {
+		if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(genResp)), &genResult); err != nil {
 			s.logger.Warn("failed to parse generated recipes", slog.String("error", err.Error()))
 		} else {
 			for i := range genResult.Recipes {
@@ -315,7 +315,7 @@ func (s *RecipeSuggestionService) ExtractIngredientsFromPhoto(
 	}
 
 	var ingredients []string
-	if err := json.Unmarshal([]byte(cleanJSONResponse(response)), &ingredients); err != nil {
+	if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(response)), &ingredients); err != nil {
 		return nil, fmt.Errorf("failed to parse vision response: %w", err)
 	}
 
@@ -497,16 +497,3 @@ func validateGeneratedRecipe(r *GeneratedRecipe) {
 	}
 }
 
-// cleanJSONResponse strips markdown code blocks that LLMs sometimes add.
-func cleanJSONResponse(s string) string {
-	s = strings.TrimSpace(s)
-	if strings.HasPrefix(s, "```json") {
-		s = strings.TrimPrefix(s, "```json")
-	} else if strings.HasPrefix(s, "```") {
-		s = strings.TrimPrefix(s, "```")
-	}
-	if strings.HasSuffix(s, "```") {
-		s = strings.TrimSuffix(s, "```")
-	}
-	return strings.TrimSpace(s)
-}

@@ -28,7 +28,7 @@ func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 	for {
 		notes, nextCursor, err := s.noteService.ListNotes(userID, 100, cursor)
 		if err != nil {
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to export notes", err)
 			return
 		}
 

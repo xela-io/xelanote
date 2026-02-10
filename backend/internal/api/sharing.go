@@ -104,7 +104,7 @@ func (s *Server) getNoteShares(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "only the note owner can view shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note shares", err)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (s *Server) updateShareRole(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "only the note owner can update shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to update share role", err)
 		return
 	}
 
@@ -196,7 +196,7 @@ func (s *Server) removeShare(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "only the note owner can remove shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to remove share", err)
 		return
 	}
 
@@ -213,7 +213,7 @@ func (s *Server) getSharedNotes(w http.ResponseWriter, r *http.Request) {
 
 	notes, err := s.sharingService.GetSharedNotesForUser(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get shared notes", err)
 		return
 	}
 
@@ -245,7 +245,7 @@ func (s *Server) getSharedNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "shared note not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get shared note", err)
 		return
 	}
 
@@ -389,7 +389,7 @@ func (s *Server) getFolderSharesHandler(w http.ResponseWriter, r *http.Request) 
 			respondError(w, http.StatusForbidden, "only the folder owner can view shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get folder shares", err)
 		return
 	}
 
@@ -443,7 +443,7 @@ func (s *Server) updateFolderShareRoleHandler(w http.ResponseWriter, r *http.Req
 			respondError(w, http.StatusForbidden, "only the folder owner can update shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to update folder share role", err)
 		return
 	}
 
@@ -482,7 +482,7 @@ func (s *Server) removeFolderShareHandler(w http.ResponseWriter, r *http.Request
 			respondError(w, http.StatusForbidden, "only the folder owner can remove shares")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to remove folder share", err)
 		return
 	}
 
@@ -499,7 +499,7 @@ func (s *Server) getSharedFoldersHandler(w http.ResponseWriter, r *http.Request)
 
 	folders, err := s.sharingService.GetSharedFoldersForUser(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get shared folders", err)
 		return
 	}
 
@@ -527,7 +527,7 @@ func (s *Server) getSharedFolderNotesHandler(w http.ResponseWriter, r *http.Requ
 
 	notes, err := s.sharingService.GetSharedFolderNotes(userID, folderID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get shared folder notes", err)
 		return
 	}
 
@@ -600,7 +600,7 @@ func (s *Server) removePlacementHandler(w http.ResponseWriter, r *http.Request) 
 			respondError(w, http.StatusNotFound, "placement not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to remove placement", err)
 		return
 	}
 

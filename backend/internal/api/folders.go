@@ -72,7 +72,7 @@ func (s *Server) createFolder(w http.ResponseWriter, r *http.Request) {
 
 	folder, err := s.noteService.CreateFolder(userID, req.Path, parentID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to create folder", err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (s *Server) getAllFolders(w http.ResponseWriter, r *http.Request) {
 
 	folders, err := s.noteService.GetAllFolders(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list folders", err)
 		return
 	}
 

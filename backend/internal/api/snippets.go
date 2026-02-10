@@ -53,7 +53,7 @@ func (s *Server) getAllSnippets(w http.ResponseWriter, r *http.Request) {
 
 	snippets, err := s.snippetService.GetAllSnippets(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list snippets", err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (s *Server) getSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get snippet", err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (s *Server) createSnippet(w http.ResponseWriter, r *http.Request) {
 
 	snippet, err := s.snippetService.CreateSnippet(userID, req.Name, req.Description, req.Content, req.Shortcut)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to create snippet", err)
 		return
 	}
 
@@ -152,14 +152,14 @@ func (s *Server) updateSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to update snippet", err)
 		return
 	}
 
 	// Return updated snippet
 	snippet, err := s.snippetService.GetSnippet(userID, snippetID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get updated snippet", err)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (s *Server) deleteSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to delete snippet", err)
 		return
 	}
 

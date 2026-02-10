@@ -248,26 +248,6 @@ func main() {
 	router := server.Router()
 
 	// Serve static files for SPA (if embedded)
-	// Debug: List embedded files
-	log.Println("Checking embedded files...")
-	entries, _ := fs.ReadDir(staticFS, ".")
-	log.Printf("Root entries: %d", len(entries))
-	for _, entry := range entries {
-		log.Printf("  - %s (isDir: %v)", entry.Name(), entry.IsDir())
-	}
-
-	// Check static/ directory contents
-	staticEntries, err := fs.ReadDir(staticFS, "static")
-	if err != nil {
-		log.Printf("Error reading static dir: %v", err)
-	} else {
-		log.Printf("Static entries: %d", len(staticEntries))
-		for i, entry := range staticEntries {
-			if i < 10 { // Show first 10
-				log.Printf("  static/%s (isDir: %v)", entry.Name(), entry.IsDir())
-			}
-		}
-	}
 
 	// setCacheHeaders sets Cache-Control based on the URL path.
 	// Vite-hashed files under /_app/immutable/ can be cached aggressively.

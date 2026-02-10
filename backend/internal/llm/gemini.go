@@ -227,13 +227,13 @@ func (c *GeminiClient) Generate(ctx context.Context, prompt string, maxTokens in
 	}
 
 	// Clean up markdown code blocks if present (Gemini sometimes wraps JSON in ```json...```)
-	result = cleanMarkdownCodeBlock(result)
+	result = CleanMarkdownCodeBlock(result)
 
 	return result, nil
 }
 
-// cleanMarkdownCodeBlock removes markdown code block formatting if present.
-func cleanMarkdownCodeBlock(s string) string {
+// CleanMarkdownCodeBlock removes markdown code block formatting if present.
+func CleanMarkdownCodeBlock(s string) string {
 	s = strings.TrimSpace(s)
 
 	// Check for ```json or ``` at start
@@ -334,7 +334,7 @@ func (c *GeminiClient) GenerateWithImage(ctx context.Context, prompt string, ima
 		}
 	}
 
-	result = cleanMarkdownCodeBlock(result)
+	result = CleanMarkdownCodeBlock(result)
 
 	return result, nil
 }

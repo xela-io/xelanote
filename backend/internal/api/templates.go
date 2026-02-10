@@ -66,7 +66,7 @@ func (s *Server) getAllTemplates(w http.ResponseWriter, r *http.Request) {
 
 	templates, err := s.templateService.GetAllTemplates(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list templates", err)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (s *Server) getTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get template", err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (s *Server) createTemplate(w http.ResponseWriter, r *http.Request) {
 
 	template, err := s.templateService.CreateTemplate(userID, req.Name, req.Description, req.Title, req.Content)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to create template", err)
 		return
 	}
 
@@ -165,14 +165,14 @@ func (s *Server) updateTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to update template", err)
 		return
 	}
 
 	// Return updated template
 	template, err := s.templateService.GetTemplate(userID, templateID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get updated template", err)
 		return
 	}
 
@@ -200,7 +200,7 @@ func (s *Server) deleteTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to delete template", err)
 		return
 	}
 

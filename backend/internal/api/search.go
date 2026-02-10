@@ -37,7 +37,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, db.ErrInvalidQuery) {
 			respondError(w, http.StatusBadRequest, err.Error())
 		} else {
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to search notes", err)
 		}
 		return
 	}
@@ -140,7 +140,7 @@ func (s *Server) quickSearch(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, db.ErrInvalidQuery) {
 			respondError(w, http.StatusBadRequest, err.Error())
 		} else {
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to quick search notes", err)
 		}
 		return
 	}
@@ -164,7 +164,7 @@ func (s *Server) getFolders(w http.ResponseWriter, r *http.Request) {
 
 	folders, err := s.noteService.GetFoldersWithCounts(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get folders", err)
 		return
 	}
 

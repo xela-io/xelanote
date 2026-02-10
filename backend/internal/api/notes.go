@@ -21,13 +21,11 @@ import (
 	"github.com/xela-io/xelanote/internal/websocket"
 )
 
-// Validation constants for notes and client-submitted links
+// Validation constants for notes
 const (
 	MaxNoteTitleLength   = 500              // Maximum characters for note title
 	MaxNoteContentLength = 10 * 1024 * 1024 // 10MB max content (for notes with embedded images)
 	MaxFolderPathLength  = 1000             // Maximum characters for folder path
-	MaxLinksPerNote      = 500              // Maximum number of links per note
-	MaxLinkTitleLength   = 200              // Maximum characters per link title
 )
 
 // ClientLink represents a link extracted by the client (for E2E encrypted notes)
@@ -98,6 +96,41 @@ func ensureNotes(notes []db.Note) []db.Note {
 	return notes
 }
 
+// validateClientLinks validates client-provided links and returns an error response if invalid.
+// Returns (linkTitles, true) on success, or (nil, false) if a validation error was sent.
+func validateClientLinks(w http.ResponseWriter, links []ClientLink) ([]string, bool) {
+	if len(links) > service.MaxLinksPerNote {
+		respondError(w, http.StatusBadRequest, fmt.Sprintf("too many links (max %d)", service.MaxLinksPerNote))
+		return nil, false
+	}
+	for i, l := range links {
+		if len(l.TargetTitle) > service.MaxLinkTitleLength {
+			respondError(w, http.StatusBadRequest, fmt.Sprintf("link %d title too long (max %d chars)", i, service.MaxLinkTitleLength))
+			return nil, false
+		}
+	}
+	titles := make([]string, len(links))
+	for i, l := range links {
+		titles[i] = l.TargetTitle
+	}
+	return titles, true
+}
+
+// convertClientDueDates converts client-provided due dates to the parser format.
+func convertClientDueDates(dueDates []ClientDueDate) []parser.DueDate {
+	result := make([]parser.DueDate, len(dueDates))
+	for i, dd := range dueDates {
+		result[i] = parser.DueDate{
+			Date:        dd.DueDate,
+			LineText:    dd.LineText,
+			LineIndex:   dd.LineIndex,
+			IsTaskItem:  dd.IsTaskItem,
+			IsCompleted: dd.IsCompleted,
+		}
+	}
+	return result
+}
+
 // NoteTitleInfo represents minimal note info for link suggestions
 type NoteTitleInfo struct {
 	ID        string `json:"id"`
@@ -133,7 +166,7 @@ func (s *Server) listNotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list notes", err)
 		return
 	}
 
@@ -339,44 +372,20 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Process links: Use client-provided links for encrypted notes, parse content for plaintext
+	// Process client-provided links for encrypted notes
 	if len(req.Links) > 0 {
-		if len(req.Links) > MaxLinksPerNote {
-			respondError(w, http.StatusBadRequest, fmt.Sprintf("too many links (max %d)", MaxLinksPerNote))
+		linkTitles, ok := validateClientLinks(w, req.Links)
+		if !ok {
 			return
-		}
-		for i, l := range req.Links {
-			if len(l.TargetTitle) > MaxLinkTitleLength {
-				respondError(w, http.StatusBadRequest, fmt.Sprintf("link %d title too long (max %d chars)", i, MaxLinkTitleLength))
-				return
-			}
-		}
-
-		// Client has sent links (encrypted note) → use these
-		linkTitles := make([]string, len(req.Links))
-		for i, l := range req.Links {
-			linkTitles[i] = l.TargetTitle
 		}
 		if err := s.noteService.UpdateLinksFromClient(userID, note.ID, linkTitles); err != nil {
 			s.logger().Error("failed to update links from client", "err", err, "note_id", note.ID)
-			// Don't fail the request - note is already created
 		}
 	}
-	// Note: For plaintext notes, CreateNote already calls updateLinks internally
 
-	// Process due dates: Use client-provided due dates for encrypted notes
+	// Process client-provided due dates for encrypted notes
 	if len(req.DueDates) > 0 {
-		dueDates := make([]parser.DueDate, len(req.DueDates))
-		for i, dd := range req.DueDates {
-			dueDates[i] = parser.DueDate{
-				Date:        dd.DueDate,
-				LineText:    dd.LineText,
-				LineIndex:   dd.LineIndex,
-				IsTaskItem:  dd.IsTaskItem,
-				IsCompleted: dd.IsCompleted,
-			}
-		}
-		if err := s.noteService.GetDB().SetNoteDueDates(note.ID, userID, dueDates); err != nil {
+		if err := s.noteService.GetDB().SetNoteDueDates(note.ID, userID, convertClientDueDates(req.DueDates)); err != nil {
 			s.logger().Error("failed to set due dates from client", "err", err, "note_id", note.ID)
 		}
 	}
@@ -404,7 +413,7 @@ func (s *Server) getNote(w http.ResponseWriter, r *http.Request) {
 
 	note, err := s.noteService.GetNote(userID, id)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note", err)
 		return
 	}
 
@@ -497,7 +506,7 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 				respondError(w, http.StatusConflict, "version mismatch - note was modified")
 				return
 			}
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to update encrypted note", err)
 			return
 		}
 	} else {
@@ -512,49 +521,25 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 				respondError(w, http.StatusConflict, "version mismatch - note was modified")
 				return
 			}
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to update note", err)
 			return
 		}
 	}
 
-	// Process links: Use client-provided links for encrypted notes, parse content for plaintext
+	// Process client-provided links for encrypted notes
 	if len(req.Links) > 0 {
-		if len(req.Links) > MaxLinksPerNote {
-			respondError(w, http.StatusBadRequest, fmt.Sprintf("too many links (max %d)", MaxLinksPerNote))
+		linkTitles, ok := validateClientLinks(w, req.Links)
+		if !ok {
 			return
-		}
-		for i, l := range req.Links {
-			if len(l.TargetTitle) > MaxLinkTitleLength {
-				respondError(w, http.StatusBadRequest, fmt.Sprintf("link %d title too long (max %d chars)", i, MaxLinkTitleLength))
-				return
-			}
-		}
-
-		// Client has sent links (encrypted note) → use these
-		linkTitles := make([]string, len(req.Links))
-		for i, l := range req.Links {
-			linkTitles[i] = l.TargetTitle
 		}
 		if err := s.noteService.UpdateLinksFromClient(userID, id, linkTitles); err != nil {
 			s.logger().Error("failed to update links from client", "err", err, "note_id", id)
-			// Don't fail the request - note is already updated
 		}
 	}
-	// Note: For plaintext notes, UpdateNote already calls updateLinks internally
 
-	// Process due dates: Use client-provided due dates for encrypted notes
+	// Process client-provided due dates for encrypted notes
 	if len(req.DueDates) > 0 {
-		dueDates := make([]parser.DueDate, len(req.DueDates))
-		for i, dd := range req.DueDates {
-			dueDates[i] = parser.DueDate{
-				Date:        dd.DueDate,
-				LineText:    dd.LineText,
-				LineIndex:   dd.LineIndex,
-				IsTaskItem:  dd.IsTaskItem,
-				IsCompleted: dd.IsCompleted,
-			}
-		}
-		if err := s.noteService.GetDB().SetNoteDueDates(id, userID, dueDates); err != nil {
+		if err := s.noteService.GetDB().SetNoteDueDates(id, userID, convertClientDueDates(req.DueDates)); err != nil {
 			s.logger().Error("failed to set due dates from client", "err", err, "note_id", id)
 		}
 	}
@@ -591,7 +576,7 @@ func (s *Server) deleteNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to delete note", err)
 		return
 	}
 
@@ -667,7 +652,7 @@ func (s *Server) decryptNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusBadRequest, "note is not encrypted")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to decrypt note", err)
 		return
 	}
 
@@ -743,7 +728,7 @@ func (s *Server) renameNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to rename note", err)
 		return
 	}
 
@@ -762,7 +747,7 @@ func (s *Server) getBacklinks(w http.ResponseWriter, r *http.Request) {
 
 	backlinks, err := s.noteService.GetBacklinks(userID, id)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get backlinks", err)
 		return
 	}
 
@@ -795,7 +780,7 @@ func (s *Server) listTrash(w http.ResponseWriter, r *http.Request) {
 
 	notes, nextCursor, err := s.noteService.ListDeletedNotes(userID, limit, cursor)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list trash", err)
 		return
 	}
 
@@ -815,7 +800,7 @@ func (s *Server) getTrashCount(w http.ResponseWriter, r *http.Request) {
 
 	count, err := s.noteService.GetDeletedNotesCount(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get trash count", err)
 		return
 	}
 
@@ -840,7 +825,7 @@ func (s *Server) restoreNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to restore note", err)
 		return
 	}
 
@@ -864,7 +849,7 @@ func (s *Server) permanentlyDeleteNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "note not found or not deleted")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to permanently delete note", err)
 		return
 	}
 
@@ -881,7 +866,7 @@ func (s *Server) emptyTrash(w http.ResponseWriter, r *http.Request) {
 
 	count, err := s.noteService.EmptyTrash(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to empty trash", err)
 		return
 	}
 
@@ -1260,7 +1245,7 @@ func (s *Server) suggestTags(w http.ResponseWriter, r *http.Request) {
 	// Get note to check if encrypted
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note for tag suggestions", err)
 		return
 	}
 	if note == nil {
@@ -1356,7 +1341,7 @@ func (s *Server) suggestLinks(w http.ResponseWriter, r *http.Request) {
 	// Get note to check if encrypted
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note for link suggestions", err)
 		return
 	}
 	if note == nil {
@@ -1425,7 +1410,7 @@ func (s *Server) listNoteTitles(w http.ResponseWriter, r *http.Request) {
 	for {
 		notes, nextCursor, err := s.noteService.ListNotes(userID, 500, cursor)
 		if err != nil {
-			respondError(w, http.StatusInternalServerError, err.Error())
+			s.respondInternalErr(w, "failed to list note titles", err)
 			return
 		}
 		allNotes = append(allNotes, notes...)
@@ -1478,7 +1463,7 @@ func handleCreateNoteError(w http.ResponseWriter, err error, title string, isJou
 		respondError(w, http.StatusForbidden, "recipe feature not enabled")
 		return
 	}
-	respondError(w, http.StatusInternalServerError, err.Error())
+	respondError(w, http.StatusInternalServerError, "failed to create note")
 }
 
 // ============================================================================
@@ -1514,7 +1499,7 @@ func (s *Server) updateNoteAIEnabled(w http.ResponseWriter, r *http.Request) {
 	// Check if note exists and belongs to user
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note", err)
 		return
 	}
 	if note == nil {
@@ -1524,7 +1509,7 @@ func (s *Server) updateNoteAIEnabled(w http.ResponseWriter, r *http.Request) {
 
 	// Update ai_enabled flag
 	if err := s.noteService.UpdateNoteAIEnabled(userID, noteID, req.AIEnabled); err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to update AI enabled flag", err)
 		return
 	}
 
@@ -1554,7 +1539,7 @@ func (s *Server) getNoteAIEnabled(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get AI enabled status", err)
 		return
 	}
 
@@ -1602,7 +1587,7 @@ func (s *Server) formatMarkdown(w http.ResponseWriter, r *http.Request) {
 	// Get note to determine content source
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note for formatting", err)
 		return
 	}
 	if note == nil {
@@ -1792,7 +1777,7 @@ func (s *Server) listNoteTitlesAIEnabled(w http.ResponseWriter, r *http.Request)
 
 	titles, err := s.noteService.GetNoteTitlesAIEnabled(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list AI-enabled note titles", err)
 		return
 	}
 

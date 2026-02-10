@@ -12,7 +12,6 @@
   import { _ } from 'svelte-i18n';
   import Logo from '$lib/components/Logo.svelte';
   import { isFIDO2Supported, authenticateWithSecurityKey } from '$lib/crypto/fido2';
-  import * as auth_store from '$lib/stores/auth.svelte';
 
   let usernameOrEmail = $state('');
   let password = $state('');
@@ -298,7 +297,7 @@
     try {
       const result = await authenticateWithSecurityKey(pendingLoginToken);
       if (result.access_token && result.refresh_token && result.user) {
-        await auth_store.setAuth(result.access_token, result.refresh_token, result.user);
+        await auth.setAuth(result.access_token, result.refresh_token, result.user);
         await initializeAndNavigate();
       } else {
         errorMessage = $_('page.login.login_failed');

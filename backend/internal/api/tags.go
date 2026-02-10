@@ -24,7 +24,7 @@ func (s *Server) getAllTags(w http.ResponseWriter, r *http.Request) {
 
 	tags, err := s.noteService.GetAllTags(userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list tags", err)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (s *Server) getNoteTags(w http.ResponseWriter, r *http.Request) {
 
 	tags, err := s.noteService.GetNoteTags(noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note tags", err)
 		return
 	}
 
@@ -106,14 +106,14 @@ func (s *Server) setNoteTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.noteService.SetNoteTags(noteID, userID, req.Tags); err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to set note tags", err)
 		return
 	}
 
 	// Return the updated tags
 	tags, err := s.noteService.GetNoteTags(noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get updated note tags", err)
 		return
 	}
 
@@ -140,7 +140,7 @@ func (s *Server) deleteTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.noteService.DeleteTag(userID, tagID); err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to delete tag", err)
 		return
 	}
 

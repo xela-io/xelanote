@@ -36,7 +36,7 @@ func (s *Server) listVersions(w http.ResponseWriter, r *http.Request) {
 	// Verify note exists and belongs to user
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note for version listing", err)
 		return
 	}
 	if note == nil {
@@ -54,7 +54,7 @@ func (s *Server) listVersions(w http.ResponseWriter, r *http.Request) {
 
 	versions, nextCursor, total, err := s.noteService.GetNoteVersions(userID, noteID, limit, cursor)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to list note versions", err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (s *Server) getVersion(w http.ResponseWriter, r *http.Request) {
 	// Verify note exists and belongs to user
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note for version lookup", err)
 		return
 	}
 	if note == nil {
@@ -100,7 +100,7 @@ func (s *Server) getVersion(w http.ResponseWriter, r *http.Request) {
 
 	v, err := s.noteService.GetNoteVersion(userID, noteID, version)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note version", err)
 		return
 	}
 	if v == nil {
@@ -145,7 +145,7 @@ func (s *Server) compareVersions(w http.ResponseWriter, r *http.Request) {
 	// Verify note exists and belongs to user
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get note for version comparison", err)
 		return
 	}
 	if note == nil {
@@ -155,7 +155,7 @@ func (s *Server) compareVersions(w http.ResponseWriter, r *http.Request) {
 
 	version1, err := s.noteService.GetNoteVersion(userID, noteID, v1)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get version v1", err)
 		return
 	}
 	if version1 == nil {
@@ -165,7 +165,7 @@ func (s *Server) compareVersions(w http.ResponseWriter, r *http.Request) {
 
 	version2, err := s.noteService.GetNoteVersion(userID, noteID, v2)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to get version v2", err)
 		return
 	}
 	if version2 == nil {
@@ -219,7 +219,7 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusConflict, "version mismatch - note was modified")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
+		s.respondInternalErr(w, "failed to restore version", err)
 		return
 	}
 

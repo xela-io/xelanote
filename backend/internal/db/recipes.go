@@ -1328,7 +1328,10 @@ func (db *DB) CreateCollectionShare(ownerUserID, collectionID, sharedWithUserID 
 		return nil, fmt.Errorf("failed to create collection share: %w", err)
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get collection share id: %w", err)
+	}
 	return db.getCollectionShareByID(int(id))
 }
 

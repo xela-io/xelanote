@@ -96,6 +96,7 @@ export function connect() {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebSocket protocol payloads vary by message type
 function handleMessage(message: { type: string; payload: any }) {
   console.log('WebSocket: Message received', message.type);
 

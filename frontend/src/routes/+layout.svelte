@@ -224,21 +224,17 @@
 
         if (securityLevel === 'paranoid') {
           // Paranoid mode: Never restore KEK, clear any stale data
-          console.log('Paranoid mode: KEK auto-restore disabled');
           await clearPersistedKEK(user.id);
 
           // Show unlock modal immediately if user has encryption enabled
           const currentUser = await api.getCurrentUser();
           if (currentUser.encryption_salt) {
-            console.log('Paranoid mode: Showing unlock modal for encrypted user');
             showUnlockModal = true;
           }
         } else {
           // Balanced/Convenient: Try to restore KEK
           const restored = await encryption.tryRestoreKEK(user.id);
           if (restored) {
-            console.log('KEK restored from IndexedDB');
-
             // Initialize auto-lock timer after KEK restore
             try {
               const prefs = await api.getPreferences();
@@ -247,8 +243,6 @@
             } catch {
               autoLock.initAutoLock(15); // Default: 15 minutes
             }
-          } else {
-            console.log('No persisted KEK found');
           }
         }
       }
@@ -582,7 +576,6 @@
     const isLocked = !encryption.isEncryptionUnlocked();
 
     if (currentNote?.content_encrypted && isLocked && !showUnlockModal) {
-      console.log('[Layout] Encryption locked while encrypted note open - showing modal');
       showUnlockModal = true;
     }
   });

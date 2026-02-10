@@ -67,6 +67,43 @@ func (s *RecipeService) resolveOwnerID(noteID string, callerUserID int) (int, st
 	return ownerID, perm, nil
 }
 
+// checkRecipeWriteAccess verifies ownership/editor permission and encryption guard.
+// Returns the ownerID for subsequent DB operations.
+func (s *RecipeService) checkRecipeWriteAccess(callerUserID int, noteID string) (int, error) {
+	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	if err != nil {
+		return 0, err
+	}
+	if callerUserID != ownerID && perm != "editor" {
+		return 0, ErrForbidden
+	}
+	encrypted, err := s.db.IsNoteEncrypted(noteID)
+	if err != nil {
+		return 0, err
+	}
+	if encrypted {
+		return 0, ErrRecipeEncrypted
+	}
+	return ownerID, nil
+}
+
+// checkRecipeReadAccess verifies read access and encryption guard.
+// Returns the ownerID for subsequent DB operations.
+func (s *RecipeService) checkRecipeReadAccess(callerUserID int, noteID string) (int, error) {
+	ownerID, _, err := s.resolveOwnerID(noteID, callerUserID)
+	if err != nil {
+		return 0, err
+	}
+	encrypted, err := s.db.IsNoteEncrypted(noteID)
+	if err != nil {
+		return 0, err
+	}
+	if encrypted {
+		return 0, ErrRecipeEncrypted
+	}
+	return ownerID, nil
+}
+
 // checkFeatureEnabled verifies the recipe feature is enabled for the user.
 func (s *RecipeService) checkFeatureEnabled(userID int) error {
 	feature, err := s.db.GetUserFeature(userID, "recipe")
@@ -261,26 +298,11 @@ func (s *RecipeService) GetRecipeDetail(callerUserID int, noteID string) (*db.Re
 // UpdateRecipeMetadata updates recipe metadata with optimistic locking.
 // Enforces I1 (ownership) and I2 (encryption guard).
 func (s *RecipeService) UpdateRecipeMetadata(callerUserID int, noteID string, meta *db.RecipeMetadata, expectedUpdatedAt string) error {
-	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	ownerID, err := s.checkRecipeWriteAccess(callerUserID, noteID)
 	if err != nil {
 		return err
 	}
 
-	// Check write permission for shared users
-	if callerUserID != ownerID && perm != "editor" {
-		return ErrForbidden
-	}
-
-	// Encryption check (I2)
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return err
-	}
-	if encrypted {
-		return ErrRecipeEncrypted
-	}
-
-	// Validate
 	if err := validateRecipeMetadata(meta); err != nil {
 		return err
 	}
@@ -293,23 +315,9 @@ func (s *RecipeService) UpdateRecipeMetadata(callerUserID int, noteID string, me
 func (s *RecipeService) SetRecipeIngredients(callerUserID int, noteID string,
 	ingredients []db.RecipeIngredient, expectedUpdatedAt string) error {
 
-	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	ownerID, err := s.checkRecipeWriteAccess(callerUserID, noteID)
 	if err != nil {
 		return err
-	}
-
-	// Check write permission for shared users
-	if callerUserID != ownerID && perm != "editor" {
-		return ErrForbidden
-	}
-
-	// Encryption check (I2)
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return err
-	}
-	if encrypted {
-		return ErrRecipeEncrypted
 	}
 
 	// Validate ingredients
@@ -336,18 +344,9 @@ func (s *RecipeService) SetRecipeIngredients(callerUserID int, noteID string,
 
 // GetScaledIngredients returns scaled ingredients for a recipe.
 func (s *RecipeService) GetScaledIngredients(callerUserID int, noteID string, targetServings int) ([]db.ScaledIngredient, error) {
-	ownerID, _, err := s.resolveOwnerID(noteID, callerUserID)
+	_, err := s.checkRecipeReadAccess(callerUserID, noteID)
 	if err != nil {
 		return nil, err
-	}
-
-	// Encryption check
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return nil, err
-	}
-	if encrypted {
-		return nil, ErrRecipeEncrypted
 	}
 
 	meta, err := s.db.GetRecipeMetadata(noteID)
@@ -365,7 +364,6 @@ func (s *RecipeService) GetScaledIngredients(callerUserID int, noteID string, ta
 		return nil, err
 	}
 
-	_ = ownerID
 	return db.ScaleIngredients(ingredients, baseServings, targetServings), nil
 }
 
@@ -373,21 +371,9 @@ func (s *RecipeService) GetScaledIngredients(callerUserID int, noteID string, ta
 
 // AddRecipeImage adds an image to a recipe.
 func (s *RecipeService) AddRecipeImage(callerUserID int, noteID string, imageURL string, caption *string) (*db.RecipeImage, error) {
-	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	_, err := s.checkRecipeWriteAccess(callerUserID, noteID)
 	if err != nil {
 		return nil, err
-	}
-	if callerUserID != ownerID && perm != "editor" {
-		return nil, ErrForbidden
-	}
-
-	// Encryption guard
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return nil, err
-	}
-	if encrypted {
-		return nil, ErrRecipeEncrypted
 	}
 
 	// URL validation
@@ -410,21 +396,9 @@ func (s *RecipeService) AddRecipeImage(callerUserID int, noteID string, imageURL
 // DeleteRecipeImage deletes an image from a recipe.
 // Owner can delete any image, editor can only delete their own.
 func (s *RecipeService) DeleteRecipeImage(callerUserID int, noteID string, imageID int) error {
-	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	ownerID, err := s.checkRecipeWriteAccess(callerUserID, noteID)
 	if err != nil {
 		return err
-	}
-	if callerUserID != ownerID && perm != "editor" {
-		return ErrForbidden
-	}
-
-	// Encryption guard
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return err
-	}
-	if encrypted {
-		return ErrRecipeEncrypted
 	}
 
 	// Ownership check: editor can only delete own images
@@ -444,21 +418,9 @@ func (s *RecipeService) DeleteRecipeImage(callerUserID int, noteID string, image
 // UpdateRecipeImageCaption updates the caption of a recipe image.
 // Owner can update any caption, editor can only update their own.
 func (s *RecipeService) UpdateRecipeImageCaption(callerUserID int, noteID string, imageID int, caption *string) error {
-	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	ownerID, err := s.checkRecipeWriteAccess(callerUserID, noteID)
 	if err != nil {
 		return err
-	}
-	if callerUserID != ownerID && perm != "editor" {
-		return ErrForbidden
-	}
-
-	// Encryption guard
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return err
-	}
-	if encrypted {
-		return ErrRecipeEncrypted
 	}
 
 	// Ownership check: editor can only update own captions
@@ -477,21 +439,9 @@ func (s *RecipeService) UpdateRecipeImageCaption(callerUserID int, noteID string
 
 // ReorderRecipeImages reorders images for a recipe.
 func (s *RecipeService) ReorderRecipeImages(callerUserID int, noteID string, imageIDs []int) error {
-	ownerID, perm, err := s.resolveOwnerID(noteID, callerUserID)
+	_, err := s.checkRecipeWriteAccess(callerUserID, noteID)
 	if err != nil {
 		return err
-	}
-	if callerUserID != ownerID && perm != "editor" {
-		return ErrForbidden
-	}
-
-	// Encryption guard
-	encrypted, err := s.db.IsNoteEncrypted(noteID)
-	if err != nil {
-		return err
-	}
-	if encrypted {
-		return ErrRecipeEncrypted
 	}
 
 	if len(imageIDs) == 0 {

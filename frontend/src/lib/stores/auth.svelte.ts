@@ -504,21 +504,13 @@ export async function login(
 
   // Setup E2E encryption with password + salt
   if (response.encryption_salt) {
-    console.log('[AUTH] Setting up E2E encryption...');
-    console.log('[AUTH] encryption_salt present:', !!response.encryption_salt);
-    console.log('[AUTH] encryption_salt length:', response.encryption_salt.length);
     try {
       const salt = fromBase64Standard(response.encryption_salt);
-      console.log('[AUTH] Salt decoded, length:', salt.length, 'bytes');
       await encryption.setupEncryption(password, response.user.id, salt);
-      console.log('[AUTH] Encryption setup successful');
     } catch (error) {
-      console.error('[AUTH] Failed to setup encryption:', error);
-      console.error('[AUTH] Error stack:', error instanceof Error ? error.stack : 'no stack');
+      console.error('[AUTH] Failed to setup encryption');
       // Don't fail login if encryption setup fails
     }
-  } else {
-    console.warn('[AUTH] No encryption_salt in login response');
   }
 
   return { requiresTwoFactor: false };

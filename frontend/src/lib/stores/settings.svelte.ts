@@ -121,9 +121,9 @@ export async function loadPreferences(): Promise<void> {
       securityLevel: prefs.security_level,
       autoLockTimeout: prefs.auto_lock_timeout,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[SETTINGS] Failed to load preferences:', err);
-    error = err.message || 'Failed to load preferences';
+    error = err instanceof Error ? err.message : 'Failed to load preferences';
 
     // CRITICAL: Do NOT apply fallback security settings
     // Failing to load is safer than downgrading security
@@ -152,9 +152,9 @@ export async function savePreferences(
     ui.setEditorMode(editorMode);
 
     return true;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to save preferences:', err);
-    error = err.message || 'Failed to save preferences';
+    error = err instanceof Error ? err.message : 'Failed to save preferences';
     toast.error('Einstellungen konnten nicht gespeichert werden');
     return false;
   } finally {
@@ -195,8 +195,8 @@ export async function changeEmail(
     await api.changeEmail(newEmail, currentPassword);
     toast.success('E-Mail-Adresse wurde geändert');
     return { success: true };
-  } catch (err: any) {
-    const errorMsg = err.message || 'Failed to change email';
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to change email';
     error = errorMsg;
 
     // Map API errors to user-friendly messages
@@ -258,7 +258,7 @@ export async function changePassword(
         const autoLockTimeout = 15; // minutes
         autoLock.initAutoLock(autoLockTimeout);
 
-        console.log('KEK successfully re-wrapped with new password');
+        // KEK successfully re-wrapped
       } catch (kekErr) {
         console.error('Failed to re-wrap KEK after password change:', kekErr);
         toast.error(
@@ -273,8 +273,8 @@ export async function changePassword(
 
     toast.success('Passwort wurde geändert');
     return { success: true };
-  } catch (err: any) {
-    const errorMsg = err.message || 'Failed to change password';
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to change password';
     error = errorMsg;
 
     // Map API errors to user-friendly messages

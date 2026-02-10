@@ -30,6 +30,10 @@ type ClaudeClient struct {
 	model      string
 	httpClient *http.Client
 	maxTokens  int
+
+	// Cached availability result (avoids repeated API calls)
+	availableCache      *bool
+	availableCacheExpiry time.Time
 }
 
 // ClaudeMessage represents a message in the Claude API format.
@@ -293,10 +297,15 @@ func (c *ClaudeClient) GenerateWithImage(ctx context.Context, prompt string, ima
 }
 
 // IsAvailable checks if the Claude API is reachable with the configured API key.
-// Makes a minimal API call to verify credentials.
+// Results are cached for 5 minutes to avoid repeated API calls.
 func (c *ClaudeClient) IsAvailable(ctx context.Context) bool {
 	if c.apiKey == "" {
 		return false
+	}
+
+	// Return cached result if still valid
+	if c.availableCache != nil && time.Now().Before(c.availableCacheExpiry) {
+		return *c.availableCache
 	}
 
 	// Send a minimal request to verify the API key works
@@ -331,10 +340,10 @@ func (c *ClaudeClient) IsAvailable(ctx context.Context) bool {
 	}
 	defer resp.Body.Close()
 
-	// 200 means the API is working
-	// 401 means invalid API key
-	// Other errors might be temporary
-	return resp.StatusCode == http.StatusOK
+	available := resp.StatusCode == http.StatusOK
+	c.availableCache = &available
+	c.availableCacheExpiry = time.Now().Add(5 * time.Minute)
+	return available
 }
 
 // Name returns the provider name for ClaudeClient.

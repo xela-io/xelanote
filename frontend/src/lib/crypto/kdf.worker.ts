@@ -21,8 +21,6 @@ self.onmessage = async (e: MessageEvent) => {
 
   if (type === 'derive') {
     try {
-      console.log('[WORKER] Deriving KEK with Argon2id via @noble/hashes...');
-
       // NFC-Normalisierung
       const normalizedPw = password.normalize('NFC');
 

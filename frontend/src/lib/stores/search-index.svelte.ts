@@ -168,9 +168,7 @@ export async function buildIndex(): Promise<void> {
   buildController = new AbortController();
 
   try {
-    console.log('[SEARCH-INDEX] Building index, fetching encrypted notes...');
     const notes = await getAllEncryptedNotes();
-    console.log(`[SEARCH-INDEX] Fetched ${notes.length} encrypted notes`);
 
     if (buildController.signal.aborted) {
       resetState();

@@ -72,7 +72,7 @@ export async function setupEncryption(
       }
       const kek = e2eEncryption.exportKEK();
       await desktopBridge.storeKek(kek);
-      console.log(`[ENCRYPTION] KEK stored in ${desktopBridge.platform} memory`);
+      // KEK stored in desktop secure memory
     } catch (err) {
       console.error('[ENCRYPTION] Failed to store KEK in desktop memory:', err);
       // Non-fatal: JavaScript memory still has KEK
@@ -84,7 +84,7 @@ export async function setupEncryption(
     try {
       const kek = e2eEncryption.exportKEK();
       await persistKEK(userId, kek, secLevel);
-      console.log('KEK persisted to IndexedDB');
+      // KEK persisted successfully
     } catch (err) {
       console.error('Failed to persist KEK:', err);
       warning('KEK konnte nicht gespeichert werden - Paranoid-Modus aktiv');
@@ -269,10 +269,6 @@ export async function tryRestoreKEK(userId: number): Promise<boolean> {
     e2eEncryption.importKEK(kek);
     isUnlocked = true;
     userID = userId;
-
-
-
-    console.log('KEK restored from IndexedDB');
 
     // Build client-side search index for encrypted notes (fire-and-forget, dynamic import to avoid circular dep)
     import('$lib/stores/search-index.svelte').then((m) => m.buildIndex());

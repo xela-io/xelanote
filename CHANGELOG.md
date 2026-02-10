@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- ESLint Import-Sortierung (frontend) via `eslint-plugin-simple-import-sort`
 - History-Store Unit-Tests fuer Undo/Redo-Persistenz
 - Find-in-Note & Search-Highlight: Ctrl+F oeffnet eine VS-Code-artige Suchleiste direkt im Editor (basierend auf @codemirror/search mit eigenem Svelte-UI-Panel)
 - Suchen & Ersetzen: Ctrl+H oeffnet die Replace-Zeile mit Einzel- und Alle-Ersetzen-Funktionalitaet

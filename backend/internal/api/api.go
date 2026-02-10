@@ -21,12 +21,6 @@ import (
 //go:embed static/captcha.html
 var captchaHTML embed.FS
 
-// isTestEnv returns true if running in test environment
-func isTestEnv() bool {
-	env := os.Getenv("XELANOTE_ENV")
-	return env == "test" || env == "testing"
-}
-
 // Server holds the HTTP server dependencies.
 type Server struct {
 	noteService      *service.NoteService
@@ -94,44 +88,7 @@ func NewServer(noteService *service.NoteService, authService *service.AuthServic
 		log.Fatalf("CORS_ALLOWED_ORIGINS must be set when XELANOTE_ENV=%s", env)
 	}
 
-	// Use higher rate limits in test environment to allow E2E tests to run
-	registerLimit := 5
-	loginLimit := 10
-	refreshLimit := 30
-	tfaLimit := 5
-	backupLimit := 3
-	recoveryLimit := 3
-	// Resource-intensive endpoint limits
-	uploadLimit := 20
-	importLimit := 10
-	passwordChangeLimit := 3
-	emailChangeLimit := 3
-	recoveryKeyLimit := 3
-	fido2Limit := 10
-	searchLimit := 120    // 120 requests per minute for search
-	llmLimit := 10        // 10 requests per minute for all LLM endpoints (shared)
-	shareLimit := 20      // 20 shares per minute
-	userSearchLimit := 30 // 30 user searches per minute
-	errorReportLimit := 5 // 5 error reports per hour
-	if isTestEnv() {
-		registerLimit = 1000
-		loginLimit = 1000
-		refreshLimit = 1000
-		tfaLimit = 1000
-		backupLimit = 1000
-		recoveryLimit = 1000
-		uploadLimit = 1000
-		importLimit = 1000
-		passwordChangeLimit = 1000
-		emailChangeLimit = 1000
-		recoveryKeyLimit = 1000
-		fido2Limit = 1000
-		searchLimit = 10000 // Effectively disabled for tests
-		llmLimit = 10000    // Effectively disabled for tests
-		shareLimit = 10000
-		userSearchLimit = 10000
-		errorReportLimit = 10000
-	}
+	limits := buildRateLimitConfig()
 
 	s := &Server{
 		noteService:      noteService,
@@ -155,38 +112,33 @@ func NewServer(noteService *service.NoteService, authService *service.AuthServic
 		router:           chi.NewRouter(),
 		// Rate limiters: register=5/hour, login=10/15min, refresh=30/hour, 2fa=5/15min, backup=3/15min, recovery=3/15min
 		// In test mode, all limits are increased to 1000/hour
-		registerLimiter:   NewRateLimiter(registerLimit, time.Hour, registerLimit),
-		loginLimiter:      NewRateLimiter(loginLimit, 15*time.Minute, loginLimit),
-		refreshLimiter:    NewRateLimiter(refreshLimit, time.Hour, refreshLimit),
-		tfaVerifyLimiter:  NewRateLimiter(tfaLimit, 15*time.Minute, tfaLimit),
-		backupCodeLimiter: NewRateLimiter(backupLimit, 15*time.Minute, backupLimit),
-		recoveryLimiter:   NewRateLimiter(recoveryLimit, 15*time.Minute, recoveryLimit),
+		registerLimiter:   NewRateLimiter(limits.registerLimit, time.Hour, limits.registerLimit),
+		loginLimiter:      NewRateLimiter(limits.loginLimit, 15*time.Minute, limits.loginLimit),
+		refreshLimiter:    NewRateLimiter(limits.refreshLimit, time.Hour, limits.refreshLimit),
+		tfaVerifyLimiter:  NewRateLimiter(limits.tfaLimit, 15*time.Minute, limits.tfaLimit),
+		backupCodeLimiter: NewRateLimiter(limits.backupLimit, 15*time.Minute, limits.backupLimit),
+		recoveryLimiter:   NewRateLimiter(limits.recoveryLimit, 15*time.Minute, limits.recoveryLimit),
 		// Resource-intensive endpoint limiters: uploads=20/hour, import=10/hour, search=120/min, summarize=10/min
 		// Sensitive user operations: password/email/recovery-key changes=3/hour
-		uploadLimiter:         NewRateLimiter(uploadLimit, time.Hour, uploadLimit),
-		importLimiter:         NewRateLimiter(importLimit, time.Hour, importLimit),
-		searchLimiter:         NewRateLimiter(searchLimit, time.Minute, 30), // 120/min, burst 30
-		passwordChangeLimiter: NewRateLimiter(passwordChangeLimit, time.Hour, passwordChangeLimit),
-		emailChangeLimiter:    NewRateLimiter(emailChangeLimit, time.Hour, emailChangeLimit),
-		recoveryKeyLimiter:    NewRateLimiter(recoveryKeyLimit, time.Hour, recoveryKeyLimit),
-		llmLimiter:            NewRateLimiter(llmLimit, time.Minute, llmLimit), // 10/min shared for all LLM endpoints
-		fido2BeginLimiter:     NewRateLimiter(fido2Limit, 15*time.Minute, fido2Limit),
-		fido2FinishLimiter:    NewRateLimiter(fido2Limit, 15*time.Minute, fido2Limit),
+		uploadLimiter:         NewRateLimiter(limits.uploadLimit, time.Hour, limits.uploadLimit),
+		importLimiter:         NewRateLimiter(limits.importLimit, time.Hour, limits.importLimit),
+		searchLimiter:         NewRateLimiter(limits.searchLimit, time.Minute, 30), // 120/min, burst 30
+		passwordChangeLimiter: NewRateLimiter(limits.passwordChangeLimit, time.Hour, limits.passwordChangeLimit),
+		emailChangeLimiter:    NewRateLimiter(limits.emailChangeLimit, time.Hour, limits.emailChangeLimit),
+		recoveryKeyLimiter:    NewRateLimiter(limits.recoveryKeyLimit, time.Hour, limits.recoveryKeyLimit),
+		llmLimiter:            NewRateLimiter(limits.llmLimit, time.Minute, limits.llmLimit), // 10/min shared for all LLM endpoints
+		fido2BeginLimiter:     NewRateLimiter(limits.fido2Limit, 15*time.Minute, limits.fido2Limit),
+		fido2FinishLimiter:    NewRateLimiter(limits.fido2Limit, 15*time.Minute, limits.fido2Limit),
 		fido2Service:          fido2Service,
 		sharingService:        sharingService,
-		shareLimiter:          NewRateLimiter(shareLimit, time.Minute, shareLimit),
-		userSearchLimiter:     NewRateLimiter(userSearchLimit, time.Minute, 10), // 30/min, burst 10
+		shareLimiter:          NewRateLimiter(limits.shareLimit, time.Minute, limits.shareLimit),
+		userSearchLimiter:     NewRateLimiter(limits.userSearchLimit, time.Minute, 10), // 30/min, burst 10
 		errorReportService:    errorReportService,
-		errorReportLimiter:    NewRateLimiter(errorReportLimit, time.Hour, 3), // 5/hour, burst 3
+		errorReportLimiter:    NewRateLimiter(limits.errorReportLimit, time.Hour, 3), // 5/hour, burst 3
 		streamContent:         newStreamContentStore(),
 		// Account lockout: 10 global attempts (5 per-IP), 30s initial lockout (doubles each time), 30min max
 		// In test mode, use 1000 attempts to effectively disable lockout
-		accountLockout: NewAccountLockout(func() int {
-			if isTestEnv() {
-				return 1000
-			}
-			return 10
-		}(), 30*time.Second, 30*time.Minute, logger),
+		accountLockout: NewAccountLockout(limits.lockoutAttempts, 30*time.Second, 30*time.Minute, logger),
 	}
 	s.setupRoutes()
 	return s

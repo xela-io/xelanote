@@ -508,7 +508,7 @@ export async function login(
     try {
       const salt = fromBase64Standard(response.encryption_salt);
       await encryption.setupEncryption(password, response.user.id, salt);
-    } catch (error) {
+    } catch (_error) {
       console.error('[AUTH] Failed to setup encryption');
       // Don't fail login if encryption setup fails
     }

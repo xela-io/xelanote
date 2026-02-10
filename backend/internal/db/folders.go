@@ -191,7 +191,10 @@ func (d *DB) CreateFolder(userID int, path string, parentID *int) (*Folder, erro
 		return nil, err
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
 	return d.GetFolderByID(userID, int(id))
 }
 

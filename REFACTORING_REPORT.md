@@ -66,7 +66,7 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 #### 🟡 WICHTIG
 
 **W-1: God-Files / God-Components (Wartbarkeit, Testbarkeit)**
-- Backend: `backend/internal/api/notes_*.go`, `backend/internal/db/notes.go`, `backend/cmd/server/main.go`, `backend/internal/api/api.go`
+- Backend: `backend/internal/api/notes_*.go`, `backend/internal/db/notes_*.go`, `backend/cmd/server/main.go`, `backend/internal/api/api.go`
 - Frontend: `frontend/src/lib/api.ts`, `frontend/src/lib/components/Editor.svelte`, `frontend/src/lib/components/Sidebar.svelte`, `frontend/src/routes/settings/+page.svelte`, `frontend/src/lib/stores/notes.svelte.ts`
 
 **W-2: Fehlerbehandlung wird in produktivem Code teilweise ignoriert**
@@ -144,7 +144,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
-  - `backend/internal/db/notes.go`, `backend/internal/db/journal.go` pruefen RFC3339-Timestamps strikt (Parse-Errors werden retourniert).
+  - `backend/internal/db/notes_crud.go`, `backend/internal/db/notes_list.go`, `backend/internal/db/notes_trash.go`, `backend/internal/db/notes_encryption.go`, `backend/internal/db/journal.go` pruefen RFC3339-Timestamps strikt (Parse-Errors werden retourniert).
   - `backend/internal/api/import.go` validiert File-Anzahl, leere Inhalte, Notiz-/Folder-Felder und begrenzt Error-Listen.
   - `backend/internal/service/notes_crud.go`, `backend/internal/service/notes_encryption.go` loggen Snapshot-Query-Fehler (und snapshoten konservativ).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
@@ -425,10 +425,20 @@ frontend/src/lib/api/
 | `backend/internal/service/notes_ai.go` | neu | AI-Flag Handling |
 | `backend/internal/service/notes_folders.go` | neu | Folder-Operationen + Defaults |
 | `backend/internal/service/notes_tags.go` | neu | Tag-Operationen |
-| `backend/internal/db/notes.go` | 1529 | Alle Note-DB-Queries |
+| `backend/internal/db/notes_models.go` | neu | Note-Modelle/DTOs |
+| `backend/internal/db/notes_crud.go` | neu | Note-CRUD + Titel-Queries |
+| `backend/internal/db/notes_list.go` | neu | Listen + Folder-Listing |
+| `backend/internal/db/notes_folders.go` | neu | Folder-Queries + Counts |
+| `backend/internal/db/notes_trash.go` | neu | Trash-Operationen |
+| `backend/internal/db/notes_encryption.go` | neu | Encrypt/Decrypt + Keywords |
+| `backend/internal/db/notes_rewrap.go` | neu | DEK-Rewrap (Bulk) |
+| `backend/internal/db/notes_summary.go` | neu | Summary + Content-Hash |
+| `backend/internal/db/notes_ai.go` | neu | AI-Flags + Titel-Query |
+| `backend/internal/db/notes_color.go` | neu | Farb-Update |
+| `backend/internal/db/notes_misc.go` | neu | ReorderNotes |
 | `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |
 
-**Status:** NoteService aufgeteilt. Offene God-Files: `backend/internal/db/notes.go`, `backend/cmd/server/main.go`.
+**Status:** NoteService + Note-DB aufgeteilt. Offene God-Files: `backend/cmd/server/main.go`.
 
 ---
 

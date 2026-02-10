@@ -1,13 +1,12 @@
 // Notes store using Svelte 5 runes
 
-import { SvelteDate } from 'svelte/reactivity';
-
 import type { Backlink, Job, Note, OfflineNoteContext } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 import { extractDueDatesDetailed } from '$lib/editor/markdown';
 import { hasPendingForNote } from '$lib/offline/offline-queue';
+import { createNotesAccessors } from '$lib/stores/notes/accessors';
 import {
   assertOnlineForParanoidMode,
   extractUniqueWikilinks,
@@ -56,63 +55,40 @@ export function queueTaskEvent(
 }
 
 // Export functions to access and modify state
-export function getCurrentNote() {
-  return currentNote;
-}
+const accessors = createNotesAccessors({
+  getCurrentNote: () => currentNote,
+  getBacklinks: () => currentNoteBacklinks,
+  getIsLoading: () => isLoading,
+  getIsSaving: () => isSaving,
+  getError: () => error,
+  setError: (value) => {
+    error = value;
+  },
+  getIsDirty: () => isDirty,
+  setDirty: (dirty) => {
+    isDirty = dirty;
+  },
+  getNotes: () => notes,
+  getNotesLoading: () => notesLoading,
+  getAutoSaveStatus: () => autoSaveStatus,
+  getLastAutoSave: () => lastAutoSave,
+  getAutoSaveError: () => autoSaveError,
+});
 
-export function getBacklinks() {
-  return currentNoteBacklinks;
-}
-
-export function getIsLoading() {
-  return isLoading;
-}
-
-export function getIsSaving() {
-  return isSaving;
-}
-
-export function getError() {
-  return error;
-}
-
-export function clearError() {
-  error = null;
-}
-
-export function getIsDirty() {
-  return isDirty;
-}
-
-export function setDirty(dirty: boolean) {
-  isDirty = dirty;
-}
-
-export function getNotes() {
-  return notes;
-}
-
-export function getRecentNotes(limit = 5) {
-  return [...notes]
-    .sort((a, b) => new SvelteDate(b.updated_at).getTime() - new SvelteDate(a.updated_at).getTime())
-    .slice(0, limit);
-}
-
-export function getNotesLoading() {
-  return notesLoading;
-}
-
-export function getAutoSaveStatus() {
-  return autoSaveStatus;
-}
-
-export function getLastAutoSave() {
-  return lastAutoSave;
-}
-
-export function getAutoSaveError() {
-  return autoSaveError;
-}
+export const getCurrentNote = accessors.getCurrentNote;
+export const getBacklinks = accessors.getBacklinks;
+export const getIsLoading = accessors.getIsLoading;
+export const getIsSaving = accessors.getIsSaving;
+export const getError = accessors.getError;
+export const clearError = accessors.clearError;
+export const getIsDirty = accessors.getIsDirty;
+export const setDirty = accessors.setDirty;
+export const getNotes = accessors.getNotes;
+export const getRecentNotes = accessors.getRecentNotes;
+export const getNotesLoading = accessors.getNotesLoading;
+export const getAutoSaveStatus = accessors.getAutoSaveStatus;
+export const getLastAutoSave = accessors.getLastAutoSave;
+export const getAutoSaveError = accessors.getAutoSaveError;
 
 export async function loadNotes() {
   notesLoading = true;

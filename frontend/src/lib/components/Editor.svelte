@@ -41,6 +41,7 @@
     loadVersionHistoryDialog,
     type DialogLoaderState,
   } from '$lib/editor/dialog-loaders';
+  import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
   import {
     handleSplitResizeDblClick,
     handleSplitResizeEnd,
@@ -591,73 +592,17 @@
     }
   }
 
-  function handlePreviewClick(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-
-    // Wikilinks
-    if (target.classList.contains('wikilink')) {
-      e.preventDefault();
-      const title = target.dataset.title;
-      if (title) {
-        handleWikilinkClick(title);
-      }
-      return;
-    }
-
-    // Task list checkboxes - handle clicks on checkbox or its label
-    if (FEATURE_FLAGS.taskLists) {
-      // Timestamp-based debounce: ignore clicks within 300ms of last click
-      const now = Date.now();
-      if (now - lastTaskClickTime < 300) {
-        console.log(
-          '[TaskSort] Ignoring click - debounce active (',
-          now - lastTaskClickTime,
-          'ms since last)'
-        );
-        e.preventDefault();
-        return;
-      }
-
-      console.log('[TaskSort] Preview click detected, target:', target.tagName, target.className);
-
-      const checkbox = target.matches('input.task-list-item-checkbox')
-        ? (target as HTMLInputElement)
-        : (target
-            .closest('label')
-            ?.querySelector('input.task-list-item-checkbox') as HTMLInputElement | null);
-
-      console.log('[TaskSort] Checkbox found:', checkbox ? 'yes' : 'no');
-
-      if (checkbox) {
-        const previewContainer = checkbox.closest('.markdown-preview');
-        console.log('[TaskSort] Preview container found:', previewContainer ? 'yes' : 'no');
-
-        if (previewContainer) {
-          const taskItem = checkbox.closest('li.task-list-item');
-          const checkboxIndex = taskItem
-            ? parseInt(taskItem.getAttribute('data-task-index') || '-1', 10)
-            : -1;
-          console.log('[TaskSort] Checkbox index:', checkboxIndex, 'checked:', checkbox.checked);
-
-          if (checkboxIndex !== -1) {
-            // Update timestamp before processing
-            lastTaskClickTime = now;
-            toggleTask(checkboxIndex, checkbox.checked);
-          }
-        }
-      }
-    }
-  }
-
-  function handleTocClick(slug: string) {
-    // Find the heading element in the preview container
-    const previewContainer = document.querySelector('.markdown-preview');
-    if (previewContainer) {
-      const heading = previewContainer.querySelector(`#${CSS.escape(slug)}`);
-      if (heading) {
-        heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
+  function handlePreviewClickLocal(e: MouseEvent) {
+    handlePreviewClick(e, {
+      featureTaskLists: FEATURE_FLAGS.taskLists,
+      getLastTaskClickTime: () => lastTaskClickTime,
+      setLastTaskClickTime: (value) => {
+        lastTaskClickTime = value;
+      },
+      onWikilink: (title) => handleWikilinkClick(title),
+      onToggleTask: (index, checked) => toggleTask(index, checked),
+      log: console.log,
+    });
   }
 
   /**
@@ -1121,7 +1066,7 @@
             {#key renderedContent}
               <div
                 class="markdown-preview h-full"
-                onclick={handlePreviewClick}
+                onclick={handlePreviewClickLocal}
                 use:taskCollapse={{
                   completedLabel: (n) =>
                     $_('component.editor.completed_count', { values: { count: n } }),

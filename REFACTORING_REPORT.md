@@ -475,6 +475,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/components/Editor.svelte`: Lazy-Load Dialog-Loader nach `frontend/src/lib/editor/dialog-loaders.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Task-Insert + Indent/Outdent nach `frontend/src/lib/editor/task-insert.ts` und `frontend/src/lib/editor/indentation.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Panels (Backlinks/Summary/Tags/Links) nach `frontend/src/lib/components/editor/EditorPanels.svelte` ausgelagert.
+- `frontend/src/lib/components/Editor.svelte`: Preview-Click/TOC-Handler nach `frontend/src/lib/editor/preview-interactions.ts` ausgelagert.
 
 ---
 

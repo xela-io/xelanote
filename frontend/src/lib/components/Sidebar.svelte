@@ -29,6 +29,11 @@
     handleTouchDrop as handleTouchDropAction,
   } from '$lib/components/sidebar/sidebar-dnd';
   import {
+    handleCreateFolderConfirm as handleCreateFolderConfirmAction,
+    handleCreateNoteConfirm as handleCreateNoteConfirmAction,
+    handleLogout as handleLogoutAction,
+  } from '$lib/components/sidebar/sidebar-actions';
+  import {
     handleSidebarResizeDblClick,
     handleSidebarResizeEnd,
     handleSidebarResizeMove,
@@ -251,15 +256,30 @@
     showCreateNoteDialog = true;
   }
 
+  const sidebarActionDeps = {
+    getSelectedFolderPath: tree.getSelectedFolderPath,
+    createNote: notes.createNote,
+    createFolder: tree.createFolder,
+    loadTree: tree.loadTree,
+    closeSidebarOnMobile: ui.closeSidebarOnMobile,
+    goto,
+    confirm: dialog.confirm,
+    alert: dialog.alert,
+    stopAutoLock: autoLock.stopAutoLock,
+    logout: auth.logoutAsync,
+    strings: {
+      confirmTitle: $_('dialog.confirm_title'),
+      confirmLogout: $_('page.sidebar.confirm_logout'),
+      logout: $_('common.logout'),
+      cancel: $_('dialog.cancel'),
+      errorTitle: $_('common.error'),
+      createFolderError: (error: string) =>
+        $_('page.sidebar.error_creating_folder', { values: { error } }),
+    },
+  };
+
   function handleCreateNoteConfirm(title: string) {
-    const selectedPath = tree.getSelectedFolderPath();
-    const folderPath = selectedPath || '/';
-    notes.createNote(title, '', folderPath).then((note) => {
-      // Reload tree to update counts
-      tree.loadTree();
-      goto(`/note/${note.id}`);
-      ui.closeSidebarOnMobile();
-    });
+    handleCreateNoteConfirmAction(title, sidebarActionDeps);
   }
 
   function handleCreateFolder() {
@@ -267,38 +287,11 @@
   }
 
   function handleCreateFolderConfirm(path: string) {
-    tree.createFolder(path).catch(async (err) => {
-      console.error('Fehler beim Erstellen:', err);
-      await dialog.alert({
-        title: $_('common.error'),
-        message: $_('page.sidebar.error_creating_folder', { values: { error: err.message } }),
-        variant: 'danger',
-      });
-    });
+    handleCreateFolderConfirmAction(path, sidebarActionDeps);
   }
 
   async function handleLogout() {
-    const confirmed = await dialog.confirm({
-      title: $_('dialog.confirm_title'),
-      message: $_('page.sidebar.confirm_logout'),
-      confirmText: $_('common.logout'),
-      cancelText: $_('dialog.cancel'),
-    });
-
-    if (!confirmed) return;
-
-    try {
-      // Stop auto-lock timer
-      autoLock.stopAutoLock();
-
-      await auth.logoutAsync();
-      // Force reload to clear all state and prevent race conditions
-      window.location.href = '/login';
-    } catch (err) {
-      console.error('Logout failed:', err);
-      // Even if backend logout fails, we're logged out locally
-      window.location.href = '/login';
-    }
+    await handleLogoutAction(sidebarActionDeps);
   }
 </script>
 

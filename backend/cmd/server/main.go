@@ -269,6 +269,17 @@ func main() {
 		}
 	}
 
+	// setCacheHeaders sets Cache-Control based on the URL path.
+	// Vite-hashed files under /_app/immutable/ can be cached aggressively.
+	// All other files must revalidate on each request.
+	setCacheHeaders := func(w http.ResponseWriter, path string) {
+		if strings.HasPrefix(path, "/_app/immutable/") {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			return
+		}
+		w.Header().Set("Cache-Control", "no-cache")
+	}
+
 	staticSub, err := fs.Sub(staticFS, "static")
 	if err == nil {
 		// Serve static files
@@ -282,11 +293,13 @@ func main() {
 
 			// Check if file exists
 			if _, err := staticFS.Open("static" + path); err == nil {
+				setCacheHeaders(w, path)
 				fileServer.ServeHTTP(w, r)
 				return
 			}
 
 			// Fall back to index.html for SPA routing
+			setCacheHeaders(w, "/index.html")
 			r.URL.Path = "/"
 			fileServer.ServeHTTP(w, r)
 		}))

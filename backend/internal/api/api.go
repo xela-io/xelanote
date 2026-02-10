@@ -223,6 +223,7 @@ func (s *Server) setupRoutes() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
+	r.Use(middleware.Compress(5)) // gzip level 5 - good compression/speed balance
 	r.Use(s.corsMiddleware)
 	r.Use(securityHeadersMiddleware)
 
@@ -606,6 +607,11 @@ func originAllowed(origin string, allowed []string) bool {
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+	// Prevent caching of authenticated API responses by default.
+	// Individual handlers can override by setting the header before calling respondJSON.
+	if w.Header().Get("Cache-Control") == "" {
+		w.Header().Set("Cache-Control", "no-store")
+	}
 	w.WriteHeader(status)
 	if data != nil {
 		json.NewEncoder(w).Encode(data)

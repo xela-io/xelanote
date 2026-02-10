@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- HTTP gzip-Kompression fuer alle Text-Responses (~65% kleinere JS/CSS/JSON-Payloads)
+- Cache-Control Header fuer statische Assets (immutable-Caching fuer Vite-gehashte Dateien, Revalidierung fuer den Rest)
+- Default `Cache-Control: no-store` fuer API-Responses (verhindert Caching verschluesselter Daten durch Proxies)
+
 ### Changed
 
 - Repository ist nun oeffentlich auf GitHub verfuegbar

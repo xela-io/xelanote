@@ -25,7 +25,10 @@
   const { resourceType, resourceId, isEncrypted = false, onClose }: Props = $props();
 
   // I18n key mapping per resource type
-  const i18nKeys: Record<ResourceType, { title: string; shareSuccess: string; unshareSuccess: string; encryptedWarning: string }> = {
+  const i18nKeys: Record<
+    ResourceType,
+    { title: string; shareSuccess: string; unshareSuccess: string; encryptedWarning: string }
+  > = {
     note: {
       title: 'sharing.title',
       shareSuccess: 'sharing.share_success',
@@ -51,33 +54,54 @@
   // API dispatch per resource type
   async function apiGetShares(): Promise<ShareEntry[]> {
     switch (resourceType) {
-      case 'note': return await api.getNoteShares(resourceId as string) as ShareEntry[];
-      case 'folder': return await api.getFolderShares(resourceId as number) as ShareEntry[];
-      case 'collection': return await api.getCollectionShares(resourceId as number) as ShareEntry[];
+      case 'note':
+        return (await api.getNoteShares(resourceId as string)) as ShareEntry[];
+      case 'folder':
+        return (await api.getFolderShares(resourceId as number)) as ShareEntry[];
+      case 'collection':
+        return (await api.getCollectionShares(resourceId as number)) as ShareEntry[];
     }
   }
 
   async function apiShare(username: string, role: string): Promise<void> {
     switch (resourceType) {
-      case 'note': await api.shareNote(resourceId as string, username, role); break;
-      case 'folder': await api.shareFolder(resourceId as number, username, role); break;
-      case 'collection': await api.shareCollection(resourceId as number, username, role); break;
+      case 'note':
+        await api.shareNote(resourceId as string, username, role);
+        break;
+      case 'folder':
+        await api.shareFolder(resourceId as number, username, role);
+        break;
+      case 'collection':
+        await api.shareCollection(resourceId as number, username, role);
+        break;
     }
   }
 
   async function apiRemoveShare(userId: number): Promise<void> {
     switch (resourceType) {
-      case 'note': await api.removeShare(resourceId as string, userId); break;
-      case 'folder': await api.removeFolderShare(resourceId as number, userId); break;
-      case 'collection': await api.removeCollectionShare(resourceId as number, userId); break;
+      case 'note':
+        await api.removeShare(resourceId as string, userId);
+        break;
+      case 'folder':
+        await api.removeFolderShare(resourceId as number, userId);
+        break;
+      case 'collection':
+        await api.removeCollectionShare(resourceId as number, userId);
+        break;
     }
   }
 
   async function apiUpdateRole(userId: number, newRole: string): Promise<void> {
     switch (resourceType) {
-      case 'note': await api.updateShareRole(resourceId as string, userId, newRole); break;
-      case 'folder': await api.updateFolderShareRole(resourceId as number, userId, newRole); break;
-      case 'collection': await api.updateCollectionShareRole(resourceId as number, userId, newRole); break;
+      case 'note':
+        await api.updateShareRole(resourceId as string, userId, newRole);
+        break;
+      case 'folder':
+        await api.updateFolderShareRole(resourceId as number, userId, newRole);
+        break;
+      case 'collection':
+        await api.updateCollectionShareRole(resourceId as number, userId, newRole);
+        break;
     }
   }
 

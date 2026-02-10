@@ -38,7 +38,11 @@
   const entryCount = $derived(sparklineData.filter((d) => d.hasEntry).length);
 
   const sparklineLabel = $derived(
-    $_('page.journal.recentActivity') + ': ' + entryCount + ' / 30 ' + $_('page.journal.days', { values: { count: 30 } })
+    $_('page.journal.recentActivity') +
+      ': ' +
+      entryCount +
+      ' / 30 ' +
+      $_('page.journal.days', { values: { count: 30 } })
   );
 
   // Show widget only if there's any activity
@@ -81,12 +85,16 @@
             <div
               class="flex-1 h-2.5 min-w-0 rounded-[2px]
                 {day.hasEntry ? 'bg-primary/40' : 'bg-muted/50'}
-                {day.isToday ? 'ring-[1.5px] ring-primary ring-offset-1 ring-offset-background' : ''}"
+                {day.isToday
+                ? 'ring-[1.5px] ring-primary ring-offset-1 ring-offset-background'
+                : ''}"
             ></div>
           {/each}
         </div>
         <div class="flex justify-between mt-1" aria-hidden="true">
-          <span class="text-[9px] text-muted-foreground">{$_('page.journal.daysAgo', { values: { count: 30 } })}</span>
+          <span class="text-[9px] text-muted-foreground"
+            >{$_('page.journal.daysAgo', { values: { count: 30 } })}</span
+          >
           <span class="text-[9px] text-muted-foreground">{$_('page.journal.today')}</span>
         </div>
       </div>

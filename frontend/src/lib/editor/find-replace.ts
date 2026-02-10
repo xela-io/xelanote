@@ -138,7 +138,12 @@ export function getMatchCount(view: EditorView): { current: number; total: numbe
 /**
  * Replace the current match with the given replacement text.
  */
-export function performReplace(view: EditorView, query: string, replacement: string, options: { caseSensitive?: boolean } = {}) {
+export function performReplace(
+  view: EditorView,
+  query: string,
+  replacement: string,
+  options: { caseSensitive?: boolean } = {}
+) {
   // Set the query with replacement
   const searchQuery = new SearchQuery({
     search: query,
@@ -158,7 +163,12 @@ export function performReplace(view: EditorView, query: string, replacement: str
 /**
  * Replace all matches with the given replacement text.
  */
-export function performReplaceAll(view: EditorView, query: string, replacement: string, options: { caseSensitive?: boolean } = {}) {
+export function performReplaceAll(
+  view: EditorView,
+  query: string,
+  replacement: string,
+  options: { caseSensitive?: boolean } = {}
+) {
   // Set the query with replacement
   const searchQuery = new SearchQuery({
     search: query,

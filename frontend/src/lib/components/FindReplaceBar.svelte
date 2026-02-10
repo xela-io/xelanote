@@ -206,7 +206,10 @@
     />
 
     <!-- Match counter -->
-    <span class="text-xs text-muted-foreground whitespace-nowrap min-w-[60px] text-center" aria-live="polite">
+    <span
+      class="text-xs text-muted-foreground whitespace-nowrap min-w-[60px] text-center"
+      aria-live="polite"
+    >
       {#if searchQuery}
         {#if matchInfo.total === 0}
           {$_('component.editor.find.no_matches')}

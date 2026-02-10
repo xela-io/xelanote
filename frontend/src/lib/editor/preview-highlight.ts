@@ -105,10 +105,7 @@ function applyHighlights(container: HTMLElement, query: string, caseSensitive: b
 /**
  * Svelte Action: Highlights search terms in the container's text nodes.
  */
-export function highlightSearchTerms(
-  container: HTMLElement,
-  options: HighlightOptions
-) {
+export function highlightSearchTerms(container: HTMLElement, options: HighlightOptions) {
   function apply() {
     removeHighlights(container);
     if (options.query) {

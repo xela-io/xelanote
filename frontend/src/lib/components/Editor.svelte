@@ -1857,7 +1857,10 @@
                 }}
                 use:taskSortable={{ onReorder: handleTaskReorder }}
                 use:imageResize={{ onResize: handleImageResize }}
-                use:highlightSearchTerms={{ query: showFindReplace ? findReplaceQuery : '', caseSensitive: findReplaceCaseSensitive }}
+                use:highlightSearchTerms={{
+                  query: showFindReplace ? findReplaceQuery : '',
+                  caseSensitive: findReplaceCaseSensitive,
+                }}
               >
                 {@html renderedContent}
               </div>

@@ -1009,8 +1009,8 @@
 <!-- Move to folder dialog -->
 {#if showMoveDialog && notes.getCurrentNote()}
   {#if dialogLoaders.moveToFolderDialog}
-    <svelte:component
-      this={dialogLoaders.moveToFolderDialog}
+    {@const MoveToFolderDialog = dialogLoaders.moveToFolderDialog}
+    <MoveToFolderDialog
       noteId={notes.getCurrentNote()!.id}
       currentFolder={notes.getCurrentNote()!.folder_path}
       onClose={() => (showMoveDialog = false)}
@@ -1020,24 +1020,20 @@
 
 <!-- Markdown Guide Dropdown -->
 {#if ui.getMarkdownGuideDropdownOpen() && dialogLoaders.markdownGuideDropdown}
-  <svelte:component
-    this={dialogLoaders.markdownGuideDropdown}
-    onClose={() => ui.setMarkdownGuideDropdownOpen(false)}
-  />
+  {@const MarkdownGuideDropdown = dialogLoaders.markdownGuideDropdown}
+  <MarkdownGuideDropdown onClose={() => ui.setMarkdownGuideDropdownOpen(false)} />
 {/if}
 
 <!-- Markdown Guide Dialog -->
 {#if ui.getMarkdownGuideOpen() && dialogLoaders.markdownGuideDialog}
-  <svelte:component
-    this={dialogLoaders.markdownGuideDialog}
-    onClose={() => ui.setMarkdownGuideOpen(false)}
-  />
+  {@const MarkdownGuideDialog = dialogLoaders.markdownGuideDialog}
+  <MarkdownGuideDialog onClose={() => ui.setMarkdownGuideOpen(false)} />
 {/if}
 
 <!-- Version History Dialog -->
 {#if showVersionHistory && notes.getCurrentNote() && dialogLoaders.versionHistoryDialog}
-  <svelte:component
-    this={dialogLoaders.versionHistoryDialog}
+  {@const VersionHistoryDialog = dialogLoaders.versionHistoryDialog}
+  <VersionHistoryDialog
     noteId={notes.getCurrentNote()!.id}
     noteTitle={notes.getCurrentNote()!.title}
     currentVersion={notes.getCurrentNote()!.version}

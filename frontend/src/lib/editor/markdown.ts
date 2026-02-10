@@ -457,9 +457,9 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
     md.renderer.rules.image = (
       tokens: Token[],
       idx: number,
-      options: any,
-      env: any,
-      _self: any
+      options: MarkdownIt.Options,
+      env: MarkdownIt.Env,
+      _self: MarkdownIt.Renderer
     ): string => {
       const token = tokens[idx];
       const src = token.attrGet('src') || '';

@@ -494,6 +494,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/stores/notes.svelte.ts`: Helper/Task-Queue nach `frontend/src/lib/stores/notes/helpers.ts` und `frontend/src/lib/stores/notes/task-events.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Accessor-Layer nach `frontend/src/lib/stores/notes/accessors.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Auto-Save nach `frontend/src/lib/stores/notes/auto-save.ts` ausgelagert.
+- `frontend/src/lib/stores/notes.svelte.ts`: Create-Note-Flow nach `frontend/src/lib/stores/notes/creator.ts` ausgelagert.
 
 ---
 

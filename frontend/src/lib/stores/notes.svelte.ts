@@ -12,6 +12,7 @@ import {
   scheduleAutoSave as scheduleAutoSaveHelper,
   triggerAutoSave as triggerAutoSaveHelper,
 } from '$lib/stores/notes/auto-save';
+import { createNote as createNoteHelper } from '$lib/stores/notes/creator';
 import {
   assertOnlineForParanoidMode,
   extractUniqueWikilinks,
@@ -151,135 +152,42 @@ export async function createNote(
   folderPath = '/',
   journalOptions?: { note_type: string; journal_date?: string }
 ) {
-  isLoading = true;
-  error = null;
-  try {
-    assertOnlineForParanoidMode();
-
-    // Check folder encryption_default
-    const allFolders = foldersStore.getFolders();
-    const targetFolder = allFolders.find((f) => f.path === folderPath);
-    // Recipes are always plaintext by default (folder may not exist yet on first creation)
-    const isRecipe = journalOptions?.note_type === 'recipe';
-    const shouldEncrypt = isRecipe ? false : targetFolder?.encryption_default !== false;
-
-    let note: api.Note;
-    let processedNote: api.Note;
-
-    if (!shouldEncrypt) {
-      // Create plaintext note (folder has encryption disabled)
-      console.log('[NOTES] Creating plaintext note (folder encryption_default=false)');
-
-      // Extract and deduplicate wiki-links from content (for graph view)
-      const uniqueLinks = extractUniqueWikilinks(content);
-
-      const payload: api.NotePayload = {
-        title,
-        content,
-        folder_path: folderPath,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-        ...(journalOptions && {
-          note_type: journalOptions.note_type,
-          journal_date: journalOptions.journal_date,
-        }),
-      };
-
-      note = await api.createNote(payload);
-      processedNote = note;
-    } else {
-      // Check if encryption is unlocked
-      const isUnlocked = encryption.isEncryptionUnlocked();
-      console.log('[NOTES] Creating note, encryption unlocked:', isUnlocked);
-
-      if (!isUnlocked) {
-        error = 'ENCRYPTION_LOCKED';
-        currentNote = null;
-        isLoading = false;
-        // Don't logout - let UI handle re-authentication via the global modal
-        throw new Error('ENCRYPTION_LOCKED');
-      }
-
-      // Encrypt before sending
-      const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(title, content);
-
-      // Extract and deduplicate wiki-links from content (for graph view)
-      const uniqueLinks = extractUniqueWikilinks(content);
-
-      const payload: api.NotePayload = {
-        title: encryptedTitle ? '' : title, // Send empty string if title encrypted
-        encrypted_title: encryptedTitle,
-        title_encrypted: !!encryptedTitle,
-        encrypted_content: encryptedContent.ciphertext,
-        wrapped_dek: encryptedContent.metadata.wrapped_dek,
-        encryption_metadata: JSON.stringify(encryptedContent.metadata),
-        keywords: keywords,
-        folder_path: folderPath,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-        due_dates: extractDueDatesDetailed(content),
-        // Journal fields (optional)
-        ...(journalOptions && {
-          note_type: journalOptions.note_type,
-          journal_date: journalOptions.journal_date,
-        }),
-      };
-
-      // Offline context: metadata for synthetic response (no plaintext)
-      const offlineContext: OfflineNoteContext = {
-        note_type: journalOptions?.note_type || 'note',
-        journal_date: journalOptions?.journal_date,
-        encryption_version: encryptedContent.metadata.version as number | undefined,
-      };
-
-      note = await api.createNote(payload, offlineContext);
-      console.log('[NOTES] Note created, version:', note.version, 'id:', note.id);
-
-      // Decrypt the note we just created (backend returns encrypted)
-      processedNote = note;
-      if (note.content_encrypted && note.encrypted_content) {
-        try {
-          const encryptedPayload: EncryptedPayload = {
-            ciphertext: note.encrypted_content,
-            metadata: JSON.parse(note.encryption_metadata || '{}'),
-          };
-
-          const decrypted = encryption.decryptNote(note.encrypted_title || null, encryptedPayload);
-
-          processedNote = {
-            ...note,
-            title: decrypted.title || note.title,
-            content: decrypted.content,
-          };
-          console.log('[NOTES] Note decrypted, content length:', decrypted.content.length);
-        } catch (err) {
-          console.error('[NOTES] Failed to decrypt created note:', err);
-          throw new Error('Failed to decrypt created note');
-        }
-      }
-    }
-
-    notes = [processedNote, ...notes];
-    currentNote = processedNote;
-    console.log(
-      '[NOTES] currentNote set, version:',
-      currentNote.version,
-      'content length:',
-      currentNote.content.length
-    );
-    isDirty = false;
-    currentNoteBacklinks = [];
-
-    // Update search index for encrypted notes
-    if (processedNote.content_encrypted) {
-      searchIndex.addToIndex(processedNote.id, processedNote.title, processedNote.content);
-    }
-
-    return processedNote;
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to create note';
-    throw e;
-  } finally {
-    isLoading = false;
-  }
+  return createNoteHelper({
+    title,
+    content,
+    folderPath,
+    journalOptions,
+    assertOnline: () => assertOnlineForParanoidMode(),
+    getFolders: () => foldersStore.getFolders(),
+    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    encryptNote: (noteTitle, noteContent) => encryption.encryptNote(noteTitle, noteContent),
+    decryptNote: (encryptedTitle, payload) =>
+      encryption.decryptNote(encryptedTitle, payload),
+    extractUniqueLinks: (noteContent) => extractUniqueWikilinks(noteContent),
+    extractDueDates: (noteContent) => extractDueDatesDetailed(noteContent),
+    createNote: (payload, offlineContext) => api.createNote(payload, offlineContext),
+    addToSearchIndex: (id, noteTitle, noteContent) =>
+      searchIndex.addToIndex(id, noteTitle, noteContent),
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getNotes: () => notes,
+    setBacklinks: (backlinks) => {
+      currentNoteBacklinks = backlinks;
+    },
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    setIsLoading: (value) => {
+      isLoading = value;
+    },
+  });
 }
 
 export async function saveNote() {

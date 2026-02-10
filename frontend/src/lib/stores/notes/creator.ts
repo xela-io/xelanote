@@ -12,7 +12,11 @@ export interface CreateNoteDeps {
   encryptNote: (
     title: string,
     content: string
-  ) => { encryptedTitle: string | null; encryptedContent: { ciphertext: string; metadata: any }; keywords: string[] };
+  ) => {
+    encryptedTitle: string | null;
+    encryptedContent: { ciphertext: string; metadata: any };
+    keywords: string[];
+  };
   decryptNote: (
     encryptedTitle: string | null,
     payload: EncryptedPayload

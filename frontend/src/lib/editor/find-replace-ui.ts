@@ -1,4 +1,5 @@
 import type { EditorView } from '@codemirror/view';
+
 import { clearSearch, sanitizeSearchQuery } from '$lib/editor/find-replace';
 
 interface FindReplaceState {
@@ -45,7 +46,10 @@ export function openFindReplace(
   };
 }
 
-export function closeFindReplace(state: FindReplaceState, handlers: FindReplaceHandlers): FindReplaceState {
+export function closeFindReplace(
+  state: FindReplaceState,
+  handlers: FindReplaceHandlers
+): FindReplaceState {
   const editorView = handlers.getEditorView();
   if (state.show) {
     if (editorView) {
@@ -62,7 +66,10 @@ export function closeFindReplace(state: FindReplaceState, handlers: FindReplaceH
   };
 }
 
-export function handleNoteChange(state: FindReplaceState, handlers: FindReplaceHandlers): FindReplaceState {
+export function handleNoteChange(
+  state: FindReplaceState,
+  handlers: FindReplaceHandlers
+): FindReplaceState {
   const noteId = handlers.getNoteId();
   if (state.prevNoteId !== null && state.prevNoteId !== noteId) {
     const editorView = handlers.getEditorView();
@@ -84,7 +91,10 @@ export function handleNoteChange(state: FindReplaceState, handlers: FindReplaceH
   };
 }
 
-export function handleUrlHighlight(state: FindReplaceState, handlers: FindReplaceHandlers): FindReplaceState {
+export function handleUrlHighlight(
+  state: FindReplaceState,
+  handlers: FindReplaceHandlers
+): FindReplaceState {
   const query = handlers.getUrlHighlight();
   if (!query) {
     return state;
@@ -103,7 +113,10 @@ export function handleUrlHighlight(state: FindReplaceState, handlers: FindReplac
   };
 }
 
-export function handleExtensionsReady(state: FindReplaceState, handlers: FindReplaceHandlers): FindReplaceState {
+export function handleExtensionsReady(
+  state: FindReplaceState,
+  handlers: FindReplaceHandlers
+): FindReplaceState {
   if (!state.pendingHighlightQuery) {
     return state;
   }

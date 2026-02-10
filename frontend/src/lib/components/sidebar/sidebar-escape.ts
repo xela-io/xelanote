@@ -7,12 +7,7 @@ export function handleSidebarEscape(
     close: () => void;
   }
 ) {
-  if (
-    e.key === 'Escape' &&
-    deps.isMobile() &&
-    deps.isOpen() &&
-    !deps.isQuickSwitcherOpen()
-  ) {
+  if (e.key === 'Escape' && deps.isMobile() && deps.isOpen() && !deps.isQuickSwitcherOpen()) {
     deps.close();
   }
 }

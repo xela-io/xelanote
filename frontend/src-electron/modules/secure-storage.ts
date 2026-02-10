@@ -5,8 +5,8 @@
  * Tokens are stored as encrypted files in the app's userData directory.
  */
 
-import { app,safeStorage } from 'electron';
-import { existsSync, mkdirSync,readFileSync, unlinkSync, writeFileSync } from 'fs';
+import { app, safeStorage } from 'electron';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 // Type for auth tokens

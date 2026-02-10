@@ -21,10 +21,7 @@ interface SidebarDndDeps {
   };
 }
 
-export function handleDropZoneDragOver(
-  e: DragEvent,
-  setActive: (active: boolean) => void
-) {
+export function handleDropZoneDragOver(e: DragEvent, setActive: (active: boolean) => void) {
   if (e.dataTransfer?.types.includes('application/x-xelanote-item')) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';

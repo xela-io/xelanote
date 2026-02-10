@@ -4,10 +4,10 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { type AppConfig,getConfig } from '$lib/api';
+  import { type AppConfig, getConfig } from '$lib/api';
   import CaptchaIframe from '$lib/components/CaptchaIframe.svelte';
   import Logo from '$lib/components/Logo.svelte';
-  import { getServerUrl,isDesktop } from '$lib/config';
+  import { getServerUrl, isDesktop } from '$lib/config';
   import * as auth from '$lib/stores/auth.svelte';
 
   let username = $state('');

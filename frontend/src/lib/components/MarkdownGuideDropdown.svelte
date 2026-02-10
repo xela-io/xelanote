@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BookOpen,Search } from 'lucide-svelte';
+  import { BookOpen, Search } from 'lucide-svelte';
 
   import * as ui from '$lib/stores/ui.svelte';
 

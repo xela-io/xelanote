@@ -3,9 +3,11 @@
 import type { Backlink, Note } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
-import type { EncryptedPayload } from '$lib/crypto/e2e';
 import { extractDueDatesDetailed } from '$lib/editor/markdown';
 import { hasPendingForNote } from '$lib/offline/offline-queue';
+import * as autosave from '$lib/stores/autosave.svelte';
+import * as encryption from '$lib/stores/encryption.svelte';
+import * as foldersStore from '$lib/stores/folders.svelte';
 import { createNotesAccessors } from '$lib/stores/notes/accessors';
 import {
   cancelAutoSave as cancelAutoSaveHelper,
@@ -14,22 +16,22 @@ import {
 } from '$lib/stores/notes/auto-save';
 import { createNote as createNoteHelper } from '$lib/stores/notes/creator';
 import { toggleEncryption as toggleEncryptionHelper } from '$lib/stores/notes/encryption-toggle';
+import { assertOnlineForParanoidMode, extractUniqueWikilinks } from '$lib/stores/notes/helpers';
 import {
-  assertOnlineForParanoidMode,
-  extractUniqueWikilinks,
-} from '$lib/stores/notes/helpers';
-import { loadNote as loadNoteHelper, loadNotes as loadNotesHelper } from '$lib/stores/notes/loaders';
+  loadNote as loadNoteHelper,
+  loadNotes as loadNotesHelper,
+} from '$lib/stores/notes/loaders';
 import {
   deleteCurrentNote as deleteCurrentNoteHelper,
   moveNote as moveNoteHelper,
 } from '$lib/stores/notes/mutations';
-import { renameCurrentNote as renameCurrentNoteHelper } from '$lib/stores/notes/rename';
+import { handleRemoteUpdateWithPendingCheck } from '$lib/stores/notes/remote-update-gate';
 import {
   handleRemoteCreate as handleRemoteCreateHelper,
   handleRemoteDelete as handleRemoteDeleteHelper,
   handleRemoteUpdate as handleRemoteUpdateHelper,
 } from '$lib/stores/notes/remote-updates';
-import { handleRemoteUpdateWithPendingCheck } from '$lib/stores/notes/remote-update-gate';
+import { renameCurrentNote as renameCurrentNoteHelper } from '$lib/stores/notes/rename';
 import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
 import {
   clearCurrentNote as clearCurrentNoteHelper,
@@ -39,9 +41,6 @@ import {
   updateCurrentNoteTitle as updateCurrentNoteTitleHelper,
 } from '$lib/stores/notes/state-updates';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
-import * as autosave from '$lib/stores/autosave.svelte';
-import * as encryption from '$lib/stores/encryption.svelte';
-import * as foldersStore from '$lib/stores/folders.svelte';
 import * as searchIndex from '$lib/stores/search-index.svelte';
 import * as toast from '$lib/stores/toast.svelte';
 
@@ -180,8 +179,7 @@ export async function createNote(
     getFolders: () => foldersStore.getFolders(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (noteTitle, noteContent) => encryption.encryptNote(noteTitle, noteContent),
-    decryptNote: (encryptedTitle, payload) =>
-      encryption.decryptNote(encryptedTitle, payload),
+    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
     extractUniqueLinks: (noteContent) => extractUniqueWikilinks(noteContent),
     extractDueDates: (noteContent) => extractDueDatesDetailed(noteContent),
     createNote: (payload, offlineContext) => api.createNote(payload, offlineContext),
@@ -251,15 +249,13 @@ export async function saveNote() {
     assertOnline: () => assertOnlineForParanoidMode(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (title, content) => encryption.encryptNote(title, content),
-    decryptNote: (encryptedTitle, payload) =>
-      encryption.decryptNote(encryptedTitle, payload),
+    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
     encryptTaskText: (text) => encryption.encryptTaskText(text),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
     extractDueDates: (content) => extractDueDatesDetailed(content),
     updateNote: (id, payload, version, offlineContext) =>
       api.updateNote(id, payload, version, offlineContext),
-    updateSearchIndex: (id, title, content) =>
-      searchIndex.updateInIndex(id, title, content),
+    updateSearchIndex: (id, title, content) => searchIndex.updateInIndex(id, title, content),
     recordTaskEvent: (noteId, payload) => api.recordTaskEvent(noteId, payload),
     isConflictError: (err) => err instanceof ApiError && err.status === 409,
   });
@@ -299,8 +295,7 @@ export async function toggleEncryption(): Promise<void> {
     cancelAutoSave: () => cancelAutoSave(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (noteTitle, noteContent) => encryption.encryptNote(noteTitle, noteContent),
-    decryptNote: (encryptedTitle, payload) =>
-      encryption.decryptNote(encryptedTitle, payload),
+    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
     updateNote: (noteId, payload, version) => api.updateNote(noteId, payload, version),
     decryptNoteApi: (noteId, noteTitle, noteContent, version, recipeData) =>
@@ -544,8 +539,7 @@ export async function moveNote(id: string, folderPath: string) {
       error = value;
     },
     getNote: (noteId) => api.getNote(noteId),
-    decryptNote: (encryptedTitle, payload) =>
-      encryption.decryptNote(encryptedTitle, payload),
+    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (title, content) => encryption.encryptNote(title, content),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
@@ -671,8 +665,7 @@ export function handleRemoteUpdate(remoteNote: Note) {
           notes = nextNotes;
         },
         isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-        decryptNote: (encryptedTitle, payload) =>
-          encryption.decryptNote(encryptedTitle, payload),
+        decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
         warn: (message, options) => toast.warning(message, options),
         loadNote: (noteId) => {
           void loadNote(noteId);

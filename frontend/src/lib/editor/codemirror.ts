@@ -1,7 +1,7 @@
 // CodeMirror 6 setup for xelanote
 
 import { bracketMatching, HighlightStyle } from '@codemirror/language';
-import { Compartment, EditorState, type Extension,Prec } from '@codemirror/state';
+import { Compartment, EditorState, type Extension, Prec } from '@codemirror/state';
 import {
   drawSelection,
   EditorView,
@@ -558,7 +558,7 @@ export function updateEditorContent(view: EditorView, content: string) {
 }
 
 // Re-export focus mode functions
-export { setDimInactiveLines,setTypewriterMode };
+export { setDimInactiveLines, setTypewriterMode };
 
 // Combined function to update all focus mode settings
 export function updateFocusMode(

@@ -1,4 +1,4 @@
-import { fireEvent,render } from '@testing-library/svelte';
+import { fireEvent, render } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 
 import NoteItem from '$lib/components/NoteItem.svelte';

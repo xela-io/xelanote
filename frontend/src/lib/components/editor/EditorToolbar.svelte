@@ -119,9 +119,7 @@
         class="text-lg font-semibold bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring rounded px-1 min-w-0 {isMobile
           ? ''
           : 'w-full'}"
-        style={isMobile
-          ? `width: ${Math.max((note?.title ?? '').length, 2) + 1}ch`
-          : ''}
+        style={isMobile ? `width: ${Math.max((note?.title ?? '').length, 2) + 1}ch` : ''}
       />
       {#if isMobile}
         <span class="flex-shrink-0">

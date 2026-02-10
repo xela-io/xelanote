@@ -1,14 +1,14 @@
 import * as api from '$lib/api';
 import { isDesktop } from '$lib/config';
-import { DecryptionError,e2eEncryption, type EncryptedPayload } from '$lib/crypto/e2e';
+import { DecryptionError, e2eEncryption, type EncryptedPayload } from '$lib/crypto/e2e';
 import {
   clearPersistedKEK,
   loadPersistedKEK,
   persistKEK,
   type SecurityLevel,
 } from '$lib/crypto/kek-persistence';
-import { type DesktopBridge,getDesktopBridge } from '$lib/desktop';
-import { error as showError,warning } from '$lib/stores/toast.svelte';
+import { type DesktopBridge, getDesktopBridge } from '$lib/desktop';
+import { error as showError, warning } from '$lib/stores/toast.svelte';
 
 // Re-export DecryptionError for UI use
 export { DecryptionError };
@@ -301,16 +301,12 @@ export async function updateSecurityLevel(level: SecurityLevel): Promise<void> {
       await clearPersistedKEK(userID);
     }
 
-
-
     // FIX: Clear WebAuthn state (handled in settings component)
   } else if (isUnlocked && userID) {
     // Re-persist with new level
     try {
       const kek = e2eEncryption.exportKEK();
       await persistKEK(userID, kek, level);
-
-
     } catch (err) {
       console.error('Failed to re-persist KEK:', err);
       showError('Fehler beim Aktualisieren der Sicherheitsstufe');

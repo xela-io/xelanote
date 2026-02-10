@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChefHat, Clock, Loader2, Lock, Plus, Sparkles } from 'lucide-svelte';
-  import { ArrowLeft, Edit, Eye, Pencil, Trash2, Users,Users as UsersIcon } from 'lucide-svelte';
+  import { ArrowLeft, Edit, Eye, Pencil, Trash2, Users, Users as UsersIcon } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 

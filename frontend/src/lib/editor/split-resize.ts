@@ -4,10 +4,7 @@ export interface SplitResizeHandlers {
   setActive: (active: boolean) => void;
 }
 
-export function handleSplitResizeStart(
-  e: PointerEvent,
-  handlers: SplitResizeHandlers
-) {
+export function handleSplitResizeStart(e: PointerEvent, handlers: SplitResizeHandlers) {
   e.preventDefault();
   handlers.setActive(true);
   (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -15,10 +12,7 @@ export function handleSplitResizeStart(
   document.body.style.cursor = 'col-resize';
 }
 
-export function handleSplitResizeMove(
-  e: PointerEvent,
-  handlers: SplitResizeHandlers
-) {
+export function handleSplitResizeMove(e: PointerEvent, handlers: SplitResizeHandlers) {
   const rect = handlers.getContainerRect();
   if (!rect) return;
   const pos = ((e.clientX - rect.left) / rect.width) * 100;

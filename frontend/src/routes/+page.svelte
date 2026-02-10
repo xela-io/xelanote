@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FilePlus, FileText,PenLine, Search } from 'lucide-svelte';
+  import { FilePlus, FileText, PenLine, Search } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';

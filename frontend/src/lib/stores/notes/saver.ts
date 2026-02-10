@@ -1,6 +1,5 @@
 import type { Note, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
-
 import type { TaskEventQueue } from '$lib/stores/notes/task-events';
 
 export interface SaveNoteDeps {
@@ -26,7 +25,11 @@ export interface SaveNoteDeps {
   encryptNote: (
     title: string,
     content: string
-  ) => { encryptedTitle: string | null; encryptedContent: { ciphertext: string; metadata: any }; keywords: string[] };
+  ) => {
+    encryptedTitle: string | null;
+    encryptedContent: { ciphertext: string; metadata: any };
+    keywords: string[];
+  };
   decryptNote: (
     encryptedTitle: string | null,
     payload: EncryptedPayload

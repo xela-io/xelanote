@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SvelteVirtualizer } from '@tanstack/svelte-virtual';
   import { createVirtualizer } from '@tanstack/svelte-virtual';
-  import { FileText, Lock,Search } from 'lucide-svelte';
+  import { FileText, Lock, Search } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';

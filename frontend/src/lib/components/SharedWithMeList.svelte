@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BookOpen,Edit, Eye, Folder, Loader2, Users } from 'lucide-svelte';
+  import { BookOpen, Edit, Eye, Folder, Loader2, Users } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';

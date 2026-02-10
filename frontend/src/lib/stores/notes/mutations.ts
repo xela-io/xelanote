@@ -57,7 +57,11 @@ export interface MoveNoteDeps {
   encryptNote: (
     title: string,
     content: string
-  ) => { encryptedTitle: string | null; encryptedContent: { ciphertext: string; metadata: any }; keywords: string[] };
+  ) => {
+    encryptedTitle: string | null;
+    encryptedContent: { ciphertext: string; metadata: any };
+    keywords: string[];
+  };
   extractUniqueLinks: (content: string) => { title: string }[];
   extractDueDates: (content: string) => unknown[];
   updateNote: (

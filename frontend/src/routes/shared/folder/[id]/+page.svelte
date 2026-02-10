@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ArrowLeft, Edit, Eye, Loader2 } from 'lucide-svelte';
-  import { onDestroy,onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';

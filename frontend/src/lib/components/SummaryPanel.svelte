@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp,Lock, RefreshCw, Sparkles } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, Lock, RefreshCw, Sparkles } from 'lucide-svelte';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 

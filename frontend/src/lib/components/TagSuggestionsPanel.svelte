@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertCircle, ChevronDown, ChevronRight,Loader2, Plus, Sparkles } from 'lucide-svelte';
+  import { AlertCircle, ChevronDown, ChevronRight, Loader2, Plus, Sparkles } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { TagSuggestion } from '$lib/api';

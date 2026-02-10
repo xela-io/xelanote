@@ -7,10 +7,7 @@ interface PreviewInteractionOptions {
   log?: (...args: unknown[]) => void;
 }
 
-export function handlePreviewClick(
-  e: MouseEvent,
-  options: PreviewInteractionOptions
-) {
+export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOptions) {
   const target = e.target as HTMLElement;
 
   // Wikilinks
@@ -56,12 +53,7 @@ export function handlePreviewClick(
         const checkboxIndex = taskItem
           ? parseInt(taskItem.getAttribute('data-task-index') || '-1', 10)
           : -1;
-        options.log?.(
-          '[TaskSort] Checkbox index:',
-          checkboxIndex,
-          'checked:',
-          checkbox.checked
-        );
+        options.log?.('[TaskSort] Checkbox index:', checkboxIndex, 'checked:', checkbox.checked);
 
         if (checkboxIndex !== -1) {
           // Update timestamp before processing

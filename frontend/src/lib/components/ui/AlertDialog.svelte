@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertCircle,AlertTriangle, Info } from 'lucide-svelte';
+  import { AlertCircle, AlertTriangle, Info } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import * as dialog from '$lib/stores/dialog.svelte';

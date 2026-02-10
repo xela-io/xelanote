@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Info,Search } from 'lucide-svelte';
+  import { Info, Search } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import * as graph from '$lib/stores/graph.svelte';

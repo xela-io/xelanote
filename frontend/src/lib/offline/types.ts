@@ -1,7 +1,7 @@
 // Offline Write Mode - Type Definitions
 // All types for the offline queue, conflict resolution, and local cache.
 
-import type { Note,NotePayload } from '$lib/api';
+import type { Note, NotePayload } from '$lib/api';
 
 // --- Queue Operation Types ---
 

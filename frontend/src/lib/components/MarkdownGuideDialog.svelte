@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Check,Copy } from 'lucide-svelte';
+  import { Check, Copy } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';

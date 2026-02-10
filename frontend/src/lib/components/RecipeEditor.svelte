@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Loader2, Lock, Menu, Plus, Sparkles,X } from 'lucide-svelte';
+  import { Loader2, Lock, Menu, Plus, Sparkles, X } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import type { RecipeCollection,RecipeIngredient } from '$lib/api';
+  import type { RecipeCollection, RecipeIngredient } from '$lib/api';
   import * as notes from '$lib/stores/notes.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';

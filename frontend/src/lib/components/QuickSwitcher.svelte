@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Filter, Lock,Plus, Search } from 'lucide-svelte';
+  import { Filter, Lock, Plus, Search } from 'lucide-svelte';
   import { onDestroy } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { type DueDateItem,getDueDates } from '$lib/api';
+  import { type DueDateItem, getDueDates } from '$lib/api';
   import { getDueDateStatus } from '$lib/editor/markdown';
 
   let dueDates = $state<DueDateItem[]>([]);

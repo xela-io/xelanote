@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Loader2,Plus, Tag, X } from 'lucide-svelte';
+  import { Loader2, Plus, Tag, X } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { Tag as TagType } from '$lib/api';

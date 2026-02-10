@@ -1,4 +1,5 @@
 import type { EditorView } from '@codemirror/view';
+
 import { ApiError, getNote, updateNoteAIEnabled } from '$lib/api';
 
 interface SaveNoteDeps {

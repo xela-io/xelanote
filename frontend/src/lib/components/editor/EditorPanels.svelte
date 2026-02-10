@@ -47,9 +47,9 @@
 <!-- AI Summary Panel -->
 <div class="border-t border-border p-4">
   <SummaryPanel
-    note={note}
+    {note}
     decryptedContent={note.content_encrypted ? note.content : undefined}
-    onSummaryUpdated={onSummaryUpdated}
+    {onSummaryUpdated}
   />
 </div>
 

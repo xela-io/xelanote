@@ -33,7 +33,9 @@ export function createNotesAccessors(deps: NotesAccessorsDeps) {
     getNotes: deps.getNotes,
     getRecentNotes: (limit = 5) =>
       [...deps.getNotes()]
-        .sort((a, b) => new SvelteDate(b.updated_at).getTime() - new SvelteDate(a.updated_at).getTime())
+        .sort(
+          (a, b) => new SvelteDate(b.updated_at).getTime() - new SvelteDate(a.updated_at).getTime()
+        )
         .slice(0, limit),
     getNotesLoading: deps.getNotesLoading,
     getAutoSaveStatus: deps.getAutoSaveStatus,

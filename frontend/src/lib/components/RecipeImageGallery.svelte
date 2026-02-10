@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, Loader2,Plus, X } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, Loader2, Plus, X } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { RecipeImage } from '$lib/api';

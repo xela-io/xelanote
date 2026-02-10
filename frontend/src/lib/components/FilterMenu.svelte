@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Calendar,Folder, Tag } from 'lucide-svelte';
+  import { Calendar, Folder, Tag } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
   import * as api from '$lib/api';

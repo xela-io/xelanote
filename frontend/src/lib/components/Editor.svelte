@@ -7,10 +7,33 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import type { AIAction } from '$lib/api';
-  import type { AITransformState } from '$lib/editor/ai-actions';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
-  import { insertWikiLink, insertWikiLinkInContent, updateEditorContent, updateFocusMode } from '$lib/editor/codemirror';
+  import type { AITransformState } from '$lib/editor/ai-actions';
+  import {
+    applyAITransform as applyAITransformToEditor,
+    prepareAITransform,
+  } from '$lib/editor/ai-actions';
+  import {
+    insertWikiLink,
+    insertWikiLinkInContent,
+    updateEditorContent,
+    updateFocusMode,
+  } from '$lib/editor/codemirror';
+  import {
+    type DialogLoaderState,
+    loadMarkdownGuideDialog,
+    loadMarkdownGuideDropdown,
+    loadMoveToFolderDialog,
+    loadVersionHistoryDialog,
+  } from '$lib/editor/dialog-loaders';
+  import {
+    handleAIToggle as handleAIToggleAction,
+    handleAutoSaveToggle as handleAutoSaveToggleAction,
+    handleEncryptionToggle as handleEncryptionToggleAction,
+    handleSaveNote as handleSaveNoteAction,
+    handleTitleInput as handleTitleInputAction,
+  } from '$lib/editor/editor-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
   import {
     closeFindReplace as closeFindReplaceUI,
@@ -19,21 +42,21 @@
     handleUrlHighlight,
     openFindReplace as openFindReplaceUI,
   } from '$lib/editor/find-replace-ui';
+  import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
   import {
     handleEditorDragOver,
     handleEditorDrop,
     handleEditorPaste,
     uploadImages,
   } from '$lib/editor/image-upload';
-  import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
-  import { applyAITransform as applyAITransformToEditor, prepareAITransform } from '$lib/editor/ai-actions';
+  import { indentSelection, outdentSelection } from '$lib/editor/indentation';
+  import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
   import {
-    loadMarkdownGuideDialog,
-    loadMarkdownGuideDropdown,
-    loadMoveToFolderDialog,
-    loadVersionHistoryDialog,
-    type DialogLoaderState,
-  } from '$lib/editor/dialog-loaders';
+    exportNoteMarkdown,
+    handleDeleteNote,
+    handleWikilinkClick as handleWikilinkAction,
+  } from '$lib/editor/note-actions';
+  import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
   import {
     handleSplitResizeDblClick,
@@ -41,21 +64,6 @@
     handleSplitResizeMove,
     handleSplitResizeStart,
   } from '$lib/editor/split-resize';
-  import { indentSelection, outdentSelection } from '$lib/editor/indentation';
-  import {
-    handleAutoSaveToggle as handleAutoSaveToggleAction,
-    handleAIToggle as handleAIToggleAction,
-    handleEncryptionToggle as handleEncryptionToggleAction,
-    handleSaveNote as handleSaveNoteAction,
-    handleTitleInput as handleTitleInputAction,
-  } from '$lib/editor/editor-actions';
-  import {
-    exportNoteMarkdown,
-    handleDeleteNote,
-    handleWikilinkClick as handleWikilinkAction,
-  } from '$lib/editor/note-actions';
-  import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
-  import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { taskCollapse } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable } from '$lib/editor/task-sortable';
@@ -564,7 +572,9 @@
         uploading = value;
       },
       onSuccess: (_event, ctx) => {
-        toast.success($_('component.editor.upload_success', { values: { filename: ctx?.filename } }));
+        toast.success(
+          $_('component.editor.upload_success', { values: { filename: ctx?.filename } })
+        );
       },
       onWarning: (event, ctx) => {
         if (event === 'copied_to_clipboard') {
@@ -699,21 +709,25 @@
       }
       window.history.replaceState(window.history.state, '', url.toString());
     },
-    setState: (partial: Partial<{
-      show: boolean;
-      query: string;
-      showReplace: boolean;
-      caseSensitive: boolean;
-      pendingHighlightQuery: string | null;
-      editorExtensionsReady: boolean;
-      prevNoteId: string | null;
-    }>) => {
+    setState: (
+      partial: Partial<{
+        show: boolean;
+        query: string;
+        showReplace: boolean;
+        caseSensitive: boolean;
+        pendingHighlightQuery: string | null;
+        editorExtensionsReady: boolean;
+        prevNoteId: string | null;
+      }>
+    ) => {
       if (partial.show !== undefined) showFindReplace = partial.show;
       if (partial.query !== undefined) findReplaceQuery = partial.query;
       if (partial.showReplace !== undefined) findReplaceShowReplace = partial.showReplace;
       if (partial.caseSensitive !== undefined) findReplaceCaseSensitive = partial.caseSensitive;
-      if (partial.pendingHighlightQuery !== undefined) pendingHighlightQuery = partial.pendingHighlightQuery;
-      if (partial.editorExtensionsReady !== undefined) editorExtensionsReady = partial.editorExtensionsReady;
+      if (partial.pendingHighlightQuery !== undefined)
+        pendingHighlightQuery = partial.pendingHighlightQuery;
+      if (partial.editorExtensionsReady !== undefined)
+        editorExtensionsReady = partial.editorExtensionsReady;
       if (partial.prevNoteId !== undefined) prevNoteId = partial.prevNoteId;
     },
   };

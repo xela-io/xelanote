@@ -18,7 +18,7 @@
   import * as notes from '$lib/stores/notes.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as trash from '$lib/stores/trash.svelte';
-  import type { FolderTreeNode, NoteTreeNode,TreeNode } from '$lib/stores/tree.svelte';
+  import type { FolderTreeNode, NoteTreeNode, TreeNode } from '$lib/stores/tree.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 

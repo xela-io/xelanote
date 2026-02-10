@@ -7,10 +7,7 @@ export interface SidebarResizeHandlers {
   setStartWidth: (value: number) => void;
 }
 
-export function handleSidebarResizeStart(
-  e: PointerEvent,
-  handlers: SidebarResizeHandlers
-) {
+export function handleSidebarResizeStart(e: PointerEvent, handlers: SidebarResizeHandlers) {
   if (handlers.getIsMobile()) return;
   e.preventDefault();
   handlers.setActive(true);

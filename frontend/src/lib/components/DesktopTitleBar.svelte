@@ -2,7 +2,7 @@
   import { Maximize2, Minimize2, Minus, X } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
-  import { type DesktopBridge,getDesktopBridge } from '$lib/desktop';
+  import { type DesktopBridge, getDesktopBridge } from '$lib/desktop';
 
   import Logo from './Logo.svelte';
 

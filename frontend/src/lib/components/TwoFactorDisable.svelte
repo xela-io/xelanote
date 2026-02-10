@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertTriangle,Loader2 } from 'lucide-svelte';
+  import { AlertTriangle, Loader2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import * as api from '$lib/api';

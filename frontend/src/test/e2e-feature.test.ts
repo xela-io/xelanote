@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { Mock } from 'vitest';
-import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('$lib/api', async () => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChefHat, Clock, ExternalLink,Users } from 'lucide-svelte';
+  import { ChefHat, Clock, ExternalLink, Users } from 'lucide-svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
 

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { ArrowLeft, KeyRound,Lock, Shield } from 'lucide-svelte';
+  import { ArrowLeft, KeyRound, Lock, Shield } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { type AppConfig,getConfig } from '$lib/api';
+  import { type AppConfig, getConfig } from '$lib/api';
   import CaptchaIframe from '$lib/components/CaptchaIframe.svelte';
   import Logo from '$lib/components/Logo.svelte';
-  import { getServerUrl,isDesktop } from '$lib/config';
-  import { authenticateWithSecurityKey,isFIDO2Supported } from '$lib/crypto/fido2';
+  import { getServerUrl, isDesktop } from '$lib/config';
+  import { authenticateWithSecurityKey, isFIDO2Supported } from '$lib/crypto/fido2';
   import * as auth from '$lib/stores/auth.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as settings from '$lib/stores/settings.svelte';

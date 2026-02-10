@@ -3,7 +3,7 @@
  * Displays underlines for spelling/grammar issues with hover tooltips for suggestions.
  */
 
-import { Compartment,type Extension, StateEffect, StateField } from '@codemirror/state';
+import { Compartment, type Extension, StateEffect, StateField } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,

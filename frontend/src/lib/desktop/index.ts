@@ -5,5 +5,5 @@
  * that works across Tauri, Electron, and Web environments.
  */
 
-export type { AuthTokens,DesktopBridge } from './interface';
+export type { AuthTokens, DesktopBridge } from './interface';
 export { getDesktopBridge, getDesktopBridgeSync, resetBridge } from './interface';

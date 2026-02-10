@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CheckCircle,Key, Loader2, Shield, Smartphone } from 'lucide-svelte';
+  import { CheckCircle, Key, Loader2, Shield, Smartphone } from 'lucide-svelte';
   import QRCode from 'qrcode';
 
   import * as api from '$lib/api';

@@ -4,7 +4,7 @@
  * Uses Electron's contextBridge API exposed via preload script.
  */
 
-import type { AuthTokens,DesktopBridge } from './interface';
+import type { AuthTokens, DesktopBridge } from './interface';
 
 // Type definition for the exposed Electron API
 interface ElectronAPI {

@@ -1,4 +1,5 @@
 import type { EditorView } from '@codemirror/view';
+
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 

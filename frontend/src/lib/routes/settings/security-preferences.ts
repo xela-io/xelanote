@@ -10,7 +10,9 @@ export interface SecurityPreferencesDeps<TPrefs> {
 export async function loadSecurityPreferences<TPrefs>(deps: SecurityPreferencesDeps<TPrefs>) {
   try {
     const prefs = await deps.getPreferences();
-    deps.setSecurityLevel((prefs as { security_level?: SecurityLevel }).security_level ?? 'balanced');
+    deps.setSecurityLevel(
+      (prefs as { security_level?: SecurityLevel }).security_level ?? 'balanced'
+    );
     deps.setAutoLockTimeout((prefs as { auto_lock_timeout?: number }).auto_lock_timeout ?? 0);
     deps.setWebAuthnCredentials(
       (prefs as { webauthn_credentials?: unknown[] }).webauthn_credentials ?? []

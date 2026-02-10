@@ -1,4 +1,5 @@
 import type { EditorView } from '@codemirror/view';
+
 import type { AIAction } from '$lib/api';
 
 export interface AITransformState {

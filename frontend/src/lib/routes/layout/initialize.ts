@@ -14,9 +14,7 @@ export interface InitializeAppDeps {
   };
   auth: {
     initAuth: () => Promise<void>;
-    addTokenUpdateListener: (
-      cb: (exp: number, iat: number) => void
-    ) => () => void;
+    addTokenUpdateListener: (cb: (exp: number, iat: number) => void) => () => void;
     getTokenExpiry: () => number;
     getTokenIssuedAt: () => number;
     getCurrentUser: () => User | null;

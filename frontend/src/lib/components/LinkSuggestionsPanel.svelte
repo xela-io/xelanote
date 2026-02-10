@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertCircle, ChevronDown, ChevronRight,Link2, Loader2, Plus } from 'lucide-svelte';
+  import { AlertCircle, ChevronDown, ChevronRight, Link2, Loader2, Plus } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { LinkSuggestion, NoteTitleInfo } from '$lib/api';

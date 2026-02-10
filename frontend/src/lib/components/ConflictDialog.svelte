@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type DiffLine,diffLines } from '$lib/offline/diff-utils';
+  import { type DiffLine, diffLines } from '$lib/offline/diff-utils';
   import { getConflicts, resolveConflict } from '$lib/offline/sync-manager.svelte';
 
   import BaseDialog from './ui/BaseDialog.svelte';

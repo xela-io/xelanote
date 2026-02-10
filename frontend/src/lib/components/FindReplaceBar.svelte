@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { EditorView } from '@codemirror/view';
-  import { CaseSensitive, ChevronDown, ChevronUp, Replace,X } from 'lucide-svelte';
+  import { CaseSensitive, ChevronDown, ChevronUp, Replace, X } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import {

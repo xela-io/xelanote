@@ -77,7 +77,9 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
  * Prepare CredentialCreationOptions from server response.
  * The server sends base64url-encoded buffers that need to be converted to ArrayBuffers.
  */
-function prepareCreationOptions(options: ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions }): CredentialCreationOptions {
+function prepareCreationOptions(
+  options: ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions }
+): CredentialCreationOptions {
   const publicKey = options.publicKey || options;
 
   return {
@@ -99,17 +101,21 @@ function prepareCreationOptions(options: ServerPublicKeyOptions & { publicKey?: 
 /**
  * Prepare CredentialRequestOptions from server response.
  */
-function prepareRequestOptions(options: ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions }): CredentialRequestOptions {
+function prepareRequestOptions(
+  options: ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions }
+): CredentialRequestOptions {
   const publicKey = options.publicKey || options;
 
   return {
     publicKey: {
       ...publicKey,
       challenge: base64UrlToBuffer(publicKey.challenge),
-      allowCredentials: (publicKey.allowCredentials || []).map((cred: ServerCredentialDescriptor) => ({
-        ...cred,
-        id: base64UrlToBuffer(cred.id),
-      })),
+      allowCredentials: (publicKey.allowCredentials || []).map(
+        (cred: ServerCredentialDescriptor) => ({
+          ...cred,
+          id: base64UrlToBuffer(cred.id),
+        })
+      ),
     } as PublicKeyCredentialRequestOptions,
   };
 }
@@ -133,7 +139,9 @@ function serializeRegistrationCredential(credential: PublicKeyCredential): Recor
 /**
  * Serialize a PublicKeyCredential (authentication response) to a JSON-safe object.
  */
-function serializeAuthenticationCredential(credential: PublicKeyCredential): Record<string, unknown> {
+function serializeAuthenticationCredential(
+  credential: PublicKeyCredential
+): Record<string, unknown> {
   const response = credential.response as AuthenticatorAssertionResponse;
   return {
     id: credential.id,
@@ -161,7 +169,9 @@ export async function registerSecurityKey(
   }
 
   // Step 1: Get creation options from server (API returns JSON with base64url strings, not ArrayBuffers)
-  const serverOptions = await beginFIDO2Registration() as unknown as ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
+  const serverOptions = (await beginFIDO2Registration()) as unknown as ServerPublicKeyOptions & {
+    publicKey?: ServerPublicKeyOptions;
+  };
   const options = prepareCreationOptions(serverOptions);
 
   // Step 2: Create credential via browser API
@@ -202,7 +212,9 @@ export async function authenticateWithSecurityKey(
   }
 
   // Step 1: Get assertion options from server (API returns JSON with base64url strings, not ArrayBuffers)
-  const serverOptions = await beginFIDO2Auth(pendingLoginToken) as unknown as ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
+  const serverOptions = (await beginFIDO2Auth(
+    pendingLoginToken
+  )) as unknown as ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
   const options = prepareRequestOptions(serverOptions);
 
   // Step 2: Get assertion via browser API

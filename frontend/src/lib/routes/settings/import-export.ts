@@ -18,7 +18,11 @@ export interface ImportExportDeps {
   triggerFileDialog: () => void;
   setImporting: (value: boolean) => void;
   importMarkdown: (files: ImportMarkdownFile[], merge: boolean) => Promise<ImportMarkdownResult>;
-  alert: (options: { title: string; message: string; variant?: 'warning' | 'default' | 'danger' }) => Promise<void>;
+  alert: (options: {
+    title: string;
+    message: string;
+    variant?: 'warning' | 'default' | 'danger';
+  }) => Promise<void>;
   messages: {
     noteTitle: string;
     errorTitle: string;

@@ -1,8 +1,8 @@
 // Auth store for managing user authentication state
 import * as api from '$lib/api';
-import { getServerUrl,isDesktop } from '$lib/config';
+import { getServerUrl, isDesktop } from '$lib/config';
 import { fromBase64Standard } from '$lib/crypto/sodium';
-import { type DesktopBridge,getDesktopBridge } from '$lib/desktop';
+import { type DesktopBridge, getDesktopBridge } from '$lib/desktop';
 
 import * as encryption from './encryption.svelte';
 import * as features from './features.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RotateCcw, Trash,Trash2 } from 'lucide-svelte';
+  import { RotateCcw, Trash, Trash2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 

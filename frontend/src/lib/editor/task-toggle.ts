@@ -304,12 +304,7 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
       // When moving up: we want to insert BEFORE the target, so just use targetLineIndex
       const newTargetIndex = targetLineIndex;
 
-      log?.(
-        '[TaskSort] Moving line from index',
-        currentLineIndex,
-        'to index',
-        newTargetIndex
-      );
+      log?.('[TaskSort] Moving line from index', currentLineIndex, 'to index', newTargetIndex);
 
       // Insert at new position
       lines.splice(newTargetIndex, 0, toggledLineText);
@@ -325,7 +320,12 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
   const taskLine = lines[task.lineNum - 1];
   const taskText = taskLine.replace(/^\s*[-*+]\s*\[[xX ]\]\s*/, '').trim();
   if (taskText && noteId) {
-    queueTaskEvent(noteId, taskText.substring(0, 500), checkboxIndex, checked ? 'completed' : 'reopened');
+    queueTaskEvent(
+      noteId,
+      taskText.substring(0, 500),
+      checkboxIndex,
+      checked ? 'completed' : 'reopened'
+    );
   }
 
   // Trigger auto-save

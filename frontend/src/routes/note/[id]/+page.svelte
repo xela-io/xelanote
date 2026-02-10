@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { AlertCircle,Loader2 } from 'lucide-svelte';
+  import { AlertCircle, Loader2 } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import { beforeNavigate,goto } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { deleteNote, permanentlyDeleteNote } from '$lib/api';
   import * as journal from '$lib/stores/journal.svelte';

@@ -17,7 +17,11 @@ export interface ToggleEncryptionDeps {
   encryptNote: (
     title: string,
     content: string
-  ) => { encryptedTitle: string | null; encryptedContent: { ciphertext: string; metadata: any }; keywords: string[] };
+  ) => {
+    encryptedTitle: string | null;
+    encryptedContent: { ciphertext: string; metadata: any };
+    keywords: string[];
+  };
   decryptNote: (
     encryptedTitle: string | null,
     payload: EncryptedPayload
@@ -54,9 +58,7 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
     if (currentNote.content_encrypted !== false) {
       console.log('[NOTES] Decrypting note:', currentNote.id);
 
-      let recipeData:
-        | { recipe_metadata?: any; recipe_ingredients?: any[] }
-        | undefined;
+      let recipeData: { recipe_metadata?: any; recipe_ingredients?: any[] } | undefined;
       if (currentNote.note_type === 'recipe' && currentNote.content) {
         try {
           const parsed = JSON.parse(currentNote.content);

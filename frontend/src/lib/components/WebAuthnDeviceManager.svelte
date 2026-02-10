@@ -11,7 +11,7 @@
   import { getCurrentUser } from '$lib/stores/auth.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as settings from '$lib/stores/settings.svelte';
-  import { error as showError,success } from '$lib/stores/toast.svelte';
+  import { error as showError, success } from '$lib/stores/toast.svelte';
 
   interface Props {
     credentials: WebAuthnCredential[];

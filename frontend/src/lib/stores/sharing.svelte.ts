@@ -1,6 +1,6 @@
 // Sharing store using Svelte 5 runes
 
-import type { SharedCollection,SharedFolder, SharedNote } from '$lib/api';
+import type { SharedCollection, SharedFolder, SharedNote } from '$lib/api';
 import * as api from '$lib/api';
 
 // State

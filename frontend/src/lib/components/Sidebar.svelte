@@ -21,19 +21,19 @@
   import { swipe } from '$lib/actions/swipe';
   import type { DropPosition, TouchDragData } from '$lib/actions/touchdrag';
   import { touchdrag } from '$lib/actions/touchdrag';
-  import { initSidebarOnMount } from '$lib/components/sidebar/sidebar-init';
-  import { handleSidebarEscape } from '$lib/components/sidebar/sidebar-escape';
+  import {
+    handleCreateFolderConfirm as handleCreateFolderConfirmAction,
+    handleCreateNoteConfirm as handleCreateNoteConfirmAction,
+    handleLogout as handleLogoutAction,
+  } from '$lib/components/sidebar/sidebar-actions';
   import {
     handleDropZoneDragLeave,
     handleDropZoneDragOver,
     handleDropZoneDrop,
     handleTouchDrop as handleTouchDropAction,
   } from '$lib/components/sidebar/sidebar-dnd';
-  import {
-    handleCreateFolderConfirm as handleCreateFolderConfirmAction,
-    handleCreateNoteConfirm as handleCreateNoteConfirmAction,
-    handleLogout as handleLogoutAction,
-  } from '$lib/components/sidebar/sidebar-actions';
+  import { handleSidebarEscape } from '$lib/components/sidebar/sidebar-escape';
+  import { initSidebarOnMount } from '$lib/components/sidebar/sidebar-init';
   import {
     handleSidebarResizeDblClick,
     handleSidebarResizeEnd,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, Flame,Loader2 } from 'lucide-svelte';
+  import { ChevronLeft, ChevronRight, Flame, Loader2 } from 'lucide-svelte';
   import { SvelteDate } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Lock,RefreshCw, WifiOff } from 'lucide-svelte';
+  import { Lock, RefreshCw, WifiOff } from 'lucide-svelte';
 
-  import { getIsSyncing, getPendingCount,getSyncProgress } from '$lib/offline/sync-manager.svelte';
+  import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as network from '$lib/stores/network.svelte';
 

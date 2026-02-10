@@ -36,26 +36,28 @@
   import TwoFactorSetup from '$lib/components/TwoFactorSetup.svelte';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import WebAuthnDeviceManager from '$lib/components/WebAuthnDeviceManager.svelte';
-  import { getDefaultServerUrl,getServerUrl, isTauri, setServerUrl } from '$lib/config';
+  import { getDefaultServerUrl, getServerUrl, isTauri, setServerUrl } from '$lib/config';
   import { e2eEncryption } from '$lib/crypto/e2e';
   import type { WebAuthnCredential } from '$lib/crypto/webauthn';
   import {
+    type EmailFormState,
+    handleEmailSubmit as handleEmailSubmitHelper,
+  } from '$lib/routes/settings/account-forms';
+  import {
+    type ApiKeyFormState,
     deleteApiKey,
     loadApiKeyStatus,
     saveApiKey,
-    type ApiKeyFormState,
   } from '$lib/routes/settings/ai-keys';
+  import {
+    handleExport as handleExportHelper,
+    handleImportClick as handleImportClickHelper,
+    handleImportFiles as handleImportFilesHelper,
+  } from '$lib/routes/settings/import-export';
   import {
     loadMigrationStats as loadMigrationStatsHelper,
     type MigrationStats,
   } from '$lib/routes/settings/migration-stats';
-  import {
-    confirmBackupCodesRegeneration,
-    handleTwoFactorDisableSuccess,
-    handleTwoFactorSetupSuccess,
-    loadTwoFactorStatus,
-    requestBackupCodesRegeneration,
-  } from '$lib/routes/settings/two-factor';
   import {
     handlePasswordChange,
     type PasswordFormState,
@@ -67,14 +69,12 @@
     type SecurityLevel,
   } from '$lib/routes/settings/security-preferences';
   import {
-    handleEmailSubmit as handleEmailSubmitHelper,
-    type EmailFormState,
-  } from '$lib/routes/settings/account-forms';
-  import {
-    handleExport as handleExportHelper,
-    handleImportClick as handleImportClickHelper,
-    handleImportFiles as handleImportFilesHelper,
-  } from '$lib/routes/settings/import-export';
+    confirmBackupCodesRegeneration,
+    handleTwoFactorDisableSuccess,
+    handleTwoFactorSetupSuccess,
+    loadTwoFactorStatus,
+    requestBackupCodesRegeneration,
+  } from '$lib/routes/settings/two-factor';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -83,7 +83,7 @@
   import * as features from '$lib/stores/features.svelte';
   import * as settings from '$lib/stores/settings.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import { type ThemeId,THEMES } from '$lib/themes';
+  import { type ThemeId, THEMES } from '$lib/themes';
 
   // Tab state (connection tab only visible in Tauri)
   let activeTab = $state<
@@ -109,6 +109,10 @@
     isChanging: false,
     reWrappingProgress: '',
   });
+
+  const updatePasswordForm = (next: Partial<PasswordFormState>) => {
+    Object.assign(passwordForm, next);
+  };
 
   // 2FA state
   let tfaStatus = $state<api.TwoFactorStatus | null>(null);
@@ -585,17 +589,12 @@
         errorTitle: $_('common.error'),
         noMdSelected: $_('page.settings.data.no_md_files_selected'),
         importCompleted: $_('page.settings.data.import_completed'),
-        notesImported: (count) =>
-          $_('page.settings.data.notes_imported', { values: { count } }),
-        foldersCreated: (count) =>
-          $_('page.settings.data.folders_created', { values: { count } }),
-        skippedNotes: (count) =>
-          $_('page.settings.data.skipped_notes', { values: { count } }),
-        failedNotes: (count) =>
-          $_('page.settings.data.failed_notes', { values: { count } }),
+        notesImported: (count) => $_('page.settings.data.notes_imported', { values: { count } }),
+        foldersCreated: (count) => $_('page.settings.data.folders_created', { values: { count } }),
+        skippedNotes: (count) => $_('page.settings.data.skipped_notes', { values: { count } }),
+        failedNotes: (count) => $_('page.settings.data.failed_notes', { values: { count } }),
         errorsLabel: $_('page.settings.data.errors'),
-        importFailed: (error) =>
-          $_('page.settings.data.import_failed', { values: { error } }),
+        importFailed: (error) => $_('page.settings.data.import_failed', { values: { error } }),
       },
     });
   }
@@ -2076,6 +2075,3 @@
     {/if}
   {/snippet}
 </BaseDialog>
-  const updatePasswordForm = (next: Partial<PasswordFormState>) => {
-    Object.assign(passwordForm, next);
-  };

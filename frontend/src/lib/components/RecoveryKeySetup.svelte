@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertTriangle, Check, Copy,Download, Key } from 'lucide-svelte';
+  import { AlertTriangle, Check, Copy, Download, Key } from 'lucide-svelte';
 
   import { toBase64Standard } from '$lib/crypto/sodium';
 

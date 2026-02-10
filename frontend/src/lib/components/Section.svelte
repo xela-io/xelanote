@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChevronDown } from 'lucide-svelte';
-  import { type Snippet,untrack } from 'svelte';
+  import { type Snippet, untrack } from 'svelte';
 
   import { animationDurations, easing } from '$lib/design/tokens';
 

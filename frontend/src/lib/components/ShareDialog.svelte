@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Loader2,Trash2, UserPlus } from 'lucide-svelte';
+  import { Loader2, Trash2, UserPlus } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { UserSearchResult } from '$lib/api';

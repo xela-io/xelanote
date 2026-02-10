@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { _, locale } from 'svelte-i18n';
 
-  import type { ActivityLogsOptions,AdminUser, SystemSettings } from '$lib/api';
+  import type { ActivityLogsOptions, AdminUser, SystemSettings } from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import * as admin from '$lib/stores/admin.svelte';
   import * as auth from '$lib/stores/auth.svelte';

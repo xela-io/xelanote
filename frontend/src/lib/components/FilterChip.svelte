@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Calendar,Folder, Tag, X } from 'lucide-svelte';
+  import { Calendar, Folder, Tag, X } from 'lucide-svelte';
 
   interface Props {
     type: 'folder' | 'tag' | 'date';

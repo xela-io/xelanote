@@ -7,7 +7,10 @@ export interface EmailFormState {
 export interface EmailFormDeps {
   form: EmailFormState;
   setForm: (next: Partial<EmailFormState>) => void;
-  changeEmail: (newEmail: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  changeEmail: (
+    newEmail: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
   reload: () => void;
   validationMessages: {
     emailRequired: string;

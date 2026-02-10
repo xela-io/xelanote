@@ -24,10 +24,7 @@ export interface SidebarActionsDeps {
   };
 }
 
-export async function handleCreateNoteConfirm(
-  title: string,
-  deps: SidebarActionsDeps
-) {
+export async function handleCreateNoteConfirm(title: string, deps: SidebarActionsDeps) {
   const selectedPath = deps.getSelectedFolderPath();
   const folderPath = selectedPath || '/';
   const note = await deps.createNote(title, '', folderPath);
@@ -36,10 +33,7 @@ export async function handleCreateNoteConfirm(
   deps.closeSidebarOnMobile();
 }
 
-export async function handleCreateFolderConfirm(
-  path: string,
-  deps: SidebarActionsDeps
-) {
+export async function handleCreateFolderConfirm(path: string, deps: SidebarActionsDeps) {
   try {
     await deps.createFolder(path);
   } catch (err: unknown) {

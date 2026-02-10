@@ -3,9 +3,9 @@
  */
 
 import { Text } from '@codemirror/state';
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { calculateMoveChanges,getTasksInDocument } from './task-reorder';
+import { calculateMoveChanges, getTasksInDocument } from './task-reorder';
 
 describe('task-reorder', () => {
   describe('getTasksInDocument', () => {

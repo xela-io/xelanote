@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { EditorView } from '@codemirror/view';
-  import { ChevronDown, Loader2,SpellCheck } from 'lucide-svelte';
+  import { ChevronDown, Loader2, SpellCheck } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import {

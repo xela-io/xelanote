@@ -7,7 +7,7 @@
   import { _, locale } from 'svelte-i18n';
 
   import { browser } from '$app/environment';
-  import { beforeNavigate,goto } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
@@ -22,11 +22,17 @@
   import AlertDialog from '$lib/components/ui/AlertDialog.svelte';
   import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
   import UnlockEncryptionModal from '$lib/components/UnlockEncryptionModal.svelte';
-  import { clearPersistedKEK,initKEKDatabase } from '$lib/crypto/kek-persistence';
+  import { clearPersistedKEK, initKEKDatabase } from '$lib/crypto/kek-persistence';
   import { initSodium } from '$lib/crypto/sodium';
   import { initOfflineDatabase } from '$lib/offline/offline-queue';
   import * as syncManager from '$lib/offline/sync-manager.svelte';
+  import { shouldRedirectToLogin } from '$lib/routes/layout/auth-guards';
+  import { handleBeforeUnload as handleBeforeUnloadHelper } from '$lib/routes/layout/beforeunload';
   import { initializeApp } from '$lib/routes/layout/initialize';
+  import { createLayoutInteractions } from '$lib/routes/layout/interactions';
+  import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
+  import { registerPwaUpdates } from '$lib/routes/layout/pwa';
+  import { createViewportHandlers } from '$lib/routes/layout/viewport';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
@@ -40,12 +46,6 @@
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import * as websocket from '$lib/stores/websocket.svelte';
-  import { registerPwaUpdates } from '$lib/routes/layout/pwa';
-  import { createLayoutInteractions } from '$lib/routes/layout/interactions';
-  import { createViewportHandlers } from '$lib/routes/layout/viewport';
-  import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
-  import { shouldRedirectToLogin } from '$lib/routes/layout/auth-guards';
-  import { handleBeforeUnload as handleBeforeUnloadHelper } from '$lib/routes/layout/beforeunload';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards

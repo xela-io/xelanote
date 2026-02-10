@@ -1,16 +1,16 @@
 // API client for xelanote backend
 
 import { getApiBaseUrl, isDesktop } from './config';
-import type { OfflineNoteContext } from './offline/types';
 import {
   enqueueOperation as enqueueOfflineOp,
   getQueueCount as getOfflineQueueCount,
 } from './offline/offline-queue';
+import type { OfflineNoteContext } from './offline/types';
 import type {
-  OfflineOperation,
   OfflineCreatePayload,
-  OfflineUpdatePayload,
   OfflineDeletePayload,
+  OfflineOperation,
+  OfflineUpdatePayload,
 } from './offline/types';
 
 // Re-export for use by other modules

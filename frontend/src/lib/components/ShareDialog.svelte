@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { Loader2,Trash2, UserPlus } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { UserPlus, Trash2, Loader2 } from 'lucide-svelte';
-  import BaseDialog from './ui/BaseDialog.svelte';
-  import * as api from '$lib/api';
+
   import type { UserSearchResult } from '$lib/api';
+  import * as api from '$lib/api';
   import * as toast from '$lib/stores/toast.svelte';
+
+  import BaseDialog from './ui/BaseDialog.svelte';
 
   type ResourceType = 'note' | 'folder' | 'collection';
 

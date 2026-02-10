@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
   import { Minus, Plus } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
 
   interface Props {
     servings: number;

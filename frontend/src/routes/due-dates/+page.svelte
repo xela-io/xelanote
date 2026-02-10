@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { CalendarClock, CalendarX2, CalendarCheck, Calendar, FileText } from 'lucide-svelte';
+  import { Calendar, CalendarCheck, CalendarClock, CalendarX2, FileText } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { getDueDates, type DueDateItem } from '$lib/api';
+
+  import { goto } from '$app/navigation';
+  import { type DueDateItem,getDueDates } from '$lib/api';
   import { getDueDateStatus } from '$lib/editor/markdown';
 
   let dueDates = $state<DueDateItem[]>([]);

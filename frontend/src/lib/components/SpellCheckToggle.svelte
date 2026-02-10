@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { SpellCheck, ChevronDown, Loader2 } from 'lucide-svelte';
   import type { EditorView } from '@codemirror/view';
-  import {
-    toggleSpellCheck,
-    setSpellCheckLanguage,
-    isSpellCheckEnabled,
-    getSpellCheckLanguage,
-  } from '$lib/editor/codemirror';
+  import { ChevronDown, Loader2,SpellCheck } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import {
+    getSpellCheckLanguage,
+    isSpellCheckEnabled,
+    setSpellCheckLanguage,
+    toggleSpellCheck,
+  } from '$lib/editor/codemirror';
 
   interface Props {
     editorView: EditorView | undefined;

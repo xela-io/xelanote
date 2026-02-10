@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronRight, Home } from 'lucide-svelte';
+
   import * as tree from '$lib/stores/tree.svelte';
 
   interface Props {

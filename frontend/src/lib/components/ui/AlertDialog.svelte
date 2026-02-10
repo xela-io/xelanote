@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { AlertCircle,AlertTriangle, Info } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { AlertTriangle, Info, AlertCircle } from 'lucide-svelte';
-  import BaseDialog from './BaseDialog.svelte';
+
   import * as dialog from '$lib/stores/dialog.svelte';
+
+  import BaseDialog from './BaseDialog.svelte';
 
   const state = $derived(dialog.getAlertState());
   const isOpen = $derived(state !== null);

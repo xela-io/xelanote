@@ -4,7 +4,7 @@
  * Tests for proactive token refresh mechanism.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the api module
 vi.mock('$lib/api', () => ({

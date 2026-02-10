@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { Note } from '$lib/api';
   import { Sparkles } from 'lucide-svelte';
+
+  import type { Note } from '$lib/api';
 
   interface Props {
     note: Note;

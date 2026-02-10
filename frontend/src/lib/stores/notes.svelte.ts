@@ -1,17 +1,18 @@
 // Notes store using Svelte 5 runes
 
 import { SvelteDate, SvelteSet } from 'svelte/reactivity';
+
+import type { Backlink, Job, Note, OfflineNoteContext } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
-import type { Note, Backlink, Job, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
-import * as autosave from '$lib/stores/autosave.svelte';
-import * as toast from '$lib/stores/toast.svelte';
-import * as encryption from '$lib/stores/encryption.svelte';
-import * as searchIndex from '$lib/stores/search-index.svelte';
-import * as foldersStore from '$lib/stores/folders.svelte';
-import { extractWikilinks, extractDueDatesDetailed } from '$lib/editor/markdown';
+import { extractDueDatesDetailed,extractWikilinks } from '$lib/editor/markdown';
 import { hasPendingForNote } from '$lib/offline/offline-queue';
+import * as autosave from '$lib/stores/autosave.svelte';
+import * as encryption from '$lib/stores/encryption.svelte';
+import * as foldersStore from '$lib/stores/folders.svelte';
+import * as searchIndex from '$lib/stores/search-index.svelte';
+import * as toast from '$lib/stores/toast.svelte';
 
 // --- Helper functions to reduce duplication ---
 

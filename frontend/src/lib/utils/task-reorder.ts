@@ -3,7 +3,7 @@
  * Provides atomic line movement operations for drag & drop.
  */
 
-import type { Text, ChangeSpec } from '@codemirror/state';
+import type { ChangeSpec,Text } from '@codemirror/state';
 
 export interface TaskInfo {
   index: number; // Global task index (matches data-task-index)

@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { setupEncryption, tryRestoreKEK } from '$lib/stores/encryption.svelte';
-  import { getCurrentUser } from '$lib/stores/auth.svelte';
-  import { fromBase64Standard } from '$lib/crypto/sodium';
-  import * as api from '$lib/api';
-  import * as autoLock from '$lib/stores/auto-lock.svelte';
+  import { Loader2, Lock } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import * as api from '$lib/api';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import { fromBase64Standard } from '$lib/crypto/sodium';
   import {
     authenticateWithWebAuthn,
-    isWebAuthnSupported,
     isPlatformAuthenticatorAvailable,
+    isWebAuthnSupported,
   } from '$lib/crypto/webauthn';
-  import { Loader2, Lock } from 'lucide-svelte';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import { getCurrentUser } from '$lib/stores/auth.svelte';
+  import * as autoLock from '$lib/stores/auto-lock.svelte';
+  import { setupEncryption, tryRestoreKEK } from '$lib/stores/encryption.svelte';
 
   interface Props {
     isOpen: boolean;

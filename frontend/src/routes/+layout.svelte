@@ -1,42 +1,44 @@
 <script lang="ts">
   import '../app.css';
-  import { onMount, untrack } from 'svelte';
+
   import type { Component } from 'svelte';
-  import { goto, beforeNavigate } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { browser } from '$app/environment';
-  import { _, locale } from 'svelte-i18n';
+  import { onMount, untrack } from 'svelte';
   import { get } from 'svelte/store';
-  import Sidebar from '$lib/components/Sidebar.svelte';
-  import MobileHeader from '$lib/components/MobileHeader.svelte';
-  import Toast from '$lib/components/Toast.svelte';
-  import OfflineBanner from '$lib/components/OfflineBanner.svelte';
-  import InstallPrompt from '$lib/components/InstallPrompt.svelte';
-  import DesktopTitleBar from '$lib/components/DesktopTitleBar.svelte';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as autosave from '$lib/stores/autosave.svelte';
-  import * as auth from '$lib/stores/auth.svelte';
-  import * as history from '$lib/stores/history.svelte';
-  import * as features from '$lib/stores/features.svelte';
-  import * as network from '$lib/stores/network.svelte';
-  import * as websocket from '$lib/stores/websocket.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
-  import * as encryption from '$lib/stores/encryption.svelte';
-  import * as autoLock from '$lib/stores/auto-lock.svelte';
-  import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
-  import { initSodium } from '$lib/crypto/sodium';
-  import { initKEKDatabase, clearPersistedKEK } from '$lib/crypto/kek-persistence';
-  import { initOfflineDatabase } from '$lib/offline/offline-queue';
-  import * as syncManager from '$lib/offline/sync-manager.svelte';
+  import { _, locale } from 'svelte-i18n';
+
+  import { browser } from '$app/environment';
+  import { beforeNavigate,goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
   import * as api from '$lib/api';
-  import * as errorReporter from '$lib/stores/error-reporter.svelte';
-  import UnlockEncryptionModal from '$lib/components/UnlockEncryptionModal.svelte';
   import ConflictDialog from '$lib/components/ConflictDialog.svelte';
-  import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+  import DesktopTitleBar from '$lib/components/DesktopTitleBar.svelte';
+  import InstallPrompt from '$lib/components/InstallPrompt.svelte';
+  import MobileHeader from '$lib/components/MobileHeader.svelte';
+  import OfflineBanner from '$lib/components/OfflineBanner.svelte';
+  import Sidebar from '$lib/components/Sidebar.svelte';
+  import Toast from '$lib/components/Toast.svelte';
   import AlertDialog from '$lib/components/ui/AlertDialog.svelte';
-  import { swipe } from '$lib/actions/swipe';
+  import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+  import UnlockEncryptionModal from '$lib/components/UnlockEncryptionModal.svelte';
+  import { clearPersistedKEK,initKEKDatabase } from '$lib/crypto/kek-persistence';
+  import { initSodium } from '$lib/crypto/sodium';
+  import { initOfflineDatabase } from '$lib/offline/offline-queue';
+  import * as syncManager from '$lib/offline/sync-manager.svelte';
+  import * as auth from '$lib/stores/auth.svelte';
+  import * as autoLock from '$lib/stores/auto-lock.svelte';
+  import * as autosave from '$lib/stores/autosave.svelte';
+  import * as encryption from '$lib/stores/encryption.svelte';
+  import * as errorReporter from '$lib/stores/error-reporter.svelte';
+  import * as features from '$lib/stores/features.svelte';
+  import * as history from '$lib/stores/history.svelte';
+  import * as network from '$lib/stores/network.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as settings from '$lib/stores/settings.svelte';
+  import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+  import * as websocket from '$lib/stores/websocket.svelte';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards

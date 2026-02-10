@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Copy, Download, Check } from 'lucide-svelte';
+  import { Check,Copy, Download } from 'lucide-svelte';
 
   interface Props {
     codes: string[];

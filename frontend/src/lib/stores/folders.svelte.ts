@@ -1,8 +1,9 @@
 // Folders store using Svelte 5 runes
 
 import { SvelteMap } from 'svelte/reactivity';
-import * as api from '$lib/api';
+
 import type { Folder } from '$lib/api';
+import * as api from '$lib/api';
 
 // State
 let folders = $state<Folder[]>([]);

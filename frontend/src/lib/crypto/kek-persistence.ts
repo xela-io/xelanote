@@ -13,9 +13,9 @@
  * - XSS = game over (same as 1Password, Bitwarden in browser)
  */
 
-import { warning } from '$lib/stores/toast.svelte';
 import * as api from '$lib/api';
 import * as encryption from '$lib/stores/encryption.svelte';
+import { warning } from '$lib/stores/toast.svelte';
 
 export type SecurityLevel = 'paranoid' | 'balanced' | 'convenient';
 

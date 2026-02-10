@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
   import { GripVertical, Trash2 } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
   import type { RecipeIngredient } from '$lib/api';
 
   interface Props {

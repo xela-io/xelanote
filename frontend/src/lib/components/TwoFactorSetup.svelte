@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { Loader2, Shield, Smartphone, Key, CheckCircle } from 'lucide-svelte';
+  import { CheckCircle,Key, Loader2, Shield, Smartphone } from 'lucide-svelte';
   import QRCode from 'qrcode';
+
   import * as api from '$lib/api';
-  import BackupCodesDisplay from './BackupCodesDisplay.svelte';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+
+  import BackupCodesDisplay from './BackupCodesDisplay.svelte';
 
   interface Props {
     onClose: () => void;

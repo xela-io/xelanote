@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import * as auth from '$lib/stores/auth.svelte';
   import * as admin from '$lib/stores/admin.svelte';
+  import * as auth from '$lib/stores/auth.svelte';
 
   const { children } = $props();
   let checking = $state(true);

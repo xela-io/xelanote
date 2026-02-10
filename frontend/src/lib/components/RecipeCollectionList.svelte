@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { BookOpen, Pencil, Plus, Trash2, Users } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { Plus, Pencil, Trash2, BookOpen, Users } from 'lucide-svelte';
+
   import type { RecipeCollection } from '$lib/api';
 
   interface Props {

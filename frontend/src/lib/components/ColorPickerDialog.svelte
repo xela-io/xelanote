@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
 
   interface Props {

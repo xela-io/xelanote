@@ -1,9 +1,10 @@
 <script lang="ts">
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import { AlertTriangle } from 'lucide-svelte';
-  import * as tree from '$lib/stores/tree.svelte';
-  import * as toast from '$lib/stores/toast.svelte';
   import { _ } from 'svelte-i18n';
+
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
+  import * as tree from '$lib/stores/tree.svelte';
 
   interface Props {
     open: boolean;

@@ -1,12 +1,13 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import js from '@eslint/js';
-import globals from 'globals';
+import prettier from 'eslint-config-prettier';
 import importSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
+import globals from 'globals';
 import svelteParser from 'svelte-eslint-parser';
 import tseslint from 'typescript-eslint';
-import prettier from 'eslint-config-prettier';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const sharedGlobals = {

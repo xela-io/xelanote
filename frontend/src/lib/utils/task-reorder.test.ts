@@ -2,9 +2,10 @@
  * Tests for task-reorder utility functions
  */
 
-import { describe, it, expect } from 'vitest';
 import { Text } from '@codemirror/state';
-import { getTasksInDocument, calculateMoveChanges } from './task-reorder';
+import { describe, expect,it } from 'vitest';
+
+import { calculateMoveChanges,getTasksInDocument } from './task-reorder';
 
 describe('task-reorder', () => {
   describe('getTasksInDocument', () => {

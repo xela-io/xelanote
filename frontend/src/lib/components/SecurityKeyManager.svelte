@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { AlertTriangle,KeyRound, Plus, Trash2 } from 'lucide-svelte';
+
+  import { deleteFIDO2Credential, type FIDO2CredentialInfo,listFIDO2Credentials } from '$lib/api';
   import { isFIDO2Supported, registerSecurityKey } from '$lib/crypto/fido2';
-  import { listFIDO2Credentials, deleteFIDO2Credential, type FIDO2CredentialInfo } from '$lib/api';
   import * as dialog from '$lib/stores/dialog.svelte';
-  import { success, error as showError } from '$lib/stores/toast.svelte';
-  import { KeyRound, Trash2, Plus, AlertTriangle } from 'lucide-svelte';
+  import { error as showError,success } from '$lib/stores/toast.svelte';
 
   interface Props {
     onUpdate?: () => void;

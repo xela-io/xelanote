@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { X, Tag, Plus, Loader2 } from 'lucide-svelte';
+  import { Loader2,Plus, Tag, X } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
+  import type { Tag as TagType } from '$lib/api';
   import * as api from '$lib/api';
   import * as toast from '$lib/stores/toast.svelte';
-  import type { Tag as TagType } from '$lib/api';
-  import { _ } from 'svelte-i18n';
 
   interface Props {
     noteId: string;

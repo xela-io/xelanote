@@ -1,10 +1,11 @@
 <script lang="ts">
   import { FolderPlus } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import * as dialog from '$lib/stores/dialog.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as notes from '$lib/stores/notes.svelte';
-  import * as dialog from '$lib/stores/dialog.svelte';
-  import { _ } from 'svelte-i18n';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
 
   interface Props {
     noteId: string;

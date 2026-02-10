@@ -4,6 +4,7 @@ import {
   type CompletionContext,
   type CompletionResult,
 } from '@codemirror/autocomplete';
+
 import { quickSearch } from '$lib/api';
 
 // Pattern to detect wikilink context: [[...

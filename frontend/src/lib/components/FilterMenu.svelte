@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { Folder, Tag, Calendar } from 'lucide-svelte';
-  import * as searchStore from '$lib/stores/search.svelte';
-  import type { DateFilter } from '$lib/stores/search.svelte';
-  import * as foldersStore from '$lib/stores/folders.svelte';
-  import * as api from '$lib/api';
+  import { Calendar,Folder, Tag } from 'lucide-svelte';
   import { onMount } from 'svelte';
+
+  import * as api from '$lib/api';
+  import * as foldersStore from '$lib/stores/folders.svelte';
+  import type { DateFilter } from '$lib/stores/search.svelte';
+  import * as searchStore from '$lib/stores/search.svelte';
 
   interface Props {
     isOpen: boolean;

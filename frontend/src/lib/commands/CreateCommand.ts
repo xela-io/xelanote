@@ -1,5 +1,6 @@
-import type { Command, CommandData, CreateCommandData } from './types';
 import * as api from '$lib/api';
+
+import type { Command, CommandData, CreateCommandData } from './types';
 
 /**
  * CreateCommand - Creates a new note.

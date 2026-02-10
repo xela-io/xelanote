@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Sun, Moon } from 'lucide-svelte';
-  import * as ui from '$lib/stores/ui.svelte';
+  import { Moon,Sun } from 'lucide-svelte';
+
   import * as settings from '$lib/stores/settings.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
 
   const isDark = $derived(ui.getCurrentTheme().variant === 'dark');
 

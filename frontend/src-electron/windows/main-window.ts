@@ -6,8 +6,9 @@
 
 import { BrowserWindow, shell } from 'electron';
 import { join } from 'path';
-import { registerWindow } from '../modules/window-manager';
+
 import { setupWindowListeners } from '../modules/ipc-handlers';
+import { registerWindow } from '../modules/window-manager';
 
 // Determine if we're in development
 const isDev = process.env.NODE_ENV === 'development';

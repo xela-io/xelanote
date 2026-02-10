@@ -3,16 +3,17 @@
  * Displays underlines for spelling/grammar issues with hover tooltips for suggestions.
  */
 
-import { StateField, StateEffect, type Extension, Compartment } from '@codemirror/state';
+import { Compartment,type Extension, StateEffect, StateField } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
   EditorView,
-  ViewPlugin,
-  type ViewUpdate,
   showTooltip,
   type Tooltip,
+  ViewPlugin,
+  type ViewUpdate,
 } from '@codemirror/view';
+
 import type { SpellIssue } from '$lib/api';
 import * as api from '$lib/api';
 

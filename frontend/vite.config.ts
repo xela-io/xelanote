@@ -1,10 +1,10 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { VitePWA } from 'vite-plugin-pwa';
-import { defineConfig } from 'vitest/config';
 import type { PluginOption } from 'vite';
-import wasm from 'vite-plugin-wasm';
+import { VitePWA } from 'vite-plugin-pwa';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import wasm from 'vite-plugin-wasm';
+import { defineConfig } from 'vitest/config';
 
 const plugins: PluginOption[] = [wasm(), topLevelAwait(), sveltekit()];
 

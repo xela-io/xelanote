@@ -6,12 +6,12 @@
  */
 
 import * as api from '$lib/api';
-import * as ui from '$lib/stores/ui.svelte';
-import * as toast from '$lib/stores/toast.svelte';
-import * as encryption from '$lib/stores/encryption.svelte';
-import * as autoLock from '$lib/stores/auto-lock.svelte';
-import { isValidThemeId, type ThemeId } from '$lib/themes';
 import { fromBase64Standard } from '$lib/crypto/sodium';
+import * as autoLock from '$lib/stores/auto-lock.svelte';
+import * as encryption from '$lib/stores/encryption.svelte';
+import * as toast from '$lib/stores/toast.svelte';
+import * as ui from '$lib/stores/ui.svelte';
+import { isValidThemeId, type ThemeId } from '$lib/themes';
 
 // State
 let isLoading = $state(false);

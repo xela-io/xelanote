@@ -1,10 +1,10 @@
 // UI state store using Svelte 5 runes
 import {
-  THEMES,
-  type ThemeId,
-  type PreviewThemeId,
-  isValidThemeId,
   isValidPreviewThemeId,
+  isValidThemeId,
+  type PreviewThemeId,
+  type ThemeId,
+  THEMES,
 } from '$lib/themes';
 
 // Sidebar state

@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Sparkles, Plus, Loader2, AlertCircle, ChevronDown, ChevronRight } from 'lucide-svelte';
-  import * as api from '$lib/api';
-  import type { TagSuggestion } from '$lib/api';
-  import * as toast from '$lib/stores/toast.svelte';
+  import { AlertCircle, ChevronDown, ChevronRight,Loader2, Plus, Sparkles } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import type { TagSuggestion } from '$lib/api';
+  import * as api from '$lib/api';
+  import * as toast from '$lib/stores/toast.svelte';
 
   interface Props {
     noteId: string;

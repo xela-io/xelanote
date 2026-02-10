@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
+  import { ChefHat, Clock, ExternalLink,Users } from 'lucide-svelte';
   import { SvelteMap } from 'svelte/reactivity';
-  import { Clock, ChefHat, Users, ExternalLink } from 'lucide-svelte';
-  import type { RecipeMetadata, RecipeImage, ScaledIngredient } from '$lib/api';
+  import { _ } from 'svelte-i18n';
+
+  import type { RecipeImage, RecipeMetadata, ScaledIngredient } from '$lib/api';
+
   import RecipeScaleControl from './RecipeScaleControl.svelte';
 
   interface Props {

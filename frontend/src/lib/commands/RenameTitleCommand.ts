@@ -1,5 +1,6 @@
-import type { Command, CommandData, RenameTitleCommandData } from './types';
 import * as api from '$lib/api';
+
+import type { Command, CommandData, RenameTitleCommandData } from './types';
 
 /**
  * RenameTitleCommand - Renames a note's title with link refactoring.

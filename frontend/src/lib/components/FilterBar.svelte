@@ -1,8 +1,10 @@
 <script lang="ts">
-  import FilterChip from './FilterChip.svelte';
-  import * as searchStore from '$lib/stores/search.svelte';
-  import type { DateFilter } from '$lib/stores/search.svelte';
   import { X } from 'lucide-svelte';
+
+  import type { DateFilter } from '$lib/stores/search.svelte';
+  import * as searchStore from '$lib/stores/search.svelte';
+
+  import FilterChip from './FilterChip.svelte';
 
   const folders = $derived(searchStore.getFolders());
   const tags = $derived(searchStore.getTags());

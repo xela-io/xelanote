@@ -1,14 +1,15 @@
 // Auth store for managing user authentication state
 import * as api from '$lib/api';
+import { getServerUrl,isDesktop } from '$lib/config';
+import { fromBase64Standard } from '$lib/crypto/sodium';
+import { type DesktopBridge,getDesktopBridge } from '$lib/desktop';
+
 import * as encryption from './encryption.svelte';
 import * as features from './features.svelte';
 import * as journal from './journal.svelte';
 import * as recipes from './recipes.svelte';
 import * as settings from './settings.svelte';
 import * as ui from './ui.svelte';
-import { fromBase64Standard } from '$lib/crypto/sodium';
-import { isDesktop, getServerUrl } from '$lib/config';
-import { getDesktopBridge, type DesktopBridge } from '$lib/desktop';
 
 export interface User {
   id: number;

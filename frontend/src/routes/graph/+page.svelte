@@ -1,7 +1,8 @@
 <script lang="ts">
-  import Graph from '$lib/components/Graph.svelte';
   import { ArrowLeft } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import Graph from '$lib/components/Graph.svelte';
 </script>
 
 <div class="flex flex-col h-screen-safe bg-background">

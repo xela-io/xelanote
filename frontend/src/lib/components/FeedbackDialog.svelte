@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n';
+
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import * as errorReporter from '$lib/stores/error-reporter.svelte';
   import * as toast from '$lib/stores/toast.svelte';
-  import { _ } from 'svelte-i18n';
 
   interface Props {
     open: boolean;

@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { Loader2, Plus,Save, Trash2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { Loader2, Save, Trash2, Plus } from 'lucide-svelte';
-  import BaseDialog from './ui/BaseDialog.svelte';
-  import type { GeneratedRecipe, GeneratedIngredient } from '$lib/api';
+
+  import type { GeneratedIngredient,GeneratedRecipe } from '$lib/api';
   import { saveGeneratedRecipe } from '$lib/api';
+
+  import BaseDialog from './ui/BaseDialog.svelte';
 
   interface Props {
     open: boolean;

@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
+  import { ArrowLeft, BookOpen, ChefHat,Edit, Eye, Loader2 } from 'lucide-svelte';
+  import { onDestroy,onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { ArrowLeft, Eye, Edit, Loader2, BookOpen, ChefHat } from 'lucide-svelte';
+
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import { onMount, onDestroy } from 'svelte';
 
   const collectionId = $derived(Number($page.params.id));
 

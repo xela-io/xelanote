@@ -5,7 +5,7 @@
  * All operations are no-ops or throw errors as appropriate.
  */
 
-import type { DesktopBridge, AuthTokens } from './interface';
+import type { AuthTokens,DesktopBridge } from './interface';
 
 class WebBridge implements DesktopBridge {
   readonly platform = 'web' as const;

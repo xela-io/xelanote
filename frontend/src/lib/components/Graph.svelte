@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { Loader } from 'lucide-svelte';
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
+
+  import * as graph from '$lib/stores/graph.svelte';
+
   import GraphCanvas from './GraphCanvas.svelte';
   import GraphControls from './GraphControls.svelte';
-  import * as graph from '$lib/stores/graph.svelte';
-  import { Loader } from 'lucide-svelte';
-  import { _ } from 'svelte-i18n';
 
   onMount(async () => {
     await graph.loadGlobalGraph();

@@ -1,9 +1,10 @@
 <script lang="ts">
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import { _ } from 'svelte-i18n';
+
   import * as api from '$lib/api';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as tree from '$lib/stores/tree.svelte';
-  import { _ } from 'svelte-i18n';
 
   interface Props {
     open: boolean;

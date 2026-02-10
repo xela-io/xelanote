@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition';
   import { X } from 'lucide-svelte';
+  import { fly } from 'svelte/transition';
   import { _ } from 'svelte-i18n';
+
   import * as toast from '$lib/stores/toast.svelte';
 
   const toasts = $derived(toast.toastState.toasts);

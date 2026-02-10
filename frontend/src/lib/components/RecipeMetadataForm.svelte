@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { ChefHat, Clock, ExternalLink } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { Clock, ChefHat, ExternalLink } from 'lucide-svelte';
+
   import type { RecipeMetadata } from '$lib/api';
 
   interface Props {

@@ -1,19 +1,21 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { Filter, Lock,Plus, Search } from 'lucide-svelte';
   import { onDestroy } from 'svelte';
-  import { quickSearch, type QuickSearchFilters } from '$lib/api';
-  import type { Note } from '$lib/api';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as folders from '$lib/stores/folders.svelte';
-  import * as searchStore from '$lib/stores/search.svelte';
-  import * as encryption from '$lib/stores/encryption.svelte';
-  import { searchEncrypted } from '$lib/stores/search-index.svelte';
-  import { Search, Plus, Filter, Lock } from 'lucide-svelte';
-  import FilterBar from './FilterBar.svelte';
-  import FilterMenu from './FilterMenu.svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import type { Note } from '$lib/api';
+  import { quickSearch, type QuickSearchFilters } from '$lib/api';
+  import * as encryption from '$lib/stores/encryption.svelte';
+  import * as folders from '$lib/stores/folders.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as searchStore from '$lib/stores/search.svelte';
+  import { searchEncrypted } from '$lib/stores/search-index.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+
+  import FilterBar from './FilterBar.svelte';
+  import FilterMenu from './FilterMenu.svelte';
 
   let query = $state('');
   let results = $state<Note[]>([]);

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { Link2, Plus, Loader2, AlertCircle, ChevronDown, ChevronRight } from 'lucide-svelte';
-  import * as api from '$lib/api';
+  import { AlertCircle, ChevronDown, ChevronRight,Link2, Loader2, Plus } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
   import type { LinkSuggestion, NoteTitleInfo } from '$lib/api';
+  import * as api from '$lib/api';
   import { extractWikilinks } from '$lib/editor/markdown';
   import * as toast from '$lib/stores/toast.svelte';
-  import { _ } from 'svelte-i18n';
 
   interface Props {
     noteId: string;

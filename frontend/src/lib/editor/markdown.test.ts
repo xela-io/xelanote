@@ -1,12 +1,13 @@
-import { describe, expect, it, vi, afterEach } from 'vitest';
-import {
-  renderMarkdown,
-  extractWikilinks,
-  sanitizeColor,
-  isValidDueDate,
-  extractDueDates,
-} from './markdown';
+import { afterEach,describe, expect, it, vi } from 'vitest';
+
 import { updateImageWidthByIndex } from './image-resize';
+import {
+  extractDueDates,
+  extractWikilinks,
+  isValidDueDate,
+  renderMarkdown,
+  sanitizeColor,
+} from './markdown';
 
 describe('renderMarkdown', () => {
   describe('basic markdown', () => {

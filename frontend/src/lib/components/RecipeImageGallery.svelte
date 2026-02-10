@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { ChevronDown, ChevronUp, Loader2,Plus, X } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { Plus, X, ChevronUp, ChevronDown, Loader2 } from 'lucide-svelte';
+
   import type { RecipeImage } from '$lib/api';
   import * as recipeStore from '$lib/stores/recipes.svelte';
 

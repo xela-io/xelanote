@@ -1,5 +1,6 @@
 <script lang="ts">
   import { List, X } from 'lucide-svelte';
+
   import type { TocEntry } from '$lib/editor/markdown';
 
   interface Props {

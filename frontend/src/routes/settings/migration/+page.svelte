@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { AlertTriangle, Check, Lock, RefreshCw, Unlock } from 'lucide-svelte';
   import { onMount } from 'svelte';
+
+  import type { Note } from '$lib/api';
   import * as api from '$lib/api';
   import * as encryption from '$lib/stores/encryption.svelte';
-  import { RefreshCw, AlertTriangle, Check, Lock, Unlock } from 'lucide-svelte';
-  import type { Note } from '$lib/api';
 
   let notes = $state<Note[]>([]);
   let loading = $state(false);

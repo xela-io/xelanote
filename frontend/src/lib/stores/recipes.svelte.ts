@@ -2,19 +2,20 @@
 // Manages recipes, collections, and ingredient scaling
 
 import { goto } from '$app/navigation';
-import * as api from '$lib/api';
 import type {
-  RecipeDetail,
-  RecipeListItem,
-  RecipeIngredient,
-  RecipeCollection,
-  RecipeMetadata,
-  ScaledIngredient,
-  SharedNote,
-  SharedCollection,
   CollectionShare,
   Note,
+  RecipeCollection,
+  RecipeDetail,
+  RecipeIngredient,
+  RecipeListItem,
+  RecipeMetadata,
+  ScaledIngredient,
+  SharedCollection,
+  SharedNote,
 } from '$lib/api';
+import * as api from '$lib/api';
+
 import { getRecipeFeatureEnabled } from './features.svelte';
 import * as notesStore from './notes.svelte';
 import * as tree from './tree.svelte';

@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import { Plus } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
   import type { RecipeCollection } from '$lib/api';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
 
   interface Props {
     open: boolean;

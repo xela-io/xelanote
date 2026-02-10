@@ -1,14 +1,15 @@
 // WebSocket store for real-time updates
 // Using Svelte 5 runes
 
+import { getWsBaseUrl } from '$lib/config';
+import type { EncryptedPayload } from '$lib/crypto/e2e';
+
 import { getAccessToken } from './auth.svelte';
+import * as encryption from './encryption.svelte';
 import * as notes from './notes.svelte';
 import * as recipes from './recipes.svelte';
-import * as tree from './tree.svelte';
 import * as searchIndex from './search-index.svelte';
-import * as encryption from './encryption.svelte';
-import type { EncryptedPayload } from '$lib/crypto/e2e';
-import { getWsBaseUrl } from '$lib/config';
+import * as tree from './tree.svelte';
 
 type WebSocketMessage = { type: string; payload: unknown };
 type NoteEventPayload = {

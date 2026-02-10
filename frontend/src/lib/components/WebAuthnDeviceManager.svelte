@@ -1,16 +1,17 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n';
+
   import {
-    registerWebAuthnCredential,
     deleteWebAuthnCredential,
     isPlatformAuthenticatorAvailable,
     isWebAuthnSupported,
+    registerWebAuthnCredential,
     type WebAuthnCredential,
   } from '$lib/crypto/webauthn';
   import { getCurrentUser } from '$lib/stores/auth.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
-  import { success, error as showError } from '$lib/stores/toast.svelte';
-  import { _ } from 'svelte-i18n';
+  import * as settings from '$lib/stores/settings.svelte';
+  import { error as showError,success } from '$lib/stores/toast.svelte';
 
   interface Props {
     credentials: WebAuthnCredential[];

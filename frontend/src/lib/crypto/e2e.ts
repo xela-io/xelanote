@@ -1,13 +1,13 @@
 import {
+  bytesToString,
+  decrypt,
   deriveKey,
   encrypt,
-  decrypt,
-  generateDEK,
-  stringToBytes,
-  bytesToString,
-  toBase64Standard,
   fromBase64Standard,
+  generateDEK,
   isInitialized,
+  stringToBytes,
+  toBase64Standard,
 } from './sodium';
 
 export interface EncryptionMetadata {

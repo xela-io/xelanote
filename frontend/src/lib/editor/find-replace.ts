@@ -5,18 +5,18 @@
  * but suppresses the default panel UI in favor of a custom Svelte component.
  */
 
-import { EditorView } from '@codemirror/view';
 import {
-  search,
-  SearchQuery,
-  setSearchQuery,
   findNext,
   findPrevious,
-  replaceNext,
-  replaceAll,
   getSearchQuery,
+  replaceAll,
+  replaceNext,
+  search,
   searchKeymap,
+  SearchQuery,
+  setSearchQuery,
 } from '@codemirror/search';
+import { EditorView } from '@codemirror/view';
 
 /**
  * Escape regex special characters for safe use in RegExp.

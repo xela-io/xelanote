@@ -1,19 +1,20 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
-  import { search } from '$lib/api';
-  import type { SearchResult } from '$lib/api';
-  import { Search, FileText, Lock } from 'lucide-svelte';
-  import { _ } from 'svelte-i18n';
-  import { createVirtualizer } from '@tanstack/svelte-virtual';
   import type { SvelteVirtualizer } from '@tanstack/svelte-virtual';
+  import { createVirtualizer } from '@tanstack/svelte-virtual';
+  import { FileText, Lock,Search } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import type { SearchResult } from '$lib/api';
+  import { search } from '$lib/api';
   import * as encryption from '$lib/stores/encryption.svelte';
   import {
-    searchEncrypted,
-    getIndexState,
-    getIndexProgress,
     buildIndex,
     cancelBuild,
+    getIndexProgress,
+    getIndexState,
+    searchEncrypted,
   } from '$lib/stores/search-index.svelte';
 
   // Parse snippet to safely render search highlights (defense in depth)

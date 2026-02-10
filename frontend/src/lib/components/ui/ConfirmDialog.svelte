@@ -1,7 +1,9 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import BaseDialog from './BaseDialog.svelte';
+
   import * as dialog from '$lib/stores/dialog.svelte';
+
+  import BaseDialog from './BaseDialog.svelte';
 
   const state = $derived(dialog.getConfirmState());
   const isOpen = $derived(state !== null);

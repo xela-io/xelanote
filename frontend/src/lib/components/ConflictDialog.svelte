@@ -1,7 +1,8 @@
 <script lang="ts">
-  import BaseDialog from './ui/BaseDialog.svelte';
+  import { type DiffLine,diffLines } from '$lib/offline/diff-utils';
   import { getConflicts, resolveConflict } from '$lib/offline/sync-manager.svelte';
-  import { diffLines, type DiffLine } from '$lib/offline/diff-utils';
+
+  import BaseDialog from './ui/BaseDialog.svelte';
 
   const conflicts = $derived(getConflicts());
   const current = $derived(conflicts[0] || null);

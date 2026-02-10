@@ -2,15 +2,16 @@
 // Stores offline operations with encrypted payloads only (no plaintext in IndexedDB).
 // Pattern follows kek-persistence.ts for IndexedDB usage.
 
+import type { Note } from '$lib/api';
+
 import type {
+  CachedNote,
+  OfflineCreatePayload,
   OfflineOperation,
   OfflineOperationStatus,
-  TempIdMapping,
-  CachedNote,
   OfflineUpdatePayload,
-  OfflineCreatePayload,
+  TempIdMapping,
 } from './types';
-import type { Note } from '$lib/api';
 
 const DB_NAME = 'xelanote-offline';
 const DB_VERSION = 1;

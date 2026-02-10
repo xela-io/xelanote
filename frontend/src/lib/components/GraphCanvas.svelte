@@ -1,8 +1,9 @@
 <script lang="ts">
+  import type { ForceGraphGeneric,LinkObject, NodeObject } from 'force-graph';
   import { onMount } from 'svelte';
+
   import { goto } from '$app/navigation';
-  import type { GraphNode, GraphEdge } from '$lib/api';
-  import type { NodeObject, LinkObject, ForceGraphGeneric } from 'force-graph';
+  import type { GraphEdge,GraphNode } from '$lib/api';
 
   type GraphNodeObj = NodeObject & GraphNode;
   type GraphLinkObj = LinkObject<GraphNodeObj> & { type: string };

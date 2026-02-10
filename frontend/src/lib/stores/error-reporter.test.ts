@@ -1,8 +1,9 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import {
-  normalizeMessage,
-  computeFingerprint,
   _resetForTesting,
+  computeFingerprint,
+  normalizeMessage,
 } from '$lib/stores/error-reporter.svelte';
 
 describe('error-reporter', () => {

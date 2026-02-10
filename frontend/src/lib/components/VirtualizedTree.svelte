@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { createVirtualizer } from '@tanstack/svelte-virtual';
   import type { SvelteVirtualizer } from '@tanstack/svelte-virtual';
-  import UnifiedTree from './UnifiedTree.svelte';
-  import * as tree from '$lib/stores/tree.svelte';
+  import { createVirtualizer } from '@tanstack/svelte-virtual';
   import { Info } from 'lucide-svelte';
+
+  import * as tree from '$lib/stores/tree.svelte';
+
+  import UnifiedTree from './UnifiedTree.svelte';
 
   // Scroll container reference
   let scrollElement = $state<HTMLDivElement | null>(null);

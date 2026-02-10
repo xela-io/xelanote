@@ -1,7 +1,8 @@
 <script lang="ts">
-  import * as encryption from '$lib/stores/encryption.svelte';
-  import { Lock, Eye, AlertTriangle, Shield, Key } from 'lucide-svelte';
+  import { AlertTriangle, Eye, Key,Lock, Shield } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import * as encryption from '$lib/stores/encryption.svelte';
 
   const settings = $derived(encryption.getSettings());
   let showKeywordWarning = $state(false);

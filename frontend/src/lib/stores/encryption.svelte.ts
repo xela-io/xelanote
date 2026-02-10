@@ -1,14 +1,14 @@
-import { e2eEncryption, type EncryptedPayload, DecryptionError } from '$lib/crypto/e2e';
+import * as api from '$lib/api';
+import { isDesktop } from '$lib/config';
+import { DecryptionError,e2eEncryption, type EncryptedPayload } from '$lib/crypto/e2e';
 import {
-  persistKEK,
-  loadPersistedKEK,
   clearPersistedKEK,
+  loadPersistedKEK,
+  persistKEK,
   type SecurityLevel,
 } from '$lib/crypto/kek-persistence';
-import * as api from '$lib/api';
-import { warning, error as showError } from '$lib/stores/toast.svelte';
-import { isDesktop } from '$lib/config';
-import { getDesktopBridge, type DesktopBridge } from '$lib/desktop';
+import { type DesktopBridge,getDesktopBridge } from '$lib/desktop';
+import { error as showError,warning } from '$lib/stores/toast.svelte';
 
 // Re-export DecryptionError for UI use
 export { DecryptionError };

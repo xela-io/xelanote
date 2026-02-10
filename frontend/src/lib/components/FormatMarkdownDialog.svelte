@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { X, Wand2, Loader2, Check, AlertTriangle } from 'lucide-svelte';
-  import { _ } from 'svelte-i18n';
-  import { createFocusTrap, type FocusTrap } from 'focus-trap';
-  import * as api from '$lib/api';
   import { diffLines } from 'diff';
+  import { createFocusTrap, type FocusTrap } from 'focus-trap';
+  import { AlertTriangle,Check, Loader2, Wand2, X } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
+  import * as api from '$lib/api';
   import * as ui from '$lib/stores/ui.svelte';
 
   interface Props {

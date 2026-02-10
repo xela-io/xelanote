@@ -1,27 +1,29 @@
 <script lang="ts">
-  import type { Component } from 'svelte';
   import {
-    ChevronRight,
     ChevronDown,
+    ChevronRight,
+    FileText,
     Folder,
     FolderOpen,
-    FileText,
     MoreVertical,
     Sparkles,
   } from 'lucide-svelte';
-  import { goto } from '$app/navigation';
-  import { _ } from 'svelte-i18n';
+  import type { Component } from 'svelte';
   import { createEventDispatcher } from 'svelte';
-  import * as tree from '$lib/stores/tree.svelte';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as dialog from '$lib/stores/dialog.svelte';
+  import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
   import * as api from '$lib/api';
+  import * as dialog from '$lib/stores/dialog.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as trash from '$lib/stores/trash.svelte';
-  import type { TreeNode, FolderTreeNode, NoteTreeNode } from '$lib/stores/tree.svelte';
-  import UnifiedTree from './UnifiedTree.svelte';
+  import type { FolderTreeNode, NoteTreeNode,TreeNode } from '$lib/stores/tree.svelte';
+  import * as tree from '$lib/stores/tree.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+
   import TreeContextMenu from './TreeContextMenu.svelte';
+  import UnifiedTree from './UnifiedTree.svelte';
   const {
     node,
     depth = 0,

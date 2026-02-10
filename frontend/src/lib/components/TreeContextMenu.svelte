@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { Palette, Edit3, Trash2, Share2 } from 'lucide-svelte';
+  import { Edit3, Palette, Share2,Trash2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
   import type { TreeNode } from '$lib/stores/tree.svelte';
 
   interface Props {

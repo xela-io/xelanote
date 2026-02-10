@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { THEMES, getThemesByVariant, isValidThemeId } from './index';
+import { describe, expect,it } from 'vitest';
+
+import { getThemesByVariant, isValidThemeId,THEMES } from './index';
 
 describe('Theme System', () => {
   it('sollte genau 2 Themes haben (Gruvbox Light & Dark)', () => {

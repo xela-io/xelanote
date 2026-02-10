@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { SvelteComponentTyped } from 'svelte';
   import type { IconProps } from 'lucide-svelte';
+  import type { SvelteComponentTyped } from 'svelte';
+
   import { animationDurations, easing } from '$lib/design/tokens';
 
   interface Props {

@@ -1,5 +1,6 @@
-import type { Command, CommandData, MoveFolderCommandData } from './types';
 import * as api from '$lib/api';
+
+import type { Command, CommandData, MoveFolderCommandData } from './types';
 
 /**
  * MoveFolderCommand - Moves a note to a different folder.

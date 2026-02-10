@@ -1,10 +1,11 @@
 // Markdown rendering with wikilink and color syntax support
 
+import DOMPurify from 'isomorphic-dompurify';
 import MarkdownIt from 'markdown-it';
 import type StateInline from 'markdown-it/lib/rules_inline/state_inline.mjs';
 import type Token from 'markdown-it/lib/token.mjs';
 import taskLists from 'markdown-it-task-lists';
-import DOMPurify from 'isomorphic-dompurify';
+
 import { FEATURE_FLAGS } from '$lib/config';
 
 // Named colors that map to CSS classes (design tokens)

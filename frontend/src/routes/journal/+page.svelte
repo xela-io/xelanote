@@ -1,20 +1,21 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
   import {
-    Loader2,
     Calendar,
-    Lock,
     ChevronDown,
-    ChevronUp,
     ChevronLeft,
     ChevronRight,
+    ChevronUp,
+    Loader2,
+    Lock,
   } from 'lucide-svelte';
-  import * as journal from '$lib/stores/journal.svelte';
-  import * as features from '$lib/stores/features.svelte';
-  import JournalHeatmap from '$lib/components/JournalHeatmap.svelte';
+  import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
   import JournalActivityWidget from '$lib/components/JournalActivityWidget.svelte';
+  import JournalHeatmap from '$lib/components/JournalHeatmap.svelte';
+  import * as features from '$lib/stores/features.svelte';
+  import * as journal from '$lib/stores/journal.svelte';
 
   const featureEnabled = $derived(features.getJournalFeatureEnabled());
   const featureLoaded = $derived(features.getJournalFeatureLoaded());

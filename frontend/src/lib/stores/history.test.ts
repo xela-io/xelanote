@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { Command, CommandData } from '$lib/commands/types';
 import * as history from '$lib/stores/history.svelte';
 

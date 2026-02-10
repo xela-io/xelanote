@@ -1,9 +1,10 @@
 <script lang="ts">
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
-  import { getChangelog } from '$lib/api';
-  import { _ } from 'svelte-i18n';
-  import MarkdownIt from 'markdown-it';
   import DOMPurify from 'isomorphic-dompurify';
+  import MarkdownIt from 'markdown-it';
+  import { _ } from 'svelte-i18n';
+
+  import { getChangelog } from '$lib/api';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
 
   interface Props {
     open: boolean;

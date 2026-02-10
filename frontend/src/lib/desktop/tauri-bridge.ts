@@ -4,7 +4,7 @@
  * Uses Tauri's IPC to communicate with Rust backend for secure operations.
  */
 
-import type { DesktopBridge, AuthTokens } from './interface';
+import type { AuthTokens,DesktopBridge } from './interface';
 
 // Tauri invoke function (lazy loaded to avoid SSR issues)
 async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {

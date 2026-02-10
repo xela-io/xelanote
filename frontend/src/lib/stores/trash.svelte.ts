@@ -4,8 +4,8 @@
  * This store provides state management for the trash page and trash count badge.
  */
 
-import * as api from '$lib/api';
 import type { Note } from '$lib/api';
+import * as api from '$lib/api';
 
 // State
 let trashedNotes = $state<Note[]>([]);

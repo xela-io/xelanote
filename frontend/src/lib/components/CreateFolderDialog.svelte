@@ -1,7 +1,8 @@
 <script lang="ts">
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
+
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
 
   interface Props {
     open: boolean;

@@ -8,11 +8,11 @@
  * This only handles property changes: delete, create, rename title, move folder.
  */
 
-import type { Command, CommandData } from '$lib/commands/types';
-import { DeleteCommand } from '$lib/commands/DeleteCommand';
 import { CreateCommand } from '$lib/commands/CreateCommand';
-import { RenameTitleCommand } from '$lib/commands/RenameTitleCommand';
+import { DeleteCommand } from '$lib/commands/DeleteCommand';
 import { MoveFolderCommand } from '$lib/commands/MoveFolderCommand';
+import { RenameTitleCommand } from '$lib/commands/RenameTitleCommand';
+import type { Command, CommandData } from '$lib/commands/types';
 
 const MAX_HISTORY_SIZE = 50;
 const STORAGE_KEY = 'xelanote_command_history';

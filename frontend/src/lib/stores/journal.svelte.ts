@@ -2,15 +2,17 @@
 // Manages journal entries and calendar navigation
 
 import { SvelteDate, SvelteMap, SvelteSet } from 'svelte/reactivity';
+
 import { goto } from '$app/navigation';
 import {
-  lookupJournal,
-  getJournalCalendar,
-  getJournalYearCalendar,
-  getJournalEntries,
-  type JournalEntry,
   ApiError,
+  getJournalCalendar,
+  getJournalEntries,
+  getJournalYearCalendar,
+  type JournalEntry,
+  lookupJournal,
 } from '$lib/api';
+
 import { getJournalFeatureEnabled } from './features.svelte';
 import * as notesStore from './notes.svelte';
 import * as tree from './tree.svelte';

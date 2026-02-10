@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Copy, Check } from 'lucide-svelte';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import { Check,Copy } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
 
   interface Props {
     onClose: () => void;

@@ -1,12 +1,14 @@
 <script lang="ts">
+  import { Camera, ChefHat,Loader2, Search, Sparkles } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
+
   import { goto } from '$app/navigation';
-  import { Loader2, Sparkles, Camera, Search, ChefHat } from 'lucide-svelte';
-  import BaseDialog from './ui/BaseDialog.svelte';
-  import type { SimilarRecipeResult, IngredientMatchResult, GeneratedRecipe } from '$lib/api';
-  import { findSimilarRecipes, suggestByIngredients, extractIngredientsFromPhoto } from '$lib/api';
+  import type { GeneratedRecipe,IngredientMatchResult, SimilarRecipeResult } from '$lib/api';
+  import { extractIngredientsFromPhoto,findSimilarRecipes, suggestByIngredients } from '$lib/api';
+
   import RecipePreviewSaveDialog from './RecipePreviewSaveDialog.svelte';
+  import BaseDialog from './ui/BaseDialog.svelte';
 
   interface Props {
     open: boolean;

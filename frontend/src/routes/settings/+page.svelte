@@ -1,52 +1,53 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
-  import { THEMES, type ThemeId } from '$lib/themes';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
-  import * as auth from '$lib/stores/auth.svelte';
-  import * as encryption from '$lib/stores/encryption.svelte';
-  import * as autoLock from '$lib/stores/auto-lock.svelte';
-  import * as dialog from '$lib/stores/dialog.svelte';
-  import * as api from '$lib/api';
-  import { e2eEncryption } from '$lib/crypto/e2e';
   import {
+    AlertTriangle,
     ArrowLeft,
-    Palette,
-    Edit3,
-    User,
+    ArrowRight,
     Check,
+    Database,
+    Download,
+    Edit3,
+    Eye,
+    EyeOff,
+    Globe,
+    Key,
     Loader2,
+    Lock,
+    Palette,
+    RefreshCw,
     Shield,
     ShieldCheck,
     ShieldOff,
-    RefreshCw,
-    AlertTriangle,
-    Globe,
-    Lock,
-    Unlock,
-    ArrowRight,
     Sparkles,
-    Key,
     Trash2,
-    Eye,
-    EyeOff,
+    Unlock,
     Upload,
-    Download,
-    Database,
+    User,
   } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { _, locale } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import * as api from '$lib/api';
   import { getExportUrl } from '$lib/api';
-  import TwoFactorSetup from '$lib/components/TwoFactorSetup.svelte';
-  import TwoFactorDisable from '$lib/components/TwoFactorDisable.svelte';
   import BackupCodesDisplay from '$lib/components/BackupCodesDisplay.svelte';
+  import SecurityKeyManager from '$lib/components/SecurityKeyManager.svelte';
+  import TwoFactorDisable from '$lib/components/TwoFactorDisable.svelte';
+  import TwoFactorSetup from '$lib/components/TwoFactorSetup.svelte';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import WebAuthnDeviceManager from '$lib/components/WebAuthnDeviceManager.svelte';
-  import SecurityKeyManager from '$lib/components/SecurityKeyManager.svelte';
+  import { getDefaultServerUrl,getServerUrl, isTauri, setServerUrl } from '$lib/config';
+  import { e2eEncryption } from '$lib/crypto/e2e';
   import type { WebAuthnCredential } from '$lib/crypto/webauthn';
-  import { _, locale } from 'svelte-i18n';
-  import { isTauri, getServerUrl, setServerUrl, getDefaultServerUrl } from '$lib/config';
-  import * as features from '$lib/stores/features.svelte';
+  import * as auth from '$lib/stores/auth.svelte';
+  import * as autoLock from '$lib/stores/auto-lock.svelte';
+  import * as dialog from '$lib/stores/dialog.svelte';
+  import * as encryption from '$lib/stores/encryption.svelte';
   import * as errorReporter from '$lib/stores/error-reporter.svelte';
+  import * as features from '$lib/stores/features.svelte';
+  import * as settings from '$lib/stores/settings.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+  import { type ThemeId,THEMES } from '$lib/themes';
 
   // Tab state (connection tab only visible in Tauri)
   let activeTab = $state<

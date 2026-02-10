@@ -1,25 +1,26 @@
 <script lang="ts">
+  import { diffLines } from 'diff';
+  import { createFocusTrap, type FocusTrap } from 'focus-trap';
   import {
-    X,
-    History,
-    RotateCcw,
-    Eye,
-    GitCompare,
-    Loader2,
     ChevronLeft,
     ChevronRight,
+    Eye,
+    GitCompare,
+    History,
+    Loader2,
     Lock,
+    RotateCcw,
+    X,
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { createFocusTrap, type FocusTrap } from 'focus-trap';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
-  import * as api from '$lib/api';
-  import { formatRelativeTime } from '$lib/utils/time';
+
   import type { NoteVersion } from '$lib/api';
-  import { diffLines } from 'diff';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as encryption from '$lib/stores/encryption.svelte';
+  import * as api from '$lib/api';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import type { EncryptedPayload } from '$lib/crypto/e2e';
+  import * as encryption from '$lib/stores/encryption.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+  import { formatRelativeTime } from '$lib/utils/time';
 
   interface Props {
     noteId: string;

@@ -4,9 +4,10 @@
  * Registers all IPC handlers for communication between main and renderer processes.
  */
 
-import { ipcMain, BrowserWindow } from 'electron';
-import { storeTokens, loadTokens, deleteTokens } from './secure-storage';
+import { BrowserWindow,ipcMain } from 'electron';
+
 import { kekManager } from './kek-manager';
+import { deleteTokens,loadTokens, storeTokens } from './secure-storage';
 
 // Type for auth tokens
 interface AuthTokens {

@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Search, Info } from 'lucide-svelte';
-  import * as graph from '$lib/stores/graph.svelte';
+  import { Info,Search } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import * as graph from '$lib/stores/graph.svelte';
 
   let searchQuery = $state('');
   let showInfo = $state(false);

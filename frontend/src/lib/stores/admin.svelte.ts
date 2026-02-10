@@ -1,13 +1,13 @@
 // Admin store for managing admin panel state
-import * as api from '$lib/api';
 import type {
-  AdminStats,
-  DetailedStats,
-  AdminUser,
   ActivityLog,
-  SystemSettings,
   ActivityLogsOptions,
+  AdminStats,
+  AdminUser,
+  DetailedStats,
+  SystemSettings,
 } from '$lib/api';
+import * as api from '$lib/api';
 
 interface AdminState {
   stats: AdminStats | null;

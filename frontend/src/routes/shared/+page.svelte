@@ -1,5 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
+
   import SharedWithMeList from '$lib/components/SharedWithMeList.svelte';
 </script>
 

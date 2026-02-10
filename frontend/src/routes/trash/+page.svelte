@@ -1,12 +1,13 @@
 <script lang="ts">
+  import { RotateCcw, Trash,Trash2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import { Trash2, RotateCcw, Trash } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import * as trash from '$lib/stores/trash.svelte';
-  import * as toast from '$lib/stores/toast.svelte';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as tree from '$lib/stores/tree.svelte';
+
   import * as dialog from '$lib/stores/dialog.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
+  import * as trash from '$lib/stores/trash.svelte';
+  import * as tree from '$lib/stores/tree.svelte';
   import { formatRelativeTime } from '$lib/utils/time';
 
   onMount(() => {

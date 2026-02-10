@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { Maximize2, Minimize2, Minus, X } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import { getDesktopBridge, type DesktopBridge } from '$lib/desktop';
+
+  import { type DesktopBridge,getDesktopBridge } from '$lib/desktop';
+
   import Logo from './Logo.svelte';
-  import { Minus, Maximize2, Minimize2, X } from 'lucide-svelte';
 
   let isMaximized = $state(false);
   let bridge: DesktopBridge | null = $state(null);

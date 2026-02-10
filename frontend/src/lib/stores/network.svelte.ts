@@ -1,7 +1,7 @@
 // Network status store for offline detection
 // Using Svelte 5 runes
 
-import { startSync, refreshPendingCount, getPendingCount } from '$lib/offline/sync-manager.svelte';
+import { getPendingCount,refreshPendingCount, startSync } from '$lib/offline/sync-manager.svelte';
 
 let isOnline = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
 let showOfflineBanner = $state(false);

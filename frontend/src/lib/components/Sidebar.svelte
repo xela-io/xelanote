@@ -1,49 +1,50 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as tree from '$lib/stores/tree.svelte';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as auth from '$lib/stores/auth.svelte';
-  import * as trash from '$lib/stores/trash.svelte';
-  import * as features from '$lib/stores/features.svelte';
-  import * as autoLock from '$lib/stores/auto-lock.svelte';
-  import * as dialog from '$lib/stores/dialog.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
   import {
-    FilePlus,
-    FolderPlus,
-    Search,
+    CalendarClock,
     ChevronLeft,
     ChevronRight,
+    FilePlus,
+    FolderPlus,
     LogOut,
-    Trash2,
+    MessageSquareWarning,
     Network,
+    Search,
     Settings,
     Shield,
+    Trash2,
     Users,
-    MessageSquareWarning,
-    CalendarClock,
   } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import { swipe } from '$lib/actions/swipe';
+  import type { DropPosition,TouchDragData } from '$lib/actions/touchdrag';
+  import { touchdrag } from '$lib/actions/touchdrag';
+  import { getConfig } from '$lib/api';
+  import * as auth from '$lib/stores/auth.svelte';
+  import * as autoLock from '$lib/stores/auto-lock.svelte';
+  import * as dialog from '$lib/stores/dialog.svelte';
+  import * as errorReporter from '$lib/stores/error-reporter.svelte';
+  import * as features from '$lib/stores/features.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as settings from '$lib/stores/settings.svelte';
+  import * as sharing from '$lib/stores/sharing.svelte';
+  import * as trash from '$lib/stores/trash.svelte';
+  import * as tree from '$lib/stores/tree.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+  import { validateDrop } from '$lib/utils/tree-drop-validation';
+
+  import ChangelogDialog from './ChangelogDialog.svelte';
+  import CreateFolderDialog from './CreateFolderDialog.svelte';
+  import CreateNoteDialog from './CreateNoteDialog.svelte';
+  import FeedbackDialog from './FeedbackDialog.svelte';
+  import JournalButton from './JournalButton.svelte';
+  import Logo from './Logo.svelte';
+  import RecipeButton from './RecipeButton.svelte';
+  import ThemeSelector from './ThemeSelector.svelte';
   import UnifiedTree from './UnifiedTree.svelte';
   import VirtualizedTree from './VirtualizedTree.svelte';
-  import ThemeSelector from './ThemeSelector.svelte';
-  import CreateNoteDialog from './CreateNoteDialog.svelte';
-  import CreateFolderDialog from './CreateFolderDialog.svelte';
-  import { _ } from 'svelte-i18n';
-  import * as sharing from '$lib/stores/sharing.svelte';
-  import { swipe } from '$lib/actions/swipe';
-  import { touchdrag } from '$lib/actions/touchdrag';
-  import type { TouchDragData, DropPosition } from '$lib/actions/touchdrag';
-  import { validateDrop } from '$lib/utils/tree-drop-validation';
-  import Logo from './Logo.svelte';
-  import JournalButton from './JournalButton.svelte';
-  import RecipeButton from './RecipeButton.svelte';
-  import FeedbackDialog from './FeedbackDialog.svelte';
-  import ChangelogDialog from './ChangelogDialog.svelte';
-  import * as errorReporter from '$lib/stores/error-reporter.svelte';
-
-  import { onMount } from 'svelte';
-  import { getConfig } from '$lib/api';
 
   let appVersion = $state('');
   let isDropZoneActive = $state(false);

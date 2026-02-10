@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as tree from '$lib/stores/tree.svelte';
+
 import type { Folder, Note } from '$lib/api';
+import * as tree from '$lib/stores/tree.svelte';
 
 // Mock API
 vi.mock('$lib/api', () => ({

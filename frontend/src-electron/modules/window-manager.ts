@@ -6,6 +6,7 @@
  */
 
 import { BrowserWindow } from 'electron';
+
 import { setupWindowListeners } from './ipc-handlers';
 
 // Track all open windows

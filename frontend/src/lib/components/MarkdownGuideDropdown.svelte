@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Search, BookOpen } from 'lucide-svelte';
+  import { BookOpen,Search } from 'lucide-svelte';
+
   import * as ui from '$lib/stores/ui.svelte';
 
   interface Props {

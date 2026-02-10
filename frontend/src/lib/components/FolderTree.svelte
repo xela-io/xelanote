@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { ChevronRight, ChevronDown, Folder, FolderOpen } from 'lucide-svelte';
+  import { ChevronDown, ChevronRight, Folder, FolderOpen } from 'lucide-svelte';
+
+  import type { FolderNode } from '$lib/stores/folders.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as notes from '$lib/stores/notes.svelte';
-  import type { FolderNode } from '$lib/stores/folders.svelte';
+
   import FolderTree from './FolderTree.svelte';
 
   const { node, depth = 0 }: { node: FolderNode; depth?: number } = $props();

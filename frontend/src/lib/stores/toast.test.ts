@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import * as toast from '$lib/stores/toast.svelte';
 
 function clearToasts() {

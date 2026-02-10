@@ -1,19 +1,21 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import { onMount, untrack } from 'svelte';
-  import { Loader2, Lock, Menu, Plus, X, Sparkles } from 'lucide-svelte';
+  import { Loader2, Lock, Menu, Plus, Sparkles,X } from 'lucide-svelte';
   import type { Component } from 'svelte';
-  import type { RecipeIngredient, RecipeCollection } from '$lib/api';
-  import * as recipes from '$lib/stores/recipes.svelte';
+  import { onMount, untrack } from 'svelte';
+  import { _ } from 'svelte-i18n';
+
+  import type { RecipeCollection,RecipeIngredient } from '$lib/api';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import RecipeMetadataForm from './RecipeMetadataForm.svelte';
-  import RecipeIngredientEditor from './RecipeIngredientEditor.svelte';
-  import RecipeScaleControl from './RecipeScaleControl.svelte';
-  import RecipePreview from './RecipePreview.svelte';
-  import RecipeImageGallery from './RecipeImageGallery.svelte';
-  import RecipeCollectionDialog from './RecipeCollectionDialog.svelte';
+
   import AddToCollectionDialog from './AddToCollectionDialog.svelte';
+  import RecipeCollectionDialog from './RecipeCollectionDialog.svelte';
+  import RecipeImageGallery from './RecipeImageGallery.svelte';
+  import RecipeIngredientEditor from './RecipeIngredientEditor.svelte';
+  import RecipeMetadataForm from './RecipeMetadataForm.svelte';
+  import RecipePreview from './RecipePreview.svelte';
+  import RecipeScaleControl from './RecipeScaleControl.svelte';
   import RecipeSuggestionDialog from './RecipeSuggestionDialog.svelte';
 
   interface Props {

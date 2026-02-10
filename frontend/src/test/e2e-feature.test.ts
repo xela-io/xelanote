@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('$lib/api', async () => {
@@ -31,10 +31,10 @@ vi.mock('$lib/stores/encryption.svelte', async () => {
 
 // Import stores after mocking
 import * as api from '$lib/api';
+import { fromBase64Standard } from '$lib/crypto/sodium';
 import * as auth from '$lib/stores/auth.svelte';
 import * as encryption from '$lib/stores/encryption.svelte';
 import * as notes from '$lib/stores/notes.svelte';
-import { fromBase64Standard } from '$lib/crypto/sodium';
 
 const FAKE_USER: auth.User = { id: 1, username: 'test', email: 'test@test.com', is_admin: false };
 const FAKE_ACCESS_TOKEN = 'fake_access_token';

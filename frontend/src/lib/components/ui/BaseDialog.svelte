@@ -22,8 +22,8 @@
 <script lang="ts">
   import { createFocusTrap, type FocusTrap } from 'focus-trap';
   import { X } from 'lucide-svelte';
-  import { _ } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
+  import { _ } from 'svelte-i18n';
 
   interface Props {
     open: boolean;

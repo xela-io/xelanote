@@ -1,6 +1,6 @@
 // Focus Mode extensions for CodeMirror
-import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { Compartment } from '@codemirror/state';
+import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 // Compartments for dynamic reconfiguration
 export const typewriterCompartment = new Compartment();

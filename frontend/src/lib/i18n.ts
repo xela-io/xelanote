@@ -1,5 +1,7 @@
-import { browser } from '$app/environment';
 import { init, register } from 'svelte-i18n';
+
+import { browser } from '$app/environment';
+
 import de from './locales/de.json';
 import en from './locales/en.json';
 

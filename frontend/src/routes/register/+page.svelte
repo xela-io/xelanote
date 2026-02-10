@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
-  import * as auth from '$lib/stores/auth.svelte';
-  import { getConfig, type AppConfig } from '$lib/api';
-  import { isDesktop, getServerUrl } from '$lib/config';
-  import CaptchaIframe from '$lib/components/CaptchaIframe.svelte';
   import { Lock } from 'lucide-svelte';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import { type AppConfig,getConfig } from '$lib/api';
+  import CaptchaIframe from '$lib/components/CaptchaIframe.svelte';
   import Logo from '$lib/components/Logo.svelte';
+  import { getServerUrl,isDesktop } from '$lib/config';
+  import * as auth from '$lib/stores/auth.svelte';
 
   let username = $state('');
   let email = $state('');

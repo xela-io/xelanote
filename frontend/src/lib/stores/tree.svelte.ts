@@ -2,8 +2,9 @@
 // Using Svelte 5 runes
 
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import * as api from '$lib/api';
+
 import type { Folder, Note } from '$lib/api';
+import * as api from '$lib/api';
 
 // Tree Node Types
 export type TreeNode = FolderTreeNode | NoteTreeNode;

@@ -2,30 +2,31 @@
 // Replays queued offline operations when connectivity returns.
 // Uses Svelte 5 runes for reactive state.
 
+import type { Note, NotePayload } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
-import type { Note, NotePayload } from '$lib/api';
-import type {
-  OfflineOperation,
-  OfflineUpdatePayload,
-  OfflineCreatePayload,
-  ConflictData,
-  SyncProgress,
-  TempIdMapping,
-} from './types';
-import {
-  getPendingOperations,
-  dequeueOperation,
-  updateOperationStatus,
-  optimizeQueue,
-  getQueueCount,
-  addTempIdMapping,
-  clearTempIdMappings,
-} from './offline-queue';
+import type { EncryptedPayload } from '$lib/crypto/e2e';
 import * as encryption from '$lib/stores/encryption.svelte';
 import * as notes from '$lib/stores/notes.svelte';
 import * as toast from '$lib/stores/toast.svelte';
-import type { EncryptedPayload } from '$lib/crypto/e2e';
+
+import {
+  addTempIdMapping,
+  clearTempIdMappings,
+  dequeueOperation,
+  getPendingOperations,
+  getQueueCount,
+  optimizeQueue,
+  updateOperationStatus,
+} from './offline-queue';
+import type {
+  ConflictData,
+  OfflineCreatePayload,
+  OfflineOperation,
+  OfflineUpdatePayload,
+  SyncProgress,
+  TempIdMapping,
+} from './types';
 
 // --- Reactive State (Svelte 5 runes) ---
 

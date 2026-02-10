@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import { onMount } from 'svelte';
   import { Flame, Loader2 } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
+
   import * as journal from '$lib/stores/journal.svelte';
 
   const yearCalendarLoading = $derived(journal.getYearCalendarLoading());

@@ -1,12 +1,14 @@
 <script lang="ts">
+  import { ChevronDown, ChevronUp,Lock, RefreshCw, Sparkles } from 'lucide-svelte';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { RefreshCw, Sparkles, Lock, ChevronDown, ChevronUp } from 'lucide-svelte';
-  import * as api from '$lib/api';
+
   import type { Note } from '$lib/api';
-  import Button from './Button.svelte';
+  import * as api from '$lib/api';
   import { isEncryptionUnlocked } from '$lib/stores/encryption.svelte';
   import * as toast from '$lib/stores/toast.svelte';
+
+  import Button from './Button.svelte';
 
   interface Props {
     note: Note;

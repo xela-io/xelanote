@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import { goto } from '$app/navigation';
+  import { ChefHat, Clock, Loader2, Lock, Plus, Sparkles } from 'lucide-svelte';
+  import { ArrowLeft, Edit, Eye, Pencil, Trash2, Users,Users as UsersIcon } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import { Loader2, Plus, Clock, ChefHat, Lock, Sparkles } from 'lucide-svelte';
-  import * as recipes from '$lib/stores/recipes.svelte';
-  import * as features from '$lib/stores/features.svelte';
-  import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
-  import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
-  import ShareDialog from '$lib/components/ShareDialog.svelte';
-  import RecipeSuggestionDialog from '$lib/components/RecipeSuggestionDialog.svelte';
+  import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
   import type { RecipeCollection } from '$lib/api';
-  import { Eye, Edit, Users as UsersIcon, ArrowLeft, Pencil, Trash2, Users } from 'lucide-svelte';
+  import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
+  import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
+  import RecipeSuggestionDialog from '$lib/components/RecipeSuggestionDialog.svelte';
+  import ShareDialog from '$lib/components/ShareDialog.svelte';
+  import * as features from '$lib/stores/features.svelte';
+  import * as recipes from '$lib/stores/recipes.svelte';
 
   let showCreateDialog = $state(false);
   let newTitle = $state('');

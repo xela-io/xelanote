@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/auth.fixture';
+import { expect,test } from '../fixtures/auth.fixture';
 
 test.describe('Code Splitting', () => {
   test('Login page should NOT load CodeMirror', async ({ page, baseURL }) => {

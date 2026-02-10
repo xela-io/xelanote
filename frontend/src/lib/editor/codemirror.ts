@@ -1,33 +1,35 @@
 // CodeMirror 6 setup for xelanote
 
-import { EditorState, Compartment, Prec, type Extension } from '@codemirror/state';
+import { bracketMatching, HighlightStyle } from '@codemirror/language';
+import { Compartment, EditorState, type Extension,Prec } from '@codemirror/state';
 import {
+  drawSelection,
   EditorView,
+  highlightActiveLine,
   keymap,
   lineNumbers,
-  highlightActiveLine,
-  drawSelection,
 } from '@codemirror/view';
-import { bracketMatching, HighlightStyle } from '@codemirror/language';
-import { tags } from '@lezer/highlight';
 import { Decoration, type DecorationSet, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { tags } from '@lezer/highlight';
+
 import { FEATURE_FLAGS } from '$lib/config';
-import { isValidDueDate } from './markdown';
+
+import { createFindReplaceExtension } from './find-replace';
 import {
-  typewriterCompartment,
   dimLinesCompartment,
   emptyExtension,
-  setTypewriterMode,
   setDimInactiveLines,
+  setTypewriterMode,
+  typewriterCompartment,
 } from './focus-mode-extensions';
+import { isValidDueDate } from './markdown';
 import {
-  spellCheckCompartment,
   createSpellCheckExtension,
-  toggleSpellCheck as toggleSpellCheckInternal,
-  setSpellLanguage as setSpellLanguageInternal,
   getSpellCheckState,
+  setSpellLanguage as setSpellLanguageInternal,
+  spellCheckCompartment,
+  toggleSpellCheck as toggleSpellCheckInternal,
 } from './spell-check';
-import { createFindReplaceExtension } from './find-replace';
 
 // Wikilink decoration
 const wikilinkMatcher = /\[\[([^\]|]+)(\|[^\]]+)?\]\]/g;
@@ -556,7 +558,7 @@ export function updateEditorContent(view: EditorView, content: string) {
 }
 
 // Re-export focus mode functions
-export { setTypewriterMode, setDimInactiveLines };
+export { setDimInactiveLines,setTypewriterMode };
 
 // Combined function to update all focus mode settings
 export function updateFocusMode(

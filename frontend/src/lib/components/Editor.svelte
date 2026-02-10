@@ -1,80 +1,81 @@
 <script lang="ts">
+  import type { EditorView } from '@codemirror/view';
+  import {
+    AlertCircle,
+    Check,
+    Columns,
+    Edit,
+    Eye,
+    History,
+    ImagePlus,
+    Link,
+    ListTodo,
+    Loader2,
+    Lock,
+    Maximize2,
+    Menu,
+    Minimize2,
+    MoreVertical,
+    RefreshCw,
+    Save,
+    Wand2,
+    WifiOff,
+  } from 'lucide-svelte';
   import type { Component } from 'svelte';
-  import { goto } from '$app/navigation';
   import { tick } from 'svelte';
+  import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import type { AIAction,Tag } from '$lib/api';
+  import * as api from '$lib/api';
+  import { ApiError } from '$lib/api';
+  import { DeleteCommand } from '$lib/commands/DeleteCommand';
+  import { FEATURE_FLAGS } from '$lib/config';
   import {
     createEditor,
-    updateEditorContent,
-    updateFocusMode,
+    type EditorConfig,
     insertWikiLink,
     insertWikiLinkInContent,
-    type EditorConfig,
+    updateEditorContent,
+    updateFocusMode,
   } from '$lib/editor/codemirror';
-  import { SvelteMap } from 'svelte/reactivity';
-  import { renderMarkdown, extractHeadings } from '$lib/editor/markdown';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as folders from '$lib/stores/folders.svelte';
-  import * as ui from '$lib/stores/ui.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
+  import { clearSearch,sanitizeSearchQuery } from '$lib/editor/find-replace';
+  import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
+  import { extractHeadings,renderMarkdown } from '$lib/editor/markdown';
+  import { highlightSearchTerms } from '$lib/editor/preview-highlight';
+  import { taskCollapse } from '$lib/editor/task-collapse';
+  import { taskSortable } from '$lib/editor/task-sortable';
+  import { getIsSyncing, getPendingCount,getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
+  import * as dialog from '$lib/stores/dialog.svelte';
+  import * as encryption from '$lib/stores/encryption.svelte';
+  import * as focusMode from '$lib/stores/focus-mode.svelte';
+  import * as folders from '$lib/stores/folders.svelte';
+  import * as history from '$lib/stores/history.svelte';
+  import * as network from '$lib/stores/network.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as settings from '$lib/stores/settings.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
-  import * as history from '$lib/stores/history.svelte';
-  import * as dialog from '$lib/stores/dialog.svelte';
-  import * as focusMode from '$lib/stores/focus-mode.svelte';
-  import { DeleteCommand } from '$lib/commands/DeleteCommand';
-  import * as api from '$lib/api';
-  import { ApiError } from '$lib/api';
-  import {
-    Edit,
-    Eye,
-    Columns,
-    Save,
-    Link,
-    ImagePlus,
-    Check,
-    AlertCircle,
-    Loader2,
-    History,
-    ListTodo,
-    MoreVertical,
-    Maximize2,
-    Minimize2,
-    Wand2,
-    Menu,
-    WifiOff,
-    RefreshCw,
-    Lock,
-  } from 'lucide-svelte';
-  import * as network from '$lib/stores/network.svelte';
-  import { getIsSyncing, getSyncProgress, getPendingCount } from '$lib/offline/sync-manager.svelte';
-  import * as encryption from '$lib/stores/encryption.svelte';
-  import type { EditorView } from '@codemirror/view';
-  import { FEATURE_FLAGS } from '$lib/config';
-  import ColorPickerPopover from './ColorPickerPopover.svelte';
-  import EditorMoreMenu from './EditorMoreMenu.svelte';
-  import ShareDialog from './ShareDialog.svelte';
-  import TagEditor from './TagEditor.svelte';
-  import TagSuggestionsPanel from './TagSuggestionsPanel.svelte';
-  import LinkSuggestionsPanel from './LinkSuggestionsPanel.svelte';
-  import SpellCheckToggle from './SpellCheckToggle.svelte';
-  import FindReplaceBar from './FindReplaceBar.svelte';
-  import { sanitizeSearchQuery, clearSearch } from '$lib/editor/find-replace';
-  import { highlightSearchTerms } from '$lib/editor/preview-highlight';
+  import * as ui from '$lib/stores/ui.svelte';
+  import { calculateMoveChanges } from '$lib/utils/task-reorder';
+
   import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
-  import type { Tag, AIAction } from '$lib/api';
   import Breadcrumb from './Breadcrumb.svelte';
-  import TableOfContents from './TableOfContents.svelte';
+  import ColorPickerPopover from './ColorPickerPopover.svelte';
+  import EditorMoreMenu from './EditorMoreMenu.svelte';
+  import FindReplaceBar from './FindReplaceBar.svelte';
+  import LinkSuggestionsPanel from './LinkSuggestionsPanel.svelte';
+  import ShareDialog from './ShareDialog.svelte';
+  import SpellCheckToggle from './SpellCheckToggle.svelte';
   import SummaryPanel from './SummaryPanel.svelte';
-
-  import { page } from '$app/stores';
-  import { taskCollapse } from '$lib/editor/task-collapse';
-  import { taskSortable } from '$lib/editor/task-sortable';
-  import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
-  import { calculateMoveChanges } from '$lib/utils/task-reorder';
+  import TableOfContents from './TableOfContents.svelte';
+  import TagEditor from './TagEditor.svelte';
+  import TagSuggestionsPanel from './TagSuggestionsPanel.svelte';
 
   interface Props {
     noteId: string;

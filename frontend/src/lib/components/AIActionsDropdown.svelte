@@ -1,16 +1,17 @@
 <script lang="ts">
   import {
-    Wand2,
-    FileText,
-    Expand,
-    Languages,
+    ArrowLeft,
     Briefcase,
     Coffee,
+    Expand,
+    FileText,
+    Languages,
     Pencil,
-    ArrowLeft,
     Send,
+    Wand2,
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
   import type { AIAction } from '$lib/api';
 
   interface Props {

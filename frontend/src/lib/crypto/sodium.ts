@@ -1,4 +1,5 @@
 import { argon2id } from '@noble/hashes/argon2.js';
+
 import { browser } from '$app/environment';
 
 let initialized = false;

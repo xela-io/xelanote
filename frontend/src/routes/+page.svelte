@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as folders from '$lib/stores/folders.svelte';
-  import { FilePlus, Search, PenLine, FileText } from 'lucide-svelte';
-  import * as ui from '$lib/stores/ui.svelte';
+  import { FilePlus, FileText,PenLine, Search } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { formatRelativeTime } from '$lib/utils/time';
+
+  import { goto } from '$app/navigation';
   import CreateNoteDialog from '$lib/components/CreateNoteDialog.svelte';
+  import * as folders from '$lib/stores/folders.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+  import { formatRelativeTime } from '$lib/utils/time';
 
   let showCreateNoteDialog = $state(false);
 

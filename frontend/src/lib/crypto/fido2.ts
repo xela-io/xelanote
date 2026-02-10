@@ -6,11 +6,11 @@
  */
 
 import {
-  beginFIDO2Registration,
-  finishFIDO2Registration,
-  beginFIDO2Auth,
-  finishFIDO2Auth,
   type AuthResponse,
+  beginFIDO2Auth,
+  beginFIDO2Registration,
+  finishFIDO2Auth,
+  finishFIDO2Registration,
 } from '$lib/api';
 
 // Server sends WebAuthn options as JSON with base64url strings instead of ArrayBuffers.

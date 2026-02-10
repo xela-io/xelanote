@@ -1,22 +1,23 @@
 <script lang="ts">
+  import { diffLines } from 'diff';
+  import { createFocusTrap, type FocusTrap } from 'focus-trap';
   import {
-    X,
-    Wand2,
-    Loader2,
-    Check,
     AlertTriangle,
-    FileText,
-    Expand,
-    Languages,
     Briefcase,
+    Check,
     Coffee,
+    Expand,
+    FileText,
+    Languages,
+    Loader2,
     Pencil,
+    Wand2,
+    X,
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import { createFocusTrap, type FocusTrap } from 'focus-trap';
-  import * as api from '$lib/api';
+
   import type { AIAction } from '$lib/api';
-  import { diffLines } from 'diff';
+  import * as api from '$lib/api';
   import * as ui from '$lib/stores/ui.svelte';
 
   interface Props {

@@ -1,12 +1,13 @@
 // Client-side fulltext search index for encrypted notes
 // Uses MiniSearch for in-memory indexing of decrypted content
 
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import MiniSearch from 'minisearch';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+
 import type { SearchResult } from '$lib/api';
 import { getAllEncryptedNotes } from '$lib/api';
-import * as encryption from '$lib/stores/encryption.svelte';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import * as encryption from '$lib/stores/encryption.svelte';
 
 const MAX_CONTENT_LENGTH = 50_000; // 50 KB per note
 

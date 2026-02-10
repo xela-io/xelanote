@@ -1,8 +1,8 @@
 // Feature detection store using Svelte 5 runes
 // Detects which optional features are enabled on the backend
 
-import { getApiBaseUrl } from '$lib/config';
 import { getFeature, setFeature } from '$lib/api';
+import { getApiBaseUrl } from '$lib/config';
 
 // === Graph Feature (Backend Detection) ===
 let graphFeatureEnabled = $state(false);

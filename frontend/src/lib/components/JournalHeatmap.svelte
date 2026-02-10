@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
+  import { ChevronLeft, ChevronRight, Flame,Loader2 } from 'lucide-svelte';
   import { SvelteDate } from 'svelte/reactivity';
-  import { Loader2, ChevronLeft, ChevronRight, Flame } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
   import * as journal from '$lib/stores/journal.svelte';
 
   const yearCalendarYear = $derived(journal.getYearCalendarYear());

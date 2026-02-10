@@ -2,6 +2,7 @@
 // Handles automatic error capture and manual feedback submission
 
 import { SvelteSet } from 'svelte/reactivity';
+
 import { getApiBaseUrl } from '$lib/config';
 
 // === State ===

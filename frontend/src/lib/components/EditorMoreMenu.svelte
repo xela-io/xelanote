@@ -1,21 +1,22 @@
 <script lang="ts">
   import {
-    Trash2,
+    Download,
     FolderInput,
-    Palette,
     HelpCircle,
-    Save,
-    Sparkles,
     Indent,
-    Outdent,
-    Share2,
     Lock,
     LockOpen,
-    Download,
+    Outdent,
+    Palette,
+    Save,
+    Share2,
+    Sparkles,
+    Trash2,
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
-  import * as autosave from '$lib/stores/autosave.svelte';
+
   import { FEATURE_FLAGS } from '$lib/config';
+  import * as autosave from '$lib/stores/autosave.svelte';
 
   interface Props {
     onDelete: () => void;

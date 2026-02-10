@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import { X, ChevronUp, ChevronDown, CaseSensitive, Replace } from 'lucide-svelte';
   import type { EditorView } from '@codemirror/view';
+  import { CaseSensitive, ChevronDown, ChevronUp, Replace,X } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
   import {
-    performSearch,
+    clearSearch,
+    getMatchCount,
     goToNextMatch,
     goToPreviousMatch,
     performReplace,
     performReplaceAll,
-    clearSearch,
-    getMatchCount,
+    performSearch,
   } from '$lib/editor/find-replace';
 
   interface Props {

@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
-  import { SvelteMap } from 'svelte/reactivity';
   import { Plus } from 'lucide-svelte';
+  import { SvelteMap } from 'svelte/reactivity';
+  import { _ } from 'svelte-i18n';
+
   import type { RecipeIngredient, ScaledIngredient } from '$lib/api';
+
   import RecipeIngredientRow from './RecipeIngredientRow.svelte';
 
   interface Props {

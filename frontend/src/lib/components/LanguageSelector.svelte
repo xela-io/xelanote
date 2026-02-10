@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { locale } from 'svelte-i18n';
   import { Globe } from 'lucide-svelte';
+  import { locale } from 'svelte-i18n';
 
   function handleChange(e: Event) {
     const newLocale = (e.target as HTMLSelectElement).value;

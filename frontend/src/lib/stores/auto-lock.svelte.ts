@@ -12,6 +12,7 @@
  */
 
 import { SvelteDate } from 'svelte/reactivity';
+
 import * as encryption from './encryption.svelte';
 import * as notes from './notes.svelte';
 import { warning } from './toast.svelte';

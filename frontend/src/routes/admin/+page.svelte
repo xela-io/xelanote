@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _, locale } from 'svelte-i18n';
+
+  import type { ActivityLogsOptions,AdminUser, SystemSettings } from '$lib/api';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import * as admin from '$lib/stores/admin.svelte';
   import * as auth from '$lib/stores/auth.svelte';
   import * as toast from '$lib/stores/toast.svelte';
-  import type { AdminUser, SystemSettings, ActivityLogsOptions } from '$lib/api';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
-  import { _, locale } from 'svelte-i18n';
 
   // i18n prefix
   const a = 'page.admin';

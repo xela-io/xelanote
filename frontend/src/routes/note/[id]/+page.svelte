@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { goto, beforeNavigate } from '$app/navigation';
+  import { AlertCircle,Loader2 } from 'lucide-svelte';
   import type { Component } from 'svelte';
-  import { Loader2, AlertCircle } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import { beforeNavigate,goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { deleteNote, permanentlyDeleteNote } from '$lib/api';
+  import * as journal from '$lib/stores/journal.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as tree from '$lib/stores/tree.svelte';
-  import * as journal from '$lib/stores/journal.svelte';
-  import { deleteNote, permanentlyDeleteNote } from '$lib/api';
 
   // Get note ID from URL params
   // $page.params.id ist immer definiert bei [id] route, aber TypeScript kennt das nicht

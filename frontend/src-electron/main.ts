@@ -5,9 +5,10 @@
  * Handles window creation, IPC, and security.
  */
 
-import { app, BrowserWindow, session, protocol, net } from 'electron';
+import { app, BrowserWindow, net,protocol, session } from 'electron';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
+
 import { registerIpcHandlers } from './modules/ipc-handlers';
 import { createMainWindow } from './windows/main-window';
 

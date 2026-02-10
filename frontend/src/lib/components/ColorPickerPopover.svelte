@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Palette, Hash, X } from 'lucide-svelte';
+  import { Hash, Palette, X } from 'lucide-svelte';
+
   import { sanitizeColor } from '$lib/editor/markdown';
 
   interface Props {

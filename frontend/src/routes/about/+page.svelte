@@ -1,25 +1,26 @@
 <script lang="ts">
   import {
     ArrowRight,
+    Code,
+    FolderTree,
+    Globe,
+    History,
+    Key,
     Link,
-    Search,
-    Type,
     Link2,
     Lock,
-    Key,
-    Code,
-    Network,
-    History,
-    WifiOff,
-    Sparkles,
-    FolderTree,
-    ShieldCheck,
-    Server,
     Monitor,
+    Network,
     Palette,
-    Globe,
+    Search,
+    Server,
+    ShieldCheck,
+    Sparkles,
+    Type,
+    WifiOff,
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
   import LanguageSelector from '$lib/components/LanguageSelector.svelte';
   import Logo from '$lib/components/Logo.svelte';
 </script>

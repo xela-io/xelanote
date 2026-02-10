@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
+  import { ArrowLeft, Edit, Eye, Loader2 } from 'lucide-svelte';
+  import { onDestroy,onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { ArrowLeft, Eye, Edit, Loader2 } from 'lucide-svelte';
+
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import * as sharing from '$lib/stores/sharing.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import { onMount, onDestroy } from 'svelte';
 
   const folderId = $derived(Number($page.params.id));
 

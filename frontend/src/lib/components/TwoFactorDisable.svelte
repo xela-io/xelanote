@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Loader2, AlertTriangle } from 'lucide-svelte';
+  import { AlertTriangle,Loader2 } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
+
   import * as api from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
-  import { _ } from 'svelte-i18n';
 
   interface Props {
     onClose: () => void;

@@ -1,5 +1,6 @@
-import type { Command, CommandData, DeleteCommandData } from './types';
 import * as api from '$lib/api';
+
+import type { Command, CommandData, DeleteCommandData } from './types';
 
 /**
  * DeleteCommand - Soft-deletes a note and stores a snapshot for undo.

@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { ArrowLeft, KeyRound,Lock, Shield } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import * as auth from '$lib/stores/auth.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
-  import * as notes from '$lib/stores/notes.svelte';
-  import * as websocket from '$lib/stores/websocket.svelte';
-  import { getConfig, type AppConfig } from '$lib/api';
-  import { isDesktop, getServerUrl } from '$lib/config';
-  import CaptchaIframe from '$lib/components/CaptchaIframe.svelte';
-  import { ArrowLeft, Shield, Lock, KeyRound } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
+
+  import { goto } from '$app/navigation';
+  import { type AppConfig,getConfig } from '$lib/api';
+  import CaptchaIframe from '$lib/components/CaptchaIframe.svelte';
   import Logo from '$lib/components/Logo.svelte';
-  import { isFIDO2Supported, authenticateWithSecurityKey } from '$lib/crypto/fido2';
+  import { getServerUrl,isDesktop } from '$lib/config';
+  import { authenticateWithSecurityKey,isFIDO2Supported } from '$lib/crypto/fido2';
+  import * as auth from '$lib/stores/auth.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
+  import * as settings from '$lib/stores/settings.svelte';
+  import * as websocket from '$lib/stores/websocket.svelte';
 
   let usernameOrEmail = $state('');
   let password = $state('');

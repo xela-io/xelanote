@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Menu } from 'lucide-svelte';
+
   import * as ui from '$lib/stores/ui.svelte';
+
   import Logo from './Logo.svelte';
 </script>
 

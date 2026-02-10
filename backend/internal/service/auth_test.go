@@ -258,3 +258,60 @@ func TestSEC_H01_DummyBcryptHashIsValid(t *testing.T) {
 	// so we test it here
 	t.Logf("Dummy bcrypt hash: %s", dummyBcryptHash)
 }
+
+func TestAuthService_RefreshAccessToken_Rotation(t *testing.T) {
+	testDB, authService := setupAuthServiceTest(t)
+	defer testDB.Close()
+
+	user, err := authService.Register(context.Background(), "refreshuser", "refresh@example.com", "password123")
+	if err != nil {
+		t.Fatalf("Failed to register test user: %v", err)
+	}
+
+	accessToken, refreshToken, err := authService.IssueTokens(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("Failed to issue tokens: %v", err)
+	}
+	if accessToken == "" || refreshToken == "" {
+		t.Fatalf("Expected non-empty tokens")
+	}
+
+	newAccessToken, newRefreshToken, err := authService.RefreshAccessToken(context.Background(), refreshToken)
+	if err != nil {
+		t.Fatalf("RefreshAccessToken failed: %v", err)
+	}
+	if newAccessToken == "" || newRefreshToken == "" {
+		t.Fatalf("Expected new tokens")
+	}
+	if newRefreshToken == refreshToken {
+		t.Fatalf("Expected refresh token rotation")
+	}
+
+	// Old refresh token should be invalidated
+	if _, _, err := authService.RefreshAccessToken(context.Background(), refreshToken); err == nil {
+		t.Fatalf("Expected old refresh token to be invalid")
+	}
+}
+
+func TestAuthService_Logout_RevokesRefreshToken(t *testing.T) {
+	testDB, authService := setupAuthServiceTest(t)
+	defer testDB.Close()
+
+	user, err := authService.Register(context.Background(), "logoutuser", "logout@example.com", "password123")
+	if err != nil {
+		t.Fatalf("Failed to register test user: %v", err)
+	}
+
+	_, refreshToken, err := authService.IssueTokens(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("Failed to issue tokens: %v", err)
+	}
+
+	if err := authService.Logout(context.Background(), refreshToken); err != nil {
+		t.Fatalf("Logout failed: %v", err)
+	}
+
+	if _, _, err := authService.RefreshAccessToken(context.Background(), refreshToken); err == nil {
+		t.Fatalf("Expected refresh token to be invalid after logout")
+	}
+}

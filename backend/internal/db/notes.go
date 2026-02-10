@@ -125,8 +125,16 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 		return nil, fmt.Errorf("failed to get note: %w", err)
 	}
 
-	note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+	}
+	parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+	}
+	note.CreatedAt = parsedCreatedAt
+	note.UpdatedAt = parsedUpdatedAt
 
 	// Handle nullable fields
 	if content.Valid {
@@ -156,8 +164,11 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 		note.ContentHash = &contentHash.String
 	}
 	if summaryGeneratedAt.Valid {
-		t, _ := time.Parse(time.RFC3339, summaryGeneratedAt.String)
-		note.SummaryGeneratedAt = &t
+		parsedSummaryAt, err := parseRFC3339Timestamp(summaryGeneratedAt.String)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse summary_generated_at for note %s: %w", note.ID, err)
+		}
+		note.SummaryGeneratedAt = &parsedSummaryAt
 	}
 	// Journal fields
 	if noteType.Valid {
@@ -196,8 +207,16 @@ func (db *DB) GetNoteByTitle(userID int, title string) (*Note, error) {
 		return nil, fmt.Errorf("failed to get note by title: %w", err)
 	}
 
-	note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+	}
+	parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+	}
+	note.CreatedAt = parsedCreatedAt
+	note.UpdatedAt = parsedUpdatedAt
 
 	return &note, nil
 }
@@ -224,8 +243,16 @@ func (db *DB) GetNoteByTitleInFolder(userID int, title, folderPath string) (*Not
 		return nil, fmt.Errorf("failed to get note by title in folder: %w", err)
 	}
 
-	note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+	}
+	parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+	}
+	note.CreatedAt = parsedCreatedAt
+	note.UpdatedAt = parsedUpdatedAt
 
 	return &note, nil
 }
@@ -252,8 +279,16 @@ func (db *DB) GetNotesByTitle(userID int, title string) ([]Note, error) {
 		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &note.Color, &createdAt, &updatedAt); err != nil {
 			return nil, err
 		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 		notes = append(notes, note)
 	}
 
@@ -394,8 +429,16 @@ func (db *DB) ListNotes(userID int, limit int, cursor string) ([]Note, string, e
 		); err != nil {
 			return nil, "", fmt.Errorf("failed to scan note: %w", err)
 		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 		note.Content = content.String
 		note.EncryptedContent = encryptedContent
 		if encryptedTitle.Valid {
@@ -528,8 +571,16 @@ func (db *DB) ListNotesByFolder(userID int, folderPath string) ([]Note, error) {
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan note: %w", err)
 		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 		note.Content = content.String
 		note.EncryptedContent = encryptedContent
 		if encryptedTitle.Valid {
@@ -697,8 +748,16 @@ func (db *DB) GetNotesByIDs(userID int, ids []string) (map[string]*Note, error) 
 		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &createdAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan note: %w", err)
 		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 		notes[note.ID] = &note
 	}
 
@@ -763,11 +822,22 @@ func (db *DB) ListDeletedNotes(userID int, limit int, cursor string) ([]Note, st
 		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &note.Color, &createdAt, &updatedAt, &deletedAt); err != nil {
 			return nil, "", fmt.Errorf("failed to scan note: %w", err)
 		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 		if deletedAt.Valid && deletedAt.String != "" {
-			t, _ := time.Parse(time.RFC3339, deletedAt.String)
-			note.DeletedAt = &t
+			parsedDeletedAt, err := parseRFC3339Timestamp(deletedAt.String)
+			if err != nil {
+				return nil, "", fmt.Errorf("failed to parse deleted_at for note %s: %w", note.ID, err)
+			}
+			note.DeletedAt = &parsedDeletedAt
 		}
 		notes = append(notes, note)
 	}
@@ -1149,8 +1219,16 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 			return nil, fmt.Errorf("failed to scan encrypted note: %w", err)
 		}
 
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 
 		// Handle nullable fields
 		if content.Valid {

@@ -70,10 +70,7 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 - Frontend: `frontend/src/lib/api.ts`, `frontend/src/lib/components/Editor.svelte`, `frontend/src/lib/components/Sidebar.svelte`, `frontend/src/routes/settings/+page.svelte`, `frontend/src/lib/stores/notes.svelte.ts`
 
 **W-2: Fehlerbehandlung wird in produktivem Code teilweise ignoriert**
-- `backend/internal/api/notes.go` (Base64-Decode ohne Fehlercheck)
-- `backend/internal/api/journal.go` (Query-Parameter `year`/`month` ohne Parse-Error-Handling)
 - `backend/internal/api/admin.go` (User-Detail-Errors ignoriert)
-- `backend/internal/llm/claude.go`, `backend/internal/llm/gemini.go` (`io.ReadAll` Fehler ignoriert)
 - `backend/internal/service/notes.go` (Snapshot-Errors ignoriert)
 - `backend/internal/db/*.go` (`LastInsertId`/`RowsAffected` Errors ignoriert)
 
@@ -146,11 +143,14 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 
 - **Type-Safety: WebSocket Payloads ohne `any`**
   - `frontend/src/lib/stores/websocket.svelte.ts` mit `unknown` + Helper-Typen.
+- **Backend: Fehlerbehandlung & Validierung gehaertet**
+  - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
+  - `backend/internal/api/notes.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
+  - `backend/internal/db/notes.go`, `backend/internal/db/journal.go` pruefen RFC3339-Timestamps strikt (Parse-Errors werden retourniert).
+  - `backend/internal/api/import.go` validiert File-Anzahl, leere Inhalte, Notiz-/Folder-Felder und begrenzt Error-Listen.
 
 ### Offen
 - Weitere `any`/unsaubere Casts (z.B. `history.svelte.ts` JSON parse, andere Stores).
-- Backend: Fehlerbehandlung in `api/notes.go`, `api/journal.go`, `llm/*.go`, `db/*.go`.
-- Security/Validation-Pruefung fuer Admin-/Import-Endpoints (nur statisch geprueft).
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 

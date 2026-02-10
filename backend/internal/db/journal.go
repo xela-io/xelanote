@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -37,8 +38,16 @@ func (db *DB) GetJournalByDate(userID int, date string) (*Note, error) {
 		return nil, err
 	}
 
-	note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse created_at for journal note %s: %w", note.ID, err)
+	}
+	parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse updated_at for journal note %s: %w", note.ID, err)
+	}
+	note.CreatedAt = parsedCreatedAt
+	note.UpdatedAt = parsedUpdatedAt
 	if journalDate.Valid {
 		note.JournalDate = &journalDate.String
 	}
@@ -110,8 +119,16 @@ func (db *DB) ListJournalEntries(userID int) ([]Note, error) {
 			return nil, err
 		}
 
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse created_at for journal note %s: %w", note.ID, err)
+		}
+		parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse updated_at for journal note %s: %w", note.ID, err)
+		}
+		note.CreatedAt = parsedCreatedAt
+		note.UpdatedAt = parsedUpdatedAt
 		if journalDate.Valid {
 			note.JournalDate = &journalDate.String
 		}

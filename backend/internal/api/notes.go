@@ -395,11 +395,15 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast creation to WebSocket clients
-	payload, _ := json.Marshal(note)
-	s.wsManager.BroadcastToUser(userID, websocket.Message{
-		Type:    "note.created",
-		Payload: payload,
-	})
+	payload, err := json.Marshal(note)
+	if err != nil {
+		s.logger().Error("failed to encode note.created payload", "err", err, "note_id", note.ID)
+	} else {
+		s.wsManager.BroadcastToUser(userID, websocket.Message{
+			Type:    "note.created",
+			Payload: payload,
+		})
+	}
 
 	w.Header().Set("ETag", generateETag(note.ID, note.Version))
 	respondJSON(w, http.StatusCreated, note)
@@ -593,11 +597,15 @@ func (s *Server) deleteNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast deletion to WebSocket clients
-	payload, _ := json.Marshal(map[string]string{"id": id})
-	s.wsManager.BroadcastToUser(userID, websocket.Message{
-		Type:    "note.deleted",
-		Payload: payload,
-	})
+	payload, err := json.Marshal(map[string]string{"id": id})
+	if err != nil {
+		s.logger().Error("failed to encode note.deleted payload", "err", err, "note_id", id)
+	} else {
+		s.wsManager.BroadcastToUser(userID, websocket.Message{
+			Type:    "note.deleted",
+			Payload: payload,
+		})
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -669,11 +677,15 @@ func (s *Server) decryptNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast update to WebSocket clients
-	payload, _ := json.Marshal(note)
-	s.wsManager.BroadcastToUser(userID, websocket.Message{
-		Type:    "note.updated",
-		Payload: payload,
-	})
+	payload, err := json.Marshal(note)
+	if err != nil {
+		s.logger().Error("failed to encode note.updated payload", "err", err, "note_id", note.ID)
+	} else {
+		s.wsManager.BroadcastToUser(userID, websocket.Message{
+			Type:    "note.updated",
+			Payload: payload,
+		})
+	}
 
 	w.Header().Set("ETag", generateETag(note.ID, note.Version))
 	respondJSON(w, http.StatusOK, note)

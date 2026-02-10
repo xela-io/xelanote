@@ -38,6 +38,9 @@ type Frontmatter struct {
 	Tags  []string `yaml:"tags"`
 }
 
+const maxImportErrors = 50
+const maxImportFiles = 1000
+
 // importMarkdown handles bulk markdown file import
 func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserID(r)
@@ -52,15 +55,34 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.Files) == 0 {
+		respondError(w, http.StatusBadRequest, "no files provided")
+		return
+	}
+	if len(req.Files) > maxImportFiles {
+		respondError(w, http.StatusBadRequest, fmt.Sprintf("too many files (max %d)", maxImportFiles))
+		return
+	}
+
 	result := ImportResponse{}
 	createdFolders := make(map[string]bool)
 
 	for _, file := range req.Files {
+		if file.Content == "" {
+			result.Skipped++
+			addImportError(&result, "Übersprungen (leerer Inhalt): "+file.Filename)
+			continue
+		}
 		// Parse frontmatter and content
 		title, content := parseMarkdown(file.Content)
 		if title == "" {
 			// Fallback: use filename without extension
 			title = strings.TrimSuffix(file.Filename, filepath.Ext(file.Filename))
+		}
+		if err := validateNoteFields(title, content, ""); err != nil {
+			result.Failed++
+			addImportError(&result, "Ungültige Notiz für "+file.Filename+": "+err.Error())
+			continue
 		}
 
 		// Extract folder path from file path
@@ -76,16 +98,12 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 		existing, err := s.noteService.GetNoteByTitleInFolder(userID, title, folderPath)
 		if err != nil && !errors.Is(err, db.ErrNotFound) {
 			result.Failed++
-			if len(result.Errors) < 10 {
-				result.Errors = append(result.Errors,
-					"DB-Fehler für "+title+": "+err.Error())
-			}
+			addImportError(&result, "DB-Fehler für "+title+": "+err.Error())
 			continue
 		}
 		if existing != nil {
 			result.Skipped++
-			result.Errors = append(result.Errors,
-				fmt.Sprintf("Übersprungen (existiert bereits in %s): %s", folderPath, title))
+			addImportError(&result, fmt.Sprintf("Übersprungen (existiert bereits in %s): %s", folderPath, title))
 			continue
 		}
 
@@ -98,28 +116,43 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		}
+		if err := validateNoteFields(title, content, folderPath); err != nil {
+			result.Failed++
+			addImportError(&result, "Ungültiger Ordnerpfad für "+title+": "+err.Error())
+			continue
+		}
 
 		// Create note
 		note, err := s.noteService.CreateNote(userID, title, content, folderPath)
 		if err != nil {
 			result.Failed++
-			result.Errors = append(result.Errors,
-				"Fehler beim Importieren von "+title+": "+err.Error())
+			addImportError(&result, "Fehler beim Importieren von "+title+": "+err.Error())
 			continue
 		}
 
 		// Broadcast creation to WebSocket clients
-		payload, _ := json.Marshal(note)
-		s.wsManager.BroadcastToUser(userID, websocket.Message{
-			Type:    "note.created",
-			Payload: payload,
-		})
+		payload, err := json.Marshal(note)
+		if err != nil {
+			s.logger().Error("failed to encode note.created payload", "err", err, "note_id", note.ID)
+		} else {
+			s.wsManager.BroadcastToUser(userID, websocket.Message{
+				Type:    "note.created",
+				Payload: payload,
+			})
+		}
 
 		result.Imported++
 	}
 
 	result.FoldersCreated = len(createdFolders)
 	respondJSON(w, http.StatusOK, result)
+}
+
+func addImportError(result *ImportResponse, message string) {
+	if len(result.Errors) >= maxImportErrors {
+		return
+	}
+	result.Errors = append(result.Errors, message)
 }
 
 // parseMarkdown extracts title from YAML frontmatter

@@ -66,7 +66,7 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 #### 🟡 WICHTIG
 
 **W-1: God-Files / God-Components (Wartbarkeit, Testbarkeit)**
-- Backend: `backend/internal/api/notes.go`, `backend/internal/service/notes.go`, `backend/internal/db/notes.go`, `backend/cmd/server/main.go`, `backend/internal/api/api.go`
+- Backend: `backend/internal/api/notes_*.go`, `backend/internal/db/notes.go`, `backend/cmd/server/main.go`, `backend/internal/api/api.go`
 - Frontend: `frontend/src/lib/api.ts`, `frontend/src/lib/components/Editor.svelte`, `frontend/src/lib/components/Sidebar.svelte`, `frontend/src/routes/settings/+page.svelte`, `frontend/src/lib/stores/notes.svelte.ts`
 
 **W-2: Fehlerbehandlung wird in produktivem Code teilweise ignoriert**
@@ -143,10 +143,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/stores/websocket.svelte.ts` mit `unknown` + Helper-Typen.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
-  - `backend/internal/api/notes.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
+  - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
   - `backend/internal/db/notes.go`, `backend/internal/db/journal.go` pruefen RFC3339-Timestamps strikt (Parse-Errors werden retourniert).
   - `backend/internal/api/import.go` validiert File-Anzahl, leere Inhalte, Notiz-/Folder-Felder und begrenzt Error-Listen.
-  - `backend/internal/service/notes.go` loggt Snapshot-Query-Fehler (und snapshotet konservativ).
+  - `backend/internal/service/notes_crud.go`, `backend/internal/service/notes_encryption.go` loggen Snapshot-Query-Fehler (und snapshoten konservativ).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
@@ -209,7 +209,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 ### Erledigt
 - **Encrypted note decode/marshal guardrails**
-  - `backend/internal/api/notes.go` (Base64-Decode Fehler + JSON Marshal Fehler behandelt)
+  - `backend/internal/api/notes_crud.go`, `backend/internal/api/notes_encryption.go` (Base64-Decode Fehler + JSON Marshal Fehler behandelt)
 
 - **LLM Client: Error Body Read Handling**
   - `backend/internal/llm/claude.go`
@@ -412,15 +412,23 @@ frontend/src/lib/api/
 | `backend/internal/api/notes_encryption.go` | neu | Decrypt + DEK-Reencrypt Endpoints |
 | `backend/internal/api/notes_misc.go` | neu | listNoteTitles + reorderNotes |
 | `backend/internal/api/notes_crud.go` | neu | CRUD (list/create/get/update/delete) |
-| `backend/internal/service/notes.go` | 1512 | Business-Logik (restliche Note-Operationen) |
+| `backend/internal/service/notes_service.go` | neu | NoteService struct + ctor |
+| `backend/internal/service/notes_cache.go` | neu | Cache-Invalidierung |
 | `backend/internal/service/notes_helpers.go` | neu | Note-Service Helper/Validation/Cache-Keys |
 | `backend/internal/service/notes_crud.go` | neu | Note-Service CRUD |
+| `backend/internal/service/notes_search.go` | neu | Search, Backlinks, Titles |
+| `backend/internal/service/notes_links.go` | neu | Link-Parsing + Update |
+| `backend/internal/service/notes_rename.go` | neu | Rename + Wikilink-Update |
+| `backend/internal/service/notes_trash.go` | neu | Trash-Operationen |
+| `backend/internal/service/notes_versions.go` | neu | Versionen + Restore |
+| `backend/internal/service/notes_encryption.go` | neu | Encrypt/Decrypt + DEK-Rewrap |
+| `backend/internal/service/notes_ai.go` | neu | AI-Flag Handling |
 | `backend/internal/service/notes_folders.go` | neu | Folder-Operationen + Defaults |
 | `backend/internal/service/notes_tags.go` | neu | Tag-Operationen |
 | `backend/internal/db/notes.go` | 1529 | Alle Note-DB-Queries |
 | `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |
 
-**Status:** Erste Entzerrung (AI/Trash aus `notes.go` ausgelagert). Weitere Aufteilung offen.
+**Status:** NoteService aufgeteilt. Offene God-Files: `backend/internal/db/notes.go`, `backend/cmd/server/main.go`.
 
 ---
 
@@ -451,7 +459,7 @@ frontend/src/lib/api/
 
 #### W-5: Duplizierte Link/DueDate-Validierung in createNote/updateNote -- ERLEDIGT (Phase 2, `7856b6b`)
 
-**Datei:** `backend/internal/api/notes.go`
+**Datei:** `backend/internal/api/notes_helpers.go`
 
 **Fix:** Helper-Funktionen `validateLinks()` und `validateDueDates()` extrahiert.
 
@@ -486,8 +494,8 @@ frontend/src/lib/api/
 #### W-9: Duplizierte Konstanten MaxLinksPerNote / MaxLinkTitleLength -- ERLEDIGT (Phase 2, `7856b6b`)
 
 **Dateien:**
-- `backend/internal/api/notes.go:29-30`
-- `backend/internal/service/notes.go:281-282`
+- `backend/internal/api/notes_helpers.go:94-100`
+- `backend/internal/service/notes_links.go:13-17`
 
 **Fix:** Konstanten in ein gemeinsames Paket verschoben.
 

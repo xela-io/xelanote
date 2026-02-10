@@ -226,6 +226,37 @@ func TestGetBacklinks_IsUserScoped(t *testing.T) {
 	}
 }
 
+func TestGetBacklinks_ExcludesDeletedTarget(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "user")
+
+	target, err := service.CreateNote(user.ID, "Target", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create target: %v", err)
+	}
+	source, err := service.CreateNote(user.ID, "Source", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create source: %v", err)
+	}
+
+	if err := service.UpdateLinksFromClient(user.ID, source.ID, []string{"Target"}); err != nil {
+		t.Fatalf("UpdateLinksFromClient failed: %v", err)
+	}
+
+	if err := service.DeleteNote(user.ID, target.ID); err != nil {
+		t.Fatalf("failed to delete target: %v", err)
+	}
+
+	backlinks, err := service.GetBacklinks(user.ID, target.ID)
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	if len(backlinks) != 0 {
+		t.Fatalf("expected 0 backlinks after deleting target, got %d", len(backlinks))
+	}
+}
+
 func TestUpdateLinksFromClient_EmptyTitlesSkipped(t *testing.T) {
 	database := setupTestDB(t)
 	service := NewNoteService(database)

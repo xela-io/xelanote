@@ -182,14 +182,14 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 
 - **Backend-Service Tests: Notes Link-Resolution**
   - `backend/internal/service/notes_links_test.go`
-  - Abdeckung: Unresolved-Links Cleanup, Backlinks ignorieren geloeschte Source-Notes, User-Scoped Backlinks.
+  - Abdeckung: Unresolved-Links Cleanup, Backlinks ignorieren geloeschte Source-Notes, geloeschte Target-Notes, User-Scoped Backlinks.
   - Hinweis: Tests laufen mit `-tags "fts5"` (SQLite FTS5 erforderlich).
 
 - **Dokumentation fuer neuere Refactorings**
   - Modul-Snapshot + How-To in `REFACTORING_REPORT.md` sowie API-Struktur in `README.md`/`docs/development.md`.
 
 ### Offen
-- Weitere Tests fuer kritische Backend-Services (Notes) — optional: weitere Backlink-Edge-Cases.
+- Keine (optional abgeschlossen).
 
 ## Phase 5 Fortschritt (Linting & Formatierung)
 

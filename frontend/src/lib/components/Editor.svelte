@@ -10,14 +10,8 @@
   import type { AITransformState } from '$lib/editor/ai-actions';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
-  import {
-    createEditor,
-    type EditorConfig,
-    insertWikiLink,
-    insertWikiLinkInContent,
-    updateEditorContent,
-    updateFocusMode,
-  } from '$lib/editor/codemirror';
+  import { insertWikiLink, insertWikiLinkInContent, updateEditorContent, updateFocusMode } from '$lib/editor/codemirror';
+  import { initEditorAction } from '$lib/editor/editor-init';
   import {
     closeFindReplace as closeFindReplaceUI,
     handleExtensionsReady,
@@ -209,61 +203,48 @@
     }
   });
 
-  // Svelte Action: Initialisiert CodeMirror wenn das DOM-Element gerendert wird
-  // Das ist das richtige Pattern für DOM-basierte Libraries wie CodeMirror
-  function initEditor(node: HTMLElement) {
-    const config: EditorConfig = {
-      doc: notes.getCurrentNote()?.content ?? '',
-      onChange: (content) => {
-        notes.updateCurrentNoteContent(content);
-        renderedContent = renderMarkdown(content, { titleToIdMap });
-
-        // Schedule auto-save after content change
-        notes.scheduleAutoSave();
-      },
-      onSave: handleSave,
-      onWikilinkClick: handleWikilinkClick,
-      onColorPicker: () => {
-        openColorPicker();
-      },
-      onBeforeNewline: (view) => {
-        return handleNewlineWithTaskReorder(view);
-      },
-      onFindReplace: (options) => {
-        openFindReplace(undefined, options);
-      },
-      onExtensionsReady: () => {
-        const nextState = handleExtensionsReady(
-          {
-            show: showFindReplace,
-            query: findReplaceQuery,
-            showReplace: findReplaceShowReplace,
-            caseSensitive: findReplaceCaseSensitive,
-            pendingHighlightQuery,
-            editorExtensionsReady: true,
-            prevNoteId,
-          },
-          findReplaceHandlers
-        );
-        showFindReplace = nextState.show;
-        findReplaceQuery = nextState.query;
-        findReplaceShowReplace = nextState.showReplace;
-        pendingHighlightQuery = nextState.pendingHighlightQuery;
-        editorExtensionsReady = true;
-      },
-    };
-
-    editorView = createEditor(node, config);
-
-    // Cleanup when element is destroyed
-    return {
-      destroy() {
-        editorView?.destroy();
-        editorView = undefined;
-        editorExtensionsReady = false;
-      },
-    };
-  }
+  const initEditor = initEditorAction({
+    getDoc: () => notes.getCurrentNote()?.content ?? '',
+    onChange: (content) => {
+      notes.updateCurrentNoteContent(content);
+      renderedContent = renderMarkdown(content, { titleToIdMap });
+      notes.scheduleAutoSave();
+    },
+    onSave: handleSave,
+    onWikilinkClick: handleWikilinkClick,
+    onColorPicker: () => {
+      openColorPicker();
+    },
+    onBeforeNewline: (view) => handleNewlineWithTaskReorder(view),
+    onFindReplace: (options) => {
+      openFindReplace(undefined, options);
+    },
+    onExtensionsReady: () => {
+      const nextState = handleExtensionsReady(
+        {
+          show: showFindReplace,
+          query: findReplaceQuery,
+          showReplace: findReplaceShowReplace,
+          caseSensitive: findReplaceCaseSensitive,
+          pendingHighlightQuery,
+          editorExtensionsReady: true,
+          prevNoteId,
+        },
+        findReplaceHandlers
+      );
+      showFindReplace = nextState.show;
+      findReplaceQuery = nextState.query;
+      findReplaceShowReplace = nextState.showReplace;
+      pendingHighlightQuery = nextState.pendingHighlightQuery;
+      editorExtensionsReady = true;
+    },
+    setEditorView: (view) => {
+      editorView = view;
+    },
+    setExtensionsReady: (ready) => {
+      editorExtensionsReady = ready;
+    },
+  });
 
   // Update editor when note content is loaded
   // But don't update during save operations to prevent focus loss

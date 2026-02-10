@@ -504,6 +504,7 @@ frontend/src/lib/api/
 - `frontend/src/routes/+layout.svelte`: PWA-Update-Registrierung nach `frontend/src/lib/routes/layout/pwa.ts` ausgelagert.
 - `frontend/src/routes/+layout.svelte`: App-Init-Flow nach `frontend/src/lib/routes/layout/initialize.ts` ausgelagert.
 - `frontend/src/routes/+layout.svelte`: Interaction-Handler nach `frontend/src/lib/routes/layout/interactions.ts` ausgelagert.
+- `frontend/src/routes/+layout.svelte`: Viewport/Keyboard-Handling nach `frontend/src/lib/routes/layout/viewport.ts` ausgelagert.
 
 ---
 

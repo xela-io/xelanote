@@ -42,6 +42,7 @@
   import * as websocket from '$lib/stores/websocket.svelte';
   import { registerPwaUpdates } from '$lib/routes/layout/pwa';
   import { createLayoutInteractions } from '$lib/routes/layout/interactions';
+  import { createViewportHandlers } from '$lib/routes/layout/viewport';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -210,105 +211,44 @@
       document.addEventListener('keydown', handleKeydown);
     };
 
-    function handleResize() {
-      const mobile = window.innerWidth < 768;
-      const wasMobile = ui.getIsMobile();
-      ui.setIsMobile(mobile);
-
-      // When switching to mobile: close drawer, exit split mode
-      // When switching to desktop: open sidebar
-      if (mobile && !wasMobile) {
-        ui.setSidebarOpen(false);
-        if (ui.getEditorMode() === 'split') {
-          ui.setEditorMode('edit');
-        }
-      }
-      if (!mobile && wasMobile) {
-        ui.setSidebarOpen(true);
-      }
-    }
-
-    // Debounced resize handler to prevent rapid updates during iOS keyboard animation
-    function debouncedHandleResize() {
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(handleResize, 150);
-    }
-
-    // Keyboard detection via Visual Viewport API + focus fallback (for Firefox iOS)
-    let inputFocused = false;
-
     function isInputElement(el: Element | null): boolean {
       if (!el) return false;
       const tagName = el.tagName;
-      // Standard form inputs
       if (tagName === 'INPUT' || tagName === 'TEXTAREA') return true;
-      // Contenteditable elements (including CodeMirror)
       if (el.getAttribute('contenteditable') === 'true') return true;
-      // Check for CodeMirror editor (element or ancestor)
       if (el.closest('.cm-editor')) return true;
       return false;
     }
 
-    function updateKeyboardState() {
-      // Visual Viewport check (works well in Safari iOS)
-      let viewportKeyboard = false;
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        viewportKeyboard = windowHeight - viewportHeight > 150;
+    const viewportHandlers = createViewportHandlers(
+      {
+        getIsMobile: () => ui.getIsMobile(),
+        setIsMobile: (value) => ui.setIsMobile(value),
+        getEditorMode: () => ui.getEditorMode(),
+        setEditorMode: (mode) => ui.setEditorMode(mode),
+        getSidebarOpen: () => ui.getSidebarOpen(),
+        setSidebarOpen: (open) => ui.setSidebarOpen(open),
+        setIsKeyboardOpen: (open) => ui.setIsKeyboardOpen(open),
+      },
+      {
+        getResizeTimeout: () => resizeTimeout,
+        setResizeTimeout: (handle) => {
+          resizeTimeout = handle;
+        },
+        isInputElement,
+        windowObj: window,
+        documentObj: document,
       }
-
-      // On mobile: keyboard is open if either viewport shrinks OR input is focused
-      // This handles Firefox iOS which doesn't properly report viewport changes
-      const keyboardOpen = viewportKeyboard || (ui.getIsMobile() && inputFocused);
-      ui.setIsKeyboardOpen(keyboardOpen);
-    }
-
-    function handleVisualViewportResize() {
-      updateKeyboardState();
-    }
-
-    function handleFocusIn(e: FocusEvent) {
-      const target = e.target as Element | null;
-      if (target && isInputElement(target)) {
-        inputFocused = true;
-        updateKeyboardState();
-      }
-    }
-
-    function handleFocusOut() {
-      // Delay to handle focus moving between inputs
-      setTimeout(() => {
-        if (!isInputElement(document.activeElement)) {
-          inputFocused = false;
-          updateKeyboardState();
-        }
-      }, 100);
-    }
-
-    // Touchstart fallback: Firefox iOS may not fire focusin reliably for CodeMirror
-    function handleTouchStart(e: TouchEvent) {
-      if (!ui.getIsMobile()) return;
-      const target = e.target as Element | null;
-      if (target && isInputElement(target)) {
-        // Delay slightly to let focus settle
-        setTimeout(() => {
-          inputFocused = true;
-          updateKeyboardState();
-        }, 50);
-      }
-    }
+    );
 
     // Initialize Visual Viewport listener for keyboard detection
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+      window.visualViewport.addEventListener('resize', viewportHandlers.handleVisualViewportResize);
     }
 
-    // Focus-based fallback for Firefox iOS (and other browsers with incomplete Visual Viewport support)
-    document.addEventListener('focusin', handleFocusIn);
-    document.addEventListener('focusout', handleFocusOut);
-    // Touch fallback for browsers where focusin doesn't fire reliably
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('focusin', viewportHandlers.handleFocusIn);
+    document.addEventListener('focusout', viewportHandlers.handleFocusOut);
+    document.addEventListener('touchstart', viewportHandlers.handleTouchStart, { passive: true });
 
     const { handleKeydown, handleActivity } = createLayoutInteractions({
       isAuthenticated: () => auth.isAuthenticated(),
@@ -365,22 +305,16 @@
 
     // Mobile detection must run synchronously before async init to prevent
     // sidebar rendering in desktop mode on mobile devices
-    handleResize();
-    window.addEventListener('resize', debouncedHandleResize);
+    viewportHandlers.handleResize();
+    window.addEventListener('resize', viewportHandlers.debouncedHandleResize);
 
     // Start async initialization (non-blocking)
     void initializeAsync();
 
     return () => {
       document.removeEventListener('keydown', handleKeydown);
-      window.removeEventListener('resize', debouncedHandleResize);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
-      }
-      document.removeEventListener('focusin', handleFocusIn);
-      document.removeEventListener('focusout', handleFocusOut);
-      document.removeEventListener('touchstart', handleTouchStart);
-      if (resizeTimeout) clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', viewportHandlers.debouncedHandleResize);
+      viewportHandlers.cleanup();
       websocket.disconnect();
 
       // Cleanup activity listeners

@@ -58,7 +58,12 @@ func newTestServer(t *testing.T) *testServer {
 	tfaService := service.NewTwoFactorService(database, logger)
 	authService := service.NewAuthService(database, jwtSecret, tfaService)
 
-	server := NewServer(nil, authService, tfaService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, logger, jwtSecret, "", nil)
+	server := NewServer(ServerConfig{
+		AuthService: authService,
+		TFAService:  tfaService,
+		Logger:      logger,
+		JWTSecret:   jwtSecret,
+	})
 
 	return &testServer{
 		Server:    server,

@@ -43,7 +43,13 @@ func TestSaltOverwritePrevention(t *testing.T) {
 	noteService := service.NewNoteService(database)
 
 	// Create test server with noteService (important for the check!)
-	server := NewServer(noteService, authService, tfaService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, logger, jwtSecret, "", nil)
+	server := NewServer(ServerConfig{
+		NoteService: noteService,
+		AuthService: authService,
+		TFAService:  tfaService,
+		Logger:      logger,
+		JWTSecret:   jwtSecret,
+	})
 
 	// 1. Create a user
 	user, err := authService.Register(context.Background(), "testuser", "test@example.com", "TestPassword123!")
@@ -122,7 +128,13 @@ func TestSaltGenerationAllowedForNewUsers(t *testing.T) {
 	noteService := service.NewNoteService(database)
 
 	// Create test server
-	server := NewServer(noteService, authService, tfaService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, logger, jwtSecret, "", nil)
+	server := NewServer(ServerConfig{
+		NoteService: noteService,
+		AuthService: authService,
+		TFAService:  tfaService,
+		Logger:      logger,
+		JWTSecret:   jwtSecret,
+	})
 
 	// 1. Create a user
 	user, err := authService.Register(context.Background(), "newuser", "new@example.com", "TestPassword123!")

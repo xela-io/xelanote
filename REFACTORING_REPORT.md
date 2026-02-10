@@ -391,11 +391,13 @@ frontend/src/lib/api/
 
 ### Strukturelle Probleme (God-Files / SOLID-Verletzungen)
 
-#### W-1: God-Struct `Server` mit 30+ Feldern -- OFFEN
+#### W-1: God-Struct `Server` mit 30+ Feldern -- ERLEDIGT
 
 **Datei:** `backend/internal/api/api.go:31-84`
 
 21-Parameter-Konstruktor. Vereint 15 Service-Referenzen, 14 Rate-Limiter und Infrastructure-Referenzen in einer flachen Struktur.
+
+**Fix:** `ServerConfig` eingefuehrt und `NewServer` auf einen Config-Struct umgestellt (Aufrufer in `main.go` und Tests aktualisiert).
 
 ---
 

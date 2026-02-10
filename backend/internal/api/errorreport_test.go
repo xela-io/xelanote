@@ -15,7 +15,11 @@ import (
 
 func newErrorReportTestServer(svc *service.ErrorReportService) *Server {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewServer(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, svc, nil, nil, logger, []byte("test-secret-key-that-is-at-least-64-chars-long-for-testing-purposes!!"), "", nil)
+	return NewServer(ServerConfig{
+		ErrorReportSvc: svc,
+		Logger:         logger,
+		JWTSecret:      []byte("test-secret-key-that-is-at-least-64-chars-long-for-testing-purposes!!"),
+	})
 }
 
 func TestSubmitErrorReport_Disabled(t *testing.T) {

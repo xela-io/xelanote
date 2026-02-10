@@ -12,46 +12,43 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/xela-io/xelanote/internal/jobs"
-	"github.com/xela-io/xelanote/internal/service"
-	"github.com/xela-io/xelanote/internal/websocket"
 )
 
 //go:embed static/captcha.html
 var captchaHTML embed.FS
 
 // NewServer creates a new API server.
-func NewServer(noteService *service.NoteService, authService *service.AuthService, tfaService *service.TwoFactorService, fido2Service *service.FIDO2Service, graphService *service.GraphService, templateService *service.TemplateService, snippetService *service.SnippetService, userService *service.UserService, adminService *service.AdminService, activityService *service.ActivityService, settingsService *service.SettingsService, turnstileService *service.TurnstileService, summarizeService *service.SummarizeService, sharingService *service.SharingService, errorReportService *service.ErrorReportService, jobManager *jobs.JobManager, wsManager *websocket.Manager, logger *slog.Logger, jwtSecret []byte, dataDir string, allowedOrigins []string) *Server {
+func NewServer(cfg ServerConfig) *Server {
 	// Validate CORS configuration in non-development environments (SEC-003)
 	env := os.Getenv("XELANOTE_ENV")
-	if env != "" && env != "development" && env != "test" && env != "testing" && len(allowedOrigins) == 0 {
-		logger.Error("FATAL: CORS_ALLOWED_ORIGINS must be set in non-development environments",
+	if env != "" && env != "development" && env != "test" && env != "testing" && len(cfg.AllowedOrigins) == 0 {
+		cfg.Logger.Error("FATAL: CORS_ALLOWED_ORIGINS must be set in non-development environments",
 			slog.String("env", env),
-			slog.Int("allowed_origins_count", len(allowedOrigins)))
+			slog.Int("allowed_origins_count", len(cfg.AllowedOrigins)))
 		log.Fatalf("CORS_ALLOWED_ORIGINS must be set when XELANOTE_ENV=%s", env)
 	}
 
 	limits := buildRateLimitConfig()
 
 	s := &Server{
-		noteService:      noteService,
-		authService:      authService,
-		tfaService:       tfaService,
-		graphService:     graphService,
-		templateService:  templateService,
-		snippetService:   snippetService,
-		userService:      userService,
-		adminService:     adminService,
-		activityService:  activityService,
-		settingsService:  settingsService,
-		turnstileService: turnstileService,
-		summarizeService: summarizeService,
-		jobManager:       jobManager,
-		wsManager:        wsManager,
-		log:              logger,
-		jwtSecret:        jwtSecret,
-		dataDir:          dataDir,
-		allowedOrigins:   allowedOrigins,
+		noteService:      cfg.NoteService,
+		authService:      cfg.AuthService,
+		tfaService:       cfg.TFAService,
+		graphService:     cfg.GraphService,
+		templateService:  cfg.TemplateService,
+		snippetService:   cfg.SnippetService,
+		userService:      cfg.UserService,
+		adminService:     cfg.AdminService,
+		activityService:  cfg.ActivityService,
+		settingsService:  cfg.SettingsService,
+		turnstileService: cfg.TurnstileService,
+		summarizeService: cfg.SummarizeService,
+		jobManager:       cfg.JobManager,
+		wsManager:        cfg.WSManager,
+		log:              cfg.Logger,
+		jwtSecret:        cfg.JWTSecret,
+		dataDir:          cfg.DataDir,
+		allowedOrigins:   cfg.AllowedOrigins,
 		router:           chi.NewRouter(),
 		// Rate limiters: register=5/hour, login=10/15min, refresh=30/hour, 2fa=5/15min, backup=3/15min, recovery=3/15min
 		// In test mode, all limits are increased to 1000/hour
@@ -72,16 +69,16 @@ func NewServer(noteService *service.NoteService, authService *service.AuthServic
 		llmLimiter:            NewRateLimiter(limits.llmLimit, time.Minute, limits.llmLimit), // 10/min shared for all LLM endpoints
 		fido2BeginLimiter:     NewRateLimiter(limits.fido2Limit, 15*time.Minute, limits.fido2Limit),
 		fido2FinishLimiter:    NewRateLimiter(limits.fido2Limit, 15*time.Minute, limits.fido2Limit),
-		fido2Service:          fido2Service,
-		sharingService:        sharingService,
+		fido2Service:          cfg.FIDO2Service,
+		sharingService:        cfg.SharingService,
 		shareLimiter:          NewRateLimiter(limits.shareLimit, time.Minute, limits.shareLimit),
 		userSearchLimiter:     NewRateLimiter(limits.userSearchLimit, time.Minute, 10), // 30/min, burst 10
-		errorReportService:    errorReportService,
+		errorReportService:    cfg.ErrorReportSvc,
 		errorReportLimiter:    NewRateLimiter(limits.errorReportLimit, time.Hour, 3), // 5/hour, burst 3
 		streamContent:         newStreamContentStore(),
 		// Account lockout: 10 global attempts (5 per-IP), 30s initial lockout (doubles each time), 30min max
 		// In test mode, use 1000 attempts to effectively disable lockout
-		accountLockout: NewAccountLockout(limits.lockoutAttempts, 30*time.Second, 30*time.Minute, logger),
+		accountLockout: NewAccountLockout(limits.lockoutAttempts, 30*time.Second, 30*time.Minute, cfg.Logger),
 	}
 	s.setupRoutes()
 	return s

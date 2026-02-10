@@ -66,6 +66,31 @@ type Server struct {
 	recipeSuggestionService *service.RecipeSuggestionService
 }
 
+// ServerConfig bundles dependencies for constructing a Server.
+type ServerConfig struct {
+	NoteService      *service.NoteService
+	AuthService      *service.AuthService
+	TFAService       *service.TwoFactorService
+	FIDO2Service     *service.FIDO2Service
+	GraphService     *service.GraphService
+	TemplateService  *service.TemplateService
+	SnippetService   *service.SnippetService
+	UserService      *service.UserService
+	AdminService     *service.AdminService
+	ActivityService  *service.ActivityService
+	SettingsService  *service.SettingsService
+	TurnstileService *service.TurnstileService
+	SummarizeService *service.SummarizeService
+	SharingService   *service.SharingService
+	ErrorReportSvc   *service.ErrorReportService
+	JobManager       *jobs.JobManager
+	WSManager        *websocket.Manager
+	Logger           *slog.Logger
+	JWTSecret        []byte
+	DataDir          string
+	AllowedOrigins   []string
+}
+
 // SetRecipeService sets the recipe service (called after server creation).
 func (s *Server) SetRecipeService(rs *service.RecipeService) {
 	s.recipeService = rs

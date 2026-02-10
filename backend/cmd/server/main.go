@@ -240,7 +240,29 @@ func main() {
 
 	// Create API server
 	allowedOrigins := parseAllowedOrigins(os.Getenv("CORS_ALLOWED_ORIGINS"))
-	server := api.NewServer(noteService, authService, tfaService, fido2Service, graphService, templateService, snippetService, userService, adminService, activityService, settingsService, turnstileService, summarizeService, sharingService, errorReportService, jobManager, wsManager, logger, []byte(jwtSecret), dataDir, allowedOrigins)
+	server := api.NewServer(api.ServerConfig{
+		NoteService:      noteService,
+		AuthService:      authService,
+		TFAService:       tfaService,
+		FIDO2Service:     fido2Service,
+		GraphService:     graphService,
+		TemplateService:  templateService,
+		SnippetService:   snippetService,
+		UserService:      userService,
+		AdminService:     adminService,
+		ActivityService:  activityService,
+		SettingsService:  settingsService,
+		TurnstileService: turnstileService,
+		SummarizeService: summarizeService,
+		SharingService:   sharingService,
+		ErrorReportSvc:   errorReportService,
+		JobManager:       jobManager,
+		WSManager:        wsManager,
+		Logger:           logger,
+		JWTSecret:        []byte(jwtSecret),
+		DataDir:          dataDir,
+		AllowedOrigins:   allowedOrigins,
+	})
 	recipeService := service.NewRecipeService(database, noteService)
 	server.SetRecipeService(recipeService)
 	recipeSuggestionService := service.NewRecipeSuggestionService(database, providerRouter, recipeService)

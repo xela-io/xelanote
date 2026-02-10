@@ -2,7 +2,10 @@ import { argon2id } from '@noble/hashes/argon2.js';
 import { browser } from '$app/environment';
 
 let initialized = false;
-let sodium: any = null;
+type SodiumWrapper = typeof import('libsodium-wrappers') extends { default: infer T }
+  ? T
+  : never;
+let sodium: SodiumWrapper | null = null;
 
 // Hardcoded constants (these are fixed in libsodium and don't change)
 // Using hardcoded values ensures tests work even when WASM isn't fully loaded

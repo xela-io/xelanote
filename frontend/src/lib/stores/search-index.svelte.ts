@@ -256,7 +256,8 @@ export function searchEncrypted(query: string, limit = 50): SearchResult[] {
   if (!query.trim()) return [];
 
   const fuzzy = query.length >= 3 ? 0.2 : false;
-  const results = index.search(query, { limit, fuzzy, prefix: true });
+  const results = index.search(query, { fuzzy, prefix: true });
+  const limitedResults = results.slice(0, limit);
   console.log(
     `[SEARCH-INDEX] Search "${query}": ${results.length} results (index has ${contentMap.size} docs)`
   );
@@ -267,7 +268,7 @@ export function searchEncrypted(query: string, limit = 50): SearchResult[] {
     .split(/\s+/)
     .filter((t) => t.length > 0);
 
-  return results.map((result) => {
+  return limitedResults.map((result) => {
     const content = contentMap.get(result.id) || '';
     const snippet = generateSnippet(content, queryTerms);
 

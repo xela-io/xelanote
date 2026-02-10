@@ -3,9 +3,12 @@ import { argon2id } from '@noble/hashes/argon2.js';
 import { browser } from '$app/environment';
 
 let initialized = false;
-type SodiumWrapper = typeof import('libsodium-wrappers') extends { default: infer T }
-  ? T
-  : never;
+type SodiumWrapper = typeof import('libsodium-wrappers') & {
+  version_string?: string;
+  libsodium?: {
+    _crypto_pwhash?: unknown;
+  };
+};
 let sodium: SodiumWrapper | null = null;
 
 // Hardcoded constants (these are fixed in libsodium and don't change)
@@ -24,13 +27,14 @@ export async function initSodium(): Promise<void> {
 
   // Dynamic import to ensure proper Vite bundling
   const sodiumModule = await import('libsodium-wrappers');
-  const _sodium = sodiumModule.default;
+  const _sodium = (sodiumModule.default ?? sodiumModule) as SodiumWrapper;
   await _sodium.ready;
   sodium = _sodium;
 
   initialized = true;
 
   if (import.meta.env.DEV) {
+    if (!sodium) return;
     // Debug: Check if wrapper initialized
     console.log('[SODIUM] Initialized, version:', sodium.version_string);
     console.log('[SODIUM] crypto_pwhash available:', typeof sodium.crypto_pwhash);
@@ -208,22 +212,23 @@ export async function deriveKeyAsync(password: string, salt: Uint8Array): Promis
  */
 export function encrypt(plaintext: Uint8Array, key: Uint8Array): Uint8Array {
   // Try libsodium if available and properly initialized
+  const readySodium = sodium;
   if (
     initialized &&
-    sodium &&
-    typeof sodium.crypto_aead_xchacha20poly1305_ietf_encrypt === 'function'
+    readySodium &&
+    typeof readySodium.crypto_aead_xchacha20poly1305_ietf_encrypt === 'function'
   ) {
     // Generiere zufällige Nonce (24 bytes für XChaCha20)
-    const nonce = sodium.randombytes_buf(NONCE_BYTES);
+    const nonce = readySodium.randombytes_buf(NONCE_BYTES) as Uint8Array;
 
     // Verschlüssle mit XChaCha20-Poly1305
-    const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+    const ciphertext = readySodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       plaintext,
       null, // No additional data
       null, // No secret nonce
       nonce,
       key
-    );
+    ) as Uint8Array;
 
     // Kombiniere: nonce + ciphertext (ciphertext enthält bereits Auth-Tag)
     const result = new Uint8Array(nonce.length + ciphertext.length);
@@ -258,10 +263,11 @@ export function decrypt(combined: Uint8Array, key: Uint8Array): Uint8Array | nul
   }
 
   // Try libsodium if available and properly initialized
+  const readySodium = sodium;
   if (
     initialized &&
-    sodium &&
-    typeof sodium.crypto_aead_xchacha20poly1305_ietf_decrypt === 'function'
+    readySodium &&
+    typeof readySodium.crypto_aead_xchacha20poly1305_ietf_decrypt === 'function'
   ) {
     // Extrahiere Nonce und Ciphertext
     const nonce = combined.slice(0, NONCE_BYTES);
@@ -269,13 +275,13 @@ export function decrypt(combined: Uint8Array, key: Uint8Array): Uint8Array | nul
 
     try {
       // Entschlüssle mit XChaCha20-Poly1305 (verifiziert Auth-Tag automatisch)
-      const plaintext = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+      const plaintext = readySodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
         null, // No secret nonce
         ciphertext,
         null, // No additional data
         nonce,
         key
-      );
+      ) as Uint8Array;
 
       return plaintext;
     } catch (error) {

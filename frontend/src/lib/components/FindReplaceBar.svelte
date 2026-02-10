@@ -33,10 +33,10 @@
     onQueryChange,
   }: Props = $props();
 
-  let searchQuery = $state(initialQuery);
+  let searchQuery = $state('');
   let replaceQuery = $state('');
   let caseSensitive = $state(false);
-  let showReplaceRow = $state(initialShowReplace);
+  let showReplaceRow = $state(false);
   let matchInfo = $state({ current: 0, total: 0 });
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let searchInputRef: HTMLInputElement | null = $state(null);
@@ -45,16 +45,16 @@
   $effect(() => {
     if (searchInputRef) {
       searchInputRef.focus();
-      if (initialQuery) {
-        searchInputRef.select();
-      }
+      if (initialQuery) searchInputRef.select();
     }
   });
 
   // Initialize with initialQuery
   $effect(() => {
-    if (initialQuery && editorView) {
-      searchQuery = initialQuery;
+    if (!editorView) return;
+    searchQuery = initialQuery;
+    showReplaceRow = initialShowReplace;
+    if (initialQuery) {
       executeSearch(initialQuery);
     }
   });

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AlertCircle,Loader2 } from 'lucide-svelte';
-  import type { Component } from 'svelte';
+  import type { ComponentType } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import { beforeNavigate,goto } from '$app/navigation';
@@ -15,8 +15,8 @@
   const noteId = $derived($page.params.id);
 
   // Dynamic import state
-  let EditorComponent = $state<Component<Record<string, unknown>> | null>(null);
-  let RecipeEditorComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let EditorComponent = $state<ComponentType | null>(null);
+  let RecipeEditorComponent = $state<ComponentType | null>(null);
   let editorLoading = $state(false);
   let editorLoadError = $state<string | null>(null);
   let retryCount = $state(0);
@@ -84,8 +84,8 @@
 
           if (cancelled) return; // Don't update if effect was cleaned up
 
-          EditorComponent = editorModule.default;
-          RecipeEditorComponent = recipeModule.default;
+          EditorComponent = editorModule.default as unknown as ComponentType;
+          RecipeEditorComponent = recipeModule.default as unknown as ComponentType;
           editorLoading = false;
           retryCount = 0;
         } catch (error) {

@@ -78,7 +78,7 @@ test.describe('Encryption Security Levels', () => {
     }
   });
 
-  test('balanced mode restores KEK from IndexedDB on reload', async ({ page, _context }) => {
+  test('balanced mode restores KEK from IndexedDB on reload', async ({ page }) => {
     await page.goto('/settings');
 
     // Check if encryption section exists

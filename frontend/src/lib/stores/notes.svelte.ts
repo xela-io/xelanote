@@ -36,6 +36,9 @@ function extractUniqueWikilinks(content: string) {
  */
 function _decryptNoteFields(note: Note): boolean {
   try {
+    if (!note.encrypted_content) {
+      throw new Error('Missing encrypted content');
+    }
     const encryptedPayload: EncryptedPayload = {
       ciphertext: note.encrypted_content,
       metadata: JSON.parse(note.encryption_metadata || '{}'),

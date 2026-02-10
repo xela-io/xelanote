@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Loader2, Lock, Menu, Plus, Sparkles,X } from 'lucide-svelte';
-  import type { Component } from 'svelte';
+  import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -25,7 +25,7 @@
   const { noteId }: Props = $props();
 
   let activeTab = $state<'ingredients' | 'instructions' | 'preview'>('ingredients');
-  let EditorComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let EditorComponent = $state<ComponentType | null>(null);
   let editorLoading = $state(true);
 
   // Collection dialogs
@@ -79,7 +79,7 @@
     // Load markdown editor for instructions tab
     try {
       const module = await import('$lib/components/Editor.svelte');
-      EditorComponent = module.default;
+      EditorComponent = module.default as unknown as ComponentType;
     } catch (err) {
       console.error('Failed to load editor:', err);
     }

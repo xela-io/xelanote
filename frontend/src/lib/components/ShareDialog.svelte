@@ -51,7 +51,7 @@
     },
   };
 
-  const keys = i18nKeys[resourceType];
+  const keys = $derived.by(() => i18nKeys[resourceType]);
 
   // API dispatch per resource type
   async function apiGetShares(): Promise<ShareEntry[]> {

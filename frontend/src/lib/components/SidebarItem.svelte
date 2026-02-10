@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { IconProps } from 'lucide-svelte';
-  import type { SvelteComponentTyped } from 'svelte';
+  import type { ComponentType } from 'svelte';
 
   import { animationDurations, easing } from '$lib/design/tokens';
 
   interface Props {
-    icon?: new (...args: unknown[]) => SvelteComponentTyped<IconProps>;
+    icon?: ComponentType;
     label: string;
     isActive?: boolean;
     count?: number;

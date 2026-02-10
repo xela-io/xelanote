@@ -14,8 +14,9 @@
   // Listen for beforeinstallprompt event
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
+      const event = e as BeforeInstallPromptEvent;
+      event.preventDefault();
+      deferredPrompt = event;
       showPrompt = true;
     });
   }

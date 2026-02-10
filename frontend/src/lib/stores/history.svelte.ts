@@ -219,7 +219,9 @@ function deserializeCommand(data: CommandData): Command {
     case 'move-folder':
       return new MoveFolderCommand(data.data);
     default:
-      throw new Error(`Unknown command type: ${data.type}`);
+      // Exhaustive check
+      const _exhaustive: never = data;
+      throw new Error(`Unknown command type: ${String(_exhaustive)}`);
   }
 }
 

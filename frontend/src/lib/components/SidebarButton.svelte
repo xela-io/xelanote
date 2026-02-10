@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { IconProps } from 'lucide-svelte';
-  import type { Snippet, SvelteComponentTyped } from 'svelte';
+  import type { ComponentType, Snippet } from 'svelte';
   import type { HTMLButtonAttributes } from 'svelte/elements';
 
   import { animationDurations, easing } from '$lib/design/tokens';
 
-  type IconComponent = new (...args: unknown[]) => SvelteComponentTyped<IconProps>;
+  type IconComponent = ComponentType;
 
   interface Props extends HTMLButtonAttributes {
     icon?: IconComponent;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
 
-  import type { Component } from 'svelte';
+  import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { get } from 'svelte/store';
   import { _, locale } from 'svelte-i18n';
@@ -108,7 +108,7 @@
   }
 
   const { children } = $props();
-  let QuickSwitcherComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let QuickSwitcherComponent = $state<ComponentType | null>(null);
   let showInstallPrompt = $state(true);
   let showUnlockModal = $state(false);
 
@@ -555,7 +555,7 @@
   async function loadQuickSwitcher() {
     if (QuickSwitcherComponent) return;
     const module = await import('$lib/components/QuickSwitcher.svelte');
-    QuickSwitcherComponent = module.default;
+    QuickSwitcherComponent = module.default as unknown as ComponentType;
   }
 
   $effect(() => {

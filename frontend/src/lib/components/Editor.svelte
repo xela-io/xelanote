@@ -21,7 +21,7 @@
     Wand2,
     WifiOff,
   } from 'lucide-svelte';
-  import type { Component } from 'svelte';
+  import type { ComponentType } from 'svelte';
   import { tick } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
@@ -116,10 +116,10 @@
   let pendingHighlightQuery = $state<string | null>(null);
   let editorExtensionsReady = $state(false);
 
-  let MoveToFolderDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
-  let markdownGuideDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
-  let MarkdownGuideDropdownComponent = $state<Component<Record<string, unknown>> | null>(null);
-  let VersionHistoryDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let MoveToFolderDialogComponent = $state<ComponentType | null>(null);
+  let markdownGuideDialogComponent = $state<ComponentType | null>(null);
+  let MarkdownGuideDropdownComponent = $state<ComponentType | null>(null);
+  let VersionHistoryDialogComponent = $state<ComponentType | null>(null);
 
   // Split resize state
   let isSplitResizing = $state(false);
@@ -1416,25 +1416,25 @@
   async function loadMoveToFolderDialog() {
     if (MoveToFolderDialogComponent) return;
     const module = await import('./MoveToFolderDialog.svelte');
-    MoveToFolderDialogComponent = module.default;
+    MoveToFolderDialogComponent = module.default as unknown as ComponentType;
   }
 
   async function loadMarkdownGuideDialog() {
     if (markdownGuideDialogComponent) return;
     const module = await import('./MarkdownGuideDialog.svelte');
-    markdownGuideDialogComponent = module.default;
+    markdownGuideDialogComponent = module.default as unknown as ComponentType;
   }
 
   async function loadMarkdownGuideDropdown() {
     if (MarkdownGuideDropdownComponent) return;
     const module = await import('./MarkdownGuideDropdown.svelte');
-    MarkdownGuideDropdownComponent = module.default;
+    MarkdownGuideDropdownComponent = module.default as unknown as ComponentType;
   }
 
   async function loadVersionHistoryDialog() {
     if (VersionHistoryDialogComponent) return;
     const { default: component } = await import('./VersionHistoryDialog.svelte');
-    VersionHistoryDialogComponent = component;
+    VersionHistoryDialogComponent = component as unknown as ComponentType;
   }
 
   $effect(() => {

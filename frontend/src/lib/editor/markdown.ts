@@ -2,11 +2,15 @@
 
 import DOMPurify from 'isomorphic-dompurify';
 import MarkdownIt from 'markdown-it';
+import type { Options as MarkdownItOptions } from 'markdown-it';
 import type StateInline from 'markdown-it/lib/rules_inline/state_inline.mjs';
 import type Token from 'markdown-it/lib/token.mjs';
 import taskLists from 'markdown-it-task-lists';
 
 import { FEATURE_FLAGS } from '$lib/config';
+
+type MarkdownItEnv = Record<string, unknown>;
+type MarkdownItRenderer = unknown;
 
 // Named colors that map to CSS classes (design tokens)
 const NAMED_COLORS = new Set(['primary', 'destructive', 'accent', 'muted', 'secondary']);
@@ -458,17 +462,18 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
     md.renderer.rules.image = (
       tokens: Token[],
       idx: number,
-      options: MarkdownIt.Options,
-      env: MarkdownIt.Env,
-      _self: MarkdownIt.Renderer
+      options: MarkdownItOptions,
+      env: MarkdownItEnv,
+      _self: MarkdownItRenderer
     ): string => {
       const token = tokens[idx];
       const src = token.attrGet('src') || '';
       const alt = token.content || '';
 
       // Track image index for resize targeting
-      env.imageIndex = (env.imageIndex || 0) + 1;
-      const imageIndex = env.imageIndex;
+      const currentIndex = typeof env.imageIndex === 'number' ? env.imageIndex : 0;
+      const imageIndex = currentIndex + 1;
+      env.imageIndex = imageIndex;
 
       // Get width from widthMap (populated by extractImageWidths)
       const widthMap = env.widthMap as Map<number, string> | undefined;

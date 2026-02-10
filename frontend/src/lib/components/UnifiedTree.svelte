@@ -8,7 +8,7 @@
     MoreVertical,
     Sparkles,
   } from 'lucide-svelte';
-  import type { Component } from 'svelte';
+  import type { ComponentType } from 'svelte';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -48,23 +48,23 @@
 
   // Rename dialog state
   let showRenameDialog = $state(false);
-  let RenameFolderDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let RenameFolderDialogComponent = $state<ComponentType | null>(null);
 
   // Delete dialog state
   let showDeleteDialog = $state(false);
-  let DeleteFolderDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let DeleteFolderDialogComponent = $state<ComponentType | null>(null);
 
   // Color picker dialog state
   let showColorPicker = $state(false);
-  let ColorPickerDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let ColorPickerDialogComponent = $state<ComponentType | null>(null);
 
   // Share dialog state (unified for note + folder)
   let showShareDialog = $state(false);
-  let ShareDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let ShareDialogComponent = $state<ComponentType | null>(null);
 
   // Rename note dialog state
   let showRenameNoteDialog = $state(false);
-  let RenameNoteDialogComponent = $state<Component<Record<string, unknown>> | null>(null);
+  let RenameNoteDialogComponent = $state<ComponentType | null>(null);
 
   // Derived selection state
   const isSelected = $derived.by(() => {
@@ -454,31 +454,31 @@
   async function loadRenameFolderDialog() {
     if (RenameFolderDialogComponent) return;
     const module = await import('./RenameFolderDialog.svelte');
-    RenameFolderDialogComponent = module.default;
+    RenameFolderDialogComponent = module.default as unknown as ComponentType;
   }
 
   async function loadDeleteFolderDialog() {
     if (DeleteFolderDialogComponent) return;
     const module = await import('./DeleteFolderDialog.svelte');
-    DeleteFolderDialogComponent = module.default;
+    DeleteFolderDialogComponent = module.default as unknown as ComponentType;
   }
 
   async function loadColorPickerDialog() {
     if (ColorPickerDialogComponent) return;
     const module = await import('./ColorPickerDialog.svelte');
-    ColorPickerDialogComponent = module.default;
+    ColorPickerDialogComponent = module.default as unknown as ComponentType;
   }
 
   async function loadShareDialog() {
     if (ShareDialogComponent) return;
     const module = await import('./ShareDialog.svelte');
-    ShareDialogComponent = module.default;
+    ShareDialogComponent = module.default as unknown as ComponentType;
   }
 
   async function loadRenameNoteDialog() {
     if (RenameNoteDialogComponent) return;
     const module = await import('./RenameNoteDialog.svelte');
-    RenameNoteDialogComponent = module.default;
+    RenameNoteDialogComponent = module.default as unknown as ComponentType;
   }
 
   $effect(() => {

@@ -3,6 +3,7 @@
 
 import { getWsBaseUrl } from '$lib/config';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import type { Note } from '$lib/api';
 
 import { getAccessToken } from './auth.svelte';
 import * as encryption from './encryption.svelte';
@@ -21,8 +22,20 @@ type NoteEventPayload = {
   encrypted_title?: string | null;
 };
 
+type RecipeEventPayload = {
+  note_id: string;
+};
+
+function asNote(payload: unknown): Note {
+  return payload as Note;
+}
+
 function asNoteEventPayload(payload: unknown): NoteEventPayload {
   return payload as NoteEventPayload;
+}
+
+function asRecipeEventPayload(payload: unknown): RecipeEventPayload {
+  return payload as RecipeEventPayload;
 }
 
 let ws: WebSocket | null = null;
@@ -116,54 +129,58 @@ function handleMessage(message: WebSocketMessage) {
 
   switch (message.type) {
     case 'note.updated':
-      notes.handleRemoteUpdate(message.payload);
+      notes.handleRemoteUpdate(asNote(message.payload));
       tree.loadTree();
       {
         const notePayload = asNoteEventPayload(message.payload);
         if (notePayload.content_encrypted && encryption.isEncryptionUnlocked()) {
-        try {
-          const encryptedPayload: EncryptedPayload = {
-            ciphertext: notePayload.encrypted_content,
-            metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
-          };
-          const decrypted = encryption.decryptNote(
-            notePayload.encrypted_title || null,
-            encryptedPayload
-          );
-          searchIndex.updateInIndex(
-            notePayload.id,
-            decrypted.title || notePayload.title || '',
-            decrypted.content
-          );
-        } catch {
-          /* silent - index repairs on next build */
-        }
+          if (notePayload.encrypted_content) {
+            try {
+              const encryptedPayload: EncryptedPayload = {
+                ciphertext: notePayload.encrypted_content,
+                metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
+              };
+              const decrypted = encryption.decryptNote(
+                notePayload.encrypted_title || null,
+                encryptedPayload
+              );
+              searchIndex.updateInIndex(
+                notePayload.id,
+                decrypted.title || notePayload.title || '',
+                decrypted.content
+              );
+            } catch {
+              /* silent - index repairs on next build */
+            }
+          }
         }
       }
       break;
     case 'note.created':
-      notes.handleRemoteCreate(message.payload);
+      notes.handleRemoteCreate(asNote(message.payload));
       tree.loadTree();
       {
         const notePayload = asNoteEventPayload(message.payload);
         if (notePayload.content_encrypted && encryption.isEncryptionUnlocked()) {
-        try {
-          const encryptedPayload: EncryptedPayload = {
-            ciphertext: notePayload.encrypted_content,
-            metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
-          };
-          const decrypted = encryption.decryptNote(
-            notePayload.encrypted_title || null,
-            encryptedPayload
-          );
-          searchIndex.addToIndex(
-            notePayload.id,
-            decrypted.title || notePayload.title || '',
-            decrypted.content
-          );
-        } catch {
-          /* silent */
-        }
+          if (notePayload.encrypted_content) {
+            try {
+              const encryptedPayload: EncryptedPayload = {
+                ciphertext: notePayload.encrypted_content,
+                metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
+              };
+              const decrypted = encryption.decryptNote(
+                notePayload.encrypted_title || null,
+                encryptedPayload
+              );
+              searchIndex.addToIndex(
+                notePayload.id,
+                decrypted.title || notePayload.title || '',
+                decrypted.content
+              );
+            } catch {
+              /* silent */
+            }
+          }
         }
       }
       break;
@@ -176,10 +193,10 @@ function handleMessage(message: WebSocketMessage) {
       }
       break;
     case 'recipe.metadata.updated':
-      recipes.handleRemoteMetadataUpdate(message.payload);
+      recipes.handleRemoteMetadataUpdate(asRecipeEventPayload(message.payload));
       break;
     case 'recipe.ingredients.updated':
-      recipes.handleRemoteIngredientsUpdate(message.payload);
+      recipes.handleRemoteIngredientsUpdate(asRecipeEventPayload(message.payload));
       break;
     default:
       console.log('WebSocket: Unknown message type', message.type);

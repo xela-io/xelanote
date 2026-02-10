@@ -169,6 +169,20 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 - Weitere Tests fuer kritische Backend-Services (Notes, Auth, Sharing Edge-Cases).
 - Dokumentation fuer neuere Refactorings (falls erforderlich).
 
+## Phase 5 Fortschritt (Linting & Formatierung)
+
+### Ergebnis
+- Tooling ist bereits vorhanden und konsistent konfiguriert:
+  - Go: `go vet`, `.golangci.yml`, `gofmt` via Makefile/CI
+  - Frontend: ESLint (flat), Prettier, markdownlint
+  - Hooks: `lefthook.yml`
+  - `.editorconfig` vorhanden
+- Kein zusaetzlicher Setup notwendig, daher keine Code- oder Config-Aenderungen in dieser Phase.
+
+### Optional (nach Wunsch)
+- `lint-staged`/Husky zusaetzlich zu Lefthook (falls zusaetzliche Hook-Logik gewuenscht).
+- Import-Sortierung (Go: `gofumpt`/`goimports`, Frontend: `eslint-plugin-simple-import-sort`).
+
 ## Fortschritt
 
 | Phase | Beschreibung | Commit | Status |

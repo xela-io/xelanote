@@ -507,6 +507,7 @@ frontend/src/lib/api/
 - `frontend/src/routes/+layout.svelte`: Viewport/Keyboard-Handling nach `frontend/src/lib/routes/layout/viewport.ts` ausgelagert.
 - `frontend/src/routes/+layout.svelte`: Navigation-Guard nach `frontend/src/lib/routes/layout/navigation-guards.ts` ausgelagert.
 - `frontend/src/routes/+layout.svelte`: Auth-Redirect-Guard nach `frontend/src/lib/routes/layout/auth-guards.ts` ausgelagert.
+- `frontend/src/routes/+layout.svelte`: beforeunload-Handler nach `frontend/src/lib/routes/layout/beforeunload.ts` ausgelagert.
 
 ---
 

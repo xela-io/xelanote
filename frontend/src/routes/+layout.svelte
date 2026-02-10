@@ -45,6 +45,7 @@
   import { createViewportHandlers } from '$lib/routes/layout/viewport';
   import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
   import { shouldRedirectToLogin } from '$lib/routes/layout/auth-guards';
+  import { handleBeforeUnload as handleBeforeUnloadHelper } from '$lib/routes/layout/beforeunload';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -301,13 +302,12 @@
     }
 
     // ✅ NEW: beforeunload handler for unsaved changes warning
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (notes.getIsDirty() || syncManager.getIsSyncing()) {
-        e.preventDefault();
-        e.returnValue = 'Sie haben ungespeicherte Änderungen';
-        return e.returnValue;
-      }
-    };
+    const handleBeforeUnload = (e: BeforeUnloadEvent) =>
+      handleBeforeUnloadHelper(e, {
+        isDirty: () => notes.getIsDirty(),
+        isSyncing: () => syncManager.getIsSyncing(),
+        warningMessage: 'Sie haben ungespeicherte Änderungen',
+      });
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 

@@ -516,186 +516,98 @@ func (s *Server) touchWebAuthnCredential(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
-// --- Claude API Key Management (BYOK) ---
+// --- LLM API Key Management (BYOK) ---
 
-type setClaudeAPIKeyRequest struct {
-	APIKey string `json:"api_key"`
+// apiKeyProvider configures generic API key handlers for a specific LLM provider.
+type apiKeyProvider struct {
+	name            string
+	setKey          func(int, string) error
+	deleteKey       func(int) error
+	getKeyStatus    func(int) (any, error)
+	invalidateCache func(int)
+	validationErr   error
+	invalidKeyMsg   string
 }
 
-// setClaudeAPIKey stores a Claude API key for the user (encrypted)
-func (s *Server) setClaudeAPIKey(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(r)
-	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	var req setClaudeAPIKeyRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.APIKey == "" {
-		respondError(w, http.StatusBadRequest, "api_key is required")
-		return
-	}
-
-	err := s.userService.SetClaudeAPIKey(userID, req.APIKey)
-	if err != nil {
-		switch err {
-		case service.ErrInvalidClaudeAPIKey:
-			respondError(w, http.StatusBadRequest, "invalid Claude API key format (must start with sk-ant-)")
-		default:
-			s.logger().Error("failed to set Claude API key", "error", err)
-			respondError(w, http.StatusInternalServerError, "failed to store API key")
+// handleSetAPIKey returns a handler that stores an API key for the given provider.
+func (s *Server) handleSetAPIKey(p apiKeyProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := getUserID(r)
+		if !ok {
+			respondError(w, http.StatusUnauthorized, "unauthorized")
+			return
 		}
-		return
-	}
 
-	// Invalidate cached Claude client so the new key is used
-	s.summarizeService.InvalidateClaudeClient(userID)
-
-	s.logger().Info("claude_api_key_set",
-		slog.Int("user_id", userID),
-		slog.String("event", "api_key_set"),
-		slog.String("remote_ip", getClientIPSafe(r)))
-
-	respondJSON(w, http.StatusOK, map[string]string{"message": "API key stored successfully"})
-}
-
-// deleteClaudeAPIKey removes the user's Claude API key
-func (s *Server) deleteClaudeAPIKey(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(r)
-	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	err := s.userService.DeleteClaudeAPIKey(userID)
-	if err != nil {
-		s.logger().Error("failed to delete Claude API key", "error", err)
-		respondError(w, http.StatusInternalServerError, "failed to delete API key")
-		return
-	}
-
-	// Invalidate cached Claude client
-	s.summarizeService.InvalidateClaudeClient(userID)
-
-	s.logger().Info("claude_api_key_deleted",
-		slog.Int("user_id", userID),
-		slog.String("event", "api_key_deleted"),
-		slog.String("remote_ip", getClientIPSafe(r)))
-
-	respondJSON(w, http.StatusOK, map[string]string{"message": "API key deleted successfully"})
-}
-
-// getClaudeAPIKeyStatus returns the status of the user's Claude API key (NOT the actual key)
-func (s *Server) getClaudeAPIKeyStatus(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(r)
-	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	status, err := s.userService.GetClaudeAPIKeyStatus(userID)
-	if err != nil {
-		s.logger().Error("failed to get Claude API key status", "error", err)
-		respondError(w, http.StatusInternalServerError, "failed to get API key status")
-		return
-	}
-
-	respondJSON(w, http.StatusOK, status)
-}
-
-// --- Gemini API Key Management (BYOK) ---
-
-type setGeminiAPIKeyRequest struct {
-	APIKey string `json:"api_key"`
-}
-
-// setGeminiAPIKey stores a Gemini API key for the user (encrypted)
-func (s *Server) setGeminiAPIKey(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(r)
-	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	var req setGeminiAPIKeyRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.APIKey == "" {
-		respondError(w, http.StatusBadRequest, "api_key is required")
-		return
-	}
-
-	err := s.userService.SetGeminiAPIKey(userID, req.APIKey)
-	if err != nil {
-		switch err {
-		case service.ErrInvalidGeminiAPIKey:
-			respondError(w, http.StatusBadRequest, "invalid Gemini API key format (must start with AIza)")
-		default:
-			s.logger().Error("failed to set Gemini API key", "error", err)
-			respondError(w, http.StatusInternalServerError, "failed to store API key")
+		var req struct {
+			APIKey string `json:"api_key"`
 		}
-		return
+		if err := decodeJSON(w, r, &req); err != nil {
+			respondError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.APIKey == "" {
+			respondError(w, http.StatusBadRequest, "api_key is required")
+			return
+		}
+
+		if err := p.setKey(userID, req.APIKey); err != nil {
+			if err == p.validationErr {
+				respondError(w, http.StatusBadRequest, p.invalidKeyMsg)
+			} else {
+				s.respondInternalErr(w, "failed to store "+p.name+" API key", err)
+			}
+			return
+		}
+
+		p.invalidateCache(userID)
+		s.logger().Info(p.name+"_api_key_set",
+			slog.Int("user_id", userID),
+			slog.String("event", "api_key_set"),
+			slog.String("remote_ip", getClientIPSafe(r)))
+
+		respondJSON(w, http.StatusOK, map[string]string{"message": "API key stored successfully"})
 	}
-
-	// Invalidate cached Gemini client so the new key is used
-	s.summarizeService.InvalidateGeminiClient(userID)
-
-	s.logger().Info("gemini_api_key_set",
-		slog.Int("user_id", userID),
-		slog.String("event", "api_key_set"),
-		slog.String("remote_ip", getClientIPSafe(r)))
-
-	respondJSON(w, http.StatusOK, map[string]string{"message": "API key stored successfully"})
 }
 
-// deleteGeminiAPIKey removes the user's Gemini API key
-func (s *Server) deleteGeminiAPIKey(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(r)
-	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
+// handleDeleteAPIKey returns a handler that removes the API key for the given provider.
+func (s *Server) handleDeleteAPIKey(p apiKeyProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := getUserID(r)
+		if !ok {
+			respondError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+
+		if err := p.deleteKey(userID); err != nil {
+			s.respondInternalErr(w, "failed to delete "+p.name+" API key", err)
+			return
+		}
+
+		p.invalidateCache(userID)
+		s.logger().Info(p.name+"_api_key_deleted",
+			slog.Int("user_id", userID),
+			slog.String("event", "api_key_deleted"),
+			slog.String("remote_ip", getClientIPSafe(r)))
+
+		respondJSON(w, http.StatusOK, map[string]string{"message": "API key deleted successfully"})
 	}
-
-	err := s.userService.DeleteGeminiAPIKey(userID)
-	if err != nil {
-		s.logger().Error("failed to delete Gemini API key", "error", err)
-		respondError(w, http.StatusInternalServerError, "failed to delete API key")
-		return
-	}
-
-	// Invalidate cached Gemini client
-	s.summarizeService.InvalidateGeminiClient(userID)
-
-	s.logger().Info("gemini_api_key_deleted",
-		slog.Int("user_id", userID),
-		slog.String("event", "api_key_deleted"),
-		slog.String("remote_ip", getClientIPSafe(r)))
-
-	respondJSON(w, http.StatusOK, map[string]string{"message": "API key deleted successfully"})
 }
 
-// getGeminiAPIKeyStatus returns the status of the user's Gemini API key (NOT the actual key)
-func (s *Server) getGeminiAPIKeyStatus(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(r)
-	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
+// handleGetAPIKeyStatus returns a handler that checks the API key status for the given provider.
+func (s *Server) handleGetAPIKeyStatus(p apiKeyProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := getUserID(r)
+		if !ok {
+			respondError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
 
-	status, err := s.userService.GetGeminiAPIKeyStatus(userID)
-	if err != nil {
-		s.logger().Error("failed to get Gemini API key status", "error", err)
-		respondError(w, http.StatusInternalServerError, "failed to get API key status")
-		return
-	}
+		status, err := p.getKeyStatus(userID)
+		if err != nil {
+			s.respondInternalErr(w, "failed to get "+p.name+" API key status", err)
+			return
+		}
 
-	respondJSON(w, http.StatusOK, status)
+		respondJSON(w, http.StatusOK, status)
+	}
 }

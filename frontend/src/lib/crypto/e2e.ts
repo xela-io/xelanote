@@ -61,8 +61,7 @@ export class E2EEncryption {
    * @param salt - User-specific salt (16 bytes, stored server-side)
    */
   async setupKEK(password: string, salt: Uint8Array): Promise<void> {
-    // TEMPORARY: Use synchronous key derivation (blocks UI briefly)
-    // TODO Phase 2: Fix worker bundling for deriveKeyAsync
+    // Synchronous key derivation (blocks UI briefly)
     this.kek = deriveKey(password, salt);
   }
 

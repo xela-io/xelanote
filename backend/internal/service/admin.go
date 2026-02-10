@@ -10,6 +10,12 @@ import (
 	"github.com/xela-io/xelanote/internal/db"
 )
 
+// Sentinel errors for admin operations.
+var (
+	ErrSelfDemotion = errors.New("cannot demote yourself")
+	ErrSelfDeletion = errors.New("cannot delete yourself")
+)
+
 // AdminService handles admin-related operations
 type AdminService struct {
 	db      *db.DB
@@ -82,7 +88,7 @@ func (s *AdminService) GetUserDetails(userID int) (*db.AdminUser, error) {
 func (s *AdminService) SetUserAdmin(adminID, targetUserID int, isAdmin bool) error {
 	// Prevent self-demotion
 	if adminID == targetUserID && !isAdmin {
-		return errors.New("cannot demote yourself")
+		return ErrSelfDemotion
 	}
 
 	return s.db.SetUserAdmin(targetUserID, isAdmin)
@@ -93,7 +99,7 @@ func (s *AdminService) SetUserAdmin(adminID, targetUserID int, isAdmin bool) err
 func (s *AdminService) DeleteUser(adminID, targetUserID int) error {
 	// Prevent self-deletion
 	if adminID == targetUserID {
-		return errors.New("cannot delete yourself")
+		return ErrSelfDeletion
 	}
 
 	// Delete uploads directory for the user

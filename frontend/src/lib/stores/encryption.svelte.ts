@@ -24,7 +24,6 @@ let userSalt = $state<Uint8Array | null>(null);
 
 // Security preferences
 let securityLevel = $state<SecurityLevel>('balanced');
-const _autoLockTimeout = $state(15); // minutes
 
 // Settings
 export interface EncryptionSettings {
@@ -271,7 +270,7 @@ export async function tryRestoreKEK(userId: number): Promise<boolean> {
     isUnlocked = true;
     userID = userId;
 
-    // TODO: Restart auto-lock timer (Phase 2)
+
 
     console.log('KEK restored from IndexedDB');
 
@@ -306,7 +305,7 @@ export async function updateSecurityLevel(level: SecurityLevel): Promise<void> {
       await clearPersistedKEK(userID);
     }
 
-    // TODO: Stop auto-lock timer (Phase 2)
+
 
     // FIX: Clear WebAuthn state (handled in settings component)
   } else if (isUnlocked && userID) {
@@ -315,7 +314,7 @@ export async function updateSecurityLevel(level: SecurityLevel): Promise<void> {
       const kek = e2eEncryption.exportKEK();
       await persistKEK(userID, kek, level);
 
-      // TODO: Restart auto-lock timer if needed (Phase 2)
+
     } catch (err) {
       console.error('Failed to re-persist KEK:', err);
       showError('Fehler beim Aktualisieren der Sicherheitsstufe');

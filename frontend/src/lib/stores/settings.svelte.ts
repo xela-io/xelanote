@@ -255,8 +255,7 @@ export async function changePassword(
         );
 
         // Restart auto-lock timer after KEK re-wrap
-        // TODO: Load timeout from user preferences (Phase 3)
-        const autoLockTimeout = 15; // Default: 15 minutes
+        const autoLockTimeout = 15; // minutes
         autoLock.initAutoLock(autoLockTimeout);
 
         console.log('KEK successfully re-wrapped with new password');

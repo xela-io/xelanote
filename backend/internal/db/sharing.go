@@ -417,7 +417,8 @@ func (db *DB) UpdateNoteShareRole(ownerUserID int, noteID string, sharedWithUser
 }
 
 // SearchUserByUsernameOrEmail searches for users by username or email prefix.
-// Excludes the requesting user and limits results to 10.
+// Excludes the requesting user and limits results to 5.
+// Only searches by username prefix to prevent email enumeration.
 func (db *DB) SearchUserByUsernameOrEmail(query string, excludeUserID int) ([]UserSearchResult, error) {
 	if len(query) < 3 {
 		return nil, fmt.Errorf("query must be at least 3 characters")
@@ -426,10 +427,10 @@ func (db *DB) SearchUserByUsernameOrEmail(query string, excludeUserID int) ([]Us
 	likeQuery := query + "%"
 	rows, err := db.Query(`
 		SELECT id, username FROM users
-		WHERE id != ? AND (username LIKE ? OR email LIKE ?)
+		WHERE id != ? AND username LIKE ?
 		ORDER BY username ASC
-		LIMIT 10
-	`, excludeUserID, likeQuery, likeQuery)
+		LIMIT 5
+	`, excludeUserID, likeQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search users: %w", err)
 	}

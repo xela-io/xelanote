@@ -4,8 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"errors"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // AdminStatsResponse represents the response for system stats
@@ -181,8 +184,8 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.adminService.SetUserAdmin(adminID, targetID, req.IsAdmin); err != nil {
-		if err.Error() == "cannot demote yourself" {
-			respondError(w, http.StatusForbidden, err.Error())
+		if errors.Is(err, service.ErrSelfDemotion) {
+			respondError(w, http.StatusForbidden, "cannot demote yourself")
 			return
 		}
 		if err == db.ErrNotFound {
@@ -229,8 +232,8 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.adminService.DeleteUser(adminID, targetID); err != nil {
-		if err.Error() == "cannot delete yourself" {
-			respondError(w, http.StatusForbidden, err.Error())
+		if errors.Is(err, service.ErrSelfDeletion) {
+			respondError(w, http.StatusForbidden, "cannot delete yourself")
 			return
 		}
 		if err == db.ErrNotFound {

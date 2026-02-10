@@ -476,15 +476,32 @@ func (s *Server) setupRoutes() {
 				r.Delete("/webauthn/credentials", s.deleteWebAuthnCredential)
 				r.Patch("/webauthn/credentials/touch", s.touchWebAuthnCredential)
 
-				// Claude API Key endpoints (BYOK - Bring Your Own Key)
-				r.Put("/api-key", s.setClaudeAPIKey)
-				r.Delete("/api-key", s.deleteClaudeAPIKey)
-				r.Get("/api-key/status", s.getClaudeAPIKeyStatus)
+				// LLM API Key endpoints (BYOK - Bring Your Own Key)
+				claudeKey := apiKeyProvider{
+					name:            "claude",
+					setKey:          s.userService.SetClaudeAPIKey,
+					deleteKey:       s.userService.DeleteClaudeAPIKey,
+					getKeyStatus:    func(uid int) (any, error) { return s.userService.GetClaudeAPIKeyStatus(uid) },
+					invalidateCache: s.summarizeService.InvalidateClaudeClient,
+					validationErr:   service.ErrInvalidClaudeAPIKey,
+					invalidKeyMsg:   "invalid Claude API key format (must start with sk-ant-)",
+				}
+				r.Put("/api-key", s.handleSetAPIKey(claudeKey))
+				r.Delete("/api-key", s.handleDeleteAPIKey(claudeKey))
+				r.Get("/api-key/status", s.handleGetAPIKeyStatus(claudeKey))
 
-				// Gemini API Key endpoints (BYOK - Bring Your Own Key)
-				r.Put("/gemini-api-key", s.setGeminiAPIKey)
-				r.Delete("/gemini-api-key", s.deleteGeminiAPIKey)
-				r.Get("/gemini-api-key/status", s.getGeminiAPIKeyStatus)
+				geminiKey := apiKeyProvider{
+					name:            "gemini",
+					setKey:          s.userService.SetGeminiAPIKey,
+					deleteKey:       s.userService.DeleteGeminiAPIKey,
+					getKeyStatus:    func(uid int) (any, error) { return s.userService.GetGeminiAPIKeyStatus(uid) },
+					invalidateCache: s.summarizeService.InvalidateGeminiClient,
+					validationErr:   service.ErrInvalidGeminiAPIKey,
+					invalidKeyMsg:   "invalid Gemini API key format (must start with AIza)",
+				}
+				r.Put("/gemini-api-key", s.handleSetAPIKey(geminiKey))
+				r.Delete("/gemini-api-key", s.handleDeleteAPIKey(geminiKey))
+				r.Get("/gemini-api-key/status", s.handleGetAPIKeyStatus(geminiKey))
 			})
 
 			// Search and export endpoints (with rate limiting to prevent DoS)
@@ -613,7 +630,9 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	}
 	w.WriteHeader(status)
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			slog.Error("failed to encode JSON response", slog.Any("error", err))
+		}
 	}
 }
 

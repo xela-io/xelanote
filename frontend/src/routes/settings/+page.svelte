@@ -49,6 +49,13 @@
     loadMigrationStats as loadMigrationStatsHelper,
     type MigrationStats,
   } from '$lib/routes/settings/migration-stats';
+  import {
+    confirmBackupCodesRegeneration,
+    handleTwoFactorDisableSuccess,
+    handleTwoFactorSetupSuccess,
+    loadTwoFactorStatus,
+    requestBackupCodesRegeneration,
+  } from '$lib/routes/settings/two-factor';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -296,50 +303,65 @@
   }
 
   async function load2FAStatus() {
-    isLoadingTfa = true;
-    try {
-      tfaStatus = await api.get2FAStatus();
-    } catch (err) {
-      console.error('Failed to load 2FA status:', err);
-    } finally {
-      isLoadingTfa = false;
-    }
+    await loadTwoFactorStatus({
+      getStatus: () => api.get2FAStatus(),
+      setStatus: (status) => {
+        tfaStatus = status;
+      },
+      setLoading: (value) => {
+        isLoadingTfa = value;
+      },
+    });
   }
 
   function handle2FASetupSuccess() {
-    showSetupDialog = false;
-    load2FAStatus();
+    handleTwoFactorSetupSuccess({
+      closeDialog: () => {
+        showSetupDialog = false;
+      },
+      reloadStatus: load2FAStatus,
+    });
   }
 
   function handle2FADisableSuccess() {
-    showDisableDialog = false;
-    load2FAStatus();
+    handleTwoFactorDisableSuccess({
+      closeDialog: () => {
+        showDisableDialog = false;
+      },
+      reloadStatus: load2FAStatus,
+    });
   }
 
   // SEC-009: Show password prompt before regenerating backup codes
   function handleRegenerateBackupCodes() {
-    showRegeneratePasswordPrompt = true;
+    requestBackupCodesRegeneration({
+      openPrompt: () => {
+        showRegeneratePasswordPrompt = true;
+      },
+    });
   }
 
   async function confirmRegenerateBackupCodes() {
-    if (!regeneratePassword) {
-      return;
-    }
-
-    isRegeneratingCodes = true;
-    try {
-      const result = await api.regenerateBackupCodes(regeneratePassword);
-      newBackupCodes = result.backup_codes;
-      showBackupCodesDialog = true;
-      showRegeneratePasswordPrompt = false;
-      regeneratePassword = '';
-      // Reload status to update unused_backup_codes count
-      load2FAStatus();
-    } catch (err) {
-      console.error('Failed to regenerate backup codes:', err);
-    } finally {
-      isRegeneratingCodes = false;
-    }
+    await confirmBackupCodesRegeneration({
+      password: regeneratePassword,
+      setIsRegenerating: (value) => {
+        isRegeneratingCodes = value;
+      },
+      regenerate: (password) => api.regenerateBackupCodes(password),
+      setNewBackupCodes: (codes) => {
+        newBackupCodes = codes;
+      },
+      setShowBackupCodesDialog: (value) => {
+        showBackupCodesDialog = value;
+      },
+      setShowPrompt: (value) => {
+        showRegeneratePasswordPrompt = value;
+      },
+      setPassword: (value) => {
+        regeneratePassword = value;
+      },
+      reloadStatus: load2FAStatus,
+    });
   }
 
   function formatDate(dateStr: string): string {

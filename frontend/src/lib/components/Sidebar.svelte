@@ -21,7 +21,7 @@
   import { swipe } from '$lib/actions/swipe';
   import type { DropPosition,TouchDragData } from '$lib/actions/touchdrag';
   import { touchdrag } from '$lib/actions/touchdrag';
-  import { getConfig } from '$lib/api';
+  import { initSidebarOnMount } from '$lib/components/sidebar/sidebar-init';
   import {
     handleSidebarResizeDblClick,
     handleSidebarResizeEnd,
@@ -148,33 +148,20 @@
   const recipeEnabled = $derived(features.getRecipeFeatureEnabled());
 
   // Restore expanded state on mount
-  onMount(() => {
-    tree.loadExpandedStateFromStorage();
-
-    // Load trash count and shared items (notes + folders)
-    trash.loadTrashCount();
-    sharing.loadAllShared();
-
-    // Load journal feature state
-    features.loadJournalFeature();
-
-    // Load recipe feature state
-    features.loadRecipeFeature();
-
-    // Load app version from config
-    getConfig()
-      .then((config) => {
-        appVersion = config.version || '';
-      })
-      .catch(() => {});
-
-    // Auto-refresh trash count every 30 seconds
-    const interval = setInterval(() => {
-      trash.loadTrashCount();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  });
+  onMount(() =>
+    initSidebarOnMount({
+      loadExpandedState: tree.loadExpandedStateFromStorage,
+      loadTrashCount: trash.loadTrashCount,
+      loadShared: sharing.loadAllShared,
+      loadJournalFeature: features.loadJournalFeature,
+      loadRecipeFeature: features.loadRecipeFeature,
+      setAppVersion: (version) => {
+        appVersion = version;
+      },
+      startInterval: (handler, ms) => window.setInterval(handler, ms),
+      clearInterval: (id) => window.clearInterval(id),
+    })
+  );
 
   // Load tree when authenticated (reactive)
   $effect(() => {

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { IconProps } from 'lucide-svelte';
   import type { ComponentType, Snippet } from 'svelte';
   import type { HTMLButtonAttributes } from 'svelte/elements';
 

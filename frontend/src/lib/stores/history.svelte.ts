@@ -194,7 +194,11 @@ export function loadHistory(): void {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return;
 
-    const historyData = JSON.parse(stored);
+    const historyData = parseHistoryData(stored);
+    if (!historyData) {
+      clearHistory();
+      return;
+    }
 
     // Deserialize commands
     undoStack = historyData.undo.map((data: CommandData) => deserializeCommand(data));
@@ -203,6 +207,26 @@ export function loadHistory(): void {
     console.error('Failed to load history from localStorage:', error);
     clearHistory();
   }
+}
+
+type StoredHistoryData = { undo: CommandData[]; redo: CommandData[] };
+
+function parseHistoryData(raw: string): StoredHistoryData | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const data = parsed as { undo?: unknown; redo?: unknown };
+  if (!Array.isArray(data.undo) || !Array.isArray(data.redo)) return null;
+
+  return {
+    undo: data.undo as CommandData[],
+    redo: data.redo as CommandData[],
+  };
 }
 
 /**
@@ -220,8 +244,10 @@ function deserializeCommand(data: CommandData): Command {
       return new MoveFolderCommand(data.data);
     default:
       // Exhaustive check
-      const _exhaustive: never = data;
-      throw new Error(`Unknown command type: ${String(_exhaustive)}`);
+      {
+        const _exhaustive: never = data;
+        throw new Error(`Unknown command type: ${String(_exhaustive)}`);
+      }
   }
 }
 

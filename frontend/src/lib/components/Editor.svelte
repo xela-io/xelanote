@@ -46,10 +46,10 @@
   import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
   import ColorPickerPopover from './ColorPickerPopover.svelte';
+  import EditorToolbar from './editor/EditorToolbar.svelte';
   import EditorMoreMenu from './EditorMoreMenu.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
   import LinkSuggestionsPanel from './LinkSuggestionsPanel.svelte';
-  import EditorToolbar from './editor/EditorToolbar.svelte';
   import ShareDialog from './ShareDialog.svelte';
   import SummaryPanel from './SummaryPanel.svelte';
   import TableOfContents from './TableOfContents.svelte';

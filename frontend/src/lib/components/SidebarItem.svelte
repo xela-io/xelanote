@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { IconProps } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
 
   import { animationDurations, easing } from '$lib/design/tokens';

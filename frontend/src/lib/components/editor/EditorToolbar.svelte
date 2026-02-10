@@ -22,11 +22,11 @@
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import type { Note } from '$lib/api';
   import { FEATURE_FLAGS } from '$lib/config';
 
-  import type { Note } from '$lib/api';
-  import SpellCheckToggle from '../SpellCheckToggle.svelte';
   import Breadcrumb from '../Breadcrumb.svelte';
+  import SpellCheckToggle from '../SpellCheckToggle.svelte';
 
   type EditorMode = 'edit' | 'split' | 'preview';
 

@@ -468,6 +468,7 @@ frontend/src/lib/api/
 **Fortschritt:**
 - `frontend/src/lib/components/Editor.svelte`: Toolbar in `frontend/src/lib/components/editor/EditorToolbar.svelte` ausgelagert (erster Schnitt).
 - `frontend/src/lib/components/Editor.svelte`: Task-Sort/Toggle-Logik nach `frontend/src/lib/editor/task-toggle.ts` ausgelagert.
+- `frontend/src/lib/components/Editor.svelte`: Image-Upload/Paste/Drop-Logik nach `frontend/src/lib/editor/image-upload.ts` ausgelagert.
 
 ---
 

@@ -9,7 +9,6 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import type { AIAction, Tag } from '$lib/api';
-  import * as api from '$lib/api';
   import { ApiError } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
@@ -22,6 +21,12 @@
     updateFocusMode,
   } from '$lib/editor/codemirror';
   import { clearSearch,sanitizeSearchQuery } from '$lib/editor/find-replace';
+  import {
+    handleEditorDragOver,
+    handleEditorDrop,
+    handleEditorPaste,
+    uploadImages,
+  } from '$lib/editor/image-upload';
   import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
   import { extractHeadings,renderMarkdown } from '$lib/editor/markdown';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
@@ -729,98 +734,36 @@
     notes.scheduleAutoSave();
   }
 
-  // Image Upload: Drag & Drop
-  function handleEditorDrop(e: DragEvent) {
-    const files = Array.from(e.dataTransfer?.files || []);
-    const imageFiles = files.filter((f) => f.type.startsWith('image/'));
-
-    if (imageFiles.length > 0) {
-      e.preventDefault();
-      uploadImages(imageFiles);
-    }
-  }
-
-  function handleEditorDragOver(e: DragEvent) {
-    // Check if dragging files (not notes/folders)
-    const types = e.dataTransfer?.types || [];
-    if (types.includes('Files')) {
-      e.preventDefault();
-      e.dataTransfer!.dropEffect = 'copy';
-    }
-  }
-
-  // Image Upload: Paste from Clipboard
-  function handleEditorPaste(e: ClipboardEvent) {
-    const items = Array.from(e.clipboardData?.items || []);
-    const imageItems = items.filter((item) => item.type.startsWith('image/'));
-
-    if (imageItems.length > 0) {
-      e.preventDefault();
-      const files = imageItems.map((item) => item.getAsFile()).filter(Boolean) as File[];
-      uploadImages(files);
-    }
-  }
-
   // Upload Logic
   let uploading = $state(false);
 
-  async function uploadImages(files: File[]) {
-    uploading = true;
-
-    for (const file of files) {
-      try {
-        const { url } = await api.uploadImage(file);
-
-        // Insert markdown at cursor
-        const markdown = `\n![${file.name}](${url})\n`;
-        const inserted = insertTextAtCursor(markdown);
-
-        if (inserted) {
-          toast.success($_('component.editor.upload_success', { values: { filename: file.name } }));
+  async function uploadImagesFromEditor(files: File[]) {
+    await uploadImages(files, {
+      editorView,
+      onStatus: (value) => {
+        uploading = value;
+      },
+      onSuccess: (_event, ctx) => {
+        toast.success($_('component.editor.upload_success', { values: { filename: ctx?.filename } }));
+      },
+      onWarning: (event, ctx) => {
+        if (event === 'copied_to_clipboard') {
+          toast.warning($_('component.editor.upload_clipboard'));
         } else {
-          // Fallback: Copy to clipboard if editor not ready
-          try {
-            await navigator.clipboard.writeText(markdown);
-            toast.warning($_('component.editor.upload_clipboard'));
-          } catch {
-            toast.warning($_('component.editor.upload_fallback', { values: { url } }));
-          }
+          toast.warning($_('component.editor.upload_fallback', { values: { url: ctx?.url } }));
         }
-      } catch (err: unknown) {
-        console.error('Upload failed:', err);
+      },
+      onError: (_event, ctx) => {
         toast.error(
           $_('component.editor.status.error_upload', {
             values: {
-              filename: file.name,
-              error: err instanceof Error ? err.message : String(err),
+              filename: ctx?.filename,
+              error: ctx?.error,
             },
           })
         );
-      }
-    }
-
-    uploading = false;
-  }
-
-  function insertTextAtCursor(text: string): boolean {
-    if (!editorView) {
-      console.warn('Editor not ready, cannot insert text');
-      return false;
-    }
-
-    const selection = editorView.state.selection.main;
-    editorView.dispatch({
-      changes: {
-        from: selection.from,
-        to: selection.to,
-        insert: text,
       },
-      selection: { anchor: selection.from + text.length },
     });
-
-    // Focus editor
-    editorView.focus();
-    return true;
   }
 
   function handleColorSelect(color: string) {
@@ -864,7 +807,7 @@
   function handleFileInputChange(e: Event) {
     const files = Array.from((e.target as HTMLInputElement).files || []);
     if (files.length > 0) {
-      uploadImages(files);
+      uploadImagesFromEditor(files);
     }
     // Reset input
     (e.target as HTMLInputElement).value = '';
@@ -1210,9 +1153,9 @@
             role="region"
             aria-label={$_('component.editor.editor_area')}
             class:flex-1={ui.getEditorMode() !== 'split'}
-            ondrop={handleEditorDrop}
+            ondrop={(e) => handleEditorDrop(e, uploadImagesFromEditor)}
             ondragover={handleEditorDragOver}
-            onpaste={handleEditorPaste}
+            onpaste={(e) => handleEditorPaste(e, uploadImagesFromEditor)}
             style={ui.getEditorMode() === 'split'
               ? `width: ${ui.getSplitPosition()}%; min-height: 400px;`
               : 'min-height: 400px;'}

@@ -8,6 +8,11 @@ import { extractDueDatesDetailed } from '$lib/editor/markdown';
 import { hasPendingForNote } from '$lib/offline/offline-queue';
 import { createNotesAccessors } from '$lib/stores/notes/accessors';
 import {
+  cancelAutoSave as cancelAutoSaveHelper,
+  scheduleAutoSave as scheduleAutoSaveHelper,
+  triggerAutoSave as triggerAutoSaveHelper,
+} from '$lib/stores/notes/auto-save';
+import {
   assertOnlineForParanoidMode,
   extractUniqueWikilinks,
 } from '$lib/stores/notes/helpers';
@@ -982,51 +987,37 @@ export async function moveNote(id: string, folderPath: string) {
  * This is exported so the Editor component can call it
  */
 export async function triggerAutoSave() {
-  const noteIdAtStart = currentNote?.id;
-  if (!currentNote || !isDirty || !noteIdAtStart) return;
-
-  autoSaveStatus = 'saving';
-  autoSaveError = null;
-
-  try {
-    // Race condition protection: verify note didn't change during debounce
-    if (currentNote?.id !== noteIdAtStart) {
-      console.log('Auto-save cancelled: note changed during debounce');
-      autoSaveStatus = 'idle';
-      return;
-    }
-
-    await saveNote(); // Reuse existing save function (sets autoSaveStatus)
-    lastAutoSave = new SvelteDate();
-  } catch (e) {
-    // Handle 409 Conflict (Version Mismatch)
-    if (e instanceof ApiError && e.status === 409) {
-      autoSaveStatus = 'error';
-      autoSaveError = 'Konflikt erkannt. Notiz wurde extern geändert.';
-
-      // Fetch remote version for conflict resolution
-      if (currentNote) {
-        api
-          .getNote(currentNote.id)
-          .then((_latest) => {
-            toast.warning('Auto-Save Konflikt. Notiz wurde remote geändert.', {
-              label: 'Neu laden',
-              handler: () => {
-                if (currentNote) loadNote(currentNote.id);
-              },
-            });
-          })
-          .catch((err) => {
-            console.error('Failed to fetch remote version:', err);
-          });
+  await triggerAutoSaveHelper({
+    getCurrentNoteId: () => currentNote?.id ?? null,
+    isDirty: () => isDirty,
+    setStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setError: (value) => {
+      autoSaveError = value;
+    },
+    setLastAutoSave: (value) => {
+      lastAutoSave = value;
+    },
+    saveNote: () => saveNote(),
+    isConflictError: (err) => err instanceof ApiError && err.status === 409,
+    handleConflict: async () => {
+      if (!currentNote) return;
+      try {
+        await api.getNote(currentNote.id);
+        toast.warning('Auto-Save Konflikt. Notiz wurde remote geändert.', {
+          label: 'Neu laden',
+          handler: () => {
+            if (currentNote) loadNote(currentNote.id);
+          },
+        });
+      } catch (err) {
+        console.error('Failed to fetch remote version:', err);
       }
-      // Don't completely disable auto-save, just pause on this error
-    } else {
-      autoSaveStatus = 'error';
-      autoSaveError = e instanceof Error ? e.message : 'Auto-save failed';
-    }
-    console.error('Auto-save failed:', e);
-  }
+    },
+    conflictMessage: 'Konflikt erkannt. Notiz wurde extern geändert.',
+    defaultError: 'Auto-save failed',
+  });
 }
 
 /**
@@ -1034,32 +1025,39 @@ export async function triggerAutoSave() {
  * Called by components when content changes
  */
 export function scheduleAutoSave() {
-  if (!autosave.getAutoSaveEnabled() || !currentNote || !isDirty || isLoading) {
-    return;
-  }
-
-  autoSaveStatus = 'pending';
-
-  // Cancel existing timeout (debounce)
-  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-
-  // Schedule auto-save after delay
-  autoSaveTimeout = setTimeout(() => {
-    triggerAutoSave();
-  }, autosave.getAutoSaveDelay());
+  scheduleAutoSaveHelper({
+    isEnabled: () => autosave.getAutoSaveEnabled(),
+    isDirty: () => isDirty,
+    isLoading: () => isLoading,
+    getCurrentNoteId: () => currentNote?.id ?? null,
+    setStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    getTimeout: () => autoSaveTimeout,
+    setTimeoutHandle: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    getDelay: () => autosave.getAutoSaveDelay(),
+    trigger: () => {
+      void triggerAutoSave();
+    },
+  });
 }
 
 /**
  * Cancel any pending auto-save
  */
 export function cancelAutoSave() {
-  if (autoSaveTimeout) {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = null;
-  }
-  if (autoSaveStatus === 'pending') {
-    autoSaveStatus = 'idle';
-  }
+  cancelAutoSaveHelper({
+    getTimeout: () => autoSaveTimeout,
+    setTimeoutHandle: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    getStatus: () => autoSaveStatus,
+    setStatus: (status) => {
+      autoSaveStatus = status;
+    },
+  });
 }
 
 // ============================================================================

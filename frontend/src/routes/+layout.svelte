@@ -41,6 +41,7 @@
   import * as ui from '$lib/stores/ui.svelte';
   import * as websocket from '$lib/stores/websocket.svelte';
   import { registerPwaUpdates } from '$lib/routes/layout/pwa';
+  import { createLayoutInteractions } from '$lib/routes/layout/interactions';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -309,65 +310,27 @@
     // Touch fallback for browsers where focusin doesn't fire reliably
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
 
-    function handleKeydown(e: KeyboardEvent) {
-      if (!auth.isAuthenticated()) return;
-
-      // Ctrl+P: Quick Switcher
-      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-        e.preventDefault();
-        ui.toggleQuickSwitcher();
-      }
-
-      // Ctrl+G: Graph (only if feature enabled)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'g' && features.getGraphFeatureEnabled()) {
-        e.preventDefault();
-        goto('/graph');
-      }
-
-      // Ctrl+/: Markdown Guide Dropdown
-      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-        e.preventDefault();
-        ui.toggleMarkdownGuideDropdown();
-      }
-
-      // Ctrl+S: Save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        notes.saveNote();
-      }
-
-      // Ctrl+Z: Undo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        if (history.history.canUndo) {
-          e.preventDefault();
-          history.undo();
-        }
-      }
-
-      // Ctrl+Shift+Z or Ctrl+Y: Redo
-      if (
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
-        ((e.ctrlKey || e.metaKey) && e.key === 'y')
-      ) {
-        if (history.history.canRedo) {
-          e.preventDefault();
-          history.redo();
-        }
-      }
-    }
-
-    function handleActivity() {
-      autoLock.recordActivity();
-      tokenRefresh.recordActivity();
-
-      // FIX: Show unlock modal immediately if encryption was locked while user was away
-      // This prevents data loss when user returns and starts typing before realizing
-      // encryption is locked (the changes would be lost after unlock + reload)
-      const currentNote = notes.getCurrentNote();
-      if (currentNote?.content_encrypted && !encryption.isEncryptionUnlocked()) {
-        showUnlockModal = true;
-      }
-    }
+    const { handleKeydown, handleActivity } = createLayoutInteractions({
+      isAuthenticated: () => auth.isAuthenticated(),
+      toggleQuickSwitcher: () => ui.toggleQuickSwitcher(),
+      toggleMarkdownGuideDropdown: () => ui.toggleMarkdownGuideDropdown(),
+      canUndo: () => history.history.canUndo,
+      canRedo: () => history.history.canRedo,
+      undo: () => history.undo(),
+      redo: () => history.redo(),
+      saveNote: () => notes.saveNote(),
+      goto,
+      graphEnabled: () => features.getGraphFeatureEnabled(),
+      recordActivity: () => {
+        autoLock.recordActivity();
+        tokenRefresh.recordActivity();
+      },
+      setShowUnlockModal: (value) => {
+        showUnlockModal = value;
+      },
+      getCurrentNote: () => notes.getCurrentNote(),
+      isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+    });
 
     function registerActivityListeners() {
       if (activityListenersRegistered) return;

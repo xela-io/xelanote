@@ -185,9 +185,11 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
   - Abdeckung: Unresolved-Links Cleanup, Backlinks ignorieren geloeschte Source-Notes, User-Scoped Backlinks.
   - Hinweis: Tests laufen mit `-tags "fts5"` (SQLite FTS5 erforderlich).
 
+- **Dokumentation fuer neuere Refactorings**
+  - Modul-Snapshot + How-To in `REFACTORING_REPORT.md` sowie API-Struktur in `README.md`/`docs/development.md`.
+
 ### Offen
 - Weitere Tests fuer kritische Backend-Services (Notes) — optional: weitere Backlink-Edge-Cases.
-- Dokumentation fuer neuere Refactorings (falls erforderlich).
 
 ## Phase 5 Fortschritt (Linting & Formatierung)
 

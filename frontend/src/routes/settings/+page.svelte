@@ -70,6 +70,11 @@
     handleEmailSubmit as handleEmailSubmitHelper,
     type EmailFormState,
   } from '$lib/routes/settings/account-forms';
+  import {
+    handleExport as handleExportHelper,
+    handleImportClick as handleImportClickHelper,
+    handleImportFiles as handleImportFilesHelper,
+  } from '$lib/routes/settings/import-export';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -556,78 +561,43 @@
 
   // Import/Export handlers
   function handleExport() {
-    window.open(getExportUrl(), '_blank');
+    handleExportHelper({
+      openWindow: (url, target) => window.open(url, target),
+      getExportUrl: () => getExportUrl(),
+    });
   }
 
   function handleImportClick() {
-    importInput.click();
+    handleImportClickHelper({
+      triggerFileDialog: () => importInput.click(),
+    });
   }
 
   async function handleImportFiles(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const files = Array.from(input.files || []);
-    const mdFiles = files.filter((f) => f.name.endsWith('.md'));
-
-    if (mdFiles.length === 0) {
-      await dialog.alert({
-        title: $_('common.note'),
-        message: $_('page.settings.data.no_md_files_selected'),
-        variant: 'warning',
-      });
-      return;
-    }
-
-    importing = true;
-
-    try {
-      const importFiles = await Promise.all(
-        mdFiles.map(async (file) => ({
-          path: (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name,
-          filename: file.name,
-          content: await file.text(),
-        }))
-      );
-
-      const result = await api.importMarkdown(importFiles, true);
-
-      let message = $_('page.settings.data.import_completed') + '\n\n';
-      message +=
-        $_('page.settings.data.notes_imported', { values: { count: result.imported } }) + '\n';
-      message +=
-        $_('page.settings.data.folders_created', { values: { count: result.folders_created } }) +
-        '\n';
-
-      if (result.skipped > 0) {
-        message +=
-          $_('page.settings.data.skipped_notes', { values: { count: result.skipped } }) + '\n';
-      }
-
-      if (result.failed > 0) {
-        message +=
-          $_('page.settings.data.failed_notes', { values: { count: result.failed } }) + '\n';
-        if (result.errors) {
-          message += `\n${$_('page.settings.data.errors')}:\n${result.errors.slice(0, 5).join('\n')}`;
-        }
-      }
-
-      await dialog.alert({
-        title: $_('page.settings.data.import_completed'),
-        message,
-        variant: result.failed > 0 ? 'warning' : 'default',
-      });
-    } catch (err: unknown) {
-      console.error('Import failed:', err);
-      await dialog.alert({
-        title: $_('common.error'),
-        message: $_('page.settings.data.import_failed', {
-          values: { error: err instanceof Error ? err.message : String(err) },
-        }),
-        variant: 'danger',
-      });
-    } finally {
-      importing = false;
-      input.value = '';
-    }
+    await handleImportFilesHelper(e, {
+      setImporting: (value) => {
+        importing = value;
+      },
+      importMarkdown: (files, merge) => api.importMarkdown(files, merge),
+      alert: (options) => dialog.alert(options),
+      messages: {
+        noteTitle: $_('common.note'),
+        errorTitle: $_('common.error'),
+        noMdSelected: $_('page.settings.data.no_md_files_selected'),
+        importCompleted: $_('page.settings.data.import_completed'),
+        notesImported: (count) =>
+          $_('page.settings.data.notes_imported', { values: { count } }),
+        foldersCreated: (count) =>
+          $_('page.settings.data.folders_created', { values: { count } }),
+        skippedNotes: (count) =>
+          $_('page.settings.data.skipped_notes', { values: { count } }),
+        failedNotes: (count) =>
+          $_('page.settings.data.failed_notes', { values: { count } }),
+        errorsLabel: $_('page.settings.data.errors'),
+        importFailed: (error) =>
+          $_('page.settings.data.import_failed', { values: { error } }),
+      },
+    });
   }
 
   function handleResetServerUrl() {

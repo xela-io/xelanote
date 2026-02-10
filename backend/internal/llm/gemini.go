@@ -204,7 +204,10 @@ func (c *GeminiClient) Generate(ctx context.Context, prompt string, maxTokens in
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to read error response: %w", err)
+		}
 
 		// Try to parse as Gemini error response
 		var errResp GeminiErrorResponse
@@ -312,7 +315,10 @@ func (c *GeminiClient) GenerateWithImage(ctx context.Context, prompt string, ima
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to read error response: %w", err)
+		}
 
 		var errResp GeminiErrorResponse
 		if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {

@@ -186,7 +186,10 @@ func (c *ClaudeClient) Generate(ctx context.Context, prompt string, maxTokens in
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to read error response: %w", err)
+		}
 
 		// Try to parse as Claude error response
 		var errResp ClaudeErrorResponse
@@ -271,7 +274,10 @@ func (c *ClaudeClient) GenerateWithImage(ctx context.Context, prompt string, ima
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to read error response: %w", err)
+		}
 
 		var errResp ClaudeErrorResponse
 		if json.Unmarshal(body, &errResp) == nil && errResp.Error.Message != "" {

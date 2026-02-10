@@ -22,6 +22,7 @@
   import type { DropPosition, TouchDragData } from '$lib/actions/touchdrag';
   import { touchdrag } from '$lib/actions/touchdrag';
   import { initSidebarOnMount } from '$lib/components/sidebar/sidebar-init';
+  import { handleSidebarEscape } from '$lib/components/sidebar/sidebar-escape';
   import {
     handleDropZoneDragLeave,
     handleDropZoneDragOver,
@@ -298,14 +299,12 @@
 <!-- Escape handler for mobile drawer -->
 <svelte:window
   onkeydown={(e) => {
-    if (
-      e.key === 'Escape' &&
-      ui.getIsMobile() &&
-      ui.getSidebarOpen() &&
-      !ui.getQuickSwitcherOpen()
-    ) {
-      ui.setSidebarOpen(false);
-    }
+    handleSidebarEscape(e, {
+      isMobile: ui.getIsMobile,
+      isOpen: ui.getSidebarOpen,
+      isQuickSwitcherOpen: ui.getQuickSwitcherOpen,
+      close: () => ui.setSidebarOpen(false),
+    });
   }}
 />
 

@@ -483,6 +483,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/components/Sidebar.svelte`: onMount-Init nach `frontend/src/lib/components/sidebar/sidebar-init.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Drag/Drop + Touch-Reorder nach `frontend/src/lib/components/sidebar/sidebar-dnd.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Create/Logout Actions nach `frontend/src/lib/components/sidebar/sidebar-actions.ts` ausgelagert.
+- `frontend/src/lib/components/Sidebar.svelte`: Escape-Handler nach `frontend/src/lib/components/sidebar/sidebar-escape.ts` ausgelagert.
 
 ---
 

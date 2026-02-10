@@ -165,8 +165,12 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 - **CHANGELOG aktualisiert**
   - `CHANGELOG.md` Eintrag fuer neue Tests.
 
+- **Backend-Service Tests: Sharing-Validierung**
+  - `backend/internal/service/sharing_test.go`
+  - Abdeckung: Self-Share, Non-Owner, Encrypted Note/Folder, Folder mit verschluesselten Notizen, Duplicate.
+
 ### Offen
-- Weitere Tests fuer kritische Backend-Services (Notes, Auth, Sharing Edge-Cases).
+- Weitere Tests fuer kritische Backend-Services (Notes, Auth).
 - Dokumentation fuer neuere Refactorings (falls erforderlich).
 
 ## Phase 5 Fortschritt (Linting & Formatierung)

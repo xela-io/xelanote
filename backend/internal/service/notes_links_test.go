@@ -121,6 +121,43 @@ func TestUpdateLinksFromClient_Deduplication(t *testing.T) {
 	}
 }
 
+func TestUpdateLinksFromClient_UnresolvedCleanup(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "user")
+
+	// Create source note
+	source, err := service.CreateNote(user.ID, "Source", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create source: %v", err)
+	}
+
+	// Add unresolved links
+	linkTitles := []string{"Ghost Note", "Another Ghost"}
+	if err := service.UpdateLinksFromClient(user.ID, source.ID, linkTitles); err != nil {
+		t.Fatalf("UpdateLinksFromClient failed: %v", err)
+	}
+
+	// Remove all links from client
+	if err := service.UpdateLinksFromClient(user.ID, source.ID, []string{}); err != nil {
+		t.Fatalf("UpdateLinksFromClient cleanup failed: %v", err)
+	}
+
+	// Create target note; should not resolve since unresolved links were cleared
+	target, err := service.CreateNote(user.ID, "Ghost Note", "now exists", "/")
+	if err != nil {
+		t.Fatalf("failed to create target: %v", err)
+	}
+
+	backlinks, err := service.GetBacklinks(user.ID, target.ID)
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	if len(backlinks) != 0 {
+		t.Fatalf("expected 0 backlinks after unresolved cleanup, got %d", len(backlinks))
+	}
+}
+
 func TestUpdateLinksFromClient_EmptyTitlesSkipped(t *testing.T) {
 	database := setupTestDB(t)
 	service := NewNoteService(database)

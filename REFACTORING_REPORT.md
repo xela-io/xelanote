@@ -66,14 +66,14 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 #### 🟡 WICHTIG
 
 **W-1: God-Files / God-Components (Wartbarkeit, Testbarkeit)**
-- Backend: `backend/internal/api/notes_*.go`, `backend/internal/db/notes_*.go`, `backend/cmd/server/main.go`, `backend/internal/api/api.go`
+- Backend: `backend/internal/api/notes_*.go`, `backend/internal/db/notes_*.go`, `backend/cmd/server/*.go`, `backend/internal/api/api.go`
 - Frontend: `frontend/src/lib/api.ts`, `frontend/src/lib/components/Editor.svelte`, `frontend/src/lib/components/Sidebar.svelte`, `frontend/src/routes/settings/+page.svelte`, `frontend/src/lib/stores/notes.svelte.ts`
 
 **W-2: Fehlerbehandlung wird in produktivem Code teilweise ignoriert**
 Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 **W-3: Harte Konfigurationen im Code statt Konfiguration/Flags**
-- `backend/cmd/server/main.go`: Worker-Count (4), Versions-Pruning (100)
+- `backend/cmd/server/server_jobs.go`: Worker-Count (4), Versions-Pruning (100)
 - `backend/internal/api/api.go`: Rate-Limit Defaults hart codiert
 - `frontend/src/lib/config.ts`: `DEFAULT_SERVER` = `https://xelanote.com` (Desktop Default)
 
@@ -436,9 +436,21 @@ frontend/src/lib/api/
 | `backend/internal/db/notes_ai.go` | neu | AI-Flags + Titel-Query |
 | `backend/internal/db/notes_color.go` | neu | Farb-Update |
 | `backend/internal/db/notes_misc.go` | neu | ReorderNotes |
-| `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |
+| `backend/cmd/server/main.go` | Entry | Flag-Parsing + Orchestrierung |
+| `backend/cmd/server/server_config.go` | neu | Env/Paths/JWT/Origins |
+| `backend/cmd/server/server_logger.go` | neu | Logger |
+| `backend/cmd/server/server_services.go` | neu | Core Services + Maintenance |
+| `backend/cmd/server/server_llm.go` | neu | LLM Router + Summarize |
+| `backend/cmd/server/server_jobs.go` | neu | JobManager + Version-Pruning |
+| `backend/cmd/server/server_error_report.go` | neu | Forgejo Error Reports |
+| `backend/cmd/server/server_websocket.go` | neu | WebSocket Manager |
+| `backend/cmd/server/server_webauthn.go` | neu | FIDO2/WebAuthn |
+| `backend/cmd/server/server_turnstile.go` | neu | Turnstile |
+| `backend/cmd/server/server_static.go` | neu | Static SPA + Cache Headers |
+| `backend/cmd/server/server_pprof.go` | neu | pprof Server |
+| `backend/cmd/server/server_shutdown.go` | neu | Graceful Shutdown |
 
-**Status:** NoteService + Note-DB aufgeteilt. Offene God-Files: `backend/cmd/server/main.go`.
+**Status:** NoteService + Note-DB + Server-Init aufgeteilt. Offene God-Files: `backend/internal/api/api.go`.
 
 ---
 
@@ -570,7 +582,7 @@ frontend/src/lib/api/
 
 #### W-16: Debug-Logging im Produktionscode -- ERLEDIGT (Phase 2, `7856b6b`)
 
-**Datei:** `backend/cmd/server/main.go:252-270`
+**Datei:** `backend/cmd/server/server_static.go`
 
 **Fix:** Debug-Logging (`"Checking embedded files..."`, `"Root entries: X"`) entfernt.
 

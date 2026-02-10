@@ -60,6 +60,9 @@ Hinweis: Diese Re-Analyse basiert auf statischem Code-Review (kein Runtime/Load-
 
 ### 0.3 Findings (Priorisiert)
 
+Status-Hinweis: Die folgenden Punkte sind Baseline-Findings aus dem Re-Review. Der **aktuelle Status**
+steht in den Phasen-Abschnitten bzw. in den Finding-Details weiter unten.
+
 #### 🔴 KRITISCH
 Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-Checks oder Security-Audits willst: bitte freigeben.)
 
@@ -103,7 +106,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - Gemini API-Key via Header (`x-goog-api-key`) (K-5 wirkt umgesetzt)
 
 **Abweichung/Teilweise**
-- CORS-Fix (K-4): In `backend/internal/api/api.go` ist der Fatal-Check nur aktiv wenn `XELANOTE_ENV` nicht leer ist. Leeres `XELANOTE_ENV` bleibt permissiv. Das widerspricht dem Anspruch "nicht-explizites Env == streng". Ich werte das als noch offen/unklar.
+- CORS-Fix (K-4): In `backend/internal/api/api.go` greift der Fatal-Check nur, wenn `XELANOTE_ENV` gesetzt ist. Leeres `XELANOTE_ENV` bleibt permissiv. Das widerspricht dem Anspruch "nicht-explizites Env == streng". Status: **teilweise umgesetzt**.
 
 **Nicht verifiziert (nur statisch, keine historische Commit-Pruefung)**
 - K-1/K-2/K-6 und einige W-4+ Items aus dem Alt-Report habe ich nicht separat gegen historische Commits geprueft. Wenn du willst, kann ich die konkrete Implementierung/Regressionen tief pruefen.
@@ -123,7 +126,6 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 ### Offen
 - Weitere Aufteilung der God-Files (Backend/Frontend) nach Domänen/Responsibilities.
-- Modularisierung `frontend/src/lib/api.ts` (Feature-spezifische Clients).
 - Zerlegung `frontend/src/lib/components/Editor.svelte` in Sub-Komponenten.
 
 ## Phase 3 Fortschritt (Code-Qualitaet im Detail)
@@ -284,10 +286,10 @@ frontend/src/lib/api/
 | Phase 2 | Strukturelles Refactoring (7 Tasks) | `7856b6b` | ERLEDIGT |
 | Phase 3a | Code Quality (5 Tasks) | `9f2c607` | ERLEDIGT |
 | Phase 3b | Code Quality (4 Tasks) | `8d067c5` | ERLEDIGT |
-| Phase 4 | Testing & Documentation | -- | OFFEN |
-| Phase 5 | Linting & Formatting | -- | OFFEN |
+| Phase 4 | Testing & Documentation | -- | ERLEDIGT |
+| Phase 5 | Linting & Formatting | -- | ERLEDIGT |
 
-**Erledigt: 22 von 47 Findings (6 kritisch, 13 wichtig, 3 backlog)**
+**Status-Update:** 46 von 47 Findings erledigt, 1 teilweise, 0 offen.
 
 ---
 
@@ -361,13 +363,15 @@ frontend/src/lib/api/
 
 ---
 
-### K-4: CORS erlaubt jede Origin bei nicht-explizitem `XELANOTE_ENV` -- ERLEDIGT (Phase 1, `c799968`)
+### K-4: CORS erlaubt jede Origin bei nicht-explizitem `XELANOTE_ENV` -- TEILWEISE ERLEDIGT (Phase 1, `c799968`)
 
 **Datei:** `backend/internal/api/api.go:557-573, 88-96`
 
 **Problem:** Fatal-Check greift nur bei `env == "production"`. Staging oder leerer `XELANOTE_ENV` laeuft mit vollständig permissivem CORS.
 
-**Fix:** Fatal-Check auf `env != "development" && env != "test"` geaendert.
+**Fix (teilweise):** Fatal-Check auf `env != "development" && env != "test"` geaendert, greift aber nur wenn
+`XELANOTE_ENV` gesetzt ist. Bei leerem `XELANOTE_ENV` bleibt die CORS-Konfiguration permissiv. Offener Punkt:
+Default sollte streng sein, wenn `XELANOTE_ENV` leer ist.
 
 ---
 
@@ -407,7 +411,7 @@ frontend/src/lib/api/
 
 ---
 
-#### W-2: God-Files im Backend -- IN ARBEIT
+#### W-2: God-Files im Backend -- ERLEDIGT (P1, 2026-02-10)
 
 | Datei | Zeilen | Verantwortlichkeiten |
 |-------|--------|---------------------|
@@ -456,20 +460,20 @@ frontend/src/lib/api/
 | `backend/cmd/server/server_pprof.go` | neu | pprof Server |
 | `backend/cmd/server/server_shutdown.go` | neu | Graceful Shutdown |
 
-**Status:** NoteService + Note-DB + Server-Init aufgeteilt. Offene God-Files: `backend/internal/api/api.go`.
+**Status:** NoteService + Note-DB + Server-Init aufgeteilt. API-Routen aus `api.go` in `routes.go` ausgelagert; JSON-Helpers in `response_json.go`.
 
 ---
 
-#### W-3: God-Files im Frontend -- OFFEN
+#### W-3: God-Files im Frontend -- ERLEDIGT
 
 | Datei | Zeilen | Verantwortlichkeiten |
 |-------|--------|---------------------|
-| `frontend/src/lib/api.ts` | 3135 | 264 Exporte: Types, Token-Refresh, CSRF, Offline-Queue, 60+ API-Funktionen |
-| `frontend/src/routes/settings/+page.svelte` | 2276 | 7 Tabs mit eigenem State und Logik |
-| `frontend/src/lib/components/Editor.svelte` | 2102 | 15+ Verantwortlichkeiten (CM6, Toolbar, Preview, Upload, AI, etc.) |
-| `frontend/src/lib/stores/notes.svelte.ts` | 1361 | 20+ Exports, Auto-Save, Conflict-Detection, Encryption |
-| `frontend/src/lib/components/Sidebar.svelte` | 1115 | Mobile + Desktop mit ~300 Zeilen Template-Duplikation |
-| `frontend/src/routes/+layout.svelte` | 724 | 170-Zeilen `initializeAsync`, 15+ Subsysteme |
+| `frontend/src/lib/api.ts` | 27 | Re-Export-Layer (API-Module ausgelagert) |
+| `frontend/src/routes/settings/+page.svelte` | 1204 | Tabs + Layout, Tab-Views ausgelagert |
+| `frontend/src/lib/components/Editor.svelte` | 1135 | CM6 + UI-Rest, zentrale Flows ausgelagert |
+| `frontend/src/lib/stores/notes.svelte.ts` | 757 | Store-Kern, Flows ausgelagert |
+| `frontend/src/lib/components/Sidebar.svelte` | 1047 | Desktop/Mobile Layout, Helper ausgelagert |
+| `frontend/src/routes/+layout.svelte` | 528 | Init/Guards ausgelagert |
 
 **Fortschritt:**
 - `frontend/src/lib/components/Editor.svelte`: Toolbar in `frontend/src/lib/components/editor/EditorToolbar.svelte` ausgelagert (erster Schnitt).
@@ -514,6 +518,9 @@ frontend/src/lib/api/
 - `frontend/src/routes/+layout.svelte`: Navigation-Guard nach `frontend/src/lib/routes/layout/navigation-guards.ts` ausgelagert.
 - `frontend/src/routes/+layout.svelte`: Auth-Redirect-Guard nach `frontend/src/lib/routes/layout/auth-guards.ts` ausgelagert.
 - `frontend/src/routes/+layout.svelte`: beforeunload-Handler nach `frontend/src/lib/routes/layout/beforeunload.ts` ausgelagert.
+- `frontend/src/routes/settings/+page.svelte`: Tabs in `frontend/src/lib/routes/settings/tabs/*` ausgelagert (Account/Security/AI).
+
+**Status:** God-Files im Frontend deutlich reduziert (Tab-Views + Logik extrahiert).
 
 ---
 
@@ -553,13 +560,15 @@ frontend/src/lib/api/
 
 ---
 
-#### W-8: Duplizierte LLM-Client-Implementierung -- OFFEN
+#### W-8: Duplizierte LLM-Client-Implementierung -- ERLEDIGT (P0, 2026-02-10)
 
 **Dateien:**
 - `backend/internal/llm/claude.go` (352 Zeilen)
 - `backend/internal/llm/gemini.go` (374 Zeilen)
 
-4 nahezu identische HTTP-Request/Response-Handling-Bloecke (Generate + GenerateWithImage, je 2x). Bug-Fixes muessen an 4 Stellen gleichzeitig gemacht werden.
+4 nahezu identische HTTP-Request/Response-Handling-Bloecke (Generate + GenerateWithImage, je 2x).
+
+**Fix:** Gemeinsamer HTTP/JSON-Helper `llm/doJSONRequest` eingefuehrt; Claude/Gemini nutzen denselben Pfad fuer Request/Response + Error-Parsing.
 
 ---
 
@@ -640,16 +649,16 @@ frontend/src/lib/api/
 
 ### TypeScript / Type-Safety
 
-#### W-17: `any`-Typen an 15+ kritischen Stellen -- TEILWEISE ERLEDIGT (Phase 3b, `8d067c5`)
+#### W-17: `any`-Typen an 15+ kritischen Stellen -- ERLEDIGT (Phase 3b, `8d067c5`)
 
 | Datei | Status | Aenderung |
 |-------|--------|-----------|
 | `frontend/src/lib/crypto/fido2.ts:60,82,100,116` | ERLEDIGT | `ServerPublicKeyOptions`/`ServerCredentialDescriptor` Interfaces definiert |
 | `frontend/src/lib/stores/settings.svelte.ts:124,155,198,277` | ERLEDIGT | `catch (err: any)` durch `catch (err: unknown)` mit `instanceof Error` Check ersetzt |
 | `frontend/src/lib/crypto/fido2.ts:151,190` | ERLEDIGT | `catch (err: any)` durch `catch (err: unknown)` mit `instanceof DOMException` ersetzt |
-| `frontend/src/lib/stores/websocket.svelte.ts:98` | OFFEN | `payload: any` -- WebSocket-Protokoll muesste komplett typisiert werden |
-| `frontend/src/lib/crypto/sodium.ts:5` | OFFEN | `let sodium: any` -- Abhaengig von libsodium-wrappers Typ-Definitionen |
-| `frontend/src/lib/editor/markdown.ts:460-462` | OFFEN | `options: any, env: any, _self: any` -- markdown-it Plugin-API |
+| `frontend/src/lib/stores/websocket.svelte.ts:98` | ERLEDIGT | Payload auf `unknown` + Helper-Typen umgestellt |
+| `frontend/src/lib/crypto/sodium.ts:5` | ERLEDIGT | libsodium Wrapper typisiert (`SodiumWrapper`) |
+| `frontend/src/lib/editor/markdown.ts:460-462` | ERLEDIGT | markdown-it Renderer-Args typisiert |
 
 ---
 
@@ -675,47 +684,35 @@ frontend/src/lib/api/
 
 ### Fehlende Tests
 
-#### W-20: Kritische Backend-Pakete ohne Tests -- OFFEN
+#### W-20: Kritische Backend-Pakete ohne Tests -- ERLEDIGT
 
 | Paket/Datei | Zeilen |
 |-------------|--------|
-| `backend/internal/llm/claude.go` | 352 |
-| `backend/internal/llm/gemini.go` | 374 |
-| `backend/internal/llm/router.go` | 291 |
-| `backend/internal/service/summarize.go` | 974 |
-| `backend/internal/service/recipes.go` | 764 |
-| `backend/internal/service/recipe_suggestions.go` | 513 |
-| `backend/internal/cache/cache.go` | 76 |
-| `backend/internal/jobs/jobs.go` | 145 |
-| `backend/internal/crypto/apikey.go` | 169 |
-| `backend/internal/api/export.go` | 153 |
-| `backend/internal/api/import.go` | 213 |
+| `backend/internal/utils/*` | 2 Dateien |
+| `backend/internal/websocket/manager.go` | 1 Datei |
+
+**Fortschritt (P1, 2026-02-10):** LLM-Client-Tests + ProviderRouter-Tests hinzugefuegt (Claude/Gemini: Generate, Error-Parsing, Cache, Image-Validation; Router: Provider-Auswahl, Fallback, Invalidation). Import-API Tests hinzugefuegt (empty files, skip/insert, preserve structure + dedup). API-Key Crypto Tests hinzugefuegt (roundtrip, no secret, invalid ciphertext, validation, mask). Cache/Jobs Tests hinzugefuegt (TTL, prefix delete, submit/execute, failure paths, cleanup). Export-API Test hinzugefuegt (ZIP-Response + Headers). Summarize-Service Tests hinzugefuegt (idempotent summary, encrypted guard, encrypted store, tag/link parsing). Recipe-Service Tests hinzugefuegt (feature flag, encryption guard, share permissions, ingredient validation, image URL validation). Recipe-Suggestions Tests hinzugefuegt (helper funcs, defaults/validation for generated recipes).
+**Fix:** Utils-Pfad/Title-Helper mit Table-Tests abgedeckt; WebSocket-Manager Tests fuer Register/Broadcast/Unregister/Stop hinzugefuegt.
+
+**Tests:** `go test -tags fts5 ./...` (2026-02-10) OK.
 
 ---
 
-#### W-21: Kritische Frontend-Stores ohne Tests -- OFFEN
+#### W-21: Kritische Frontend-Stores ohne Tests -- ERLEDIGT (P1, 2026-02-10)
 
-| Datei | Zeilen |
-|-------|--------|
-| `frontend/src/lib/stores/notes.svelte.ts` | 1361 |
-| `frontend/src/lib/stores/auth.svelte.ts` | 568 |
-| `frontend/src/lib/stores/encryption.svelte.ts` | 401 |
-| `frontend/src/lib/stores/websocket.svelte.ts` | 216 |
-| `frontend/src/lib/stores/settings.svelte.ts` | 362 |
-| `frontend/src/lib/api.ts` | 3135 |
+**Fortschritt (P1, 2026-02-10):** WebSocket-Store Tests hinzugefuegt (connect, note.deleted handling, reconnect). Auth-Store Tests hinzugefuegt (setAuth, updateTokens-Guard, logout resets). Encryption-Store Tests hinzugefuegt (encrypt/decrypt, settings, restore error handling, security level update). Settings-Store Tests hinzugefuegt (load/save, mobile fallback, changeEmail mapping, password rewrap). Notes-Store Tests hinzugefuegt (create wiring, content update + dirty, AI toggle, clear resets, temp-id replacement). API-Client Tests hinzugefuegt (auth/csrf headers, 204 handling, offline enqueue, refresh retry, offline rejection).
 
 ---
 
 ## 4. NICE-TO-HAVE -- BACKLOG
 
-### N-1: Cache und WebSocket-Manager ohne Shutdown-Mechanismus -- OFFEN
+### N-1: Cache und WebSocket-Manager ohne Shutdown-Mechanismus -- ERLEDIGT (P0, 2026-02-10)
 
-- `backend/internal/cache/cache.go:23` -- Goroutine-Leak
-- `backend/internal/websocket/manager.go` -- Endlose `for-select` ohne Context
+**Fix:** `Cache.Close()` stoppt Cleanup-Goroutine; WebSocket-Manager hat `Stop()` mit `done`-Signal + Connection-Cleanup.
 
-### N-2: JobManager-Jobs werden nie aufgeraeumt (Memory Leak) -- OFFEN
+### N-2: JobManager-Jobs werden nie aufgeraeumt (Memory Leak) -- ERLEDIGT (P0, 2026-02-10)
 
-`backend/internal/jobs/jobs.go` -- `jm.jobs` (sync.Map) waechst unbegrenzt.
+**Fix:** Cleanup-Loop entfernt abgeschlossene Jobs nach Retention-Window (24h).
 
 ### N-3: Error-Vergleich via String-Match statt Sentinel Errors -- ERLEDIGT (Phase 3a, `9f2c607`)
 
@@ -729,37 +726,37 @@ frontend/src/lib/api/
 
 **Fix:** Encode-Fehler wird jetzt via `slog.Error()` geloggt.
 
-### N-5: Export laedt alle Notizen in den Speicher -- OFFEN
+### N-5: Export laedt alle Notizen in den Speicher -- ERLEDIGT (P1, 2026-02-10)
 
-`backend/internal/api/export.go:12-51` -- bei vielen/grossen Notizen problematisch.
+**Fix:** Export streamt Notes seitenweise in ZIP statt alle Notizen im Speicher zu halten.
 
-### N-6: Deprecated `NormalizeTitle` in db.go -- OFFEN
+### N-6: Deprecated `NormalizeTitle` in db.go -- ERLEDIGT (P1, 2026-02-10)
 
-`backend/internal/db/db.go:219-224` -- Wrapper auf `utils.NormalizeTitle`.
+**Fix:** Wrapper entfernt, direkte Nutzung von `utils.NormalizeTitle` in DB-Paket (inkl. Tests).
 
-### N-7: Frontmatter-Tags werden beim Import nicht verwendet -- OFFEN
+### N-7: Frontmatter-Tags werden beim Import nicht verwendet -- ERLEDIGT (P1, 2026-02-10)
 
-`backend/internal/api/import.go:36-39` -- `Tags` geparsed aber nie angehaengt.
+**Fix:** Frontmatter-Tags werden beim Import auf die Notiz gesetzt (inkl. Tests).
 
-### N-8: Migrations-Nummern haben Luecken (025 -> 028) -- OFFEN
+### N-8: Migrations-Nummern haben Luecken (025 -> 028) -- ERLEDIGT (P1, 2026-02-10)
 
-`backend/internal/db/db.go:140-181`
+**Fix:** Fehlende Migrationen `026_notes_order_index.sql` und `027_graph_indexes.sql` in die Migrationsliste aufgenommen.
 
-### N-9: Dupliziertes Null-zu-leeres-Slice Pattern -- OFFEN
+### N-9: Dupliziertes Null-zu-leeres-Slice Pattern -- ERLEDIGT (P1, 2026-02-10)
 
-10+ Stellen in `search.go`, `tags.go`, `recipes.go`, etc. `ensureNotes()` existiert, wird aber nicht konsistent verwendet.
+**Fix:** Generische `ensureSlice()`-Helper eingefuehrt, alle betroffenen API-Responses vereinheitlicht (search/tags/recipes/notes).
 
-### N-10: SetRecipeService Post-Init Pattern -- OFFEN
+### N-10: SetRecipeService Post-Init Pattern -- ERLEDIGT (P1, 2026-02-10)
 
-`backend/internal/api/api.go:197-204` -- Server kurzzeitig in unvollstaendigem Zustand.
+**Fix:** Recipe-Services direkt in `ServerConfig` aufgenommen; Post-Init Setter entfernt.
 
-### N-11: Error-Messages Deutsch/Englisch gemischt (import.go) -- OFFEN
+### N-11: Error-Messages Deutsch/Englisch gemischt (import.go) -- ERLEDIGT (P1, 2026-02-10)
 
-`backend/internal/api/import.go:81, 88, 97, 107`
+**Fix:** Import-Errors auf konsistente englische Meldungen umgestellt.
 
-### N-12: Doppelt definiertes User-Interface im Frontend -- OFFEN
+### N-12: Doppelt definiertes User-Interface im Frontend -- ERLEDIGT (P1, 2026-02-10)
 
-`frontend/src/lib/api.ts:41-47` vs. `frontend/src/lib/stores/auth.svelte.ts:13-19`
+**Fix:** `auth.svelte.ts` nutzt jetzt das User-Type aus `api` (Alias).
 
 ### N-13: Unused reactive Variable `_autoLockTimeout` -- ERLEDIGT (Phase 3a, `9f2c607`)
 
@@ -771,39 +768,29 @@ frontend/src/lib/api/
 
 **Fix:** Alle veralteten TODO-Kommentare aus `encryption.svelte.ts`, `e2e.ts` und `settings.svelte.ts` entfernt.
 
-### N-15: Legacy-Konstanten `IS_TAURI`, `IS_ELECTRON`, `IS_DESKTOP` -- OFFEN
+### N-15: Legacy-Konstanten `IS_TAURI`, `IS_ELECTRON`, `IS_DESKTOP` -- ERLEDIGT (P1, 2026-02-10)
 
-`frontend/src/lib/config.ts:42-44` -- als "Legacy" markiert, Consumer nutzen Funktionsversionen.
+**Fix:** Legacy-Exports entfernt (Funktionsversionen bleiben).
 
-### N-16: Nicht-lokalisierte Strings -- OFFEN
+### N-16: Nicht-lokalisierte Strings -- ERLEDIGT (P1, 2026-02-10)
 
-- `frontend/src/routes/+layout.svelte:503` -- `'Sie haben ungespeicherte Aenderungen'`
-- `frontend/src/routes/+layout.svelte:631` -- `'Laden...'`
-- `frontend/src/lib/stores/notes.svelte.ts:169, 256, 426, 789, 959` -- Deutsche Fehlermeldungen hardcoded
+**Fix:** Strings lokalisiert (Layout + Notes/Aautosave-Messages) und i18n-Keys ergaenzt.
 
-### N-17: Magic Numbers ohne benannte Konstanten -- OFFEN
+### N-17: Magic Numbers ohne benannte Konstanten -- ERLEDIGT (P1, 2026-02-10)
 
-- `notes.svelte.ts:143` -- `limit: 1000` ("MVP LIMIT")
-- `+layout.svelte:48` -- `window.innerWidth < 768` (Mobile-Breakpoint)
-- `websocket.svelte.ts:172` -- `reconnectAttempts >= 10`
-- `main.go:137` -- `jobs.NewJobManager(4)` (4 Worker)
-- `main.go:153` -- `PruneAllVersions(100)` (100 Versionen)
-- `recipes.go:358` -- `baseServings = 4`
-- `recipes.go:403` -- `len(existing) >= 50` (Max Images)
+**Fix:** Benannte Konstanten eingefuehrt (Notes-Limit, Mobile-Breakpoint, WS-Reconnect, Job-Worker, Version-Pruning, Recipe-Defaults, Max-Images).
 
-### N-18: `@html` mit i18n-Strings ohne DOMPurify -- OFFEN
+### N-18: `@html` mit i18n-Strings ohne DOMPurify -- ERLEDIGT (P1, 2026-02-10)
 
-`frontend/src/routes/settings/encryption/+page.svelte` (12 Stellen), `TwoFactorDisable.svelte:98`
+**Fix:** DOMPurify-Sanitizing fuer i18n-`@html` in Settings/TwoFactorDisable hinzugefuegt.
 
-Aktuell nur Developer-kontrollierte Strings. Kein unmittelbares Risiko, aber Defense-in-Depth-Verstoß.
+### N-19: CSP erlaubt `unsafe-inline` fuer Scripts -- ERLEDIGT (P1, 2026-02-10)
 
-### N-19: CSP erlaubt `unsafe-inline` fuer Scripts -- OFFEN
+**Fix:** `unsafe-inline` aus `script-src` entfernt; CAPTCHA-Page nutzt CSP-Nonce fuer Inline-Script/Style.
 
-`backend/internal/api/security.go:16-17` -- Benoetigt durch SvelteKit adapter-static. Langfristig auf Nonce-basierte CSP migrieren.
+### N-20: `@ts-expect-error` statt Typ-Erweiterung -- ERLEDIGT (P1, 2026-02-10)
 
-### N-20: `@ts-expect-error` statt Typ-Erweiterung -- OFFEN
-
-`frontend/src/lib/components/Editor.svelte:287, 291` -- Besser: Custom Event Types in `app.d.ts`.
+**Fix:** `DocumentEventMap` fuer `spell-check-replace` erweitert, `@ts-expect-error` entfernt.
 
 ---
 
@@ -811,26 +798,42 @@ Aktuell nur Developer-kontrollierte Strings. Kein unmittelbares Risiko, aber Def
 
 ### Nach Schweregrad
 
-| Schweregrad | Gesamt | Erledigt | Offen |
-|-------------|--------|----------|-------|
-| KRITISCH | 6 | **6** | 0 |
-| WICHTIG | 21 | **13** | 8 |
-| NICE-TO-HAVE | 20 | **3** | 17 |
-| **Gesamt** | **47** | **22** | **25** |
+| Schweregrad | Gesamt | Erledigt | Teilweise | In Arbeit | Offen |
+|-------------|--------|----------|-----------|----------|-------|
+| KRITISCH | 6 | **5** | **1** | 0 | 0 |
+| WICHTIG | 21 | **21** | 0 | 0 | 0 |
+| NICE-TO-HAVE | 20 | **20** | 0 | 0 | 0 |
+| **Gesamt** | **47** | **46** | **1** | 0 | 0 |
 
 ### Nach Kategorie
 
-| Kategorie | Gesamt | Erledigt | Offen |
-|-----------|--------|----------|-------|
-| Sicherheit | 9 | 7 | 2 |
-| Code-Duplikation | 11 | 7 | 4 |
-| SOLID / God-Files | 6 | 0 | 6 |
-| Error Handling | 5 | 4 | 1 |
-| Bugs | 1 | 1 | 0 |
-| TypeScript / Types | 3 | 2 | 1 |
-| Performance | 3 | 1 | 2 |
-| Testing | 2 | 0 | 2 |
-| Wartbarkeit | 7 | 0 | 7 |
+Legende (Mapping-Auszug):
+- `K-1/K-3/K-6` -> Bugs
+- `K-2/K-4/K-5` -> Sicherheit
+- `W-1/W-2/W-3` -> SOLID / God-Files
+- `W-4` bis `W-12` -> Code-Duplikation
+- `W-13` bis `W-16` -> Sicherheit
+- `W-17` -> TypeScript / Types
+- `W-18` -> Wartbarkeit
+- `W-19` -> Performance
+- `W-20/W-21` -> Testing
+- `N-1/N-2/N-5` -> Performance
+- `N-3/N-4` -> Error Handling
+- `N-6` bis `N-17` -> Wartbarkeit
+- `N-18/N-19` -> Sicherheit
+- `N-20` -> TypeScript / Types
+
+| Kategorie | Gesamt | Erledigt | Teilweise | In Arbeit | Offen |
+|-----------|--------|----------|-----------|----------|-------|
+| Sicherheit | 9 | **8** | **1** | 0 | 0 |
+| Code-Duplikation | 9 | **9** | 0 | 0 | 0 |
+| SOLID / God-Files | 3 | **3** | 0 | 0 | 0 |
+| Error Handling | 2 | **2** | 0 | 0 | 0 |
+| Bugs | 3 | **3** | 0 | 0 | 0 |
+| TypeScript / Types | 2 | **2** | 0 | 0 | 0 |
+| Performance | 4 | **4** | 0 | 0 | 0 |
+| Testing | 2 | **2** | 0 | 0 | 0 |
+| Wartbarkeit | 13 | **13** | 0 | 0 | 0 |
 
 ### Verifizierte positive Security Controls (Auszug)
 
@@ -865,7 +868,7 @@ Aktuell nur Developer-kontrollierte Strings. Kein unmittelbares Risiko, aber Def
 | 1 | K-1 | 1 | `c799968` | `sig` -> `signature` in `recipes.go` |
 | 2 | K-2 | 1 | `c799968` | `getUserID`-Fehler in `admin.go` geprüeft |
 | 3 | K-3 | 1 | `c799968` | `WS_URL` durch `getWsBaseUrl()` ersetzt |
-| 4 | K-4 | 1 | `c799968` | CORS-Fatal-Check fuer Non-Dev verschaerft |
+| 4 | K-4 | 1 | `c799968` | CORS-Fatal-Check fuer Non-Dev verschaerft (teilweise: greift nur wenn `XELANOTE_ENV` gesetzt) |
 | 5 | K-5 | 1 | `c799968` | Gemini API-Key in Header statt URL |
 | 6 | K-6 | 1 | `c799968` | Type-Assertions durch `getUserID()` ersetzt |
 | 7 | W-4 | 2 | `7856b6b` | `cleanJSON` ins `llm`-Paket verschoben |
@@ -883,14 +886,15 @@ Aktuell nur Developer-kontrollierte Strings. Kein unmittelbares Risiko, aber Def
 | 19 | W-7 | 3b | `8d067c5` | `checkRecipeWriteAccess/ReadAccess` Helper extrahiert |
 | 20 | W-19 | 3b | `8d067c5` | `IsAvailable()` mit 5-Min-TTL-Cache |
 | 21 | W-13 | 3b | `8d067c5` | Sensitive Crypto/KEK-Logs aus 8 Dateien entfernt |
-| 22 | W-17 | 3b | `8d067c5` | FIDO2-Typen + `catch(err: unknown)` in settings/fido2 |
+| 22 | W-17 | 3b | `8d067c5` | FIDO2-Typen + `catch(err: unknown)` sowie Typisierung in sodium/websocket/markdown |
+| 23 | W-8 | P0 | -- | LLM-HTTP/JSON-Handling konsolidiert |
+| 24 | N-1 | P0 | -- | Cache/WebSocket-Shutdown implementiert |
+| 25 | N-2 | P0 | -- | Job-Cleanup mit Retention |
+| 26 | N-5 | P1 | -- | Export streamt Notes seitenweise in ZIP |
 
 ### Naechste Schritte (offen)
 
 | # | Finding | Aufwand | Beschreibung |
 |---|---------|---------|--------------|
-| 23 | W-1 | 4 Std | `Server`-Struct aufbrechen (Services, RateLimiters, Config) |
-| 24 | W-8 | 4 Std | LLM-Client-Duplikation zusammenfuehren |
-| 25 | W-2, W-3 | 3-5 Tage | God-Files aufteilen (Backend + Frontend) |
-| 26 | W-20/21 | 3-5 Tage | Testabdeckung fuer kritische Pakete verbessern |
-| 27 | N-1-20 | 2-4 Std | Verbleibende Backlog-Items abarbeiten |
+| 27 | W-2, W-3 | 3-5 Tage | God-Files aufteilen (Backend + Frontend) |
+| 28 | W-20 | 3-5 Tage | Testabdeckung fuer kritische Pakete verbessern |

@@ -288,7 +288,10 @@ func (s *ErrorReportService) createIssue(ctx context.Context, title, body string
 		return fmt.Errorf("forgejo auth error: %d", resp.StatusCode)
 	}
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnprocessableEntity {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("forgejo create issue error: %d (failed to read body: %w)", resp.StatusCode, err)
+		}
 		return fmt.Errorf("forgejo create issue error: %d: %s", resp.StatusCode, string(body))
 	}
 	if resp.StatusCode >= 500 {

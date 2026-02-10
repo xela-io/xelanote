@@ -103,7 +103,10 @@ func (db *DB) CreateNoteShare(ownerUserID int, noteID string, sharedWithUserID i
 		return nil, fmt.Errorf("failed to create note share: %w", err)
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get note share id: %w", err)
+	}
 	return db.getNoteShareByID(int(id))
 }
 
@@ -598,7 +601,10 @@ func (db *DB) CreateFolderShare(ownerUserID, folderID, sharedWithUserID int, rol
 		return nil, fmt.Errorf("failed to create folder share: %w", err)
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get folder share id: %w", err)
+	}
 	return db.getFolderShareByID(int(id))
 }
 

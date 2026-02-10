@@ -71,11 +71,8 @@
   display: none;
 }
 
-/* Prevent double-tap zoom - only for non-draggable elements */
-button:not([draggable='true']):not(.drag-handle),
-a:not([draggable='true']),
-input[type='checkbox'],
-input[type='radio'] {
+/* Prevent double-tap zoom globally on mobile */
+html {
   touch-action: manipulation;
 }
 

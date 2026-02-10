@@ -190,6 +190,8 @@ frontend/src/lib/stores/tree.test.ts  # tests
 
 Use Vitest with `@testing-library/svelte` for component tests. Mock API calls with `vi.mock('$lib/api')`.
 
+**Naming convention:** Use `should [expected behavior] when [condition]` for new test cases.
+
 ### E2E
 
 Place spec files in `frontend/tests/e2e/` with the `.spec.ts` suffix. Use Playwright's Locator API (`getByRole`, `getByText`, `locator`).

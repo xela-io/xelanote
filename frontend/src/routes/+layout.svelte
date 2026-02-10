@@ -44,6 +44,7 @@
   import { createLayoutInteractions } from '$lib/routes/layout/interactions';
   import { createViewportHandlers } from '$lib/routes/layout/viewport';
   import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
+  import { shouldRedirectToLogin } from '$lib/routes/layout/auth-guards';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -102,7 +103,13 @@
     const isAuth = untrack(() => auth.isAuthenticated());
 
     // Only redirect to login if trying to access protected routes while not authenticated
-    if (!isAuth && !isPublicRoute) {
+    if (
+      shouldRedirectToLogin({
+        authInitialized,
+        isAuthenticated: isAuth,
+        isPublicRoute,
+      })
+    ) {
       goto('/login');
     }
 

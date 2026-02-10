@@ -78,7 +78,10 @@ func (db *DB) GetOrCreateUserPreferences(userID int) (*UserPreferences, bool, er
 		return nil, false, err
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, false, err
+	}
 	return &UserPreferences{
 		ID:              int(id),
 		UserID:          userID,
@@ -107,7 +110,10 @@ func (db *DB) UpsertUserPreferences(userID int, theme, editorMode string) (*User
 		return nil, err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
 	if rowsAffected == 0 {
 		// Insert new row
 		_, err = db.Exec(`
@@ -146,7 +152,10 @@ func (db *DB) UpdateEncryptionPreferences(userID int, keywordsEnabled, encryptTi
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them
 		_, err = db.Exec(`
@@ -172,7 +181,10 @@ func (db *DB) SetRecoveryKey(userID int, recoveryKeyHash string, recoveryKeySalt
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them with recovery key
 		_, err = db.Exec(`
@@ -217,7 +229,10 @@ func (db *DB) UpdateSecurityPreferences(userID int, securityLevel string, autoLo
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them
 		_, err = db.Exec(`
@@ -252,7 +267,10 @@ func (db *DB) AddWebAuthnCredential(userID int64, credentialID, deviceName strin
 		return nil, err
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
 
 	return &WebAuthnCredential{
 		ID:           id,
@@ -347,7 +365,10 @@ func (db *DB) SetClaudeAPIKey(userID int, encryptedKey string) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them with the API key
 		_, err = db.Exec(`
@@ -450,7 +471,10 @@ func (db *DB) SetGeminiAPIKey(userID int, encryptedKey string) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them with the API key
 		_, err = db.Exec(`

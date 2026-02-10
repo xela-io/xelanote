@@ -219,7 +219,10 @@ func (db *DB) SetUserAdmin(userID int, isAdmin bool) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}
@@ -311,7 +314,10 @@ func (db *DB) DeleteUserByAdmin(userID int) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}

@@ -39,7 +39,10 @@ func (db *DB) CreateUser(username, email, passwordHash string) (*User, error) {
 		return nil, err
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
 	return db.GetUserByID(int(id))
 }
 
@@ -223,7 +226,10 @@ func (db *DB) UpdateUserEmail(userID int, newEmail string) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}
@@ -241,7 +247,10 @@ func (db *DB) UpdateUserPassword(userID int, newPasswordHash string) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}
@@ -260,7 +269,10 @@ func (tx *Tx) UpdateUserPasswordTx(userID int, newPasswordHash string) error {
 		return err
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}

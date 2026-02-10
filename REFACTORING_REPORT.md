@@ -175,8 +175,13 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
   - Abdeckung: Refresh-Token-Rotation + Logout invalidiert Refresh-Token.
   - Hinweis: Tests laufen mit `-tags "fts5"` (SQLite FTS5 erforderlich).
 
+- **Backend-Service Tests: Notes Snapshots/Validation**
+  - `backend/internal/service/notes_test.go`
+  - Abdeckung: invalides `folderPath`, Snapshot-Threshold (kein Doppel-Snapshot), Snapshot nach Threshold.
+  - Hinweis: Tests laufen mit `-tags "fts5"` (SQLite FTS5 erforderlich).
+
 ### Offen
-- Weitere Tests fuer kritische Backend-Services (Notes).
+- Weitere Tests fuer kritische Backend-Services (Notes) — optional: Link-Resolution/Backlinks und Note-Limits.
 - Dokumentation fuer neuere Refactorings (falls erforderlich).
 
 ## Phase 5 Fortschritt (Linting & Formatierung)

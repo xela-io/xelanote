@@ -405,7 +405,7 @@ frontend/src/lib/api/
 
 | Datei | Zeilen | Verantwortlichkeiten |
 |-------|--------|---------------------|
-| `backend/internal/api/notes.go` | 1843 | Rename, Backlinks, Color, Jobs, Helper Endpoints |
+| `backend/internal/api/notes_meta.go` | neu | Rename, Backlinks, Color, Async-Job |
 | `backend/internal/api/notes_ai.go` | neu | LLM/Summary/AI-Endpoints |
 | `backend/internal/api/notes_trash.go` | neu | Trash-Endpoints |
 | `backend/internal/api/notes_helpers.go` | neu | Validation, ETag, request types, helper utils |

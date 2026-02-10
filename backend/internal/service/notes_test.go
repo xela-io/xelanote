@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -92,5 +93,24 @@ func TestNoteService_UpdateNote_SnapshotAfterThreshold(t *testing.T) {
 	}
 	if total < 2 || len(versions) < 2 {
 		t.Fatalf("expected 2+ version snapshots, got %d", total)
+	}
+}
+
+func TestNoteService_CreateNote_RespectsMaxNotesLimit(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+
+	user := createTestUser(t, database, "limituser")
+
+	if err := database.SetSetting("max_notes_per_user", "1"); err != nil {
+		t.Fatalf("failed to set max notes limit: %v", err)
+	}
+
+	if _, err := service.CreateNote(user.ID, "First", "content", "/"); err != nil {
+		t.Fatalf("failed to create first note: %v", err)
+	}
+
+	if _, err := service.CreateNote(user.ID, "Second", "content", "/"); !errors.Is(err, ErrNoteLimitExceeded) {
+		t.Fatalf("expected ErrNoteLimitExceeded, got %v", err)
 	}
 }

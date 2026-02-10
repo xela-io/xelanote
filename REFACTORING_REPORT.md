@@ -177,11 +177,11 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 
 - **Backend-Service Tests: Notes Snapshots/Validation**
   - `backend/internal/service/notes_test.go`
-  - Abdeckung: invalides `folderPath`, Snapshot-Threshold (kein Doppel-Snapshot), Snapshot nach Threshold.
+  - Abdeckung: invalides `folderPath`, Snapshot-Threshold (kein Doppel-Snapshot), Snapshot nach Threshold, Note-Limit.
   - Hinweis: Tests laufen mit `-tags "fts5"` (SQLite FTS5 erforderlich).
 
 ### Offen
-- Weitere Tests fuer kritische Backend-Services (Notes) — optional: Link-Resolution/Backlinks und Note-Limits.
+- Weitere Tests fuer kritische Backend-Services (Notes) — optional: Link-Resolution/Backlinks.
 - Dokumentation fuer neuere Refactorings (falls erforderlich).
 
 ## Phase 5 Fortschritt (Linting & Formatierung)

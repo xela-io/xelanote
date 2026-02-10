@@ -499,6 +499,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/stores/notes.svelte.ts`: Encryption-Toggle nach `frontend/src/lib/stores/notes/encryption-toggle.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Rename-Flow nach `frontend/src/lib/stores/notes/rename.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: WebSocket-Remote-Updates nach `frontend/src/lib/stores/notes/remote-updates.ts` ausgelagert.
+- `frontend/src/lib/stores/notes.svelte.ts`: Note-State-Updates nach `frontend/src/lib/stores/notes/state-updates.ts` ausgelagert.
 
 ---
 

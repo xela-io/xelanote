@@ -30,6 +30,13 @@ import {
   handleRemoteUpdate as handleRemoteUpdateHelper,
 } from '$lib/stores/notes/remote-updates';
 import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
+import {
+  clearCurrentNote as clearCurrentNoteHelper,
+  replaceTempId as replaceTempIdHelper,
+  updateCurrentNoteAIEnabled as updateCurrentNoteAIEnabledHelper,
+  updateCurrentNoteContent as updateCurrentNoteContentHelper,
+  updateCurrentNoteTitle as updateCurrentNoteTitleHelper,
+} from '$lib/stores/notes/state-updates';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as autosave from '$lib/stores/autosave.svelte';
 import * as encryption from '$lib/stores/encryption.svelte';
@@ -360,55 +367,163 @@ export async function renameCurrentNote(newTitle: string) {
 }
 
 export function updateCurrentNoteContent(content: string) {
-  if (currentNote) {
-    // Only mark as dirty if content actually changed
-    if (currentNote.content !== content) {
-      currentNote = { ...currentNote, content };
-      isDirty = true;
-      // Increment counter to detect changes during save
+  updateCurrentNoteContentHelper(content, {
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getIsDirty: () => isDirty,
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    incrementSaveCounter: () => {
       saveInProgressCounter++;
-    }
-  }
+    },
+    getAutoSaveTimeout: () => autoSaveTimeout,
+    setAutoSaveTimeout: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    clearError: () => {
+      error = null;
+    },
+    clearBacklinks: () => {
+      currentNoteBacklinks = [];
+    },
+    clearLastSaved: () => {
+      lastSavedVersion = null;
+      lastSaveTimestamp = null;
+    },
+  });
 }
 
 export function updateCurrentNoteTitle(title: string) {
-  if (currentNote) {
-    // Only mark as dirty if title actually changed
-    if (currentNote.title !== title) {
-      currentNote = { ...currentNote, title };
-      isDirty = true;
-      // Increment counter to detect changes during save
+  updateCurrentNoteTitleHelper(title, {
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getIsDirty: () => isDirty,
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    incrementSaveCounter: () => {
       saveInProgressCounter++;
-    }
-  }
+    },
+    getAutoSaveTimeout: () => autoSaveTimeout,
+    setAutoSaveTimeout: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    clearError: () => {
+      error = null;
+    },
+    clearBacklinks: () => {
+      currentNoteBacklinks = [];
+    },
+    clearLastSaved: () => {
+      lastSavedVersion = null;
+      lastSaveTimestamp = null;
+    },
+  });
 }
 
 export function updateCurrentNoteAIEnabled(aiEnabled: boolean) {
-  if (currentNote) {
-    currentNote = { ...currentNote, ai_enabled: aiEnabled };
-    // Also update in the notes list
-    const idx = notes.findIndex((n) => n.id === currentNote!.id);
-    if (idx !== -1) {
-      notes[idx] = { ...notes[idx], ai_enabled: aiEnabled };
-      notes = [...notes]; // Trigger reactivity
-    }
-  }
+  updateCurrentNoteAIEnabledHelper(aiEnabled, {
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getIsDirty: () => isDirty,
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    incrementSaveCounter: () => {
+      saveInProgressCounter++;
+    },
+    getAutoSaveTimeout: () => autoSaveTimeout,
+    setAutoSaveTimeout: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    clearError: () => {
+      error = null;
+    },
+    clearBacklinks: () => {
+      currentNoteBacklinks = [];
+    },
+    clearLastSaved: () => {
+      lastSavedVersion = null;
+      lastSaveTimestamp = null;
+    },
+  });
 }
 
 export function clearCurrentNote() {
-  // Cancel pending auto-save
-  if (autoSaveTimeout) {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = null;
-  }
-  autoSaveStatus = 'idle';
-  autoSaveError = null;
-  lastSavedVersion = null; // Reset echo tracker
-
-  currentNote = null;
-  currentNoteBacklinks = [];
-  isDirty = false;
-  error = null;
+  clearCurrentNoteHelper({
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getIsDirty: () => isDirty,
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    incrementSaveCounter: () => {
+      saveInProgressCounter++;
+    },
+    getAutoSaveTimeout: () => autoSaveTimeout,
+    setAutoSaveTimeout: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    clearError: () => {
+      error = null;
+    },
+    clearBacklinks: () => {
+      currentNoteBacklinks = [];
+    },
+    clearLastSaved: () => {
+      lastSavedVersion = null;
+      lastSaveTimestamp = null;
+    },
+  });
 }
 
 export async function moveNote(id: string, folderPath: string) {
@@ -624,11 +739,41 @@ function updateNoteInList(updated: Note) {
  * Called by sync-manager after a successful offline create sync.
  */
 export function replaceTempId(tempId: string, realNote: Note) {
-  // Update in notes list
-  notes = notes.map((n) => (n.id === tempId ? realNote : n));
-
-  // Update currentNote if it has the temp ID
-  if (currentNote?.id === tempId) {
-    currentNote = realNote;
-  }
+  replaceTempIdHelper(tempId, realNote, {
+    getCurrentNote: () => currentNote,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    getNotes: () => notes,
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    getIsDirty: () => isDirty,
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    incrementSaveCounter: () => {
+      saveInProgressCounter++;
+    },
+    getAutoSaveTimeout: () => autoSaveTimeout,
+    setAutoSaveTimeout: (handle) => {
+      autoSaveTimeout = handle;
+    },
+    setAutoSaveStatus: (status) => {
+      autoSaveStatus = status;
+    },
+    setAutoSaveError: (value) => {
+      autoSaveError = value;
+    },
+    clearError: () => {
+      error = null;
+    },
+    clearBacklinks: () => {
+      currentNoteBacklinks = [];
+    },
+    clearLastSaved: () => {
+      lastSavedVersion = null;
+      lastSaveTimestamp = null;
+    },
+  });
 }

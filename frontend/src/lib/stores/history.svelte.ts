@@ -211,13 +211,13 @@ export function loadHistory(): void {
 function deserializeCommand(data: CommandData): Command {
   switch (data.type) {
     case 'delete':
-      return new DeleteCommand(data.data as any);
+      return new DeleteCommand(data.data);
     case 'create':
-      return new CreateCommand(data.data as any);
+      return new CreateCommand(data.data);
     case 'rename-title':
-      return new RenameTitleCommand(data.data as any);
+      return new RenameTitleCommand(data.data);
     case 'move-folder':
-      return new MoveFolderCommand(data.data as any);
+      return new MoveFolderCommand(data.data);
     default:
       throw new Error(`Unknown command type: ${data.type}`);
   }

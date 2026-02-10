@@ -39,12 +39,31 @@ export interface Command {
 /**
  * Serialized command data for localStorage persistence.
  */
-export interface CommandData {
-  type: 'delete' | 'create' | 'rename-title' | 'move-folder';
-  timestamp: number;
-  noteId: string;
-  data: DeleteCommandData | CreateCommandData | RenameTitleCommandData | MoveFolderCommandData;
-}
+export type CommandData =
+  | {
+      type: 'delete';
+      timestamp: number;
+      noteId: string;
+      data: DeleteCommandData;
+    }
+  | {
+      type: 'create';
+      timestamp: number;
+      noteId: string;
+      data: CreateCommandData;
+    }
+  | {
+      type: 'rename-title';
+      timestamp: number;
+      noteId: string;
+      data: RenameTitleCommandData;
+    }
+  | {
+      type: 'move-folder';
+      timestamp: number;
+      noteId: string;
+      data: MoveFolderCommandData;
+    };
 
 /**
  * Data for DeleteCommand - stores full note snapshot for restoration.

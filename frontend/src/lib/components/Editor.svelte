@@ -1,26 +1,6 @@
 <script lang="ts">
   import type { EditorView } from '@codemirror/view';
-  import {
-    AlertCircle,
-    Check,
-    Columns,
-    Edit,
-    Eye,
-    History,
-    ImagePlus,
-    Link,
-    ListTodo,
-    Loader2,
-    Lock,
-    Maximize2,
-    Menu,
-    Minimize2,
-    MoreVertical,
-    RefreshCw,
-    Save,
-    Wand2,
-    WifiOff,
-  } from 'lucide-svelte';
+  import { Link } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { tick } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
@@ -28,7 +8,7 @@
 
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import type { AIAction,Tag } from '$lib/api';
+  import type { AIAction, Tag } from '$lib/api';
   import * as api from '$lib/api';
   import { ApiError } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
@@ -65,13 +45,12 @@
 
   import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
-  import Breadcrumb from './Breadcrumb.svelte';
   import ColorPickerPopover from './ColorPickerPopover.svelte';
   import EditorMoreMenu from './EditorMoreMenu.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
   import LinkSuggestionsPanel from './LinkSuggestionsPanel.svelte';
+  import EditorToolbar from './editor/EditorToolbar.svelte';
   import ShareDialog from './ShareDialog.svelte';
-  import SpellCheckToggle from './SpellCheckToggle.svelte';
   import SummaryPanel from './SummaryPanel.svelte';
   import TableOfContents from './TableOfContents.svelte';
   import TagEditor from './TagEditor.svelte';
@@ -93,10 +72,8 @@
   let showColorPicker = $state(false);
   let showMoreMenu = $state(false);
   let showShareDialog = $state(false);
-  let moreMenuButtonRef: HTMLButtonElement | null = $state(null);
   let moreMenuTriggerRect = $state<DOMRect | null>(null);
   let showAIActionsDropdown = $state(false);
-  let aiActionsButtonRef: HTMLButtonElement | null = $state(null);
   let aiActionsTriggerRect = $state<DOMRect | null>(null);
   let showAITransformDialog = $state(false);
   let aiTransformState = $state<{
@@ -187,26 +164,6 @@
       }
     }
   });
-
-  // Svelte Action: Scroll-Fade for toolbar overflow indicator
-  function scrollFade(node: HTMLElement) {
-    const wrapper = node.parentElement!;
-    function update() {
-      const hasOverflow = node.scrollWidth > node.clientWidth;
-      const atEnd = node.scrollLeft + node.clientWidth >= node.scrollWidth - 2;
-      wrapper.style.setProperty('--scroll-fade', hasOverflow && !atEnd ? '1' : '0');
-    }
-    update();
-    node.addEventListener('scroll', update, { passive: true });
-    const ro = new ResizeObserver(update);
-    ro.observe(node);
-    return {
-      destroy() {
-        node.removeEventListener('scroll', update);
-        ro.disconnect();
-      },
-    };
-  }
 
   // Svelte Action: Initialisiert CodeMirror wenn das DOM-Element gerendert wird
   // Das ist das richtige Pattern für DOM-basierte Libraries wie CodeMirror
@@ -425,7 +382,7 @@
   }
 
   // Open AI Actions dropdown
-  function handleAIActionsClick() {
+  function handleAIActionsClick(rect: DOMRect) {
     const currentNote = notes.getCurrentNote();
     if (!currentNote) return;
 
@@ -436,9 +393,7 @@
     }
 
     // Capture button position for desktop dropdown placement
-    if (aiActionsButtonRef) {
-      aiActionsTriggerRect = aiActionsButtonRef.getBoundingClientRect();
-    }
+    aiActionsTriggerRect = rect;
     showAIActionsDropdown = true;
   }
 
@@ -519,12 +474,10 @@
   }
 
   // Menu coordination: close other menus when one opens
-  function openMoreMenu() {
+  function openMoreMenu(triggerRect: DOMRect) {
     showColorPicker = false;
     ui.setMarkdownGuideDropdownOpen(false);
-    if (moreMenuButtonRef) {
-      moreMenuTriggerRect = moreMenuButtonRef.getBoundingClientRect();
-    }
+    moreMenuTriggerRect = triggerRect;
     showMoreMenu = true;
   }
 
@@ -1500,267 +1453,39 @@
 <div class="flex flex-col h-full">
   <!-- Toolbar (fixed header, not in scroll container) -->
   {#if notes.getCurrentNote()}
-    <div class="flex-shrink-0 z-10 border-b border-border bg-background">
-      <!-- Breadcrumb Navigation - hidden on mobile -->
-      {#if !ui.getIsMobile()}
-        <div class="px-4 pt-2">
-          <Breadcrumb
-            folderPath={notes.getCurrentNote()!.folder_path}
-            noteTitle={notes.getCurrentNote()!.title}
-          />
-        </div>
-      {/if}
-      <!-- Mobile: Two-row layout | Desktop: Single-row layout -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 gap-2">
-        <!-- Title (auto-sized on mobile so save icon sits next to text, limited on desktop) -->
-        <div class="flex items-center gap-1 flex-shrink min-w-0 sm:max-w-[30%]">
-          <input
-            type="text"
-            value={notes.getCurrentNote()?.title ?? ''}
-            oninput={handleTitleInput}
-            autocorrect="on"
-            autocapitalize="words"
-            spellcheck="true"
-            inputmode="text"
-            aria-label={$_('component.editor.title_input')}
-            class="text-lg font-semibold bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring rounded px-1 min-w-0 {ui.getIsMobile()
-              ? ''
-              : 'w-full'}"
-            style={ui.getIsMobile()
-              ? `width: ${Math.max((notes.getCurrentNote()?.title ?? '').length, 2) + 1}ch`
-              : ''}
-          />
-          {#if ui.getIsMobile()}
-            <span class="flex-shrink-0">
-              {#if notes.getAutoSaveStatus() === 'saving'}
-                <Loader2 size={16} class="animate-spin text-muted-foreground" />
-              {:else if notes.getAutoSaveStatus() === 'saved'}
-                <Check size={16} class="text-success" />
-              {:else if notes.getAutoSaveStatus() === 'error'}
-                <AlertCircle size={16} class="text-destructive" />
-              {/if}
-            </span>
-          {/if}
-        </div>
-
-        <!-- Offline/Sync status pill -->
-        {#if getIsSyncing()}
-          <div
-            class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-blue-500"
-          >
-            <RefreshCw size={12} class="animate-spin" />
-            <span
-              >{getSyncProgress().total > 0
-                ? `${getSyncProgress().current}/${getSyncProgress().total}`
-                : 'Sync...'}</span
-            >
-          </div>
-        {:else if !network.getIsOnline() && !encryption.isEncryptionUnlocked()}
-          <div
-            class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
-          >
-            <Lock size={12} />
-            <span>Gesperrt</span>
-          </div>
-        {:else if !network.getIsOnline() && getPendingCount() > 0}
-          <div
-            class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
-          >
-            <WifiOff size={12} />
-            <span>{getPendingCount()}</span>
-          </div>
-        {:else if !network.getIsOnline()}
-          <div
-            class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
-          >
-            <WifiOff size={12} />
-            <span>Offline</span>
-          </div>
-        {/if}
-
-        <!-- Buttons (horizontally scrollable with fade indicator) + fixed More button -->
-        <div class="flex items-center gap-1 flex-1 min-w-0">
-          <div class="toolbar-scroll-wrapper">
-            <div class="toolbar-buttons flex items-center gap-1" use:scrollFade>
-              <!-- Sidebar toggle - always visible on mobile since MobileHeader is hidden on note pages -->
-              {#if ui.getIsMobile()}
-                <button
-                  type="button"
-                  onclick={() => ui.setSidebarOpen(true)}
-                  class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                  aria-label="Menü öffnen"
-                >
-                  <Menu size={16} />
-                </button>
-              {/if}
-
-              <!-- Editor mode toggles - always visible -->
-              <div
-                class="flex rounded-md border border-border flex-shrink-0"
-                role="group"
-                aria-label={$_('component.editor.toolbar.mode_group')}
-              >
-                <button
-                  type="button"
-                  onclick={() => settings.setEditorModePreference('edit')}
-                  class="p-2 hover:bg-accent rounded-l-md toolbar-btn"
-                  class:rounded-r-md={ui.getIsMobile()}
-                  class:bg-accent={ui.getEditorMode() === 'edit'}
-                  aria-label={$_('component.editor.toolbar.mode_edit')}
-                  aria-pressed={ui.getEditorMode() === 'edit'}
-                >
-                  <Edit size={16} />
-                </button>
-                {#if !ui.getIsMobile()}
-                  <button
-                    type="button"
-                    onclick={() => settings.setEditorModePreference('split')}
-                    class="p-2 hover:bg-accent border-x border-border toolbar-btn"
-                    class:bg-accent={ui.getEditorMode() === 'split'}
-                    aria-label={$_('component.editor.toolbar.mode_split')}
-                    aria-pressed={ui.getEditorMode() === 'split'}
-                  >
-                    <Columns size={16} />
-                  </button>
-                {/if}
-                <button
-                  type="button"
-                  onclick={() => settings.setEditorModePreference('preview')}
-                  class="p-2 hover:bg-accent rounded-r-md toolbar-btn"
-                  class:border-l={ui.getIsMobile()}
-                  class:border-border={ui.getIsMobile()}
-                  class:bg-accent={ui.getEditorMode() === 'preview'}
-                  aria-label={$_('component.editor.toolbar.mode_preview')}
-                  aria-pressed={ui.getEditorMode() === 'preview'}
-                >
-                  <Eye size={16} />
-                </button>
-              </div>
-
-              <!-- Formatting tools - always visible -->
-              {#if FEATURE_FLAGS.taskLists}
-                <button
-                  type="button"
-                  onclick={handleInsertTask}
-                  class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                  aria-label={$_('component.editor.toolbar.task')}
-                >
-                  <ListTodo size={16} />
-                </button>
-              {/if}
-
-              <!-- Divider -->
-              <div class="w-px h-6 bg-border mx-1 flex-shrink-0"></div>
-
-              <!-- Save button - always visible -->
-              <button
-                type="button"
-                onclick={handleSave}
-                disabled={!notes.getIsDirty() || notes.getIsSaving()}
-                class="p-2 hover:bg-accent rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn"
-                aria-label={$_('component.editor.toolbar.save')}
-              >
-                <Save size={16} />
-              </button>
-
-              <!-- Upload button - always visible -->
-              <button
-                type="button"
-                onclick={handleUploadButtonClick}
-                disabled={uploading}
-                class="p-2 hover:bg-accent rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn"
-                aria-label={$_('component.editor.toolbar.upload')}
-              >
-                <ImagePlus size={16} />
-              </button>
-
-              <!-- History button - always visible -->
-              <button
-                type="button"
-                onclick={() => (showVersionHistory = true)}
-                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                aria-label={$_('component.editor.toolbar.history')}
-              >
-                <History size={16} />
-              </button>
-
-              <!-- Focus Mode toggle - hidden on mobile -->
-              {#if !ui.getIsMobile()}
-                <button
-                  type="button"
-                  onclick={() => focusMode.toggle()}
-                  class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                  class:bg-accent={focusMode.isActive()}
-                  aria-label={$_('component.editor.toolbar.focus_mode')}
-                  aria-pressed={focusMode.isActive()}
-                >
-                  {#if focusMode.isActive()}
-                    <Minimize2 size={16} />
-                  {:else}
-                    <Maximize2 size={16} />
-                  {/if}
-                </button>
-              {/if}
-
-              <!-- Spell Check toggle - only in edit mode with AI enabled -->
-              {#if FEATURE_FLAGS.spellCheck && notes.getCurrentNote()?.ai_enabled && (ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split')}
-                <SpellCheckToggle {editorView} />
-              {/if}
-
-              <!-- AI Actions button - only when AI enabled -->
-              {#if notes.getCurrentNote()?.ai_enabled && (ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split')}
-                <div class="flex-shrink-0">
-                  <button
-                    bind:this={aiActionsButtonRef}
-                    type="button"
-                    onclick={handleAIActionsClick}
-                    class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                    class:bg-accent={showAIActionsDropdown}
-                    aria-label={$_('component.editor.ai_actions')}
-                    title={$_('component.editor.ai_actions_tooltip')}
-                    aria-expanded={showAIActionsDropdown}
-                    aria-haspopup="menu"
-                  >
-                    <Wand2 size={16} />
-                  </button>
-                </div>
-              {/if}
-
-              <!-- Auto-save toggle -->
-              <button
-                type="button"
-                onclick={handleAutoSaveToggle}
-                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                class:bg-accent={autosave.getAutoSaveEnabled()}
-                aria-label={$_('component.editor.toolbar.autosave')}
-                aria-pressed={autosave.getAutoSaveEnabled()}
-              >
-                {#if notes.getAutoSaveStatus() === 'saving'}
-                  <Loader2 size={16} class="animate-spin" />
-                {:else if notes.getAutoSaveStatus() === 'saved'}
-                  <Check size={16} class="text-success" />
-                {:else if notes.getAutoSaveStatus() === 'error'}
-                  <AlertCircle size={16} class="text-destructive" />
-                {:else}
-                  <Save size={16} class={autosave.getAutoSaveEnabled() ? 'text-primary' : ''} />
-                {/if}
-              </button>
-            </div>
-          </div>
-          <!-- More menu button - fixed right, always visible outside scroll area -->
-          <button
-            bind:this={moreMenuButtonRef}
-            onclick={openMoreMenu}
-            class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-            aria-expanded={showMoreMenu}
-            aria-haspopup="menu"
-            title={$_('component.editor.toolbar.more_options')}
-          >
-            <MoreVertical size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
+    <EditorToolbar
+      note={notes.getCurrentNote()}
+      {editorView}
+      isMobile={ui.getIsMobile()}
+      editorMode={ui.getEditorMode()}
+      autoSaveStatus={notes.getAutoSaveStatus()}
+      autoSaveEnabled={autosave.getAutoSaveEnabled()}
+      isDirty={notes.getIsDirty()}
+      isSaving={notes.getIsSaving()}
+      {uploading}
+      {showAIActionsDropdown}
+      {showMoreMenu}
+      aiEnabled={notes.getCurrentNote()?.ai_enabled ?? false}
+      syncing={getIsSyncing()}
+      syncProgress={getSyncProgress()}
+      pendingCount={getPendingCount()}
+      isOnline={network.getIsOnline()}
+      isEncryptionUnlocked={encryption.isEncryptionUnlocked()}
+      focusModeActive={focusMode.isActive()}
+      showSpellCheck={Boolean(notes.getCurrentNote()?.ai_enabled) &&
+        (ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split')}
+      onTitleInput={handleTitleInput}
+      onOpenSidebar={() => ui.setSidebarOpen(true)}
+      onSetEditorMode={settings.setEditorModePreference}
+      onInsertTask={handleInsertTask}
+      onSave={handleSave}
+      onUpload={handleUploadButtonClick}
+      onShowHistory={() => (showVersionHistory = true)}
+      onToggleFocus={focusMode.toggle}
+      onToggleAutosave={handleAutoSaveToggle}
+      onAIActions={handleAIActionsClick}
+      onOpenMoreMenu={openMoreMenu}
+    />
   {/if}
 
   <!-- Content area (scrollable container for editor, backlinks, and tags) -->

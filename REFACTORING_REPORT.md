@@ -465,6 +465,9 @@ frontend/src/lib/api/
 | `frontend/src/lib/components/Sidebar.svelte` | 1115 | Mobile + Desktop mit ~300 Zeilen Template-Duplikation |
 | `frontend/src/routes/+layout.svelte` | 724 | 170-Zeilen `initializeAsync`, 15+ Subsysteme |
 
+**Fortschritt:**
+- `frontend/src/lib/components/Editor.svelte`: Toolbar in `frontend/src/lib/components/editor/EditorToolbar.svelte` ausgelagert (erster Schnitt).
+
 ---
 
 ### Code-Duplikation Backend

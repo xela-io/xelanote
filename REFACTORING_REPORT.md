@@ -473,6 +473,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/components/Editor.svelte`: Find/Replace-UI-Flow nach `frontend/src/lib/editor/find-replace-ui.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Split-Resize-Handler nach `frontend/src/lib/editor/split-resize.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Lazy-Load Dialog-Loader nach `frontend/src/lib/editor/dialog-loaders.ts` ausgelagert.
+- `frontend/src/lib/components/Editor.svelte`: Task-Insert + Indent/Outdent nach `frontend/src/lib/editor/task-insert.ts` und `frontend/src/lib/editor/indentation.ts` ausgelagert.
 
 ---
 

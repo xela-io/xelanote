@@ -48,9 +48,11 @@
     handleSplitResizeMove,
     handleSplitResizeStart,
   } from '$lib/editor/split-resize';
+  import { indentSelection, outdentSelection } from '$lib/editor/indentation';
   import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { taskCollapse } from '$lib/editor/task-collapse';
+  import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable } from '$lib/editor/task-sortable';
   import { toggleTaskByIndex } from '$lib/editor/task-toggle';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
@@ -810,73 +812,7 @@
       await tick(); // Wait for editor DOM to render and initEditor action to run
       if (!editorView) return; // Editor still not ready
     }
-
-    const doc = editorView.state.doc;
-    const selection = editorView.state.selection.main;
-    const cursorLine = doc.lineAt(selection.from);
-
-    // Find the nearest task list by scanning upward from cursor
-    // This handles cases where cursor is below or within a task list
-    let nearestTaskListEnd = -1;
-    for (let i = cursorLine.number; i >= 1; i--) {
-      const line = doc.line(i);
-      if (/^\s*[-*+]\s*\[[xX ]\]/.test(line.text)) {
-        nearestTaskListEnd = i;
-        break;
-      }
-    }
-
-    // If we found a task list nearby, get its full boundaries
-    const tasksInList: Array<{ lineNum: number; isChecked: boolean }> = [];
-
-    if (nearestTaskListEnd > 0) {
-      const boundary = findTaskListBoundary(doc, nearestTaskListEnd);
-
-      // Find all tasks in this list boundary
-      for (let i = boundary.startLine; i <= boundary.endLine; i++) {
-        const line = doc.line(i);
-        const match = /^(\s*[-*+]\s*)\[([xX ])\]/.exec(line.text);
-        if (match) {
-          tasksInList.push({
-            lineNum: i,
-            isChecked: match[2].toLowerCase() === 'x',
-          });
-        }
-      }
-    }
-
-    // Find the first checked task
-    const firstCheckedTask = tasksInList.find((t) => t.isChecked);
-
-    // If there are checked tasks AND cursor is at or after the first checked task
-    // (including below the list), insert the new task BEFORE the first checked task
-    if (firstCheckedTask && cursorLine.number >= firstCheckedTask.lineNum) {
-      const targetLine = doc.line(firstCheckedTask.lineNum);
-      const text = '- [ ] \n';
-
-      editorView.dispatch({
-        changes: { from: targetLine.from, insert: text },
-        // Position cursor at end of new task (before the newline)
-        selection: { anchor: targetLine.from + text.length - 1 },
-      });
-    } else {
-      // Original behavior: insert at cursor position
-      const insertPos = selection.from === selection.to ? selection.from : cursorLine.to;
-
-      const isAtLineStart = insertPos === cursorLine.from;
-      const isEmptyLine = cursorLine.text.trim() === '';
-
-      // Auf neuer Zeile einfügen, außer Zeile ist leer oder Cursor am Anfang
-      const prefix = isAtLineStart || isEmptyLine ? '' : '\n';
-      const text = `${prefix}- [ ] `;
-
-      editorView.dispatch({
-        changes: { from: insertPos, to: insertPos, insert: text },
-        selection: { anchor: insertPos + text.length },
-      });
-    }
-
-    editorView.focus();
+    insertTask(editorView);
   }
 
   async function handleIndent() {
@@ -885,25 +821,7 @@
       await tick();
       if (!editorView) return;
     }
-
-    const state = editorView.state;
-    const selection = state.selection.main;
-    const doc = state.doc;
-
-    // Finde alle Zeilen in der Selektion
-    const startLine = doc.lineAt(selection.from);
-    const endLine = doc.lineAt(selection.to);
-
-    const changes: { from: number; to: number; insert: string }[] = [];
-
-    for (let lineNum = startLine.number; lineNum <= endLine.number; lineNum++) {
-      const line = doc.line(lineNum);
-      // Tab am Zeilenanfang einfügen
-      changes.push({ from: line.from, to: line.from, insert: '\t' });
-    }
-
-    editorView.dispatch({ changes });
-    editorView.focus();
+    indentSelection(editorView);
   }
 
   async function handleOutdent() {
@@ -912,39 +830,7 @@
       await tick();
       if (!editorView) return;
     }
-
-    const state = editorView.state;
-    const selection = state.selection.main;
-    const doc = state.doc;
-
-    // Finde alle Zeilen in der Selektion
-    const startLine = doc.lineAt(selection.from);
-    const endLine = doc.lineAt(selection.to);
-
-    const changes: { from: number; to: number; insert: string }[] = [];
-
-    for (let lineNum = startLine.number; lineNum <= endLine.number; lineNum++) {
-      const line = doc.line(lineNum);
-      const text = line.text;
-
-      // Entferne führenden Tab oder bis zu 4 Spaces
-      if (text.startsWith('\t')) {
-        changes.push({ from: line.from, to: line.from + 1, insert: '' });
-      } else if (text.startsWith('    ')) {
-        changes.push({ from: line.from, to: line.from + 4, insert: '' });
-      } else if (text.startsWith('   ')) {
-        changes.push({ from: line.from, to: line.from + 3, insert: '' });
-      } else if (text.startsWith('  ')) {
-        changes.push({ from: line.from, to: line.from + 2, insert: '' });
-      } else if (text.startsWith(' ')) {
-        changes.push({ from: line.from, to: line.from + 1, insert: '' });
-      }
-    }
-
-    if (changes.length > 0) {
-      editorView.dispatch({ changes });
-    }
-    editorView.focus();
+    outdentSelection(editorView);
   }
 
   const findReplaceHandlers = {

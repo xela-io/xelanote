@@ -29,6 +29,7 @@ import {
   handleRemoteDelete as handleRemoteDeleteHelper,
   handleRemoteUpdate as handleRemoteUpdateHelper,
 } from '$lib/stores/notes/remote-updates';
+import { handleRemoteUpdateWithPendingCheck } from '$lib/stores/notes/remote-update-gate';
 import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
 import {
   clearCurrentNote as clearCurrentNoteHelper,
@@ -648,52 +649,35 @@ export function handleRemoteUpdate(remoteNote: Note) {
   // After sync completes, loadNotes() will load fresh server state.
   // Note: This is async but we handle it via fire-and-forget pattern.
   // The check runs fast (IndexedDB) and calls the actual update logic.
-  _handleRemoteUpdateAsync(remoteNote);
-}
-
-async function _handleRemoteUpdateAsync(remoteNote: Note) {
-  try {
-    const hasPending = await hasPendingForNote(remoteNote.id);
-    if (hasPending) {
-      console.log(
-        '[WebSocket] Skipping remote update for note with pending offline ops:',
-        remoteNote.id
-      );
-      return;
-    }
-  } catch {
-    // IndexedDB error - continue with normal flow
-  }
-
-  _handleRemoteUpdateSync(remoteNote);
-}
-
-function _handleRemoteUpdateSync(remoteNote: Note) {
-  handleRemoteUpdateHelper(remoteNote, {
-    getCurrentNote: () => currentNote,
-    getIsSaving: () => isSaving,
-    getIsDirty: () => isDirty,
-    getLastSavedVersion: () => lastSavedVersion,
-    getLastSaveTimestamp: () => lastSaveTimestamp,
-    clearLastSaved: () => {
-      lastSavedVersion = null;
-      lastSaveTimestamp = null;
-    },
-    setCurrentNote: (note) => {
-      currentNote = note;
-    },
-    updateNoteInList: (note) => updateNoteInList(note),
-    getNotes: () => notes,
-    setNotes: (nextNotes) => {
-      notes = nextNotes;
-    },
-    isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-    decryptNote: (encryptedTitle, payload) =>
-      encryption.decryptNote(encryptedTitle, payload),
-    warn: (message, options) => toast.warning(message, options),
-    loadNote: (id) => {
-      void loadNote(id);
-    },
+  handleRemoteUpdateWithPendingCheck(remoteNote, {
+    hasPendingForNote: (noteId) => hasPendingForNote(noteId),
+    onUpdate: (note) =>
+      handleRemoteUpdateHelper(note, {
+        getCurrentNote: () => currentNote,
+        getIsSaving: () => isSaving,
+        getIsDirty: () => isDirty,
+        getLastSavedVersion: () => lastSavedVersion,
+        getLastSaveTimestamp: () => lastSaveTimestamp,
+        clearLastSaved: () => {
+          lastSavedVersion = null;
+          lastSaveTimestamp = null;
+        },
+        setCurrentNote: (nextNote) => {
+          currentNote = nextNote;
+        },
+        updateNoteInList: (nextNote) => updateNoteInList(nextNote),
+        getNotes: () => notes,
+        setNotes: (nextNotes) => {
+          notes = nextNotes;
+        },
+        isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
+        decryptNote: (encryptedTitle, payload) =>
+          encryption.decryptNote(encryptedTitle, payload),
+        warn: (message, options) => toast.warning(message, options),
+        loadNote: (noteId) => {
+          void loadNote(noteId);
+        },
+      }),
   });
 }
 

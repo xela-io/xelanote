@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { EditorView } from '@codemirror/view';
   import { Link } from 'lucide-svelte';
-  import type { ComponentType } from 'svelte';
   import { tick } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
@@ -36,6 +35,13 @@
   } from '$lib/editor/image-upload';
   import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
   import { applyAITransform as applyAITransformToEditor, prepareAITransform } from '$lib/editor/ai-actions';
+  import {
+    loadMarkdownGuideDialog,
+    loadMarkdownGuideDropdown,
+    loadMoveToFolderDialog,
+    loadVersionHistoryDialog,
+    type DialogLoaderState,
+  } from '$lib/editor/dialog-loaders';
   import {
     handleSplitResizeDblClick,
     handleSplitResizeEnd,
@@ -105,10 +111,12 @@
   let pendingHighlightQuery = $state<string | null>(null);
   let editorExtensionsReady = $state(false);
 
-  let MoveToFolderDialogComponent = $state<ComponentType | null>(null);
-  let markdownGuideDialogComponent = $state<ComponentType | null>(null);
-  let MarkdownGuideDropdownComponent = $state<ComponentType | null>(null);
-  let VersionHistoryDialogComponent = $state<ComponentType | null>(null);
+  let dialogLoaders = $state<DialogLoaderState>({
+    moveToFolderDialog: null,
+    markdownGuideDialog: null,
+    markdownGuideDropdown: null,
+    versionHistoryDialog: null,
+  });
 
   // Split resize state
   let isSplitResizing = $state(false);
@@ -1010,51 +1018,35 @@
     findReplaceShowReplace = nextState.showReplace;
   }
 
-  async function loadMoveToFolderDialog() {
-    if (MoveToFolderDialogComponent) return;
-    const module = await import('./MoveToFolderDialog.svelte');
-    MoveToFolderDialogComponent = module.default as unknown as ComponentType;
-  }
-
-  async function loadMarkdownGuideDialog() {
-    if (markdownGuideDialogComponent) return;
-    const module = await import('./MarkdownGuideDialog.svelte');
-    markdownGuideDialogComponent = module.default as unknown as ComponentType;
-  }
-
-  async function loadMarkdownGuideDropdown() {
-    if (MarkdownGuideDropdownComponent) return;
-    const module = await import('./MarkdownGuideDropdown.svelte');
-    MarkdownGuideDropdownComponent = module.default as unknown as ComponentType;
-  }
-
-  async function loadVersionHistoryDialog() {
-    if (VersionHistoryDialogComponent) return;
-    const { default: component } = await import('./VersionHistoryDialog.svelte');
-    VersionHistoryDialogComponent = component as unknown as ComponentType;
-  }
-
   $effect(() => {
     if (showMoveDialog) {
-      loadMoveToFolderDialog();
+      loadMoveToFolderDialog(dialogLoaders).then((next) => {
+        dialogLoaders = next;
+      });
     }
   });
 
   $effect(() => {
     if (showVersionHistory) {
-      loadVersionHistoryDialog();
+      loadVersionHistoryDialog(dialogLoaders).then((next) => {
+        dialogLoaders = next;
+      });
     }
   });
 
   $effect(() => {
     if (ui.getMarkdownGuideOpen()) {
-      loadMarkdownGuideDialog();
+      loadMarkdownGuideDialog(dialogLoaders).then((next) => {
+        dialogLoaders = next;
+      });
     }
   });
 
   $effect(() => {
     if (ui.getMarkdownGuideDropdownOpen()) {
-      loadMarkdownGuideDropdown();
+      loadMarkdownGuideDropdown(dialogLoaders).then((next) => {
+        dialogLoaders = next;
+      });
     }
   });
 
@@ -1357,8 +1349,9 @@
 
 <!-- Move to folder dialog -->
 {#if showMoveDialog && notes.getCurrentNote()}
-  {#if MoveToFolderDialogComponent}
-    <MoveToFolderDialogComponent
+  {#if dialogLoaders.moveToFolderDialog}
+    <svelte:component
+      this={dialogLoaders.moveToFolderDialog}
       noteId={notes.getCurrentNote()!.id}
       currentFolder={notes.getCurrentNote()!.folder_path}
       onClose={() => (showMoveDialog = false)}
@@ -1367,19 +1360,25 @@
 {/if}
 
 <!-- Markdown Guide Dropdown -->
-{#if ui.getMarkdownGuideDropdownOpen() && MarkdownGuideDropdownComponent}
-  <MarkdownGuideDropdownComponent onClose={() => ui.setMarkdownGuideDropdownOpen(false)} />
+{#if ui.getMarkdownGuideDropdownOpen() && dialogLoaders.markdownGuideDropdown}
+  <svelte:component
+    this={dialogLoaders.markdownGuideDropdown}
+    onClose={() => ui.setMarkdownGuideDropdownOpen(false)}
+  />
 {/if}
 
 <!-- Markdown Guide Dialog -->
-{#if ui.getMarkdownGuideOpen() && markdownGuideDialogComponent}
-  {@const MarkdownGuideDialog = markdownGuideDialogComponent}
-  <MarkdownGuideDialog onClose={() => ui.setMarkdownGuideOpen(false)} />
+{#if ui.getMarkdownGuideOpen() && dialogLoaders.markdownGuideDialog}
+  <svelte:component
+    this={dialogLoaders.markdownGuideDialog}
+    onClose={() => ui.setMarkdownGuideOpen(false)}
+  />
 {/if}
 
 <!-- Version History Dialog -->
-{#if showVersionHistory && notes.getCurrentNote() && VersionHistoryDialogComponent}
-  <VersionHistoryDialogComponent
+{#if showVersionHistory && notes.getCurrentNote() && dialogLoaders.versionHistoryDialog}
+  <svelte:component
+    this={dialogLoaders.versionHistoryDialog}
     noteId={notes.getCurrentNote()!.id}
     noteTitle={notes.getCurrentNote()!.title}
     currentVersion={notes.getCurrentNote()!.version}

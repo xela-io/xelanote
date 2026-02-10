@@ -152,6 +152,23 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 - Backend: Fehlerbehandlung in `api/notes.go`, `api/journal.go`, `llm/*.go`, `db/*.go`.
 - Security/Validation-Pruefung fuer Admin-/Import-Endpoints (nur statisch geprueft).
 
+## Phase 4 Fortschritt (Testing & Dokumentation)
+
+### Erledigt
+- **Unit-Tests fuer History Store**
+  - `frontend/src/lib/stores/history.test.ts`
+  - Test-Namen folgen dem `should ... when ...` Schema.
+
+- **Dokumentation: Test-Namenskonvention**
+  - `TESTING.md` ergaenzt (Namensschema).
+
+- **CHANGELOG aktualisiert**
+  - `CHANGELOG.md` Eintrag fuer neue Tests.
+
+### Offen
+- Weitere Tests fuer kritische Backend-Services (Notes, Auth, Sharing Edge-Cases).
+- Dokumentation fuer neuere Refactorings (falls erforderlich).
+
 ## Fortschritt
 
 | Phase | Beschreibung | Commit | Status |

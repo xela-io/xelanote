@@ -103,8 +103,24 @@ func (s *Server) getJournalCalendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
-	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
+	yearParam := r.URL.Query().Get("year")
+	monthParam := r.URL.Query().Get("month")
+	if yearParam != "" {
+		parsedYear, err := strconv.Atoi(yearParam)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid year")
+			return
+		}
+		year = parsedYear
+	}
+	if monthParam != "" {
+		parsedMonth, err := strconv.Atoi(monthParam)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid month")
+			return
+		}
+		month = parsedMonth
+	}
 
 	now := time.Now()
 	if year == 0 {
@@ -141,7 +157,15 @@ func (s *Server) getJournalCalendarYear(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
+	yearParam := r.URL.Query().Get("year")
+	if yearParam != "" {
+		parsedYear, err := strconv.Atoi(yearParam)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid year")
+			return
+		}
+		year = parsedYear
+	}
 
 	now := time.Now()
 	if year == 0 {

@@ -409,6 +409,7 @@ frontend/src/lib/api/
 | `backend/internal/api/notes_ai.go` | neu | LLM/Summary/AI-Endpoints |
 | `backend/internal/api/notes_trash.go` | neu | Trash-Endpoints |
 | `backend/internal/api/notes_helpers.go` | neu | Validation, ETag, request types, helper utils |
+| `backend/internal/api/notes_encryption.go` | neu | Decrypt + DEK-Reencrypt Endpoints |
 | `backend/internal/service/notes.go` | 1512 | Business-Logik fuer alle Note-Operationen |
 | `backend/internal/db/notes.go` | 1529 | Alle Note-DB-Queries |
 | `backend/cmd/server/main.go` | 340 | DB-Init, Services, WS, Jobs, HTTP, Shutdown |

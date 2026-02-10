@@ -78,6 +78,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fingerprint-basierte Deduplizierung: gleicher Fehler wird als Kommentar am bestehenden Issue angefuegt statt neues Issue
 - Client-seitiges Rate-Limiting (3 Reports/5 Min) und Session-Dedup
 - Backend Rate-Limiting (5/Stunde) und 16KB Body-Limit fuer Error Reports
+
+### Changed
+- Frontend: `notes.svelte.ts`, `settings/+page.svelte` und `+layout.svelte` modularisiert (Helper unter `src/lib/stores/notes/` und `src/lib/routes/`).
+- Layout- und Notes-Flows (PWA-Update, Init, Interactions, Viewport, Guards, Auto-Save, Remote-Updates) in eigene Module ausgelagert.
+
+### Fixed
+- FE-Typecheck bereinigt; `npm run typecheck`, `npm run lint`, `npm run format` und `make test-frontend` gruen.
 - Konfiguration ueber FORGEJO_URL, FORGEJO_REPO, FORGEJO_API_TOKEN (Feature deaktiviert wenn leer)
 - /api/config liefert `error_reporting_enabled` fuer Frontend-Feature-Detection
 - 10 Frontend-Tests (normalizeMessage, computeFingerprint, Dedup) und 19 Backend-Tests (Service + Handler)

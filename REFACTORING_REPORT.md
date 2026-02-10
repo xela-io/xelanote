@@ -199,6 +199,19 @@ Keine eindeutigen kritischen Findings aus statischer Analyse. (Wenn du Runtime-C
 ### Offen
 - Weitere Error-Handling-Hotspots (z.B. `api/journal.go`, `db/*` RowsAffected/LastInsertId).
 
+## Phase 3 Fortschritt (Frontend-Modularisierung)
+
+### Status
+- **Start vorbereitet:** Modulgrenzen fuer `frontend/src/lib/api.ts` wurden festgelegt (Option A bestaetigt).
+- **Umsetzung begonnen:** Neues Typen-Modul geplant/angelegt (`frontend/src/lib/api/types.ts`).
+- **Abgebrochen vor Abschluss:** Umbau von `frontend/src/lib/api.ts` auf Re-Exports/Type-Auslagerung konnte noch nicht sauber applied werden.
+
+### Nächste Schritte (Resume)
+1. `frontend/src/lib/api.ts` auf `export * from './api/types'` umstellen und lokale Interface-Definitionen entfernen.
+2. API-Funktionen Schritt fuer Schritt in Moduldateien aufteilen (auth, notes, folders, etc.) laut Option A.
+3. Re-Exports in `api.ts` als Facade beibehalten (keine Call-Site-Aenderung).
+4. Tests/Typecheck laufen lassen.
+
 ## Fortschritt
 
 | Phase | Beschreibung | Commit | Status |

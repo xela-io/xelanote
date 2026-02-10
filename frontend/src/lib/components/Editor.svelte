@@ -21,7 +21,13 @@
     updateEditorContent,
     updateFocusMode,
   } from '$lib/editor/codemirror';
-  import { clearSearch,sanitizeSearchQuery } from '$lib/editor/find-replace';
+  import {
+    closeFindReplace as closeFindReplaceUI,
+    handleExtensionsReady,
+    handleNoteChange,
+    handleUrlHighlight,
+    openFindReplace as openFindReplaceUI,
+  } from '$lib/editor/find-replace-ui';
   import {
     handleEditorDragOver,
     handleEditorDrop,
@@ -189,11 +195,23 @@
         openFindReplace(undefined, options);
       },
       onExtensionsReady: () => {
+        const nextState = handleExtensionsReady(
+          {
+            show: showFindReplace,
+            query: findReplaceQuery,
+            showReplace: findReplaceShowReplace,
+            caseSensitive: findReplaceCaseSensitive,
+            pendingHighlightQuery,
+            editorExtensionsReady: true,
+            prevNoteId,
+          },
+          findReplaceHandlers
+        );
+        showFindReplace = nextState.show;
+        findReplaceQuery = nextState.query;
+        findReplaceShowReplace = nextState.showReplace;
+        pendingHighlightQuery = nextState.pendingHighlightQuery;
         editorExtensionsReady = true;
-        if (pendingHighlightQuery) {
-          openFindReplace(pendingHighlightQuery);
-          pendingHighlightQuery = null;
-        }
       },
     };
 
@@ -899,36 +917,75 @@
     editorView.focus();
   }
 
-  function openFindReplace(query?: string, options?: { replace?: boolean }) {
-    findReplaceQuery = query ?? '';
-    findReplaceShowReplace = options?.replace ?? false;
-
-    // If editor has selection and no query provided, use selected text
-    if (!query && editorView) {
-      const selection = editorView.state.selection.main;
-      if (selection.from !== selection.to) {
-        findReplaceQuery = editorView.state.doc.sliceString(selection.from, selection.to);
+  const findReplaceHandlers = {
+    getEditorView: () => editorView,
+    getEditorMode: () => ui.getEditorMode(),
+    getNoteId: () => noteId,
+    getUrlHighlight: () => $page.url.searchParams.get('highlight'),
+    setUrlHighlight: (value: string | null) => {
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set('highlight', value);
+      } else if (url.searchParams.has('highlight')) {
+        url.searchParams.delete('highlight');
       }
-    }
+      window.history.replaceState(window.history.state, '', url.toString());
+    },
+    setState: (partial: Partial<{
+      show: boolean;
+      query: string;
+      showReplace: boolean;
+      caseSensitive: boolean;
+      pendingHighlightQuery: string | null;
+      editorExtensionsReady: boolean;
+      prevNoteId: string | null;
+    }>) => {
+      if (partial.show !== undefined) showFindReplace = partial.show;
+      if (partial.query !== undefined) findReplaceQuery = partial.query;
+      if (partial.showReplace !== undefined) findReplaceShowReplace = partial.showReplace;
+      if (partial.caseSensitive !== undefined) findReplaceCaseSensitive = partial.caseSensitive;
+      if (partial.pendingHighlightQuery !== undefined) pendingHighlightQuery = partial.pendingHighlightQuery;
+      if (partial.editorExtensionsReady !== undefined) editorExtensionsReady = partial.editorExtensionsReady;
+      if (partial.prevNoteId !== undefined) prevNoteId = partial.prevNoteId;
+    },
+  };
 
-    showFindReplace = true;
+  function openFindReplace(query?: string, options?: { replace?: boolean }) {
+    const nextState = openFindReplaceUI(
+      {
+        show: showFindReplace,
+        query: findReplaceQuery,
+        showReplace: findReplaceShowReplace,
+        caseSensitive: findReplaceCaseSensitive,
+        pendingHighlightQuery,
+        editorExtensionsReady,
+        prevNoteId,
+      },
+      findReplaceHandlers,
+      query,
+      options
+    );
+    showFindReplace = nextState.show;
+    findReplaceQuery = nextState.query;
+    findReplaceShowReplace = nextState.showReplace;
   }
 
   function closeFindReplace() {
-    if (showFindReplace) {
-      showFindReplace = false;
-      findReplaceQuery = '';
-      findReplaceShowReplace = false;
-      if (editorView) {
-        clearSearch(editorView);
-      }
-      // Remove ?highlight= from URL
-      const url = new URL(window.location.href);
-      if (url.searchParams.has('highlight')) {
-        url.searchParams.delete('highlight');
-        window.history.replaceState(window.history.state, '', url.toString());
-      }
-    }
+    const nextState = closeFindReplaceUI(
+      {
+        show: showFindReplace,
+        query: findReplaceQuery,
+        showReplace: findReplaceShowReplace,
+        caseSensitive: findReplaceCaseSensitive,
+        pendingHighlightQuery,
+        editorExtensionsReady,
+        prevNoteId,
+      },
+      findReplaceHandlers
+    );
+    showFindReplace = nextState.show;
+    findReplaceQuery = nextState.query;
+    findReplaceShowReplace = nextState.showReplace;
   }
 
   async function loadMoveToFolderDialog() {
@@ -984,34 +1041,42 @@
   // in declaration order, so close runs first, then re-open with ?highlight=.
   let prevNoteId: string | null = null;
   $effect(() => {
-    if (prevNoteId !== null && prevNoteId !== noteId) {
-      // Inline close without clearing pendingHighlightQuery
-      showFindReplace = false;
-      findReplaceQuery = '';
-      findReplaceShowReplace = false;
-      if (editorView) {
-        clearSearch(editorView);
-      }
-    }
-    prevNoteId = noteId;
+    const nextState = handleNoteChange(
+      {
+        show: showFindReplace,
+        query: findReplaceQuery,
+        showReplace: findReplaceShowReplace,
+        caseSensitive: findReplaceCaseSensitive,
+        pendingHighlightQuery,
+        editorExtensionsReady,
+        prevNoteId,
+      },
+      findReplaceHandlers
+    );
+    showFindReplace = nextState.show;
+    findReplaceQuery = nextState.query;
+    findReplaceShowReplace = nextState.showReplace;
+    prevNoteId = nextState.prevNoteId;
   });
 
   // URL highlight param: open FindReplaceBar when ?highlight= is present
   $effect(() => {
-    const query = $page.url.searchParams.get('highlight');
-    if (query) {
-      const sanitized = sanitizeSearchQuery(query);
-      const isPreviewOnly = ui.getEditorMode() === 'preview';
-
-      if (isPreviewOnly || (editorExtensionsReady && editorView)) {
-        // Preview mode: no editor needed, just open bar for preview highlights
-        // Edit/Split mode with ready editor: open immediately
-        openFindReplace(sanitized);
-      } else {
-        // Edit/Split mode, editor not yet ready → defer until onExtensionsReady
-        pendingHighlightQuery = sanitized;
-      }
-    }
+    const nextState = handleUrlHighlight(
+      {
+        show: showFindReplace,
+        query: findReplaceQuery,
+        showReplace: findReplaceShowReplace,
+        caseSensitive: findReplaceCaseSensitive,
+        pendingHighlightQuery,
+        editorExtensionsReady,
+        prevNoteId,
+      },
+      findReplaceHandlers
+    );
+    showFindReplace = nextState.show;
+    findReplaceQuery = nextState.query;
+    findReplaceShowReplace = nextState.showReplace;
+    pendingHighlightQuery = nextState.pendingHighlightQuery;
   });
 </script>
 

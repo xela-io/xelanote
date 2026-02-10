@@ -2,6 +2,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
 import globals from 'globals';
+import importSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
 import svelteParser from 'svelte-eslint-parser';
 import tseslint from 'typescript-eslint';
@@ -31,6 +32,15 @@ export default [
   ...tseslint.configs.recommended,
   ...svelte.configs['flat/recommended'],
   prettier,
+  {
+    plugins: {
+      'simple-import-sort': importSort,
+    },
+    rules: {
+      'simple-import-sort/imports': 'warn',
+      'simple-import-sort/exports': 'warn',
+    },
+  },
 
   // Global rule overrides: downgrade noisy rules to warnings
   {

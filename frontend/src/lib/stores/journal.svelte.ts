@@ -428,6 +428,49 @@ export function calculateStreaks(
 }
 
 /**
+ * Get year dates for a specific year (independent of navigation state).
+ */
+export function getYearDatesSetForYear(year: number): Set<string> {
+  void yearCacheVersion;
+  return yearCache.get(year) ?? new Set();
+}
+
+/**
+ * Get prev December dates for a specific year (independent of navigation state).
+ */
+export function getPrevDecDatesForYear(year: number): string[] {
+  void yearCacheVersion;
+  return prevDecCache.get(year) ?? [];
+}
+
+/**
+ * Populate cache without mutating yearCalendarYear navigation state.
+ * Unlike loadYearCalendar(), this does NOT set yearCalendarYear,
+ * so the desktop heatmap's year navigation is not affected.
+ */
+export async function ensureYearCacheLoaded(year: number) {
+  if (!getJournalFeatureEnabled()) return;
+  if (yearCache.has(year)) return;
+
+  yearCalendarLoading = true;
+  yearCalendarError = null;
+  try {
+    const [yearResponse, decResponse] = await Promise.all([
+      getJournalYearCalendar(year),
+      getJournalCalendar(year - 1, 12),
+    ]);
+    yearCache.set(year, new SvelteSet(yearResponse.dates ?? []));
+    prevDecCache.set(year, decResponse.dates ?? []);
+    yearCacheVersion++;
+  } catch (error) {
+    console.error('Failed to load year calendar:', error);
+    yearCalendarError = 'Year calendar could not be loaded';
+  } finally {
+    yearCalendarLoading = false;
+  }
+}
+
+/**
  * Invalidate year cache for a specific year (e.g., when a journal entry is deleted).
  */
 export function invalidateYearCache(year: number) {

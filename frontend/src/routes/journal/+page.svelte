@@ -14,6 +14,7 @@
   import * as journal from '$lib/stores/journal.svelte';
   import * as features from '$lib/stores/features.svelte';
   import JournalHeatmap from '$lib/components/JournalHeatmap.svelte';
+  import JournalActivityWidget from '$lib/components/JournalActivityWidget.svelte';
 
   const featureEnabled = $derived(features.getJournalFeatureEnabled());
   const featureLoaded = $derived(features.getJournalFeatureLoaded());
@@ -173,8 +174,13 @@
   {:else}
     <div class="flex-1 overflow-y-auto p-6">
       <div class="max-w-5xl">
-        <!-- Mobile Layout: Entries first, then collapsible calendar -->
+        <!-- Mobile Layout: Activity widget, entries, then collapsible calendar -->
         <div class="md:hidden">
+          <!-- Activity Widget -->
+          <div class="mb-4">
+            <JournalActivityWidget />
+          </div>
+
           <!-- Entry List -->
           {@render entryListBlock()}
 

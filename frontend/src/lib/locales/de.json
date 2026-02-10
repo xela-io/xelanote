@@ -327,7 +327,10 @@
       "longestStreak": "Längste",
       "legendNoEntry": "Kein Eintrag",
       "legendEntry": "Eintrag",
-      "days": "{count, plural, one {Tag} other {Tage}}"
+      "days": "{count, plural, one {Tag} other {Tage}}",
+      "recentActivity": "Letzte Aktivität",
+      "daysAgo": "vor {count} T.",
+      "today": "Heute"
     },
     "recipes": {
       "title": "Rezepte",

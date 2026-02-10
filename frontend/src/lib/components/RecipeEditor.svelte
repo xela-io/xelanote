@@ -1,11 +1,12 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { onMount } from 'svelte';
-  import { Loader2, Lock, Plus, X, Sparkles } from 'lucide-svelte';
+  import { onMount, untrack } from 'svelte';
+  import { Loader2, Lock, Menu, Plus, X, Sparkles } from 'lucide-svelte';
   import type { Component } from 'svelte';
   import type { RecipeIngredient, RecipeCollection } from '$lib/api';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
   import RecipeMetadataForm from './RecipeMetadataForm.svelte';
   import RecipeIngredientEditor from './RecipeIngredientEditor.svelte';
   import RecipeScaleControl from './RecipeScaleControl.svelte';
@@ -51,11 +52,17 @@
   const isEncrypted = $derived(currentRecipe?.encrypted ?? false);
   const isReadonly = $derived(false); // TODO: Check share role for viewer
 
-  // Sync local ingredients when recipe loads
+  // Sync local ingredients from server state (initial load + remote updates).
+  // Uses untrack on ingredientsDirty so it doesn't become a dependency —
+  // this prevents the effect from re-running when ingredientsDirty changes,
+  // which would overwrite in-progress edits after auto-save completes.
   $effect(() => {
     if (currentRecipe?.ingredients) {
-      localIngredients = [...currentRecipe.ingredients];
-      ingredientsDirty = false;
+      const dirty = untrack(() => ingredientsDirty);
+      if (!dirty) {
+        localIngredients = [...currentRecipe.ingredients];
+        ingredientsDirty = false;
+      }
     }
   });
 
@@ -174,6 +181,17 @@
 
     <!-- Tabs -->
     <div class="flex items-center border-b border-border px-4 shrink-0">
+      <!-- Sidebar toggle on mobile (MobileHeader is hidden on /note/ routes) -->
+      {#if ui.getIsMobile()}
+        <button
+          type="button"
+          onclick={() => ui.setSidebarOpen(true)}
+          class="p-2 -ml-2 mr-1 rounded-md hover:bg-accent toolbar-btn"
+          aria-label="Menü öffnen"
+        >
+          <Menu size={16} />
+        </button>
+      {/if}
       <div class="flex gap-0 -mb-px">
         <button
           onclick={() => switchTab('ingredients')}

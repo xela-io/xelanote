@@ -305,8 +305,11 @@ export async function updateIngredients(
   lastError = null;
   try {
     await api.setRecipeIngredients(noteId, ingredients, currentRecipe.metadata.updated_at);
-    // Reload detail to get updated timestamps
-    await loadRecipeDetail(noteId);
+    // Silently refresh to get the server's updated_at (needed for optimistic locking).
+    // Don't use loadRecipeDetail() here — it sets recipeDetailLoading=true which
+    // swaps the editor for a loading spinner, causing focus loss mid-typing.
+    const updated = await api.getRecipeDetail(noteId);
+    currentRecipe = updated;
     return true;
   } catch (error) {
     console.error('Failed to update recipe ingredients:', error);

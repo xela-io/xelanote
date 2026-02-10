@@ -39,6 +39,7 @@
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import * as websocket from '$lib/stores/websocket.svelte';
+  import { registerPwaUpdates } from '$lib/routes/layout/pwa';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -59,49 +60,15 @@
 
   if (browser) {
     import('virtual:pwa-register').then(({ registerSW }) => {
-      const updateSW = registerSW({
-        immediate: true,
-        onNeedRefresh() {
-          // ✅ SECURITY: Check if user has unsaved changes or pending offline ops
-          const isDirty = notes.getIsDirty();
-          const hasPending = syncManager.getPendingCount() > 0;
-
-          if (isDirty || hasPending) {
-            console.log('[PWA] Update available, but waiting for save/sync...');
-
-            // Clear any existing interval to prevent multiple timers
-            if (updateCheckInterval !== null) {
-              clearInterval(updateCheckInterval);
-            }
-
-            // Poll until save/sync completes (check every 1 second)
-            updateCheckInterval = setInterval(() => {
-              if (!notes.getIsDirty() && syncManager.getPendingCount() === 0) {
-                clearInterval(updateCheckInterval!);
-                updateCheckInterval = null;
-                promptForUpdate();
-              }
-            }, 1000); // 1000ms = 1 second (prevents CPU thrashing)
-          } else {
-            promptForUpdate();
-          }
-
-          function promptForUpdate() {
-            const shouldUpdate = confirm(get(_)('pwa.update_available'));
-
-            if (shouldUpdate) {
-              updateSW(true); // Trigger update + reload
-            }
-          }
-        },
-        onOfflineReady() {
-          console.log('[PWA] App ready to work offline');
-        },
-        onRegisteredSW(swUrl, _registration) {
-          console.log('[PWA] Service Worker registered:', swUrl);
-        },
-        onRegisterError(error) {
-          console.error('[PWA] Service Worker registration failed:', error);
+      registerPwaUpdates({
+        registerSW,
+        isDirty: () => notes.getIsDirty(),
+        getPendingCount: () => syncManager.getPendingCount(),
+        confirm: (message) => confirm(message),
+        updateMessage: () => get(_)('pwa.update_available'),
+        getIntervalHandle: () => updateCheckInterval,
+        setIntervalHandle: (handle) => {
+          updateCheckInterval = handle;
         },
       });
     });

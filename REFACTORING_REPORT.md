@@ -501,6 +501,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/stores/notes.svelte.ts`: WebSocket-Remote-Updates nach `frontend/src/lib/stores/notes/remote-updates.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Note-State-Updates nach `frontend/src/lib/stores/notes/state-updates.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Pending-Check fuer WebSocket-Updates nach `frontend/src/lib/stores/notes/remote-update-gate.ts` ausgelagert.
+- `frontend/src/routes/+layout.svelte`: PWA-Update-Registrierung nach `frontend/src/lib/routes/layout/pwa.ts` ausgelagert.
 
 ---
 

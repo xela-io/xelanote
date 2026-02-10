@@ -1,6 +1,6 @@
 // Notes store using Svelte 5 runes
 
-import type { Backlink, Job, Note } from '$lib/api';
+import type { Backlink, Note } from '$lib/api';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
@@ -23,6 +23,7 @@ import {
   deleteCurrentNote as deleteCurrentNoteHelper,
   moveNote as moveNoteHelper,
 } from '$lib/stores/notes/mutations';
+import { renameCurrentNote as renameCurrentNoteHelper } from '$lib/stores/notes/rename';
 import { saveNote as saveNoteHelper } from '$lib/stores/notes/saver';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as autosave from '$lib/stores/autosave.svelte';
@@ -326,93 +327,31 @@ export async function deleteCurrentNote() {
   });
 }
 
-/**
- * Poll a job until it completes or fails
- */
-async function pollJobCompletion(jobId: string, maxAttempts = 60): Promise<Job> {
-  for (let i = 0; i < maxAttempts; i++) {
-    const job = await api.getJobStatus(jobId);
-    if (job.status === 'completed' || job.status === 'failed') {
-      return job;
-    }
-    // Wait 1 second between polls
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  throw new Error('Job timeout - operation took too long');
-}
-
-function isRenameResult(value: unknown): value is api.RenameResult {
-  if (!value || typeof value !== 'object') return false;
-  const result = value as { note?: unknown; updated_note_count?: unknown };
-  if (!result.note || typeof result.note !== 'object') return false;
-  return typeof result.updated_note_count === 'number';
-}
-
 export async function renameCurrentNote(newTitle: string) {
-  if (!currentNote) return;
-
-  // Snapshot for rollback (optimistic UI pattern)
-  const snapshot = {
-    note: { ...currentNote },
-    notesList: [...notes],
-  };
-
-  // Optimistic UI update - apply changes immediately
-  currentNote = { ...currentNote, title: newTitle };
-  notes = notes.map((n) => (n.id === currentNote!.id ? currentNote! : n));
-  isDirty = false;
-  error = null;
-
-  try {
-    // Check backlinks count to decide sync vs async
-    const backlinksResult = await api.getBacklinks(snapshot.note.id);
-    const backlinksCount = backlinksResult.backlinks.length;
-
-    // Heuristic: Use async mode for >100 backlinks
-    const useAsync = backlinksCount > 100;
-
-    if (useAsync) {
-      // Async mode - submit job and poll for completion
-      toast.info('Renaming note in background...');
-
-      const { job_id } = await api.renameNoteAsync(snapshot.note.id, newTitle);
-
-      // Poll for completion
-      const job = await pollJobCompletion(job_id);
-
-      if (job.status === 'completed') {
-        if (!isRenameResult(job.result)) {
-          throw new Error('Unexpected job result from rename');
-        }
-        // Success - update with result
-        currentNote = job.result.note;
-        await loadNotes();
-        toast.success(
-          `Note renamed successfully (${job.result.updated_note_count} references updated)`
-        );
-        return job.result;
-      } else {
-        // Failed - revert and show error
-        currentNote = snapshot.note;
-        notes = snapshot.notesList;
-        const errorMsg = job.error || 'Failed to rename note';
-        toast.error(errorMsg);
-        throw new Error(errorMsg);
-      }
-    } else {
-      // Sync mode - execute immediately (existing behavior)
-      const result = await api.renameNote(snapshot.note.id, newTitle);
-      currentNote = result.note;
-      await loadNotes();
-      return result;
-    }
-  } catch (e) {
-    // Revert to snapshot on error
-    currentNote = snapshot.note;
-    notes = snapshot.notesList;
-    error = e instanceof Error ? e.message : 'Failed to rename note';
-    throw e;
-  }
+  return renameCurrentNoteHelper(newTitle, {
+    getCurrentNote: () => currentNote,
+    getNotes: () => notes,
+    setCurrentNote: (note) => {
+      currentNote = note;
+    },
+    setNotes: (nextNotes) => {
+      notes = nextNotes;
+    },
+    setDirty: (dirty) => {
+      isDirty = dirty;
+    },
+    setError: (value) => {
+      error = value;
+    },
+    getBacklinks: (noteId) => api.getBacklinks(noteId),
+    renameNote: (noteId, title) => api.renameNote(noteId, title),
+    renameNoteAsync: (noteId, title) => api.renameNoteAsync(noteId, title),
+    getJobStatus: (jobId) => api.getJobStatus(jobId),
+    notifyInfo: (message) => toast.info(message),
+    notifySuccess: (message) => toast.success(message),
+    notifyError: (message) => toast.error(message),
+    loadNotes: () => loadNotes(),
+  });
 }
 
 export function updateCurrentNoteContent(content: string) {

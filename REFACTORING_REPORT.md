@@ -497,6 +497,7 @@ frontend/src/lib/api/
 - `frontend/src/lib/stores/notes.svelte.ts`: Create-Note-Flow nach `frontend/src/lib/stores/notes/creator.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Delete/Move-Flow nach `frontend/src/lib/stores/notes/mutations.ts` ausgelagert.
 - `frontend/src/lib/stores/notes.svelte.ts`: Encryption-Toggle nach `frontend/src/lib/stores/notes/encryption-toggle.ts` ausgelagert.
+- `frontend/src/lib/stores/notes.svelte.ts`: Rename-Flow nach `frontend/src/lib/stores/notes/rename.ts` ausgelagert.
 
 ---
 

@@ -49,6 +49,11 @@
     handleSplitResizeStart,
   } from '$lib/editor/split-resize';
   import { indentSelection, outdentSelection } from '$lib/editor/indentation';
+  import {
+    exportNoteMarkdown,
+    handleDeleteNote,
+    handleWikilinkClick as handleWikilinkAction,
+  } from '$lib/editor/note-actions';
   import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { taskCollapse } from '$lib/editor/task-collapse';
@@ -487,109 +492,53 @@
   }
 
   function handleExportNote() {
-    const currentNote = notes.getCurrentNote();
-    if (!currentNote) return;
-
-    const title = currentNote.title || 'Untitled';
-    const content = currentNote.content || '';
-    const markdown = `---\ntitle: "${title.replace(/"/g, '\\"')}"\n---\n\n${content}`;
-
-    const sanitizedTitle = title.replace(/[<>:"/\\|?*]/g, '_').trim() || 'note';
-    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${sanitizedTitle}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportNoteMarkdown(notes.getCurrentNote());
   }
 
   async function handleDelete() {
-    const currentNote = notes.getCurrentNote();
-    if (!currentNote) return;
-
-    const confirmed = await dialog.confirm({
-      title: $_('dialog.confirm_title'),
-      message: $_('dialog.delete_note_confirm'),
-      confirmText: $_('common.delete'),
-      cancelText: $_('dialog.cancel'),
-      variant: 'danger',
+    await handleDeleteNote({
+      goto,
+      confirm: dialog.confirm,
+      createDeleteCommand: (snapshot) => new DeleteCommand(snapshot),
+      executeCommand: history.executeCommand,
+      undoCommand: history.undo,
+      getCurrentNote: () => notes.getCurrentNote(),
+      loadNotes: notes.loadNotes,
+      loadTree: tree.loadTree,
+      clearCurrentNote: notes.clearCurrentNote,
+      incrementTrash: trash.incrementTrashCount,
+      decrementTrash: trash.decrementTrashCount,
+      toast,
+      strings: {
+        confirmTitle: $_('dialog.confirm_title'),
+        deleteConfirmMessage: $_('dialog.delete_note_confirm'),
+        deleteConfirmText: $_('common.delete'),
+        cancelText: $_('dialog.cancel'),
+        createMissingMessage: $_('dialog.create_missing_note'),
+        createMissingConfirmText: $_('common.confirm'),
+        deleteError: $_('component.editor.error_delete'),
+        noteTrashed: $_('component.editor.note_trashed'),
+        noteRestored: $_('component.editor.note_restored'),
+        restoreError: $_('component.editor.error_restore'),
+      },
     });
-
-    if (!confirmed) return;
-
-    try {
-      // Create snapshot for undo
-      const snapshot = {
-        noteId: currentNote.id,
-        snapshot: {
-          title: currentNote.title,
-          content: currentNote.content,
-          folder_path: currentNote.folder_path,
-          version: currentNote.version,
-        },
-      };
-
-      // Execute delete command
-      const deleteCmd = new DeleteCommand(snapshot);
-      const success = await history.executeCommand(deleteCmd);
-
-      if (!success) {
-        toast.error($_('component.editor.error_delete'));
-        return;
-      }
-
-      // Update local state
-      notes.clearCurrentNote();
-      await notes.loadNotes();
-      await tree.loadTree();
-
-      // Update trash count
-      trash.incrementTrashCount();
-
-      // Show undo toast
-      toast.undoToast($_('component.editor.note_trashed'), async () => {
-        const success = await history.undo();
-        if (success) {
-          toast.success($_('component.editor.note_restored'));
-          await notes.loadNotes();
-          await tree.loadTree();
-          trash.decrementTrashCount();
-        } else {
-          toast.error($_('component.editor.error_restore'));
-        }
-      });
-
-      goto('/');
-    } catch (e) {
-      console.error('Failed to delete:', e);
-      toast.error($_('component.editor.error_delete'));
-    }
   }
 
   async function handleWikilinkClick(title: string) {
-    // Try to find note by title
-    const allNotes = notes.getNotes();
-    const targetNote = allNotes.find((n) => n.title.toLowerCase() === title.toLowerCase());
-
-    if (targetNote) {
-      goto(`/note/${targetNote.id}`);
-    } else {
-      // Create new note in the same folder as the current note
-      const confirmed = await dialog.confirm({
-        title: $_('dialog.confirm_title'),
-        message: $_('dialog.create_missing_note'),
-        confirmText: $_('common.confirm'),
+    await handleWikilinkAction(title, {
+      goto,
+      confirm: dialog.confirm,
+      getCurrentNote: () => notes.getCurrentNote(),
+      getAllNotes: () => notes.getNotes(),
+      createNote: notes.createNote,
+      loadFolders: folders.loadFolders,
+      strings: {
+        confirmTitle: $_('dialog.confirm_title'),
         cancelText: $_('dialog.cancel'),
-      });
-
-      if (confirmed) {
-        const currentFolder = notes.getCurrentNote()?.folder_path || '/';
-        const note = await notes.createNote(title, '', currentFolder);
-        await folders.loadFolders();
-        goto(`/note/${note.id}`);
-      }
-    }
+        createMissingMessage: $_('dialog.create_missing_note'),
+        createMissingConfirmText: $_('common.confirm'),
+      },
+    });
   }
 
   function handlePreviewClickLocal(e: MouseEvent) {

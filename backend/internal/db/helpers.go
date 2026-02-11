@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 )
@@ -35,4 +36,16 @@ func ensureRowsAffected(result sql.Result) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// ensureRowsAffectedWithContext adds operation context while preserving ErrNotFound semantics.
+func ensureRowsAffectedWithContext(result sql.Result, context string) error {
+	err := ensureRowsAffected(result)
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, ErrNotFound) {
+		return ErrNotFound
+	}
+	return fmt.Errorf("%s: %w", context, err)
 }

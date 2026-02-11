@@ -23,14 +23,5 @@ func (db *DB) UpdateNoteColor(userID int, noteID string, color *string) error {
 	if err != nil {
 		return fmt.Errorf("failed to update note color: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }

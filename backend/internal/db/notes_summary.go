@@ -41,16 +41,7 @@ func (db *DB) UpdateNoteSummary(userID int, noteID, summary string, encrypted bo
 	if err != nil {
 		return fmt.Errorf("failed to update note summary: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // UpdateNoteContentHash updates the content_hash for a note.
@@ -64,16 +55,7 @@ func (db *DB) UpdateNoteContentHash(userID int, noteID, contentHash string) erro
 	if err != nil {
 		return fmt.Errorf("failed to update content hash: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // GetNotesNeedingSummary returns unencrypted notes that need summary generation.

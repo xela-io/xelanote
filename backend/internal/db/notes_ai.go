@@ -18,15 +18,7 @@ func (db *DB) UpdateNoteAIEnabled(userID int, noteID string, enabled bool) error
 	if err != nil {
 		return fmt.Errorf("failed to update ai_enabled: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to get rows affected")
 }
 
 // GetNoteAIEnabled returns the ai_enabled status for a note.

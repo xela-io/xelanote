@@ -140,11 +140,12 @@ test.describe('Notes Search', () => {
     await page.goto('/login');
   });
 
-  test.skip('finds note via quick search', async ({ page }) => {
+  test('finds note via quick search', async ({ page }) => {
     const uniqueKeyword = `kw${Date.now()}`;
-    await createNote(page, `Search ${uniqueKeyword}`, `Body ${uniqueKeyword}`);
+    const created = await createNote(page, `Search ${uniqueKeyword}`, `Body ${uniqueKeyword}`);
 
     let found = false;
+    let lastPayload: unknown = null;
     for (let attempt = 0; attempt < 8; attempt++) {
       const searchResponse = await apiRequest(
         page,
@@ -152,18 +153,41 @@ test.describe('Notes Search', () => {
         `/api/quick-search?q=${encodeURIComponent(uniqueKeyword)}&limit=10`
       );
       expect(searchResponse.status).toBe(200);
+      lastPayload = searchResponse.payload;
 
       const payload = searchResponse.payload as
-        | { results?: Array<{ id: string; title: string }> }
-        | Array<{ id: string; title: string }>;
-      const results = Array.isArray(payload) ? payload : (payload.results ?? []);
-      if (results.some((item) => item.title.includes(uniqueKeyword))) {
+        | {
+            results?: Array<{
+              id?: string;
+              title?: string;
+              snippet?: string;
+            }>;
+            notes?: Array<{
+              id?: string;
+              title?: string;
+              snippet?: string;
+            }>;
+          }
+        | Array<{
+            id?: string;
+            title?: string;
+            snippet?: string;
+          }>;
+      const results = Array.isArray(payload) ? payload : (payload.results ?? payload.notes ?? []);
+      if (
+        results.some(
+          (item) =>
+            item.id === created.id ||
+            item.title?.includes(uniqueKeyword) ||
+            item.snippet?.includes(uniqueKeyword)
+        )
+      ) {
         found = true;
         break;
       }
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(500);
     }
 
-    expect(found).toBeTruthy();
+    expect(found, `quick-search payload: ${JSON.stringify(lastPayload)}`).toBeTruthy();
   });
 });

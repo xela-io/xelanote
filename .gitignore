@@ -29,6 +29,7 @@ frontend/.vite/
 frontend/.turbo/
 frontend/bundle-stats.html
 frontend/playwright-report/
+frontend/.playwright-browsers/
 frontend/coverage/
 
 # Electron Desktop App

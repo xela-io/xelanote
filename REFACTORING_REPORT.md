@@ -262,7 +262,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - Follow-up: verbleibende `simple-import-sort`/unused-var-Warnungen in Settings/Dialog-Panels bereinigt; `npm run lint` wieder gruen.
 - **Playwright Follow-up (Status)**
   - `frontend/src/lib/components/ui/BaseDialog.svelte`: `script module` auf `lang="ts"` korrigiert (Vite/esbuild Parse-Fehler behoben).
-  - `npm run test:e2e` weiterhin blockiert durch fehlende lokale Playwright-Browser-Binaries (`npx playwright install` erforderlich).
+  - Lokale Browser-Installation ist erfolgt (`PLAYWRIGHT_BROWSERS_PATH=./.playwright-browsers`).
+  - `npm run test:e2e` im aktuellen Environment weiterhin blockiert: fehlende System-Library `libglib-2.0.so.0` fuer Chromium Headless.
 
 ### Offen
 - Keine (optional abgeschlossen).

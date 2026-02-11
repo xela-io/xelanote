@@ -36,6 +36,14 @@
   } from '$lib/editor/editor-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
   import {
+    extractFilesFromInputChangeEvent,
+    handleColorSelectAction,
+    openColorPickerAction,
+    openMarkdownHelpAction,
+    openMoreMenuAction,
+    resetInputEventValue,
+  } from '$lib/editor/editor-ui-actions';
+  import {
     closeFindReplace as closeFindReplaceUI,
     handleExtensionsReady,
     handleNoteChange,
@@ -419,22 +427,45 @@
 
   // Menu coordination: close other menus when one opens
   function openMoreMenu(triggerRect: DOMRect) {
-    showColorPicker = false;
-    ui.setMarkdownGuideDropdownOpen(false);
-    moreMenuTriggerRect = triggerRect;
-    showMoreMenu = true;
+    openMoreMenuAction(
+      {
+        setShowColorPicker: (value) => {
+          showColorPicker = value;
+        },
+        setMarkdownGuideDropdownOpen: (value) => ui.setMarkdownGuideDropdownOpen(value),
+        setMoreMenuTriggerRect: (rect) => {
+          moreMenuTriggerRect = rect;
+        },
+        setShowMoreMenu: (value) => {
+          showMoreMenu = value;
+        },
+      },
+      triggerRect
+    );
   }
 
   function openColorPicker() {
-    showMoreMenu = false;
-    ui.setMarkdownGuideDropdownOpen(false);
-    showColorPicker = true;
+    openColorPickerAction({
+      setShowMoreMenu: (value) => {
+        showMoreMenu = value;
+      },
+      setMarkdownGuideDropdownOpen: (value) => ui.setMarkdownGuideDropdownOpen(value),
+      setShowColorPicker: (value) => {
+        showColorPicker = value;
+      },
+    });
   }
 
   function openMarkdownHelp() {
-    showMoreMenu = false;
-    showColorPicker = false;
-    ui.toggleMarkdownGuideDropdown();
+    openMarkdownHelpAction({
+      setShowMoreMenu: (value) => {
+        showMoreMenu = value;
+      },
+      setShowColorPicker: (value) => {
+        showColorPicker = value;
+      },
+      toggleMarkdownGuideDropdown: () => ui.toggleMarkdownGuideDropdown(),
+    });
   }
 
   function handleExportNote() {
@@ -594,33 +625,7 @@
 
   function handleColorSelect(color: string) {
     if (!editorView) return;
-
-    const selection = editorView.state.selection.main;
-    const selectedText = editorView.state.doc.sliceString(selection.from, selection.to);
-
-    // Wrap selected text in color syntax, or insert placeholder if no selection
-    const text = selectedText || 'Text';
-    const openTag = `{color:${color}}`;
-    const closeTag = '{/color}';
-    const fullText = `${openTag}${text}${closeTag}`;
-
-    editorView.dispatch({
-      changes: {
-        from: selection.from,
-        to: selection.to,
-        insert: fullText,
-      },
-      // Position cursor after opening tag if no text was selected
-      selection: selectedText
-        ? { anchor: selection.from + fullText.length }
-        : {
-            anchor: selection.from + openTag.length,
-            head: selection.from + openTag.length + text.length,
-          },
-    });
-
-    // Focus editor
-    editorView.focus();
+    handleColorSelectAction(editorView, color);
   }
 
   function handleInsertLink(term: string, targetTitle: string) {
@@ -655,12 +660,11 @@
   }
 
   function handleFileInputChange(e: Event) {
-    const files = Array.from((e.target as HTMLInputElement).files || []);
+    const files = extractFilesFromInputChangeEvent(e);
     if (files.length > 0) {
       uploadImagesFromEditor(files);
     }
-    // Reset input
-    (e.target as HTMLInputElement).value = '';
+    resetInputEventValue(e);
   }
 
   async function handleInsertTask() {

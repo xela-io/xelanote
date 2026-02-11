@@ -186,6 +186,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - Fixes u.a. in `frontend/src/lib/api/client.ts`, `frontend/src/lib/crypto/fido2.ts`,
     `frontend/src/lib/stores/websocket.svelte.ts`, `frontend/src/routes/settings/+page.svelte`,
     `frontend/src/lib/routes/settings/tabs/AccountTab.svelte`, zugehoerige Tests.
+- **Editor-Modularisierung (weiterer Schnitt)**
+  - Neuer Helper: `frontend/src/lib/editor/editor-ui-actions.ts`.
+  - `frontend/src/lib/components/Editor.svelte` nutzt ausgelagerte UI-Handler fuer
+    More-Menu/Color-Picker/Markdown-Hilfe, Color-Tag-Insert und File-Input-Parsing.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -320,8 +324,8 @@ frontend/src/lib/api/
 4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte`.
-2. Optionale End-to-End-Szenarien nachziehen (laut `TESTING.md` war `e2e-feature.test.ts > Scenario 2` historisch auffaellig).
+1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte` (z.B. Find/Replace- und DnD-bezogene lokale Handler).
+2. Optionale End-to-End-Szenarien nachziehen (insb. Playwright-Suite ausserhalb der Vitest-E2E-Feature-Tests).
 
 ## Fortschritt
 

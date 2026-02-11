@@ -135,6 +135,12 @@ func TestGetClientIP(t *testing.T) {
 			remoteAddr: "10.0.0.1:12345",
 			expected:   "10.0.0.1",
 		},
+		{
+			name:       "X-Forwarded-For with host:port is normalized to IP",
+			headers:    map[string]string{"X-Forwarded-For": "203.0.113.195:4321"},
+			remoteAddr: "10.0.0.1:12345",
+			expected:   "203.0.113.195",
+		},
 	}
 
 	for _, tt := range tests {

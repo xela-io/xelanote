@@ -126,7 +126,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 ### Offen
 - Keine offenen Findings in Phase 2.
-- Follow-up (optional): weitere Zerlegung von `frontend/src/lib/components/Editor.svelte` in Sub-Komponenten.
+- Optionaler Follow-up abgeschlossen: weitere Zerlegung von `frontend/src/lib/components/Editor.svelte` in Sub-Komponenten/Helper.
 
 ## Phase 3 Fortschritt (Code-Qualitaet im Detail)
 
@@ -233,7 +233,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 ### Offen
 - Keine offenen Findings in Phase 3.
-- Follow-up (optional): verbleibende Parse-/Type-Haertungen in weniger kritischen Modulen.
+- Optionaler Follow-up abgeschlossen: verbleibende Parse-/Type-Haertungen in weniger kritischen Modulen weiter reduziert.
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 
@@ -338,6 +338,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.
+- Optionaler Follow-up weitgehend abgeschlossen: zentrale `LastInsertId`/`RowsAffected`-Helper in ausgewaehlten DB-Pfaden breit ausgerollt.
 - Follow-up (optional): verbleibende DB-Pfade schrittweise auf gemeinsame `LastInsertId`/`RowsAffected`-Helper vereinheitlichen.
 
 ## Phase 3 Fortschritt (Frontend-Modularisierung)
@@ -386,8 +387,8 @@ frontend/src/lib/api/
 4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte` (restliche lokale Handler/Effects).
-2. Optionale End-to-End-Szenarien nachziehen (insb. Playwright-Suite ausserhalb der Vitest-E2E-Feature-Tests).
+1. Playwright E2E im vollwertigen Host-Environment laufen lassen (im aktuellen Container durch fehlende System-Library `libglib-2.0.so.0` blockiert).
+2. Optional verbleibende DB-Randpfade weiter auf zentrale Result-Helper ziehen (funktional bereits stabil).
 
 ## Fortschritt
 
@@ -400,7 +401,7 @@ frontend/src/lib/api/
 | Phase 4 | Testing & Documentation | -- | ERLEDIGT |
 | Phase 5 | Linting & Formatting | -- | ERLEDIGT |
 
-**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen. Verbleibende Punkte sind als optionale Follow-ups markiert.
+**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen. Optionale Follow-ups sind bis auf Environment-limitierte Playwright-E2E weitgehend abgearbeitet.
 
 ---
 

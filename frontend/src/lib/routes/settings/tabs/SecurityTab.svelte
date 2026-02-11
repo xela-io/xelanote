@@ -64,15 +64,11 @@
         disabled={!encryption.isEncryptionUnlocked() || isSavingSecurityLevel}
         class="w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left
 				{securityLevel === 'paranoid'
-            ? 'border-success bg-success/10'
-            : 'border-border hover:border-success/50 bg-card'}
+          ? 'border-success bg-success/10'
+          : 'border-border hover:border-success/50 bg-card'}
 				disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <div
-          class="mt-1 {securityLevel === 'paranoid'
-            ? 'text-success'
-            : 'text-muted-foreground'}"
-        >
+        <div class="mt-1 {securityLevel === 'paranoid' ? 'text-success' : 'text-muted-foreground'}">
           <ShieldCheck size={24} />
         </div>
         <div class="flex-1">
@@ -96,15 +92,11 @@
         disabled={!encryption.isEncryptionUnlocked() || isSavingSecurityLevel}
         class="w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left
 				{securityLevel === 'balanced'
-            ? 'border-primary bg-primary/10'
-            : 'border-border hover:border-primary/50 bg-card'}
+          ? 'border-primary bg-primary/10'
+          : 'border-border hover:border-primary/50 bg-card'}
 				disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <div
-          class="mt-1 {securityLevel === 'balanced'
-            ? 'text-primary'
-            : 'text-muted-foreground'}"
-        >
+        <div class="mt-1 {securityLevel === 'balanced' ? 'text-primary' : 'text-muted-foreground'}">
           <Shield size={24} />
         </div>
         <div class="flex-1">
@@ -133,8 +125,8 @@
         disabled={!encryption.isEncryptionUnlocked() || isSavingSecurityLevel}
         class="w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left
 				{securityLevel === 'convenient'
-            ? 'border-orange-500 bg-orange-500/10'
-            : 'border-border hover:border-orange-500/50 bg-card'}
+          ? 'border-orange-500 bg-orange-500/10'
+          : 'border-border hover:border-orange-500/50 bg-card'}
 				disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <div
@@ -316,7 +308,9 @@
           <div class="p-3 rounded-lg bg-success/15 border border-success/30">
             <div class="flex items-center gap-2">
               <Check size={16} class="text-success" />
-              <span class="text-sm text-success">{$_('page.settings.security.migration_complete')}</span>
+              <span class="text-sm text-success"
+                >{$_('page.settings.security.migration_complete')}</span
+              >
             </div>
           </div>
         {:else}

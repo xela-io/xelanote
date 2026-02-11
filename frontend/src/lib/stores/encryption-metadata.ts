@@ -1,6 +1,8 @@
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 
-export function parseEncryptionMetadata(raw: string | null | undefined): EncryptedPayload['metadata'] {
+export function parseEncryptionMetadata(
+  raw: string | null | undefined
+): EncryptedPayload['metadata'] {
   if (!raw) {
     throw new Error('Missing encryption metadata');
   }

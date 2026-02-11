@@ -150,10 +150,12 @@ function prepareCreationOptions(options: ServerCreationOptions): CredentialCreat
         ...publicKey.user!,
         id: base64UrlToBuffer(publicKey.user!.id),
       },
-      excludeCredentials: (publicKey.excludeCredentials || []).map((cred: ServerCredentialDescriptor) => ({
-        ...cred,
-        id: base64UrlToBuffer(cred.id),
-      })),
+      excludeCredentials: (publicKey.excludeCredentials || []).map(
+        (cred: ServerCredentialDescriptor) => ({
+          ...cred,
+          id: base64UrlToBuffer(cred.id),
+        })
+      ),
     } as PublicKeyCredentialCreationOptions,
   };
 }

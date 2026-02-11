@@ -1,4 +1,4 @@
-import { expect, type Page,test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { registerAndLoginApi } from './helpers/auth';
 
@@ -44,7 +44,9 @@ async function apiRequest(
   return { status: response.status(), payload };
 }
 
-async function getSecurityPrefs(page: Page): Promise<{ security_level: string; auto_lock_timeout: number }> {
+async function getSecurityPrefs(
+  page: Page
+): Promise<{ security_level: string; auto_lock_timeout: number }> {
   const response = await apiRequest(page, 'GET', '/api/users/preferences');
   expect(response.status).toBe(200);
   const prefs = response.payload as { security_level: string; auto_lock_timeout: number };

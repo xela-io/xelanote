@@ -63,7 +63,11 @@ export class E2EEncryption {
     }
 
     const payload = parsed as { ciphertext?: unknown; metadata?: unknown };
-    if (typeof payload.ciphertext !== 'string' || !payload.metadata || typeof payload.metadata !== 'object') {
+    if (
+      typeof payload.ciphertext !== 'string' ||
+      !payload.metadata ||
+      typeof payload.metadata !== 'object'
+    ) {
       throw new DecryptionError('CORRUPTED_METADATA');
     }
 

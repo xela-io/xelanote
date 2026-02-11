@@ -77,9 +77,7 @@ describe('api client', () => {
       configurable: true,
     });
 
-    const randomUUID = vi.fn()
-      .mockReturnValueOnce('temp-id')
-      .mockReturnValueOnce('op-id');
+    const randomUUID = vi.fn().mockReturnValueOnce('temp-id').mockReturnValueOnce('op-id');
     const cryptoBackup = globalThis.crypto;
     Object.defineProperty(globalThis, 'crypto', {
       value: { randomUUID },

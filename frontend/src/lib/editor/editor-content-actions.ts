@@ -4,53 +4,53 @@ import { updateImageWidthByIndex } from '$lib/editor/image-resize';
 import { calculateMoveChanges } from '$lib/utils/task-reorder';
 
 interface TaskReorderActionParams {
-	editorView: EditorView | undefined;
-	fromTaskIndex: number;
-	toTaskIndex: number;
-	scheduleAutoSave: () => void;
+  editorView: EditorView | undefined;
+  fromTaskIndex: number;
+  toTaskIndex: number;
+  scheduleAutoSave: () => void;
 }
 
 export function handleTaskReorderAction(params: TaskReorderActionParams): void {
-	const { editorView, fromTaskIndex, toTaskIndex, scheduleAutoSave } = params;
-	if (!editorView) return;
+  const { editorView, fromTaskIndex, toTaskIndex, scheduleAutoSave } = params;
+  if (!editorView) return;
 
-	const doc = editorView.state.doc;
-	const changes = calculateMoveChanges(doc, fromTaskIndex, toTaskIndex);
-	if (changes.length === 0) return;
+  const doc = editorView.state.doc;
+  const changes = calculateMoveChanges(doc, fromTaskIndex, toTaskIndex);
+  if (changes.length === 0) return;
 
-	editorView.dispatch({ changes, scrollIntoView: true });
-	scheduleAutoSave();
+  editorView.dispatch({ changes, scrollIntoView: true });
+  scheduleAutoSave();
 }
 
 interface ImageResizeActionParams {
-	editorView: EditorView | undefined;
-	imageIndex: number;
-	newWidth: number;
-	getFallbackContent: () => string;
-	setFallbackContent: (content: string) => void;
-	scheduleAutoSave: () => void;
+  editorView: EditorView | undefined;
+  imageIndex: number;
+  newWidth: number;
+  getFallbackContent: () => string;
+  setFallbackContent: (content: string) => void;
+  scheduleAutoSave: () => void;
 }
 
 export function handleImageResizeAction(params: ImageResizeActionParams): void {
-	const {
-		editorView,
-		imageIndex,
-		newWidth,
-		getFallbackContent,
-		setFallbackContent,
-		scheduleAutoSave,
-	} = params;
+  const {
+    editorView,
+    imageIndex,
+    newWidth,
+    getFallbackContent,
+    setFallbackContent,
+    scheduleAutoSave,
+  } = params;
 
-	const content = editorView ? editorView.state.doc.toString() : getFallbackContent();
-	const newContent = updateImageWidthByIndex(content, imageIndex, newWidth);
+  const content = editorView ? editorView.state.doc.toString() : getFallbackContent();
+  const newContent = updateImageWidthByIndex(content, imageIndex, newWidth);
 
-	if (editorView) {
-		editorView.dispatch({
-			changes: { from: 0, to: editorView.state.doc.length, insert: newContent },
-		});
-	} else {
-		setFallbackContent(newContent);
-	}
+  if (editorView) {
+    editorView.dispatch({
+      changes: { from: 0, to: editorView.state.doc.length, insert: newContent },
+    });
+  } else {
+    setFallbackContent(newContent);
+  }
 
-	scheduleAutoSave();
+  scheduleAutoSave();
 }

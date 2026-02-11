@@ -1,11 +1,14 @@
 import type { EditorView } from '@codemirror/view';
 
-export function openMoreMenuAction(setState: {
-  setShowColorPicker: (value: boolean) => void;
-  setMarkdownGuideDropdownOpen: (value: boolean) => void;
-  setMoreMenuTriggerRect: (rect: DOMRect) => void;
-  setShowMoreMenu: (value: boolean) => void;
-}, triggerRect: DOMRect): void {
+export function openMoreMenuAction(
+  setState: {
+    setShowColorPicker: (value: boolean) => void;
+    setMarkdownGuideDropdownOpen: (value: boolean) => void;
+    setMoreMenuTriggerRect: (rect: DOMRect) => void;
+    setShowMoreMenu: (value: boolean) => void;
+  },
+  triggerRect: DOMRect
+): void {
   setState.setShowColorPicker(false);
   setState.setMarkdownGuideDropdownOpen(false);
   setState.setMoreMenuTriggerRect(triggerRect);

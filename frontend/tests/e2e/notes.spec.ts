@@ -1,4 +1,4 @@
-import { expect, type Page,test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { registerAndLoginApi } from './helpers/auth';
 
@@ -55,11 +55,7 @@ async function apiRequest(
   return { status: response.status(), payload };
 }
 
-async function createNote(
-  page: Page,
-  title: string,
-  content = ''
-): Promise<Note> {
+async function createNote(page: Page, title: string, content = ''): Promise<Note> {
   const response = await apiRequest(page, 'POST', '/api/notes', {
     body: { title, content, folder_path: '/' },
   });

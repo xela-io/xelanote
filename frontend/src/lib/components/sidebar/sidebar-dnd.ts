@@ -8,10 +8,7 @@ interface SidebarDndDeps {
   loadTree: () => Promise<void>;
   reorderFolders: (parentID: number | null, folderIds: number[]) => Promise<void>;
   reorderNotes: (folderPath: string, noteIds: string[]) => Promise<void>;
-  findParentOfNodeById: (
-    type: 'folder' | 'note',
-    id: string | number
-  ) => FolderTreeNode | null;
+  findParentOfNodeById: (type: 'folder' | 'note', id: string | number) => FolderTreeNode | null;
   getFolderChildren: (parent: FolderTreeNode) => FolderTreeNode[];
   getNoteChildren: (parent: FolderTreeNode) => NoteTreeNode[];
   alert: (opts: { title: string; message: string; variant: 'danger' | 'warning' }) => Promise<void>;

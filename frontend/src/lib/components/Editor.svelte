@@ -10,10 +10,7 @@
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
   import type { AITransformState } from '$lib/editor/ai-actions';
-  import {
-    updateEditorContent,
-    updateFocusMode,
-  } from '$lib/editor/codemirror';
+  import { updateEditorContent, updateFocusMode } from '$lib/editor/codemirror';
   import {
     type DialogLoaderState,
     loadMarkdownGuideDialog,
@@ -34,7 +31,10 @@
     handleAIActionSelectAction,
     openAIActionsMenuAction,
   } from '$lib/editor/editor-ai-menu';
-  import { handleImageResizeAction, handleTaskReorderAction } from '$lib/editor/editor-content-actions';
+  import {
+    handleImageResizeAction,
+    handleTaskReorderAction,
+  } from '$lib/editor/editor-content-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
   import { ensureEditorReady } from '$lib/editor/editor-mode';
   import {
@@ -75,9 +75,7 @@
   } from '$lib/editor/note-actions';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
-  import {
-    createSplitResizeController,
-  } from '$lib/editor/split-resize';
+  import { createSplitResizeController } from '$lib/editor/split-resize';
   import { taskCollapse } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable } from '$lib/editor/task-sortable';
@@ -553,8 +551,7 @@
         error: (message) => toast.error(message),
       },
       messages: {
-        success: (filename) =>
-          $_('component.editor.upload_success', { values: { filename } }),
+        success: (filename) => $_('component.editor.upload_success', { values: { filename } }),
         copiedToClipboard: $_('component.editor.upload_clipboard'),
         fallback: (url) => $_('component.editor.upload_fallback', { values: { url } }),
         error: (filename, message) =>
@@ -670,7 +667,9 @@
     },
   };
 
-  function getFindReplaceState(options?: { editorExtensionsReadyOverride?: boolean }): FindReplaceState {
+  function getFindReplaceState(options?: {
+    editorExtensionsReadyOverride?: boolean;
+  }): FindReplaceState {
     return readFindReplaceState({
       show: showFindReplace,
       query: findReplaceQuery,

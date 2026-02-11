@@ -1,5 +1,15 @@
 <script lang="ts">
-  import { ArrowRight, Download, Key, Loader2, Lock, Shield, ShieldOff, Trash2, User } from 'lucide-svelte';
+  import {
+    ArrowRight,
+    Download,
+    Key,
+    Loader2,
+    Lock,
+    Shield,
+    ShieldOff,
+    Trash2,
+    User,
+  } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { EmailFormState } from '$lib/routes/settings/account-forms';
@@ -114,7 +124,10 @@
       {/if}
 
       <div>
-        <label for="settings-current-password" class="block text-sm font-medium text-foreground mb-2">
+        <label
+          for="settings-current-password"
+          class="block text-sm font-medium text-foreground mb-2"
+        >
           {$_('page.settings.account.current_password')}
         </label>
         <input
@@ -140,7 +153,10 @@
       </div>
 
       <div>
-        <label for="settings-confirm-password" class="block text-sm font-medium text-foreground mb-2">
+        <label
+          for="settings-confirm-password"
+          class="block text-sm font-medium text-foreground mb-2"
+        >
           {$_('page.settings.account.confirm_password')}
         </label>
         <input

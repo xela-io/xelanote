@@ -205,9 +205,7 @@
         reorderNotes: tree.reorderNotes,
         findParentOfNodeById: tree.findParentOfNodeById,
         getFolderChildren: (parent: tree.FolderTreeNode) =>
-          parent.children.filter(
-            (c): c is tree.FolderTreeNode => c.type === 'folder'
-          ),
+          parent.children.filter((c): c is tree.FolderTreeNode => c.type === 'folder'),
         getNoteChildren: (parent: tree.FolderTreeNode) =>
           parent.children.filter((c): c is tree.NoteTreeNode => c.type === 'note'),
         alert: dialog.alert,
@@ -241,9 +239,7 @@
         reorderNotes: tree.reorderNotes,
         findParentOfNodeById: tree.findParentOfNodeById,
         getFolderChildren: (parent: tree.FolderTreeNode) =>
-          parent.children.filter(
-            (c): c is tree.FolderTreeNode => c.type === 'folder'
-          ),
+          parent.children.filter((c): c is tree.FolderTreeNode => c.type === 'folder'),
         getNoteChildren: (parent: tree.FolderTreeNode) =>
           parent.children.filter((c): c is tree.NoteTreeNode => c.type === 'note'),
         alert: dialog.alert,

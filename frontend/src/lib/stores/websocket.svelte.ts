@@ -293,7 +293,10 @@ function scheduleReconnect() {
     return;
   }
 
-  const delay = Math.min(BASE_RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY_MS);
+  const delay = Math.min(
+    BASE_RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts),
+    MAX_RECONNECT_DELAY_MS
+  );
   reconnectAttempts++;
 
   console.log(`WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);

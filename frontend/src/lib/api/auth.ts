@@ -144,9 +144,7 @@ export async function deleteFIDO2Credential(id: number): Promise<void> {
   return request(`/2fa/fido2/credentials/${id}`, { method: 'DELETE' });
 }
 
-export async function beginFIDO2Auth(
-  pendingLoginToken: string
-): Promise<unknown> {
+export async function beginFIDO2Auth(pendingLoginToken: string): Promise<unknown> {
   const response = await fetch(`${getApiBaseUrl()}/auth/fido2/begin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

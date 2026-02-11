@@ -6,7 +6,9 @@ interface EnsureEditorReadyParams {
   tick: () => Promise<void>;
 }
 
-export async function ensureEditorReady(params: EnsureEditorReadyParams): Promise<EditorView | undefined> {
+export async function ensureEditorReady(
+  params: EnsureEditorReadyParams
+): Promise<EditorView | undefined> {
   const current = params.getEditorView();
   if (current) return current;
 

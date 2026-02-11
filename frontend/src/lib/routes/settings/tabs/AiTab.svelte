@@ -34,7 +34,9 @@
         <div class="flex items-start gap-3">
           <Key size={20} class="text-success mt-0.5" />
           <div class="flex-1">
-            <div class="font-medium text-success mb-1">{$_('page.settings.ai.api_key_configured')}</div>
+            <div class="font-medium text-success mb-1">
+              {$_('page.settings.ai.api_key_configured')}
+            </div>
             <div class="text-sm text-success font-mono">{claudeApiKeyStatus.masked_key}</div>
             {#if claudeApiKeyStatus.updated_at}
               <div class="text-xs text-success mt-2">
@@ -66,7 +68,10 @@
         </summary>
         <form onsubmit={handleSaveClaudeApiKey} class="mt-4 space-y-4">
           <div>
-            <label for="claude-api-key-update" class="block text-sm font-medium text-foreground mb-1">
+            <label
+              for="claude-api-key-update"
+              class="block text-sm font-medium text-foreground mb-1"
+            >
               {$_('page.settings.ai.new_api_key_label')}
             </label>
             <div class="relative">
@@ -182,7 +187,9 @@
         <div class="flex items-start gap-3">
           <Key size={20} class="text-success mt-0.5" />
           <div class="flex-1">
-            <div class="font-medium text-success mb-1">{$_('page.settings.ai.api_key_configured')}</div>
+            <div class="font-medium text-success mb-1">
+              {$_('page.settings.ai.api_key_configured')}
+            </div>
             <div class="text-sm text-success font-mono">{geminiApiKeyStatus.masked_key}</div>
             {#if geminiApiKeyStatus.updated_at}
               <div class="text-xs text-success mt-2">
@@ -214,7 +221,10 @@
         </summary>
         <form onsubmit={handleSaveGeminiApiKey} class="mt-4 space-y-4">
           <div>
-            <label for="gemini-api-key-update" class="block text-sm font-medium text-foreground mb-1">
+            <label
+              for="gemini-api-key-update"
+              class="block text-sm font-medium text-foreground mb-1"
+            >
               {$_('page.settings.ai.new_api_key_label')}
             </label>
             <div class="relative">

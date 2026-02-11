@@ -2,8 +2,12 @@ node_modules
 build
 dist
 dist-electron
+dev-dist
+release
 .svelte-kit
 .vite
+.playwright-browsers
 coverage
+test-results
 static/generated
 src-tauri/target

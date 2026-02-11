@@ -123,7 +123,7 @@ describe('history store', () => {
 
     expect(history.canUndo()).toBe(false);
     expect(localStorage.getItem('xelanote_command_history')).toBe(
-      JSON.stringify({ undo: [], redo: [] }),
+      JSON.stringify({ undo: [], redo: [] })
     );
   });
 });

@@ -1,9 +1,6 @@
 import type { ComponentType } from 'svelte';
 
-export function loadSvelteComponentFromModule(
-  module: unknown,
-  context: string
-): ComponentType {
+export function loadSvelteComponentFromModule(module: unknown, context: string): ComponentType {
   if (!module || typeof module !== 'object') {
     throw new Error(`Invalid lazy component module in ${context}`);
   }

@@ -942,7 +942,6 @@
         {handleRegenerateBackupCodes}
         {formatDate}
       />
-
     {:else if activeTab === 'ai'}
       <AiTab
         {claudeApiKeyStatus}
@@ -956,7 +955,6 @@
         {handleSaveGeminiApiKey}
         {handleDeleteGeminiApiKey}
       />
-
     {:else if activeTab === 'data'}
       <div class="space-y-8">
         <!-- Export -->

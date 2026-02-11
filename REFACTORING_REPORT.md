@@ -46,7 +46,7 @@ Hinweis: Diese Re-Analyse basiert auf statischem Code-Review (kein Runtime/Load-
 - Go: `backend/internal/*` mit `_test.go` (DB/Service/API/Parser/Auth)
 - Frontend: Vitest (`frontend/src/lib/**/*.test.ts`)
 - E2E: Playwright (`frontend/tests/e2e/*.spec.ts`)
-- Bekanntes Problem: `e2e-feature.test.ts > Scenario 2` ist laut `TESTING.md` fehlschlagend
+- Status-Update (2026-02-11): `make test-frontend` lief gruen; `src/test/e2e-feature.test.ts` inkl. Scenario 2 ist aktuell passing.
 
 **Lint/Format**
 - Go: `go vet` (CI/Make), `.golangci.yml` vorhanden

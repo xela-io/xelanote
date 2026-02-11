@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Backend API route wiring modularized into domain-specific route files for improved maintainability.
+- Unit tests for typed API key status mapping and forwarded IP parsing edge cases.
 - Frontend API-Modularisierung: `frontend/src/lib/api.ts` ist jetzt Facade, API in Module unter `frontend/src/lib/api/` ausgelagert
 - ESLint Import-Sortierung (frontend) via `eslint-plugin-simple-import-sort`
 - History-Store Unit-Tests fuer Undo/Redo-Persistenz
@@ -80,6 +82,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend Rate-Limiting (5/Stunde) und 16KB Body-Limit fuer Error Reports
 
 ### Changed
+- API key status handlers now use explicit typed responses instead of untyped status payloads.
+- Client IP extraction now validates `X-Forwarded-For` / `X-Real-IP` values before trusting them.
+- Recipe image metadata timestamp updates are now handled transactionally in DB operations.
+- README improved with architecture overview, development script reference, and fixed configuration table formatting.
 - Frontend: `notes.svelte.ts`, `settings/+page.svelte` und `+layout.svelte` modularisiert (Helper unter `src/lib/stores/notes/` und `src/lib/routes/`).
 - Layout- und Notes-Flows (PWA-Update, Init, Interactions, Viewport, Guards, Auto-Save, Remote-Updates) in eigene Module ausgelagert.
 

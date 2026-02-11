@@ -57,6 +57,17 @@ SQLite database file.
 
 ---
 
+## Architecture
+
+- `backend/`: Go API server (`cmd/server`) with layered modules:
+  - `internal/api` (HTTP routing/handlers)
+  - `internal/service` (business logic)
+  - `internal/db` (SQLite persistence)
+- `frontend/`: SvelteKit web app with state stores, API client modules, and component UI.
+- `frontend/src-electron/`, `frontend/src-tauri/`: Desktop wrappers for Electron and Tauri.
+
+---
+
 ## Installation
 
 **Prerequisites**
@@ -138,17 +149,21 @@ Full API documentation: `docs/api.md`.
 | `XELANOTE_ENV` | `development` | Set to `production` for secure cookies and hardened defaults |
 | `XELANOTE_DB_KEY` | — | SQLCipher encryption key for database-at-rest encryption |
 | `XELANOTE_DB_KEY_FILE` | — | Path to file containing the SQLCipher key |
-
----
-
-## Frontend API Structure
-
-Frontend API calls live in `frontend/src/lib/api/`. The entry point is `frontend/src/lib/api.ts`,
-which re-exports the module APIs. Use `import * as api from '$lib/api'` at call sites.
-Modul-Snapshot: siehe `REFACTORING_REPORT.md`.
 | `TURNSTILE_SECRET_KEY` | — | Cloudflare Turnstile CAPTCHA secret |
 | `TURNSTILE_SITE_KEY` | — | Cloudflare Turnstile CAPTCHA site key |
 | `PPROF_ENABLED` | `false` | Enable Go pprof profiling endpoint |
+
+---
+
+## Development Scripts
+
+- `make init`: install frontend/backend dependencies and hooks
+- `make run-backend`: run Go backend on `:8080`
+- `make run-frontend`: run Vite dev server on `:5173`
+- `make test`: backend tests
+- `make test-frontend`: frontend unit tests
+- `make test-e2e`: Playwright tests
+- `make quality`: format/lint/typecheck checks
 
 Full list: `docs/environment-variables.md`.
 

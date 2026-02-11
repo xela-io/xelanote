@@ -28,9 +28,15 @@ interface ElectronAPI {
   onMaximizeChange(callback: (maximized: boolean) => void): () => void;
 }
 
+declare global {
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
+}
+
 // Get the exposed API from window
 function getElectronAPI(): ElectronAPI {
-  const api = (window as unknown as { electronAPI?: ElectronAPI }).electronAPI;
+  const api = window.electronAPI;
   if (!api) {
     throw new Error('electronAPI not available - not running in Electron');
   }

@@ -8,6 +8,7 @@
   type GraphNodeObj = NodeObject & GraphNode;
   type GraphLinkObj = LinkObject<GraphNodeObj> & { type: string };
   type ForceGraphInstance = ForceGraphGeneric<ForceGraphInstance, GraphNodeObj, GraphLinkObj>;
+  type ForceGraphFactory = () => (element: HTMLElement) => ForceGraphInstance;
 
   const { nodes, edges } = $props<{ nodes: GraphNode[]; edges: GraphEdge[] }>();
 
@@ -18,6 +19,17 @@
   let loading = $state(true);
 
   let cleanup: (() => void) | null = null;
+
+  function parseForceGraphFactory(module: unknown): ForceGraphFactory {
+    if (!module || typeof module !== 'object') {
+      throw new Error('Invalid force-graph module');
+    }
+    const maybe = module as { default?: unknown };
+    if (typeof maybe.default !== 'function') {
+      throw new Error('force-graph default export is not a function');
+    }
+    return maybe.default as ForceGraphFactory;
+  }
 
   onMount(() => {
     // Initialize graph asynchronously
@@ -32,10 +44,7 @@
   async function initGraph() {
     // Lazy load force-graph
     const ForceGraphModule = await import('force-graph');
-    // Type assertion needed - force-graph's default export is a factory function
-    const ForceGraph = ForceGraphModule.default as unknown as () => (
-      element: HTMLElement
-    ) => ForceGraphInstance;
+    const ForceGraph = parseForceGraphFactory(ForceGraphModule);
     loading = false;
 
     // Wait for next tick to ensure containerRef is bound

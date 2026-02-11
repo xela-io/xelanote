@@ -178,6 +178,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
     `frontend/src/lib/components/RecipeEditor.svelte`, `frontend/src/lib/components/UnifiedTree.svelte`,
     `frontend/src/lib/editor/dialog-loaders.ts` nutzen jetzt validiertes Modul-Loading statt
     `as unknown as ComponentType`.
+- **Verbleibende `as unknown as`-Stellen bereinigt**
+  - `frontend/src/lib/components/GraphCanvas.svelte` validiert den `force-graph`-Factory-Export vor Nutzung.
+  - `frontend/src/lib/desktop/electron-bridge.ts` nutzt eine typisierte `Window`-Erweiterung fuer `electronAPI`.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).

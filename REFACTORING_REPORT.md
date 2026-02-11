@@ -213,6 +213,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Frontend Parse-Haertung (gezielte Follow-ups)**
   - `frontend/src/lib/stores/notes/encryption-toggle.ts` nutzt `parseRecipeContentPayload()` statt direktem `JSON.parse(... as ...)` fuer Recipe-Decrypt-Preprocessing.
   - `frontend/src/lib/api/ai.ts` validiert `stream_token` aus dem Prepare-Endpoint explizit vor Nutzung.
+  - `frontend/src/lib/stores/auth.svelte.ts` validiert JWT-Claims (`exp`/`iat`) strikt als Number-Felder im Payload-Parser.
 
 ### Offen
 - Keine offenen Findings in Phase 3.
@@ -264,6 +265,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/components/ui/BaseDialog.svelte`: `script module` auf `lang="ts"` korrigiert (Vite/esbuild Parse-Fehler behoben).
   - Lokale Browser-Installation ist erfolgt (`PLAYWRIGHT_BROWSERS_PATH=./.playwright-browsers`).
   - `npm run test:e2e` im aktuellen Environment weiterhin blockiert: fehlende System-Library `libglib-2.0.so.0` fuer Chromium Headless.
+  - `frontend/eslint.config.js` ignoriert `.playwright-browsers/**`, damit lokale Browser-Binaries nicht in den Lint-Lauf geraten.
 
 ### Offen
 - Keine (optional abgeschlossen).

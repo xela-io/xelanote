@@ -23,6 +23,7 @@ export default [
       'dist/**',
       'dist-electron/**',
       'dev-dist/**',
+      '.playwright-browsers/**',
       'src-tauri/target/**',
       '.svelte-kit/**',
       '.vite/**',

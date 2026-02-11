@@ -69,8 +69,11 @@ function parseJWTPayload(raw: string): { exp: number; iat: number } | null {
 
   if (!parsed || typeof parsed !== 'object') return null;
   const payload = parsed as { exp?: unknown; iat?: unknown };
-  const exp = Number(payload.exp);
-  const iat = Number(payload.iat);
+  const exp = payload.exp;
+  const iat = payload.iat;
+  if (typeof exp !== 'number' || typeof iat !== 'number') {
+    return null;
+  }
   return { exp, iat };
 }
 

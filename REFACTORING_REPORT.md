@@ -163,6 +163,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/stores/auth.svelte.ts` validiert JWT-Payload-Struktur vor Claim-Auswertung.
   - `frontend/src/lib/stores/notes/task-events.ts` validiert persistierte Queue-Events aus `sessionStorage`.
   - `frontend/src/lib/stores/notes/loaders.ts` und `frontend/src/lib/stores/notes/remote-updates.ts` nutzen den zentralen Metadata-Parser.
+- **Type-Safety: API-/Crypto-Parse-Haertungen**
+  - `frontend/src/lib/api/ai.ts` validiert SSE-Event-Payloads (`token`, `cached`, `error`) vor Nutzung.
+  - `frontend/src/lib/api/client.ts` nutzt defensives Request-Body-Parsing fuer Offline-Mutationspfade.
+  - `frontend/src/lib/crypto/e2e.ts` validiert encrypted title payloads strukturell in `decryptTitle()`.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -172,7 +176,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
-- Weitere unsaubere Casts in anderen Stores/Modulen ausserhalb der bereits gehaerteten Pfade.
+- Weitere unsaubere Casts in anderen Modulen (z.B. `frontend/src/lib/crypto/fido2.ts` mit `as unknown as` auf WebAuthn-Optionen/Credentials).
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 

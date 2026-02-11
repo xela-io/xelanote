@@ -50,6 +50,55 @@ export class DecryptionError extends Error {
 export class E2EEncryption {
   private kek: Uint8Array | null = null; // Key Encryption Key (raw bytes)
 
+  private parseEncryptedPayload(raw: string): EncryptedPayload {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new DecryptionError('CORRUPTED_METADATA');
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      throw new DecryptionError('CORRUPTED_METADATA');
+    }
+
+    const payload = parsed as { ciphertext?: unknown; metadata?: unknown };
+    if (typeof payload.ciphertext !== 'string' || !payload.metadata || typeof payload.metadata !== 'object') {
+      throw new DecryptionError('CORRUPTED_METADATA');
+    }
+
+    const metadata = payload.metadata as {
+      version?: unknown;
+      algorithm?: unknown;
+      kdf?: unknown;
+      kdf_strength?: unknown;
+      nonce_bytes?: unknown;
+      wrapped_dek?: unknown;
+    };
+    if (
+      metadata.version !== 2 ||
+      metadata.algorithm !== 'XChaCha20-Poly1305' ||
+      metadata.kdf !== 'Argon2id' ||
+      metadata.kdf_strength !== 'interactive' ||
+      metadata.nonce_bytes !== 24 ||
+      typeof metadata.wrapped_dek !== 'string'
+    ) {
+      throw new DecryptionError('CORRUPTED_METADATA');
+    }
+
+    return {
+      ciphertext: payload.ciphertext,
+      metadata: {
+        version: 2,
+        algorithm: 'XChaCha20-Poly1305',
+        kdf: 'Argon2id',
+        kdf_strength: 'interactive',
+        nonce_bytes: 24,
+        wrapped_dek: metadata.wrapped_dek,
+      },
+    };
+  }
+
   /**
    * Setup KEK from user password (synchronous for Phase 1).
    * Call this on login after receiving the user's encryption salt from the server.
@@ -202,7 +251,7 @@ export class E2EEncryption {
    * @returns Decrypted plaintext title
    */
   decryptTitle(encryptedTitle: string): string {
-    const payload = JSON.parse(encryptedTitle);
+    const payload = this.parseEncryptedPayload(encryptedTitle);
     return this.decryptNote(payload);
   }
 

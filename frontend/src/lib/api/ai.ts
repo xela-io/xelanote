@@ -18,6 +18,30 @@ import type {
   TaskEventPayload,
 } from './types';
 
+function parseJsonEventData(raw: string): unknown | null {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function asEventToken(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+function asSummaryFromEvent(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const maybe = value as { summary?: unknown };
+  return typeof maybe.summary === 'string' ? maybe.summary : null;
+}
+
+function asErrorFromEvent(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const maybe = value as { error?: unknown };
+  return typeof maybe.error === 'string' ? maybe.error : null;
+}
+
 /**
  * Generate or retrieve a summary for a note.
  * For plaintext notes: call without arguments to generate server-side
@@ -119,22 +143,24 @@ export async function summarizeNoteStream(
         } else if (line === '' && eventType && eventData) {
           // Process complete event
           if (eventType === 'token') {
-            try {
-              const token = JSON.parse(eventData) as string;
+            const parsed = parseJsonEventData(eventData);
+            const token = asEventToken(parsed);
+            if (token !== null) {
               fullSummary += token;
               onToken(token);
-            } catch {
+            } else {
               // Fallback for older backend versions
-              const token = eventData.replace(/\\n/g, '\n');
-              fullSummary += token;
-              onToken(token);
+              const fallbackToken = eventData.replace(/\\n/g, '\n');
+              fullSummary += fallbackToken;
+              onToken(fallbackToken);
             }
           } else if (eventType === 'cached') {
-            try {
-              const data = JSON.parse(eventData);
-              onComplete(data.summary);
+            const parsed = parseJsonEventData(eventData);
+            const summary = asSummaryFromEvent(parsed);
+            if (summary !== null) {
+              onComplete(summary);
               return;
-            } catch {
+            } else {
               onError('Failed to parse cached summary');
               return;
             }
@@ -142,10 +168,11 @@ export async function summarizeNoteStream(
             onComplete(fullSummary);
             return;
           } else if (eventType === 'error') {
-            try {
-              const data = JSON.parse(eventData);
-              onError(data.error || 'Unknown error');
-            } catch {
+            const parsed = parseJsonEventData(eventData);
+            const message = asErrorFromEvent(parsed);
+            if (message !== null) {
+              onError(message);
+            } else {
               onError(eventData);
             }
             return;

@@ -12,7 +12,7 @@ import type {
   OfflineOperation,
   OfflineUpdatePayload,
 } from '../offline/types';
-import type { Note, RefreshResponse, RefreshResult } from './types';
+import type { Note, NotePayload, RefreshResponse, RefreshResult } from './types';
 
 // Import auth store functions (will be available at runtime)
 let getAccessToken: () => string | null;
@@ -183,6 +183,28 @@ function safeJsonParse(s: string | undefined | null): Record<string, unknown> {
   }
 }
 
+function parseBodyObject(body: BodyInit | null | undefined): Record<string, unknown> {
+  if (!body || typeof body !== 'string') return {};
+  try {
+    const parsed = JSON.parse(body);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function asBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
 async function handleOfflineMutation<T>(path: string, options: ExtendedRequestInit): Promise<T> {
   // Only note mutations are allowed offline
   if (!isNoteRoute(path)) {
@@ -190,7 +212,7 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
   }
 
   const method = options.method || 'GET';
-  const body = options.body ? JSON.parse(options.body as string) : {};
+  const body = parseBodyObject(options.body);
   const headers = new Headers(options.headers);
   const ctx = options._offlineContext || {};
 
@@ -200,32 +222,33 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
   if (method === 'POST' && path === '/notes') {
     // CREATE
     const tempId = `temp_${crypto.randomUUID()}`;
-    const encMetadata = safeJsonParse(body.encryption_metadata);
+    const encMetadata = safeJsonParse(asString(body.encryption_metadata));
+    const folderPath = asString(body.folder_path) || '/';
 
     syntheticNote = {
       id: tempId,
       title: '',
       content: '',
-      folder_path: body.folder_path || '/',
+      folder_path: folderPath,
       version: 1,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      encrypted_content: body.encrypted_content,
+      encrypted_content: asString(body.encrypted_content),
       content_encrypted: true,
-      encrypted_title: body.encrypted_title || null,
-      title_encrypted: body.title_encrypted || false,
-      wrapped_dek: body.wrapped_dek,
-      encryption_version: (encMetadata.version as number) || 2,
-      encryption_metadata: body.encryption_metadata,
-      note_type: body.note_type || 'note',
-      journal_date: body.journal_date,
+      encrypted_title: asString(body.encrypted_title) || null,
+      title_encrypted: asBoolean(body.title_encrypted) || false,
+      wrapped_dek: asString(body.wrapped_dek),
+      encryption_version: asNumber(encMetadata.version) || 2,
+      encryption_metadata: asString(body.encryption_metadata),
+      note_type: asString(body.note_type) || 'note',
+      journal_date: asString(body.journal_date),
       ai_enabled: ctx.ai_enabled,
     };
 
     const createPayload: OfflineCreatePayload = {
       type: 'create',
-      notePayload: body,
-      folderPath: body.folder_path || '/',
+      notePayload: body as NotePayload,
+      folderPath: folderPath,
     };
 
     operation = {
@@ -242,23 +265,24 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
     // UPDATE
     const noteId = path.split('/')[2];
     const version = parseInt(headers.get('If-Match') || '1');
-    const encMetadata = safeJsonParse(body.encryption_metadata);
+    const encMetadata = safeJsonParse(asString(body.encryption_metadata));
+    const folderPath = asString(body.folder_path) || ctx.folder_path || '/';
 
     syntheticNote = {
       id: noteId,
       title: '',
       content: '',
-      folder_path: body.folder_path || ctx.folder_path || '/',
+      folder_path: folderPath,
       version: version + 1,
       created_at: ctx.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      encrypted_content: body.encrypted_content,
+      encrypted_content: asString(body.encrypted_content),
       content_encrypted: true,
-      encrypted_title: body.encrypted_title || null,
-      title_encrypted: body.title_encrypted || false,
-      wrapped_dek: body.wrapped_dek,
-      encryption_version: ctx.encryption_version || (encMetadata.version as number) || 2,
-      encryption_metadata: body.encryption_metadata,
+      encrypted_title: asString(body.encrypted_title) || null,
+      title_encrypted: asBoolean(body.title_encrypted) || false,
+      wrapped_dek: asString(body.wrapped_dek),
+      encryption_version: ctx.encryption_version || asNumber(encMetadata.version) || 2,
+      encryption_metadata: asString(body.encryption_metadata),
       note_type: ctx.note_type || 'note',
       journal_date: ctx.journal_date,
       ai_enabled: ctx.ai_enabled || false,
@@ -266,7 +290,7 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
 
     const updatePayload: OfflineUpdatePayload = {
       type: 'update',
-      notePayload: body,
+      notePayload: body as NotePayload,
       expectedVersion: version,
     };
 

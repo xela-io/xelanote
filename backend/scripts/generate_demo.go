@@ -1173,19 +1173,19 @@ func seedTags(d *sql.DB, uid int64, noteIDs map[string]string) {
 	}
 
 	assignments := map[string][]string{
-		"Welcome to xelanote":       {"guide"},
-		"Project Roadmap":           {"project", "todo"},
-		"Architecture Overview":     {"project", "reference", "documentation"},
-		"Sprint Review Notes":       {"meeting", "project"},
-		"REST API Reference":        {"reference", "documentation", "project"},
-		"Ideas Backlog":             {"project", "todo"},
-		"Website Redesign Brief":    {"project", "todo"},
-		"Docker Cheatsheet":         {"reference", "devops"},
-		"Deployment Guide":          {"guide", "devops"},
-		"Git Workflow Guide":        {"guide", "programming"},
+		"Welcome to xelanote":        {"guide"},
+		"Project Roadmap":            {"project", "todo"},
+		"Architecture Overview":      {"project", "reference", "documentation"},
+		"Sprint Review Notes":        {"meeting", "project"},
+		"REST API Reference":         {"reference", "documentation", "project"},
+		"Ideas Backlog":              {"project", "todo"},
+		"Website Redesign Brief":     {"project", "todo"},
+		"Docker Cheatsheet":          {"reference", "devops"},
+		"Deployment Guide":           {"guide", "devops"},
+		"Git Workflow Guide":         {"guide", "programming"},
 		"Go Error Handling Patterns": {"programming", "reference"},
-		"Japan Travel Plan 2026":    {"personal", "todo"},
-		"Reading List":              {"personal"},
+		"Japan Travel Plan 2026":     {"personal", "todo"},
+		"Reading List":               {"personal"},
 	}
 
 	count := 0
@@ -1290,8 +1290,8 @@ func seedTemplates(d *sql.DB, uid int64) {
 		name, desc, title, content string
 	}{
 		{
-			name: "Meeting Notes",
-			desc: "Template for recurring meetings with agenda, notes, and action items",
+			name:  "Meeting Notes",
+			desc:  "Template for recurring meetings with agenda, notes, and action items",
 			title: "Meeting: [Topic]",
 			content: l(
 				"# Meeting: [Topic]",
@@ -1321,8 +1321,8 @@ func seedTemplates(d *sql.DB, uid int64) {
 			),
 		},
 		{
-			name: "Project Brief",
-			desc: "Structured project kickoff document with goals, timeline, and risks",
+			name:  "Project Brief",
+			desc:  "Structured project kickoff document with goals, timeline, and risks",
 			title: "Project: [Name]",
 			content: l(
 				"# Project: [Name]",

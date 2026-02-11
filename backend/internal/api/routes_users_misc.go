@@ -27,9 +27,9 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 
 		// LLM API Key endpoints (BYOK - Bring Your Own Key)
 		claudeKey := apiKeyProvider{
-			name:            "claude",
-			setKey:          s.userService.SetClaudeAPIKey,
-			deleteKey:       s.userService.DeleteClaudeAPIKey,
+			name:      "claude",
+			setKey:    s.userService.SetClaudeAPIKey,
+			deleteKey: s.userService.DeleteClaudeAPIKey,
 			getKeyStatus: func(uid int) (*apiKeyStatusResponse, error) {
 				status, err := s.userService.GetClaudeAPIKeyStatus(uid)
 				if err != nil {
@@ -46,9 +46,9 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 		r.Get("/api-key/status", s.handleGetAPIKeyStatus(claudeKey))
 
 		geminiKey := apiKeyProvider{
-			name:            "gemini",
-			setKey:          s.userService.SetGeminiAPIKey,
-			deleteKey:       s.userService.DeleteGeminiAPIKey,
+			name:      "gemini",
+			setKey:    s.userService.SetGeminiAPIKey,
+			deleteKey: s.userService.DeleteGeminiAPIKey,
 			getKeyStatus: func(uid int) (*apiKeyStatusResponse, error) {
 				status, err := s.userService.GetGeminiAPIKeyStatus(uid)
 				if err != nil {

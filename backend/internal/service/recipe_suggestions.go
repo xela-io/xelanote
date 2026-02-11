@@ -496,4 +496,3 @@ func validateGeneratedRecipe(r *GeneratedRecipe) {
 		}
 	}
 }
-

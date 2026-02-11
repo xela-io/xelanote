@@ -2,8 +2,8 @@
 package api
 
 import (
-	"encoding/json"
 	"embed"
+	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"

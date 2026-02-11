@@ -43,7 +43,11 @@ func (db *DB) CreateUser(username, email, passwordHash string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.GetUserByID(int(id))
+	userID, err := validateLastInsertID(id, "user id")
+	if err != nil {
+		return nil, err
+	}
+	return db.GetUserByID(userID)
 }
 
 // GetUserByID retrieves a user by their ID
@@ -226,14 +230,7 @@ func (db *DB) UpdateUserEmail(userID int, newEmail string) error {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffected(result)
 }
 
 // UpdateUserPassword updates a user's password hash
@@ -247,14 +244,7 @@ func (db *DB) UpdateUserPassword(userID int, newPasswordHash string) error {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffected(result)
 }
 
 // UpdateUserPasswordTx updates a user's password hash within a transaction.
@@ -269,14 +259,7 @@ func (tx *Tx) UpdateUserPasswordTx(userID int, newPasswordHash string) error {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffected(result)
 }
 
 // GetUserByEmail retrieves a user by their email address

@@ -302,6 +302,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **DB RowsAffected-Helper (ausgewaehlte Pfade)**
   - `backend/internal/db/helpers.go`: `ensureRowsAffected()` eingefuehrt.
   - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen den Helper fuer konsistentes NotFound-Handling.
+  - `backend/internal/db/auth.go` nutzt `ensureRowsAffected()` in User-Update-Pfaden und `validateLastInsertID()` bei `CreateUser()`.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

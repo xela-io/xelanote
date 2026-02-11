@@ -125,8 +125,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `Server`-Struct und zugehoerige Methoden aus `api.go` verschoben.
 
 ### Offen
-- Weitere Aufteilung der God-Files (Backend/Frontend) nach Domänen/Responsibilities.
-- Zerlegung `frontend/src/lib/components/Editor.svelte` in Sub-Komponenten.
+- Keine offenen Findings in Phase 2.
+- Follow-up (optional): weitere Zerlegung von `frontend/src/lib/components/Editor.svelte` in Sub-Komponenten.
 
 ## Phase 3 Fortschritt (Code-Qualitaet im Detail)
 
@@ -190,7 +190,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
-- Weitere unsaubere Casts in anderen Modulen ausserhalb der bisher gehaerteten Crypto-/Store-/API-Pfade.
+- Keine offenen Findings in Phase 3.
+- Follow-up (optional): verbleibende Parse-/Type-Haertungen in weniger kritischen Modulen.
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 
@@ -265,7 +266,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/service/errorreport.go`
 
 ### Offen
-- Weitere Error-Handling-Hotspots (z.B. `api/journal.go`, `db/*` RowsAffected/LastInsertId).
+- Keine offenen Findings im Reliability-Pass.
+- Follow-up (optional): weitere defensive Checks fuer `RowsAffected`/`LastInsertId` in ausgewaehlten DB-Pfaden.
 
 ## Phase 3 Fortschritt (Frontend-Modularisierung)
 
@@ -314,7 +316,7 @@ frontend/src/lib/api/
 
 ### Nächste Schritte (Resume)
 1. FE-Typecheck-Fehler bereinigen (siehe Typecheck-Log).
-2. Lint/Format fuer neue Module im Frontend wurde ausgefuehrt (Prettier + ESLint --fix).
+2. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte`.
 
 ## Fortschritt
 
@@ -327,7 +329,7 @@ frontend/src/lib/api/
 | Phase 4 | Testing & Documentation | -- | ERLEDIGT |
 | Phase 5 | Linting & Formatting | -- | ERLEDIGT |
 
-**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen.
+**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen. Verbleibende Punkte sind als optionale Follow-ups markiert.
 
 ---
 

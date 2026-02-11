@@ -33,6 +33,59 @@ interface ServerPublicKeyOptions {
   attestation?: AttestationConveyancePreference;
 }
 
+type ServerCreationOptions = ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
+type ServerRequestOptions = ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
+
+function isServerPublicKeyOptions(value: unknown): value is ServerPublicKeyOptions {
+  if (!value || typeof value !== 'object') return false;
+  const options = value as { challenge?: unknown; user?: unknown };
+  if (typeof options.challenge !== 'string') return false;
+
+  if (options.user !== undefined) {
+    if (!options.user || typeof options.user !== 'object') return false;
+    const user = options.user as { id?: unknown; name?: unknown; displayName?: unknown };
+    if (
+      typeof user.id !== 'string' ||
+      typeof user.name !== 'string' ||
+      typeof user.displayName !== 'string'
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function parseServerCreationOptions(value: unknown): ServerCreationOptions {
+  if (isServerPublicKeyOptions(value)) {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    const wrapped = value as { publicKey?: unknown };
+    if (isServerPublicKeyOptions(wrapped.publicKey)) {
+      return { publicKey: wrapped.publicKey };
+    }
+  }
+
+  throw new Error('Ungueltige FIDO2-Registrierungsoptionen vom Server.');
+}
+
+function parseServerRequestOptions(value: unknown): ServerRequestOptions {
+  if (isServerPublicKeyOptions(value)) {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    const wrapped = value as { publicKey?: unknown };
+    if (isServerPublicKeyOptions(wrapped.publicKey)) {
+      return { publicKey: wrapped.publicKey };
+    }
+  }
+
+  throw new Error('Ungueltige FIDO2-Authentifizierungsoptionen vom Server.');
+}
+
 /**
  * Check if WebAuthn/FIDO2 is supported in the current browser
  */
@@ -169,9 +222,7 @@ export async function registerSecurityKey(
   }
 
   // Step 1: Get creation options from server (API returns JSON with base64url strings, not ArrayBuffers)
-  const serverOptions = (await beginFIDO2Registration()) as unknown as ServerPublicKeyOptions & {
-    publicKey?: ServerPublicKeyOptions;
-  };
+  const serverOptions = parseServerCreationOptions(await beginFIDO2Registration());
   const options = prepareCreationOptions(serverOptions);
 
   // Step 2: Create credential via browser API
@@ -195,8 +246,11 @@ export async function registerSecurityKey(
   }
 
   // Step 3: Send credential to server
-  const serialized = serializeRegistrationCredential(credential as PublicKeyCredential);
-  return finishFIDO2Registration(deviceName, serialized as unknown as Credential);
+  if (!(credential instanceof PublicKeyCredential)) {
+    throw new Error('Ungueltige Registrierungsantwort vom Browser.');
+  }
+  const serialized = serializeRegistrationCredential(credential);
+  return finishFIDO2Registration(deviceName, serialized);
 }
 
 /**
@@ -212,9 +266,7 @@ export async function authenticateWithSecurityKey(
   }
 
   // Step 1: Get assertion options from server (API returns JSON with base64url strings, not ArrayBuffers)
-  const serverOptions = (await beginFIDO2Auth(
-    pendingLoginToken
-  )) as unknown as ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
+  const serverOptions = parseServerRequestOptions(await beginFIDO2Auth(pendingLoginToken));
   const options = prepareRequestOptions(serverOptions);
 
   // Step 2: Get assertion via browser API
@@ -240,6 +292,9 @@ export async function authenticateWithSecurityKey(
   }
 
   // Step 3: Send assertion to server
-  const serialized = serializeAuthenticationCredential(credential as PublicKeyCredential);
-  return finishFIDO2Auth(pendingLoginToken, serialized as unknown as Credential);
+  if (!(credential instanceof PublicKeyCredential)) {
+    throw new Error('Ungueltige Authentifizierungsantwort vom Browser.');
+  }
+  const serialized = serializeAuthenticationCredential(credential);
+  return finishFIDO2Auth(pendingLoginToken, serialized);
 }

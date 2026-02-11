@@ -112,13 +112,13 @@ export async function regenerateBackupCodes(password: string): Promise<{ backup_
 
 // FIDO2/WebAuthn 2FA API
 
-export async function beginFIDO2Registration(): Promise<PublicKeyCredentialCreationOptions> {
+export async function beginFIDO2Registration(): Promise<unknown> {
   return request('/2fa/fido2/register/begin', { method: 'POST' });
 }
 
 export async function finishFIDO2Registration(
   deviceName: string,
-  credential: Credential
+  credential: Record<string, unknown>
 ): Promise<{ credential_id: number; backup_codes?: string[] }> {
   const response = await fetch(
     `${getApiBaseUrl()}/2fa/fido2/register/finish?device_name=${encodeURIComponent(deviceName)}`,
@@ -146,7 +146,7 @@ export async function deleteFIDO2Credential(id: number): Promise<void> {
 
 export async function beginFIDO2Auth(
   pendingLoginToken: string
-): Promise<PublicKeyCredentialRequestOptions> {
+): Promise<unknown> {
   const response = await fetch(`${getApiBaseUrl()}/auth/fido2/begin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -162,7 +162,7 @@ export async function beginFIDO2Auth(
 
 export async function finishFIDO2Auth(
   pendingLoginToken: string,
-  credential: Credential
+  credential: Record<string, unknown>
 ): Promise<AuthResponse> {
   const response = await fetch(
     `${getApiBaseUrl()}/auth/fido2/finish?pending_login_token=${encodeURIComponent(pendingLoginToken)}`,

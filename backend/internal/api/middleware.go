@@ -92,7 +92,7 @@ func getClientIPSafe(r *http.Request) string {
 			// The leftmost IP is the original client
 			parts := strings.Split(xff, ",")
 			if len(parts) > 0 {
-				clientIP := strings.TrimSpace(parts[0])
+				clientIP := parseValidIP(strings.TrimSpace(parts[0]))
 				if clientIP != "" {
 					return clientIP
 				}
@@ -102,12 +102,38 @@ func getClientIPSafe(r *http.Request) string {
 		// Check X-Real-IP as fallback
 		xri := r.Header.Get("X-Real-IP")
 		if xri != "" {
-			return strings.TrimSpace(xri)
+			clientIP := parseValidIP(strings.TrimSpace(xri))
+			if clientIP != "" {
+				return clientIP
+			}
 		}
 	}
 
 	// Return the direct connection IP if not from trusted proxy
 	return remoteIP
+}
+
+// parseValidIP normalizes and validates a candidate IP string.
+// Returns empty string for invalid values.
+func parseValidIP(candidate string) string {
+	if candidate == "" {
+		return ""
+	}
+
+	if ip := net.ParseIP(candidate); ip != nil {
+		return ip.String()
+	}
+
+	// Accept host:port inputs and normalize to plain IP.
+	host, _, err := net.SplitHostPort(candidate)
+	if err != nil {
+		return ""
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return ip.String()
+	}
+
+	return ""
 }
 
 // Context key for user ID

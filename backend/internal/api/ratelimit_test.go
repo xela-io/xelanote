@@ -114,6 +114,27 @@ func TestGetClientIP(t *testing.T) {
 			remoteAddr: "8.8.8.8:12345", // Public IP, not trusted
 			expected:   "8.8.8.8",
 		},
+		{
+			name:       "Invalid X-Forwarded-For falls back to remote addr",
+			headers:    map[string]string{"X-Forwarded-For": "not-an-ip"},
+			remoteAddr: "10.0.0.1:12345",
+			expected:   "10.0.0.1",
+		},
+		{
+			name: "Invalid X-Forwarded-For uses valid X-Real-IP fallback",
+			headers: map[string]string{
+				"X-Forwarded-For": "not-an-ip",
+				"X-Real-IP":       "198.51.100.178",
+			},
+			remoteAddr: "10.0.0.1:12345",
+			expected:   "198.51.100.178",
+		},
+		{
+			name:       "Invalid X-Real-IP falls back to remote addr",
+			headers:    map[string]string{"X-Real-IP": "not-an-ip"},
+			remoteAddr: "10.0.0.1:12345",
+			expected:   "10.0.0.1",
+		},
 	}
 
 	for _, tt := range tests {

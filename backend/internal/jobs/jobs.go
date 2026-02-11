@@ -88,6 +88,12 @@ func (jm *JobManager) Stop() {
 
 // Submit submits a job for execution
 func (jm *JobManager) Submit(job *Job) error {
+	select {
+	case <-jm.ctx.Done():
+		return fmt.Errorf("job manager stopped")
+	default:
+	}
+
 	job.Status = JobStatusPending
 	job.CreatedAt = time.Now()
 	job.UpdatedAt = time.Now()
@@ -97,6 +103,7 @@ func (jm *JobManager) Submit(job *Job) error {
 	case jm.queue <- job:
 		return nil
 	case <-jm.ctx.Done():
+		jm.jobs.Delete(job.ID)
 		return fmt.Errorf("job manager stopped")
 	}
 }

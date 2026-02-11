@@ -1,4 +1,4 @@
-<script module>
+<script lang="ts" module>
   let counter = 0;
   let scrollLockCount = 0;
 

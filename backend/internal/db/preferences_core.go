@@ -98,7 +98,7 @@ func (db *DB) UpsertUserPreferences(userID int, theme, editorMode string) (*User
 		return nil, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return nil, err
 	}

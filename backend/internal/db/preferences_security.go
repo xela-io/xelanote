@@ -15,7 +15,7 @@ func (db *DB) UpdateSecurityPreferences(userID int, securityLevel string, autoLo
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return err
 	}

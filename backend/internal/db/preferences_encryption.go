@@ -28,7 +28,7 @@ func (db *DB) UpdateEncryptionPreferences(userID int, keywordsEnabled, encryptTi
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (db *DB) SetRecoveryKey(userID int, recoveryKeyHash string, recoveryKeySalt
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return err
 	}

@@ -21,7 +21,7 @@ func (db *DB) SetClaudeAPIKey(userID int, encryptedKey string) error {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (db *DB) SetGeminiAPIKey(userID int, encryptedKey string) error {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return err
 	}

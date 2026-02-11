@@ -45,6 +45,7 @@
     openMoreMenuAction,
     resetInputEventValue,
   } from '$lib/editor/editor-ui-actions';
+  import { uploadImagesFromEditorAction } from '$lib/editor/editor-upload-actions';
   import { readFindReplaceState, writeFindReplaceState } from '$lib/editor/find-replace-state';
   import {
     closeFindReplace as closeFindReplaceUI,
@@ -59,7 +60,6 @@
     handleEditorDragOver,
     handleEditorDrop,
     handleEditorPaste,
-    uploadImages,
   } from '$lib/editor/image-upload';
   import { indentSelection, outdentSelection } from '$lib/editor/indentation';
   import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
@@ -538,32 +538,29 @@
   let uploading = $state(false);
 
   async function uploadImagesFromEditor(files: File[]) {
-    await uploadImages(files, {
+    await uploadImagesFromEditorAction({
+      files,
       editorView,
-      onStatus: (value) => {
+      setUploading: (value) => {
         uploading = value;
       },
-      onSuccess: (_event, ctx) => {
-        toast.success(
-          $_('component.editor.upload_success', { values: { filename: ctx?.filename } })
-        );
+      toast: {
+        success: (message) => toast.success(message),
+        warning: (message) => toast.warning(message),
+        error: (message) => toast.error(message),
       },
-      onWarning: (event, ctx) => {
-        if (event === 'copied_to_clipboard') {
-          toast.warning($_('component.editor.upload_clipboard'));
-        } else {
-          toast.warning($_('component.editor.upload_fallback', { values: { url: ctx?.url } }));
-        }
-      },
-      onError: (_event, ctx) => {
-        toast.error(
+      messages: {
+        success: (filename) =>
+          $_('component.editor.upload_success', { values: { filename } }),
+        copiedToClipboard: $_('component.editor.upload_clipboard'),
+        fallback: (url) => $_('component.editor.upload_fallback', { values: { url } }),
+        error: (filename, message) =>
           $_('component.editor.status.error_upload', {
             values: {
-              filename: ctx?.filename,
-              error: ctx?.error,
+              filename,
+              error: message,
             },
-          })
-        );
+          }),
       },
     });
   }

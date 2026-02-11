@@ -222,11 +222,119 @@ function parseHistoryData(raw: string): StoredHistoryData | null {
   if (!parsed || typeof parsed !== 'object') return null;
   const data = parsed as { undo?: unknown; redo?: unknown };
   if (!Array.isArray(data.undo) || !Array.isArray(data.redo)) return null;
+  if (!isCommandDataArray(data.undo) || !isCommandDataArray(data.redo)) return null;
 
   return {
-    undo: data.undo as CommandData[],
-    redo: data.redo as CommandData[],
+    undo: data.undo,
+    redo: data.redo,
   };
+}
+
+function isCommandDataArray(value: unknown[]): value is CommandData[] {
+  return value.every((entry) => isCommandData(entry));
+}
+
+function isCommandData(value: unknown): value is CommandData {
+  if (!value || typeof value !== 'object') return false;
+
+  const maybe = value as {
+    type?: unknown;
+    timestamp?: unknown;
+    noteId?: unknown;
+    data?: unknown;
+  };
+
+  if (
+    typeof maybe.type !== 'string' ||
+    typeof maybe.timestamp !== 'number' ||
+    typeof maybe.noteId !== 'string' ||
+    !maybe.data ||
+    typeof maybe.data !== 'object'
+  ) {
+    return false;
+  }
+
+  switch (maybe.type) {
+    case 'delete':
+      return isDeleteData(maybe.data);
+    case 'create':
+      return isCreateData(maybe.data);
+    case 'rename-title':
+      return isRenameTitleData(maybe.data);
+    case 'move-folder':
+      return isMoveFolderData(maybe.data);
+    default:
+      return false;
+  }
+}
+
+function isDeleteData(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as {
+    noteId?: unknown;
+    snapshot?: {
+      title?: unknown;
+      content?: unknown;
+      folder_path?: unknown;
+      version?: unknown;
+    };
+  };
+  return (
+    typeof data.noteId === 'string' &&
+    !!data.snapshot &&
+    typeof data.snapshot.title === 'string' &&
+    typeof data.snapshot.content === 'string' &&
+    typeof data.snapshot.folder_path === 'string' &&
+    typeof data.snapshot.version === 'number'
+  );
+}
+
+function isCreateData(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as {
+    noteId?: unknown;
+    title?: unknown;
+    content?: unknown;
+    folder_path?: unknown;
+  };
+  return (
+    typeof data.noteId === 'string' &&
+    typeof data.title === 'string' &&
+    typeof data.content === 'string' &&
+    typeof data.folder_path === 'string'
+  );
+}
+
+function isRenameTitleData(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as {
+    noteId?: unknown;
+    oldTitle?: unknown;
+    newTitle?: unknown;
+    version?: unknown;
+  };
+  return (
+    typeof data.noteId === 'string' &&
+    typeof data.oldTitle === 'string' &&
+    typeof data.newTitle === 'string' &&
+    typeof data.version === 'number'
+  );
+}
+
+function isMoveFolderData(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as {
+    noteId?: unknown;
+    oldFolder?: unknown;
+    newFolder?: unknown;
+    version?: unknown;
+  };
+  return (
+    typeof data.noteId === 'string' &&
+    typeof data.oldFolder === 'string' &&
+    typeof data.newFolder === 'string' &&
+    typeof data.version === 'number'
+  );
 }
 
 /**

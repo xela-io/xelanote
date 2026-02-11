@@ -143,6 +143,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 
 - **Type-Safety: WebSocket Payloads ohne `any`**
   - `frontend/src/lib/stores/websocket.svelte.ts` mit `unknown` + Helper-Typen.
+- **Type-Safety: History-Deserialisierung ohne unsichere Casts**
+  - `frontend/src/lib/stores/history.svelte.ts` validiert persistierte Command-Daten strukturell statt blindem Cast.
+  - `frontend/src/lib/stores/history.test.ts` deckt gueltige und fehlerhafte localStorage-Payloads ab.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -152,7 +155,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
-- Weitere `any`/unsaubere Casts (z.B. `history.svelte.ts` JSON parse, andere Stores).
+- Weitere unsaubere Casts in anderen Stores/Modulen (History-JSON-Parse ist bereinigt).
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 

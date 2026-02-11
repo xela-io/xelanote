@@ -72,4 +72,58 @@ describe('history store', () => {
 
     expect(history.canRedo()).toBe(false);
   });
+
+  it('should load persisted history when stored command data is valid', () => {
+    const persisted = {
+      undo: [
+        {
+          type: 'create',
+          timestamp: Date.now(),
+          noteId: 'note-123',
+          data: {
+            noteId: 'note-123',
+            title: 'title',
+            content: 'content',
+            folder_path: '/',
+          },
+        },
+      ],
+      redo: [],
+    };
+
+    localStorage.setItem('xelanote_command_history', JSON.stringify(persisted));
+
+    history.loadHistory();
+
+    expect(history.canUndo()).toBe(true);
+    expect(history.canRedo()).toBe(false);
+  });
+
+  it('should clear history when persisted command data is malformed', () => {
+    const malformed = {
+      undo: [
+        {
+          type: 'create',
+          timestamp: Date.now(),
+          noteId: 'note-123',
+          data: {
+            noteId: 'note-123',
+            title: 'title',
+            // missing required "content"
+            folder_path: '/',
+          },
+        },
+      ],
+      redo: [],
+    };
+
+    localStorage.setItem('xelanote_command_history', JSON.stringify(malformed));
+
+    history.loadHistory();
+
+    expect(history.canUndo()).toBe(false);
+    expect(localStorage.getItem('xelanote_command_history')).toBe(
+      JSON.stringify({ undo: [], redo: [] }),
+    );
+  });
 });

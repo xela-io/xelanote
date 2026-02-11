@@ -127,12 +127,24 @@
     try {
       const stored = localStorage.getItem(COLLAPSED_KEY);
       if (stored !== null) {
-        mobileCalendarCollapsed = JSON.parse(stored);
+        const parsed = parseStoredCollapsed(stored);
+        if (parsed !== null) {
+          mobileCalendarCollapsed = parsed;
+        }
       }
     } catch {
       // localStorage might not be available
     }
   });
+
+  function parseStoredCollapsed(raw: string): boolean | null {
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'boolean' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
 
   // Load data reactively once feature is confirmed enabled
   $effect(() => {

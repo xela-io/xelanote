@@ -22,6 +22,32 @@ interface SidebarDndDeps {
   };
 }
 
+type SidebarDraggedItem =
+  | { type: 'folder'; id: number; path: string }
+  | { type: 'note'; id: string; folder_path: string };
+
+function parseSidebarDraggedItem(raw: string): SidebarDraggedItem | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const data = parsed as { type?: unknown; id?: unknown; path?: unknown; folder_path?: unknown };
+
+  if (data.type === 'folder') {
+    if (typeof data.id !== 'number' || typeof data.path !== 'string') return null;
+    return { type: 'folder', id: data.id, path: data.path };
+  }
+  if (data.type === 'note') {
+    if (typeof data.id !== 'string' || typeof data.folder_path !== 'string') return null;
+    return { type: 'note', id: data.id, folder_path: data.folder_path };
+  }
+  return null;
+}
+
 export function handleDropZoneDragOver(e: DragEvent, setActive: (active: boolean) => void) {
   if (e.dataTransfer?.types.includes('application/x-xelanote-item')) {
     e.preventDefault();
@@ -46,7 +72,8 @@ export async function handleDropZoneDrop(
   if (!data) return;
 
   try {
-    const dragData = JSON.parse(data);
+    const dragData = parseSidebarDraggedItem(data);
+    if (!dragData) throw new Error('invalid drag payload');
 
     if (dragData.type === 'folder') {
       await deps.moveFolder(dragData.id, '/');

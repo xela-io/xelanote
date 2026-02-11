@@ -17,6 +17,28 @@
   // Drag and drop state
   let isDragOver = $state(false);
 
+  type DraggedNoteData = { id: string; title: string; folder_path: string };
+
+  function parseDraggedNoteData(raw: string): DraggedNoteData | null {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+
+    if (!parsed || typeof parsed !== 'object') return null;
+    const data = parsed as { id?: unknown; title?: unknown; folder_path?: unknown };
+    if (
+      typeof data.id !== 'string' ||
+      typeof data.title !== 'string' ||
+      typeof data.folder_path !== 'string'
+    ) {
+      return null;
+    }
+    return { id: data.id, title: data.title, folder_path: data.folder_path };
+  }
+
   function handleExpandClick(e: MouseEvent) {
     e.stopPropagation();
     folders.toggleExpanded(node.path);
@@ -56,7 +78,8 @@
     if (!data) return;
 
     try {
-      const dragData = JSON.parse(data) as { id: string; title: string; folder_path: string };
+      const dragData = parseDraggedNoteData(data);
+      if (!dragData) return;
 
       // Don't move if already in this folder
       if (dragData.folder_path === node.path) return;

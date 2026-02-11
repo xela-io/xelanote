@@ -168,6 +168,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/api/client.ts` nutzt defensives Request-Body-Parsing fuer Offline-Mutationspfade.
   - `frontend/src/lib/crypto/e2e.ts` validiert encrypted title payloads strukturell in `decryptTitle()`.
   - `frontend/src/lib/crypto/fido2.ts` ersetzt `as unknown as` durch Runtime-Guards fuer Serveroptionen und Browser-Credentials.
+- **UI-Parse-Haertung (Drag&Drop + lokale Preferences)**
+  - `frontend/src/routes/journal/+page.svelte` validiert den gespeicherten Collapse-Boolean aus `localStorage`.
+  - `frontend/src/lib/components/FolderTree.svelte`, `frontend/src/lib/components/UnifiedTree.svelte` und
+    `frontend/src/lib/components/sidebar/sidebar-dnd.ts` validieren Drag-Daten vor Move/Reorder-Operationen.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).

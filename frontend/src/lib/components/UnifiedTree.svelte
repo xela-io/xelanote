@@ -46,6 +46,44 @@
   let isDragOver = $state(false);
   let dropPosition = $state<'before' | 'after' | 'into' | null>(null);
 
+  type DraggedTreeItem =
+    | { type: 'folder'; id: number; path: string }
+    | { type: 'note'; id: string; title: string; folder_path: string };
+
+  function parseDraggedTreeItem(raw: string): DraggedTreeItem | null {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+
+    if (!parsed || typeof parsed !== 'object') return null;
+    const data = parsed as {
+      type?: unknown;
+      id?: unknown;
+      path?: unknown;
+      title?: unknown;
+      folder_path?: unknown;
+    };
+
+    if (data.type === 'folder') {
+      if (typeof data.id !== 'number' || typeof data.path !== 'string') return null;
+      return { type: 'folder', id: data.id, path: data.path };
+    }
+    if (data.type === 'note') {
+      if (
+        typeof data.id !== 'string' ||
+        typeof data.title !== 'string' ||
+        typeof data.folder_path !== 'string'
+      ) {
+        return null;
+      }
+      return { type: 'note', id: data.id, title: data.title, folder_path: data.folder_path };
+    }
+    return null;
+  }
+
   // Rename dialog state
   let showRenameDialog = $state(false);
   let RenameFolderDialogComponent = $state<ComponentType | null>(null);
@@ -301,7 +339,8 @@
     if (!data) return;
 
     try {
-      const dragData = JSON.parse(data);
+      const dragData = parseDraggedTreeItem(data);
+      if (!dragData) return;
 
       // Handle folder reordering (before/after) - only for sibling folders
       if (

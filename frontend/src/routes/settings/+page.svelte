@@ -21,9 +21,10 @@
   import { goto } from '$app/navigation';
   import * as api from '$lib/api';
   import { getExportUrl } from '$lib/api';
-  import AccountTab from '$lib/routes/settings/tabs/AccountTab.svelte';
-  import AiTab from '$lib/routes/settings/tabs/AiTab.svelte';
-  import SecurityTab from '$lib/routes/settings/tabs/SecurityTab.svelte';
+  import BackupCodesDisplay from '$lib/components/BackupCodesDisplay.svelte';
+  import TwoFactorDisable from '$lib/components/TwoFactorDisable.svelte';
+  import TwoFactorSetup from '$lib/components/TwoFactorSetup.svelte';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import { getDefaultServerUrl, getServerUrl, isTauri, setServerUrl } from '$lib/config';
   import { e2eEncryption } from '$lib/crypto/e2e';
   import type { WebAuthnCredential } from '$lib/crypto/webauthn';
@@ -56,6 +57,9 @@
     loadSecurityPreferences as loadSecurityPreferencesHelper,
     type SecurityLevel,
   } from '$lib/routes/settings/security-preferences';
+  import AccountTab from '$lib/routes/settings/tabs/AccountTab.svelte';
+  import AiTab from '$lib/routes/settings/tabs/AiTab.svelte';
+  import SecurityTab from '$lib/routes/settings/tabs/SecurityTab.svelte';
   import {
     confirmBackupCodesRegeneration,
     handleTwoFactorDisableSuccess,

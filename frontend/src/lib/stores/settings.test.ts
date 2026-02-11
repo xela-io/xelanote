@@ -22,7 +22,7 @@ const setTheme = vi.fn();
 const setEditorMode = vi.fn();
 const getIsMobile = vi.fn().mockReturnValue(false);
 const getEditorMode = vi.fn().mockReturnValue('edit');
-const getCurrentThemeId = vi.fn().mockReturnValue('default-dark');
+const getCurrentThemeId = vi.fn().mockReturnValue('gruvbox-dark');
 vi.mock('$lib/stores/ui.svelte', () => ({
   setTheme,
   setEditorMode,
@@ -52,7 +52,7 @@ const success = vi.fn();
 vi.mock('$lib/stores/toast.svelte', () => ({ error, success }));
 
 vi.mock('$lib/themes', () => ({
-  isValidThemeId: (id: string) => id === 'default-dark',
+  isValidThemeId: (id: string) => id === 'gruvbox-dark' || id === 'gruvbox-light',
 }));
 
 vi.mock('$lib/crypto/sodium', () => ({
@@ -68,7 +68,7 @@ describe('settings store', () => {
 
   it('should load preferences and apply UI + encryption settings', async () => {
     getPreferences.mockResolvedValue({
-      theme: 'default-dark',
+      theme: 'gruvbox-dark',
       editor_mode: 'split',
       security_level: 'balanced',
       auto_lock_timeout: 10,
@@ -79,7 +79,7 @@ describe('settings store', () => {
     const settings = await import('$lib/stores/settings.svelte');
     await settings.loadPreferences();
 
-    expect(setTheme).toHaveBeenCalledWith('default-dark');
+    expect(setTheme).toHaveBeenCalledWith('gruvbox-dark');
     expect(setEditorMode).toHaveBeenCalledWith('split');
     expect(setSecurityLevel).toHaveBeenCalledWith('balanced');
     expect(initSettingsFromPreferences).toHaveBeenCalledWith(true, true);
@@ -89,7 +89,7 @@ describe('settings store', () => {
   it('should fallback editor mode to edit on mobile', async () => {
     getIsMobile.mockReturnValue(true);
     getPreferences.mockResolvedValue({
-      theme: 'default-dark',
+      theme: 'gruvbox-dark',
       editor_mode: 'split',
       security_level: 'balanced',
       auto_lock_timeout: 0,
@@ -107,9 +107,9 @@ describe('settings store', () => {
     updatePreferences.mockResolvedValue(undefined);
     const settings = await import('$lib/stores/settings.svelte');
 
-    const ok = await settings.savePreferences('default-dark', 'edit');
+    const ok = await settings.savePreferences('gruvbox-dark', 'edit');
     expect(ok).toBe(true);
-    expect(setTheme).toHaveBeenCalledWith('default-dark');
+    expect(setTheme).toHaveBeenCalledWith('gruvbox-dark');
     expect(setEditorMode).toHaveBeenCalledWith('edit');
   });
 

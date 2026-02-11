@@ -205,6 +205,47 @@ function asNumber(value: unknown): number | undefined {
   return typeof value === 'number' ? value : undefined;
 }
 
+function normalizeLinks(value: unknown): NotePayload['links'] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const links = value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const link = entry as { target_title?: unknown };
+      return typeof link.target_title === 'string' ? { target_title: link.target_title } : null;
+    })
+    .filter((entry): entry is { target_title: string } => entry !== null);
+  return links.length > 0 ? links : undefined;
+}
+
+function normalizeNotePayload(body: Record<string, unknown>): NotePayload {
+  const payload: NotePayload = {
+    title: asString(body.title) ?? '',
+  };
+
+  const content = asString(body.content);
+  if (content !== undefined) payload.content = content;
+  const folderPath = asString(body.folder_path);
+  if (folderPath !== undefined) payload.folder_path = folderPath;
+  const encryptedTitle = asString(body.encrypted_title);
+  if (encryptedTitle !== undefined) payload.encrypted_title = encryptedTitle;
+  const titleEncrypted = asBoolean(body.title_encrypted);
+  if (titleEncrypted !== undefined) payload.title_encrypted = titleEncrypted;
+  const encryptedContent = asString(body.encrypted_content);
+  if (encryptedContent !== undefined) payload.encrypted_content = encryptedContent;
+  const wrappedDek = asString(body.wrapped_dek);
+  if (wrappedDek !== undefined) payload.wrapped_dek = wrappedDek;
+  const encryptionMetadata = asString(body.encryption_metadata);
+  if (encryptionMetadata !== undefined) payload.encryption_metadata = encryptionMetadata;
+  const noteType = asString(body.note_type);
+  if (noteType !== undefined) payload.note_type = noteType;
+  const journalDate = asString(body.journal_date);
+  if (journalDate !== undefined) payload.journal_date = journalDate;
+  const links = normalizeLinks(body.links);
+  if (links) payload.links = links;
+
+  return payload;
+}
+
 async function handleOfflineMutation<T>(path: string, options: ExtendedRequestInit): Promise<T> {
   // Only note mutations are allowed offline
   if (!isNoteRoute(path)) {
@@ -247,7 +288,7 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
 
     const createPayload: OfflineCreatePayload = {
       type: 'create',
-      notePayload: body as NotePayload,
+      notePayload: normalizeNotePayload(body),
       folderPath: folderPath,
     };
 
@@ -290,7 +331,7 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
 
     const updatePayload: OfflineUpdatePayload = {
       type: 'update',
-      notePayload: body as NotePayload,
+      notePayload: normalizeNotePayload(body),
       expectedVersion: version,
     };
 

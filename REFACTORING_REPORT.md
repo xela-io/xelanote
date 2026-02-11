@@ -181,6 +181,11 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Verbleibende `as unknown as`-Stellen bereinigt**
   - `frontend/src/lib/components/GraphCanvas.svelte` validiert den `force-graph`-Factory-Export vor Nutzung.
   - `frontend/src/lib/desktop/electron-bridge.ts` nutzt eine typisierte `Window`-Erweiterung fuer `electronAPI`.
+- **Frontend-Typecheck-Bereinigung**
+  - `npm run typecheck` ist wieder gruen (0 Errors, 0 Warnings).
+  - Fixes u.a. in `frontend/src/lib/api/client.ts`, `frontend/src/lib/crypto/fido2.ts`,
+    `frontend/src/lib/stores/websocket.svelte.ts`, `frontend/src/routes/settings/+page.svelte`,
+    `frontend/src/lib/routes/settings/tabs/AccountTab.svelte`, zugehoerige Tests.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -315,8 +320,8 @@ frontend/src/lib/api/
 4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. FE-Typecheck-Fehler bereinigen (siehe Typecheck-Log).
-2. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte`.
+1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte`.
+2. Optionale End-to-End-Szenarien nachziehen (laut `TESTING.md` war `e2e-feature.test.ts > Scenario 2` historisch auffaellig).
 
 ## Fortschritt
 

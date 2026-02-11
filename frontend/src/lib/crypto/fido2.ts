@@ -33,8 +33,17 @@ interface ServerPublicKeyOptions {
   attestation?: AttestationConveyancePreference;
 }
 
-type ServerCreationOptions = ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
-type ServerRequestOptions = ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions };
+type ServerCreationOptions = ServerPublicKeyOptions | { publicKey: ServerPublicKeyOptions };
+type ServerRequestOptions = ServerPublicKeyOptions | { publicKey: ServerPublicKeyOptions };
+
+function unwrapServerPublicKeyOptions(
+  options: ServerCreationOptions | ServerRequestOptions
+): ServerPublicKeyOptions {
+  if ('publicKey' in options) {
+    return options.publicKey;
+  }
+  return options;
+}
 
 function isServerPublicKeyOptions(value: unknown): value is ServerPublicKeyOptions {
   if (!value || typeof value !== 'object') return false;
@@ -130,10 +139,8 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
  * Prepare CredentialCreationOptions from server response.
  * The server sends base64url-encoded buffers that need to be converted to ArrayBuffers.
  */
-function prepareCreationOptions(
-  options: ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions }
-): CredentialCreationOptions {
-  const publicKey = options.publicKey || options;
+function prepareCreationOptions(options: ServerCreationOptions): CredentialCreationOptions {
+  const publicKey = unwrapServerPublicKeyOptions(options);
 
   return {
     publicKey: {
@@ -143,7 +150,7 @@ function prepareCreationOptions(
         ...publicKey.user!,
         id: base64UrlToBuffer(publicKey.user!.id),
       },
-      excludeCredentials: (publicKey.excludeCredentials || []).map((cred) => ({
+      excludeCredentials: (publicKey.excludeCredentials || []).map((cred: ServerCredentialDescriptor) => ({
         ...cred,
         id: base64UrlToBuffer(cred.id),
       })),
@@ -154,10 +161,8 @@ function prepareCreationOptions(
 /**
  * Prepare CredentialRequestOptions from server response.
  */
-function prepareRequestOptions(
-  options: ServerPublicKeyOptions & { publicKey?: ServerPublicKeyOptions }
-): CredentialRequestOptions {
-  const publicKey = options.publicKey || options;
+function prepareRequestOptions(options: ServerRequestOptions): CredentialRequestOptions {
+  const publicKey = unwrapServerPublicKeyOptions(options);
 
   return {
     publicKey: {

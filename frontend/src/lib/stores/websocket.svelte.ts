@@ -39,8 +39,26 @@ function parseMessage(raw: unknown): WebSocketMessage | null {
 
 function parseNote(payload: unknown): Note | null {
   if (!isObjectRecord(payload)) return null;
-  if (typeof payload.id !== 'string') return null;
-  return payload as Note;
+  if (
+    typeof payload.id !== 'string' ||
+    typeof payload.title !== 'string' ||
+    typeof payload.content !== 'string' ||
+    typeof payload.folder_path !== 'string' ||
+    typeof payload.version !== 'number' ||
+    typeof payload.created_at !== 'string' ||
+    typeof payload.updated_at !== 'string'
+  ) {
+    return null;
+  }
+  return {
+    id: payload.id,
+    title: payload.title,
+    content: payload.content,
+    folder_path: payload.folder_path,
+    version: payload.version,
+    created_at: payload.created_at,
+    updated_at: payload.updated_at,
+  };
 }
 
 function parseNoteEventPayload(payload: unknown): NoteEventPayload | null {

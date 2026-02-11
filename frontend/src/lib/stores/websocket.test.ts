@@ -81,7 +81,15 @@ describe('websocket store', () => {
     wsStore.connect();
     const ws = MockWebSocket.instances[0];
 
-    const payload: Note = { id: 'note-1', title: 't', content: 'c', folder_path: '/' };
+    const payload: Note = {
+      id: 'note-1',
+      title: 't',
+      content: 'c',
+      folder_path: '/',
+      version: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     ws.onmessage?.({ data: JSON.stringify({ type: 'note.deleted', payload }) });
 
     expect(handleRemoteDelete).toHaveBeenCalledWith('note-1');

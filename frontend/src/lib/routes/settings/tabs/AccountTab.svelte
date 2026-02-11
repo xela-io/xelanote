@@ -10,7 +10,9 @@
   export let passwordForm: PasswordFormState;
   export let handleEmailSubmit: (e: Event) => void;
   export let handlePasswordSubmit: (e: Event) => void;
-  export let tfaStatus: import('$lib/api').TwoFactorStatus | null;
+  export let tfaStatus:
+    | (import('$lib/api').TwoFactorStatus & { backup_code_regenerated_at?: string })
+    | null;
   export let isLoadingTfa: boolean;
   export let showSetupDialog: boolean;
   export let showDisableDialog: boolean;
@@ -55,10 +57,11 @@
       {/if}
 
       <div>
-        <label class="block text-sm font-medium text-foreground mb-2">
+        <label for="settings-new-email" class="block text-sm font-medium text-foreground mb-2">
           {$_('page.settings.account.new_email')}
         </label>
         <input
+          id="settings-new-email"
           type="email"
           bind:value={emailForm.newEmail}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
@@ -68,10 +71,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-foreground mb-2">
+        <label for="settings-email-password" class="block text-sm font-medium text-foreground mb-2">
           {$_('page.settings.account.password')}
         </label>
         <input
+          id="settings-email-password"
           type="password"
           bind:value={emailForm.password}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
@@ -110,10 +114,11 @@
       {/if}
 
       <div>
-        <label class="block text-sm font-medium text-foreground mb-2">
+        <label for="settings-current-password" class="block text-sm font-medium text-foreground mb-2">
           {$_('page.settings.account.current_password')}
         </label>
         <input
+          id="settings-current-password"
           type="password"
           bind:value={passwordForm.currentPassword}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
@@ -122,10 +127,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-foreground mb-2">
+        <label for="settings-new-password" class="block text-sm font-medium text-foreground mb-2">
           {$_('page.settings.account.new_password')}
         </label>
         <input
+          id="settings-new-password"
           type="password"
           bind:value={passwordForm.newPassword}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
@@ -134,10 +140,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-foreground mb-2">
+        <label for="settings-confirm-password" class="block text-sm font-medium text-foreground mb-2">
           {$_('page.settings.account.confirm_password')}
         </label>
         <input
+          id="settings-confirm-password"
           type="password"
           bind:value={passwordForm.confirmPassword}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground

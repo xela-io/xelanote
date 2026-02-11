@@ -298,6 +298,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **DB Insert-ID Guardrails (ausgewaehlte Pfade)**
   - `backend/internal/db/helpers.go`: `validateLastInsertID()` eingefuehrt (positiv + int-overflow-safe).
   - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen die Validierung nach `LastInsertId()`.
+  - `backend/internal/db/preferences_core.go` nutzt `validateLastInsertID()` in `GetOrCreateUserPreferences()`.
+  - `backend/internal/db/preferences_webauthn.go` validiert positive Insert-ID bei `AddWebAuthnCredential()`.
   - Testlauf: `go test -tags fts5 ./internal/db` gruen.
 - **DB RowsAffected-Helper (ausgewaehlte Pfade)**
   - `backend/internal/db/helpers.go`: `ensureRowsAffected()` eingefuehrt.

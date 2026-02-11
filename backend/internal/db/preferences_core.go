@@ -66,8 +66,12 @@ func (db *DB) GetOrCreateUserPreferences(userID int) (*UserPreferences, bool, er
 	if err != nil {
 		return nil, false, err
 	}
+	prefsID, err := validateLastInsertID(id, "user preferences id")
+	if err != nil {
+		return nil, false, err
+	}
 	return &UserPreferences{
-		ID:              int(id),
+		ID:              prefsID,
 		UserID:          userID,
 		Theme:           "default-dark",
 		EditorMode:      "split",

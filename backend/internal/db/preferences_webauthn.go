@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -20,6 +21,9 @@ func (db *DB) AddWebAuthnCredential(userID int64, credentialID, deviceName strin
 	id, err := result.LastInsertId()
 	if err != nil {
 		return nil, err
+	}
+	if id <= 0 {
+		return nil, fmt.Errorf("invalid webauthn credential id: %d", id)
 	}
 
 	return &WebAuthnCredential{

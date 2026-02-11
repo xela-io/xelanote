@@ -462,6 +462,32 @@ Default sollte streng sein, wenn `XELANOTE_ENV` leer ist.
 
 **Status:** NoteService + Note-DB + Server-Init aufgeteilt. API-Routen aus `api.go` in `routes.go` ausgelagert; JSON-Helpers in `response_json.go`.
 
+**Update (2026-02-11): weitere God-Files im Backend zerlegt**
+
+| Datei | Ergebnis |
+|-------|----------|
+| `backend/internal/db/recipes.go` | Aufgeteilt in: `recipes_models.go`, `recipes_notes.go`, `recipes_metadata.go`, `recipes_ingredients.go`, `recipes_data.go`, `recipes_images.go`, `recipes_collections.go`, `recipes_summaries.go`, `recipes_scaling.go`, `recipes_sharing.go` |
+| `backend/internal/db/sharing.go` | Aufgeteilt in: `sharing_models.go`, `sharing_utils.go`, `sharing_notes.go`, `sharing_folders.go`, `sharing_placements.go`, `sharing_recipes.go`, `sharing_search.go` |
+| `backend/internal/service/summarize.go` | Aufgeteilt in: `summarize_service.go`, `summarize_tags.go`, `summarize_links.go`, `summarize_spellcheck.go`, `summarize_ai_transform.go` |
+| `backend/internal/api/recipes.go` | Aufgeteilt in: `recipes_types.go`, `recipes_handlers.go`, `recipes_collections.go`, `recipes_collection_shares.go`, `recipes_shared.go`, `recipes_images.go`, `recipes_images_signing.go` |
+| `backend/internal/db/recipes_test.go` | Aufgeteilt in: `recipes_helpers_test.go`, `recipes_notes_test.go`, `recipes_metadata_test.go`, `recipes_ingredients_test.go`, `recipes_collections_test.go`, `recipes_scaling_test.go`, `recipes_data_test.go`, `recipes_encryption_test.go`, `recipes_validation_test.go`, `recipes_sharing_test.go`, `recipes_images_test.go` |
+| `backend/internal/api/auth.go` | Aufgeteilt in: `auth_types.go`, `auth_helpers.go`, `auth_register.go`, `auth_login.go`, `auth_tokens.go`, `auth_user.go` |
+| `backend/internal/api/sharing.go` | Aufgeteilt in: `sharing_types.go`, `sharing_notes.go`, `sharing_folders.go`, `sharing_placements.go`, `sharing_search.go` |
+| `backend/internal/api/users.go` | Aufgeteilt in: `users_types.go`, `users_preferences.go`, `users_account.go`, `users_encryption.go`, `users_security.go`, `users_webauthn.go`, `users_apikeys.go` |
+| `backend/internal/api/notes_ai.go` | Aufgeteilt in: `notes_ai_types.go`, `notes_ai_summary.go`, `notes_ai_suggest.go`, `notes_ai_format.go`, `notes_ai_transform.go`, `notes_ai_titles.go` |
+| `backend/internal/api/notes_trash.go` | Aufgeteilt in: `notes_trash_list.go`, `notes_trash_actions.go` |
+| `backend/internal/service/recipes.go` | Aufgeteilt in: `recipes_types.go`, `recipes_helpers.go`, `recipes_notes.go`, `recipes_images.go`, `recipes_collections.go`, `recipes_collections_owner.go` |
+| `backend/internal/api/notes_misc.go` | Aufgeteilt in: `notes_misc_types.go`, `notes_misc_titles.go`, `notes_misc_reorder.go` |
+| `backend/internal/api/notes_helpers.go` | Aufgeteilt in: `notes_helpers_types.go`, `notes_helpers_validate.go`, `notes_helpers_etag.go` |
+| `backend/internal/api/notes_meta.go` | Aufgeteilt in: `notes_meta_types.go`, `notes_meta_rename.go`, `notes_meta_backlinks.go`, `notes_meta_color.go` |
+| `backend/internal/service/user.go` | Aufgeteilt in: `user_types.go`, `user_preferences.go`, `user_account.go`, `user_recovery.go`, `user_webauthn.go`, `user_apikeys.go` |
+| `backend/internal/db/folders.go` | Aufgeteilt in: `folders_models.go`, `folders_utils.go`, `folders_queries.go`, `folders_move.go`, `folders_delete.go`, `folders_rename.go`, `folders_reorder.go`, `folders_color.go`, `folders_ai.go`, `folders_encryption.go` |
+| `backend/internal/db/preferences.go` | Aufgeteilt in: `preferences_types.go`, `preferences_core.go`, `preferences_encryption.go`, `preferences_security.go`, `preferences_webauthn.go`, `preferences_apikeys.go` |
+| `backend/internal/api/folders.go` | Aufgeteilt in: `folders_types.go`, `folders_crud.go`, `folders_reorder.go`, `folders_color.go`, `folders_ai.go`, `folders_encryption.go` |
+| `backend/internal/api/notes_crud.go` | Aufgeteilt in: `notes_crud_create.go`, `notes_crud_read.go`, `notes_crud_update.go`, `notes_crud_delete.go` |
+| `backend/internal/db/admin.go` | Aufgeteilt in: `admin_types.go`, `admin_stats.go`, `admin_users.go`, `admin_metrics.go` |
+| `backend/internal/service/notes_encryption.go` | Aufgeteilt in: `notes_encryption_create.go`, `notes_encryption_update.go`, `notes_encryption_decrypt.go`, `notes_encryption_batch.go` |
+
 ---
 
 #### W-3: God-Files im Frontend -- ERLEDIGT

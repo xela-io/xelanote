@@ -1,0 +1,105 @@
+package api
+
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"log/slog"
+	"net/http"
+)
+
+// register handles user registration endpoint
+func (s *Server) register(w http.ResponseWriter, r *http.Request) {
+	var req RegisterRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// Validate required fields
+	if req.Username == "" || req.Email == "" || req.Password == "" {
+		respondError(w, http.StatusBadRequest, "username, email, and password are required")
+		return
+	}
+
+	// Validate username format (only for new registrations, existing users are grandfathered)
+	if err := validateUsername(req.Username); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Verify CAPTCHA token
+	// If a token is provided (from web or desktop iframe), always verify it.
+	// If no token and not a desktop client, require CAPTCHA (when enabled).
+	// Desktop clients without a token get a fallback bypass (offline/iframe failure).
+	clientIP := getClientIPSafe(r)
+	if req.CaptchaToken != "" {
+		if err := s.turnstileService.Verify(r.Context(), req.CaptchaToken, clientIP); err != nil {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	} else if !isDesktopClient(r) {
+		if err := s.turnstileService.Verify(r.Context(), "", clientIP); err != nil {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
+	// Register user
+	user, err := s.authService.Register(r.Context(), req.Username, req.Email, req.Password)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Generate encryption salt for E2E encryption
+	salt := make([]byte, 16) // 128-bit salt
+	if _, err := rand.Read(salt); err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to generate encryption salt")
+		return
+	}
+
+	if err := s.authService.SetUserEncryptionSalt(user.ID, salt); err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to store encryption salt")
+		return
+	}
+
+	// Auto-login after successful registration
+	accessToken, refreshToken, requiresTwoFactor, _, err := s.authService.Login(r.Context(), req.Username, req.Password)
+	if err != nil {
+		// Registration succeeded but login failed (should not happen)
+		respondError(w, http.StatusInternalServerError, "registration succeeded but login failed")
+		return
+	}
+
+	// New users never have 2FA enabled, but check just in case
+	if requiresTwoFactor {
+		respondError(w, http.StatusInternalServerError, "unexpected 2FA requirement for new user")
+		return
+	}
+
+	// Set cookies for cookie-based auth
+	setAccessTokenCookie(w, accessToken)
+	setRefreshTokenCookie(w, refreshToken)
+
+	// Generate and set CSRF token
+	csrfToken, err := generateCSRFToken()
+	if err != nil {
+		s.logger().Error("failed to generate CSRF token", slog.Any("error", err))
+		respondError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	setCSRFTokenCookie(w, csrfToken)
+
+	// Return tokens, user info, and encryption salt
+	respondJSON(w, http.StatusCreated, AuthResponse{
+		AccessToken:    accessToken,
+		RefreshToken:   refreshToken,
+		EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
+		User: UserResponse{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			IsAdmin:  user.IsAdmin,
+		},
+	})
+}

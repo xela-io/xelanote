@@ -21,6 +21,7 @@
   import type { FolderTreeNode, NoteTreeNode, TreeNode } from '$lib/stores/tree.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   import TreeContextMenu from './TreeContextMenu.svelte';
   import UnifiedTree from './UnifiedTree.svelte';
@@ -493,31 +494,31 @@
   async function loadRenameFolderDialog() {
     if (RenameFolderDialogComponent) return;
     const module = await import('./RenameFolderDialog.svelte');
-    RenameFolderDialogComponent = module.default as unknown as ComponentType;
+    RenameFolderDialogComponent = loadSvelteComponentFromModule(module, 'RenameFolderDialog');
   }
 
   async function loadDeleteFolderDialog() {
     if (DeleteFolderDialogComponent) return;
     const module = await import('./DeleteFolderDialog.svelte');
-    DeleteFolderDialogComponent = module.default as unknown as ComponentType;
+    DeleteFolderDialogComponent = loadSvelteComponentFromModule(module, 'DeleteFolderDialog');
   }
 
   async function loadColorPickerDialog() {
     if (ColorPickerDialogComponent) return;
     const module = await import('./ColorPickerDialog.svelte');
-    ColorPickerDialogComponent = module.default as unknown as ComponentType;
+    ColorPickerDialogComponent = loadSvelteComponentFromModule(module, 'ColorPickerDialog');
   }
 
   async function loadShareDialog() {
     if (ShareDialogComponent) return;
     const module = await import('./ShareDialog.svelte');
-    ShareDialogComponent = module.default as unknown as ComponentType;
+    ShareDialogComponent = loadSvelteComponentFromModule(module, 'ShareDialog');
   }
 
   async function loadRenameNoteDialog() {
     if (RenameNoteDialogComponent) return;
     const module = await import('./RenameNoteDialog.svelte');
-    RenameNoteDialogComponent = module.default as unknown as ComponentType;
+    RenameNoteDialogComponent = loadSvelteComponentFromModule(module, 'RenameNoteDialog');
   }
 
   $effect(() => {

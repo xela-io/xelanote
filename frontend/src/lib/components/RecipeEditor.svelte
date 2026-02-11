@@ -8,6 +8,7 @@
   import * as notes from '$lib/stores/notes.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   import AddToCollectionDialog from './AddToCollectionDialog.svelte';
   import RecipeCollectionDialog from './RecipeCollectionDialog.svelte';
@@ -79,7 +80,7 @@
     // Load markdown editor for instructions tab
     try {
       const module = await import('$lib/components/Editor.svelte');
-      EditorComponent = module.default as unknown as ComponentType;
+      EditorComponent = loadSvelteComponentFromModule(module, 'RecipeEditorInstructions');
     } catch (err) {
       console.error('Failed to load editor:', err);
     }

@@ -9,6 +9,7 @@
   import * as journal from '$lib/stores/journal.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as tree from '$lib/stores/tree.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   // Get note ID from URL params
   // $page.params.id ist immer definiert bei [id] route, aber TypeScript kennt das nicht
@@ -84,8 +85,8 @@
 
           if (cancelled) return; // Don't update if effect was cleaned up
 
-          EditorComponent = editorModule.default as unknown as ComponentType;
-          RecipeEditorComponent = recipeModule.default as unknown as ComponentType;
+          EditorComponent = loadSvelteComponentFromModule(editorModule, 'Editor');
+          RecipeEditorComponent = loadSvelteComponentFromModule(recipeModule, 'RecipeEditor');
           editorLoading = false;
           retryCount = 0;
         } catch (error) {

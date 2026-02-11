@@ -46,6 +46,7 @@
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import * as websocket from '$lib/stores/websocket.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   // ✅ Service Worker Registration (PWA) mit isDirty Gate
   // NOTE: Module-level variable, but only accessed within browser guards
@@ -359,7 +360,7 @@
   async function loadQuickSwitcher() {
     if (QuickSwitcherComponent) return;
     const module = await import('$lib/components/QuickSwitcher.svelte');
-    QuickSwitcherComponent = module.default as unknown as ComponentType;
+    QuickSwitcherComponent = loadSvelteComponentFromModule(module, 'QuickSwitcher');
   }
 
   $effect(() => {

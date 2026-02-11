@@ -172,6 +172,12 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/routes/journal/+page.svelte` validiert den gespeicherten Collapse-Boolean aus `localStorage`.
   - `frontend/src/lib/components/FolderTree.svelte`, `frontend/src/lib/components/UnifiedTree.svelte` und
     `frontend/src/lib/components/sidebar/sidebar-dnd.ts` validieren Drag-Daten vor Move/Reorder-Operationen.
+- **Lazy-Component-Loading ohne unsichere Double-Casts**
+  - Neuer Helper: `frontend/src/lib/utils/lazy-component.ts`.
+  - `frontend/src/routes/+layout.svelte`, `frontend/src/routes/note/[id]/+page.svelte`,
+    `frontend/src/lib/components/RecipeEditor.svelte`, `frontend/src/lib/components/UnifiedTree.svelte`,
+    `frontend/src/lib/editor/dialog-loaders.ts` nutzen jetzt validiertes Modul-Loading statt
+    `as unknown as ComponentType`.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).

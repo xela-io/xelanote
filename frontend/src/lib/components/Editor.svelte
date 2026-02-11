@@ -20,6 +20,7 @@
     loadMarkdownGuideDropdown,
     loadMoveToFolderDialog,
     loadVersionHistoryDialog,
+    maybeLoadDialog,
   } from '$lib/editor/dialog-loaders';
   import {
     handleAIToggle as handleAIToggleAction,
@@ -730,35 +731,32 @@
   }
 
   $effect(() => {
-    if (showMoveDialog) {
-      loadMoveToFolderDialog(dialogLoaders).then((next) => {
-        dialogLoaders = next;
-      });
-    }
+    maybeLoadDialog(showMoveDialog, dialogLoaders, loadMoveToFolderDialog, (next) => {
+      dialogLoaders = next;
+    });
   });
 
   $effect(() => {
-    if (showVersionHistory) {
-      loadVersionHistoryDialog(dialogLoaders).then((next) => {
-        dialogLoaders = next;
-      });
-    }
+    maybeLoadDialog(showVersionHistory, dialogLoaders, loadVersionHistoryDialog, (next) => {
+      dialogLoaders = next;
+    });
   });
 
   $effect(() => {
-    if (ui.getMarkdownGuideOpen()) {
-      loadMarkdownGuideDialog(dialogLoaders).then((next) => {
-        dialogLoaders = next;
-      });
-    }
+    maybeLoadDialog(ui.getMarkdownGuideOpen(), dialogLoaders, loadMarkdownGuideDialog, (next) => {
+      dialogLoaders = next;
+    });
   });
 
   $effect(() => {
-    if (ui.getMarkdownGuideDropdownOpen()) {
-      loadMarkdownGuideDropdown(dialogLoaders).then((next) => {
+    maybeLoadDialog(
+      ui.getMarkdownGuideDropdownOpen(),
+      dialogLoaders,
+      loadMarkdownGuideDropdown,
+      (next) => {
         dialogLoaders = next;
-      });
-    }
+      }
+    );
   });
 
   // Close FindReplaceBar when note changes (not on initial mount).

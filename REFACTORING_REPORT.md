@@ -212,6 +212,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Editor-Modularisierung (AI-Menue-Flow)**
   - Neuer Helper: `frontend/src/lib/editor/editor-ai-menu.ts`.
   - `frontend/src/lib/components/Editor.svelte` nutzt ausgelagerte AI-Menu/Open-Select-Apply-Handler.
+- **Editor-Modularisierung (Dialog-Loader-Trigger)**
+  - `frontend/src/lib/editor/dialog-loaders.ts` exportiert `maybeLoadDialog()` fuer wiederverwendbare lazy-load Trigger.
+  - `frontend/src/lib/components/Editor.svelte` nutzt den Trigger statt vier nahezu identischer Loader-Effects.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -620,6 +623,7 @@ nicht-explizites Env nicht mehr permissiv.
 - `frontend/src/lib/components/Editor.svelte`: Image-Upload-Status/Toast-Flow nach `frontend/src/lib/editor/editor-upload-actions.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Link-Insert- und Summary-Update-Logik nach `frontend/src/lib/editor/editor-note-content.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: AI-Menue/Open-Select-Apply-Logik nach `frontend/src/lib/editor/editor-ai-menu.ts` ausgelagert.
+- `frontend/src/lib/components/Editor.svelte`: Dialog-Lazyload-Trigger mit `maybeLoadDialog()` vereinheitlicht.
 - `frontend/src/lib/components/Sidebar.svelte`: Resize-Handler nach `frontend/src/lib/components/sidebar/sidebar-resize.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: onMount-Init nach `frontend/src/lib/components/sidebar/sidebar-init.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Drag/Drop + Touch-Reorder nach `frontend/src/lib/components/sidebar/sidebar-dnd.ts` ausgelagert.

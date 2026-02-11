@@ -9,6 +9,18 @@ export interface DialogLoaderState {
   versionHistoryDialog?: ComponentType | null;
 }
 
+export function maybeLoadDialog(
+  shouldLoad: boolean,
+  state: DialogLoaderState,
+  loader: (state: DialogLoaderState) => Promise<DialogLoaderState>,
+  setState: (state: DialogLoaderState) => void
+): void {
+  if (!shouldLoad) return;
+  loader(state).then((next) => {
+    setState(next);
+  });
+}
+
 export async function loadMoveToFolderDialog(state: DialogLoaderState) {
   if (state.moveToFolderDialog) return state;
   const module = await import('$lib/components/MoveToFolderDialog.svelte');

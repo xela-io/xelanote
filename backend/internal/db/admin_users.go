@@ -78,15 +78,7 @@ func (db *DB) SetUserAdmin(userID int, isAdmin bool) error {
 	if err != nil {
 		return err
 	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffected(result)
 }
 
 // DeleteUserByAdmin deletes a user and all their data
@@ -173,13 +165,8 @@ func (db *DB) DeleteUserByAdmin(userID int) error {
 	if err != nil {
 		return err
 	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
+	if err := ensureRowsAffected(result); err != nil {
 		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
 	}
 
 	return tx.Commit()

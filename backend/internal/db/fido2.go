@@ -140,15 +140,7 @@ func (db *DB) DeleteFIDO2Credential(userID int, credID int64) error {
 	if err != nil {
 		return err
 	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffected(result)
 }
 
 // CountFIDO2Credentials returns the number of FIDO2 credentials for a user

@@ -303,6 +303,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/helpers.go`: `ensureRowsAffected()` eingefuehrt.
   - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen den Helper fuer konsistentes NotFound-Handling.
   - `backend/internal/db/auth.go` nutzt `ensureRowsAffected()` in User-Update-Pfaden und `validateLastInsertID()` bei `CreateUser()`.
+  - `backend/internal/db/fido2.go` und `backend/internal/db/admin_users.go` nutzen `ensureRowsAffected()` fuer konsistentes NotFound-Handling bei Delete/Update-Pfaden.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

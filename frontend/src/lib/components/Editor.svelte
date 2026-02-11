@@ -15,8 +15,6 @@
     prepareAITransform,
   } from '$lib/editor/ai-actions';
   import {
-    insertWikiLink,
-    insertWikiLinkInContent,
     updateEditorContent,
     updateFocusMode,
   } from '$lib/editor/codemirror';
@@ -37,6 +35,10 @@
   import { handleImageResizeAction, handleTaskReorderAction } from '$lib/editor/editor-content-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
   import { ensureEditorReady } from '$lib/editor/editor-mode';
+  import {
+    handleInsertLinkAction,
+    updateCurrentNoteSummary,
+  } from '$lib/editor/editor-note-content';
   import {
     extractFilesFromInputChangeEvent,
     handleColorSelectAction,
@@ -571,27 +573,18 @@
   }
 
   function handleInsertLink(term: string, targetTitle: string) {
-    if (editorView) {
-      // Editor mode: use CodeMirror
-      insertWikiLink(editorView, term, targetTitle);
-      notes.scheduleAutoSave();
-    } else {
-      // Preview mode: modify content directly
-      const content = notes.getCurrentNote()?.content || '';
-      const { newContent, found } = insertWikiLinkInContent(content, term, targetTitle);
-      if (found) {
-        notes.updateCurrentNoteContent(newContent);
-        notes.scheduleAutoSave();
-      }
-    }
+    handleInsertLinkAction({
+      editorView,
+      term,
+      targetTitle,
+      getFallbackContent: () => notes.getCurrentNote()?.content || '',
+      setFallbackContent: (content) => notes.updateCurrentNoteContent(content),
+      scheduleAutoSave: () => notes.scheduleAutoSave(),
+    });
   }
 
   function handleSummaryUpdated(summary: string) {
-    const currentNote = notes.getCurrentNote();
-    if (currentNote) {
-      currentNote.summary = summary;
-      currentNote.summary_generated_at = new Date().toISOString();
-    }
+    updateCurrentNoteSummary(notes.getCurrentNote(), summary);
   }
 
   // Upload Button Handler

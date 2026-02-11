@@ -11,10 +11,6 @@
   import { FEATURE_FLAGS } from '$lib/config';
   import type { AITransformState } from '$lib/editor/ai-actions';
   import {
-    applyAITransform as applyAITransformToEditor,
-    prepareAITransform,
-  } from '$lib/editor/ai-actions';
-  import {
     updateEditorContent,
     updateFocusMode,
   } from '$lib/editor/codemirror';
@@ -32,6 +28,11 @@
     handleSaveNote as handleSaveNoteAction,
     handleTitleInput as handleTitleInputAction,
   } from '$lib/editor/editor-actions';
+  import {
+    applyAITransformAction,
+    handleAIActionSelectAction,
+    openAIActionsMenuAction,
+  } from '$lib/editor/editor-ai-menu';
   import { handleImageResizeAction, handleTaskReorderAction } from '$lib/editor/editor-content-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
   import { ensureEditorReady } from '$lib/editor/editor-mode';
@@ -337,35 +338,41 @@
   function handleAIActionsClick(rect: DOMRect) {
     const currentNote = notes.getCurrentNote();
     if (!currentNote) return;
-
-    // Check if AI is enabled for this note
-    if (!currentNote.ai_enabled) {
-      toast.error($_('error.ai_transform.ai_disabled'));
-      return;
-    }
-
-    // Capture button position for desktop dropdown placement
-    aiActionsTriggerRect = rect;
-    showAIActionsDropdown = true;
+    openAIActionsMenuAction({
+      rect,
+      aiEnabled: Boolean(currentNote.ai_enabled),
+      setTriggerRect: (nextRect) => {
+        aiActionsTriggerRect = nextRect;
+      },
+      setOpen: (value) => {
+        showAIActionsDropdown = value;
+      },
+      showDisabledError: () => {
+        toast.error($_('error.ai_transform.ai_disabled'));
+      },
+    });
   }
 
   // Handle AI action selection from dropdown
   async function handleAIActionSelect(action: AIAction, customPrompt?: string) {
-    showAIActionsDropdown = false;
-
     const currentNote = notes.getCurrentNote();
     if (!currentNote || !editorView) return;
 
-    await prepareAITransform(action, customPrompt, {
-      getCurrentContent: () => currentNote.content,
-      getEditorView: () => editorView,
-      setDialogOpen: (open) => {
-        showAITransformDialog = open;
+    await handleAIActionSelectAction({
+      action,
+      customPrompt,
+      currentContent: currentNote.content,
+      editorView,
+      setDropdownOpen: (value) => {
+        showAIActionsDropdown = value;
+      },
+      setDialogOpen: (value) => {
+        showAITransformDialog = value;
       },
       setTransformState: (state) => {
         aiTransformState = state;
       },
-      showError: () => {
+      showTooShortError: () => {
         toast.error($_('error.ai_transform.too_short'));
       },
     });
@@ -373,16 +380,21 @@
 
   // Apply transformed content from dialog
   function applyAITransform(transformedText: string) {
-    applyAITransformToEditor(editorView, aiTransformState, transformedText);
-
-    // Schedule auto-save
-    notes.scheduleAutoSave();
-
-    // Close dialog and clear state
-    showAITransformDialog = false;
-    aiTransformState = null;
-
-    toast.success($_('component.editor.ai_transform_success'));
+    applyAITransformAction({
+      transformedText,
+      editorView,
+      aiTransformState,
+      scheduleAutoSave: () => notes.scheduleAutoSave(),
+      setDialogOpen: (value) => {
+        showAITransformDialog = value;
+      },
+      setTransformState: (state) => {
+        aiTransformState = state;
+      },
+      showSuccess: () => {
+        toast.success($_('component.editor.ai_transform_success'));
+      },
+    });
   }
 
   // Menu coordination: close other menus when one opens

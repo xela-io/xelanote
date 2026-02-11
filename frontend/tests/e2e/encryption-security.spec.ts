@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { registerAndLogin } from './helpers/auth';
 
 /**
  * Encryption Security Level Tests
@@ -7,169 +8,98 @@ import { expect, test } from '@playwright/test';
  * Verifies that KEK persistence respects security level settings.
  */
 
-// Test credentials - should match a test user in the database
-const TEST_USER = {
-  username: 'testuser',
-  password: 'testpassword123',
-};
+async function openSecuritySettings(page: import('@playwright/test').Page) {
+  await page.goto('/settings');
+  const hasSecurityHeading = await page
+    .locator('text=/Sicherheitsstufe|Security Level/i')
+    .first()
+    .isVisible({ timeout: 3000 })
+    .catch(() => false);
+  if (!hasSecurityHeading) {
+    test.skip();
+    return false;
+  }
+  return true;
+}
+
+async function clickButtonIfVisible(
+  page: import('@playwright/test').Page,
+  namePattern: RegExp
+): Promise<boolean> {
+  const button = page.getByRole('button', { name: namePattern }).first();
+  if (!(await button.isVisible({ timeout: 1500 }).catch(() => false))) {
+    return false;
+  }
+  await button.click();
+  return true;
+}
+
+async function confirmSecurityChangeIfNeeded(page: import('@playwright/test').Page) {
+  await clickButtonIfVisible(page, /Bestätigen|Confirm|Enable|Verstanden|Understood/i);
+}
 
 test.describe('Encryption Security Levels', () => {
   test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/login');
-    await page.fill('input[name="username"]', TEST_USER.username);
-    await page.fill('input[name="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to home
-    await expect(page).toHaveURL('/');
+    await registerAndLogin(page);
   });
 
   test('paranoid mode requires password on every page reload', async ({ page }) => {
-    // Skip if encryption not enabled for this user
-    await page.goto('/settings');
-
-    // Check if encryption section exists
-    const encryptionSection = page.locator('text=Verschlüsselung');
-    if (!(await encryptionSection.isVisible())) {
-      test.skip();
+    if (!(await openSecuritySettings(page))) {
       return;
     }
 
-    // Navigate to security settings
-    // Look for the security level section
-    const securitySection = page.locator('text=Sicherheitsstufe');
-    if (!(await securitySection.isVisible())) {
-      test.skip();
-      return;
-    }
-
-    // Select paranoid mode
-    const paranoidButton = page.locator('button:has-text("Paranoid")');
-    if (await paranoidButton.isVisible()) {
-      await paranoidButton.click();
-
-      // Confirm the dialog if it appears
-      const confirmButton = page.locator('button:has-text("Bestätigen")');
-      if (await confirmButton.isVisible({ timeout: 1000 })) {
-        await confirmButton.click();
-      }
-
-      // Wait for save
+    if (await clickButtonIfVisible(page, /Paranoid/i)) {
+      await confirmSecurityChangeIfNeeded(page);
       await page.waitForTimeout(500);
-
-      // Reload the page
       await page.reload();
 
-      // In paranoid mode, the unlock modal should appear
-      // (assuming encryption is already enabled and was unlocked)
       const unlockModal = page.locator('[data-testid="unlock-encryption-modal"]');
       const passwordInput = page.locator('input[type="password"]');
-
-      // Either the modal should be visible OR we should see a password prompt
       const modalVisible = await unlockModal.isVisible({ timeout: 2000 }).catch(() => false);
       const passwordVisible = await passwordInput.isVisible({ timeout: 2000 }).catch(() => false);
-
-      // Log result for debugging
-      console.log('Paranoid mode test:', { modalVisible, passwordVisible });
-
-      // At least one should be true if encryption was active
-      // Note: This test may need adjustment based on actual UI behavior
+      expect(modalVisible || passwordVisible).toBeTruthy();
     }
   });
 
   test('balanced mode restores KEK from IndexedDB on reload', async ({ page }) => {
-    await page.goto('/settings');
-
-    // Check if encryption section exists
-    const encryptionSection = page.locator('text=Verschlüsselung');
-    if (!(await encryptionSection.isVisible())) {
-      test.skip();
+    if (!(await openSecuritySettings(page))) {
       return;
     }
 
-    // Navigate to security settings
-    const securitySection = page.locator('text=Sicherheitsstufe');
-    if (!(await securitySection.isVisible())) {
-      test.skip();
-      return;
-    }
-
-    // Select balanced mode
-    const balancedButton = page.locator('button:has-text("Ausgewogen")');
-    if (await balancedButton.isVisible()) {
-      await balancedButton.click();
-
-      // Confirm if needed
-      const confirmButton = page.locator('button:has-text("Bestätigen")');
-      if (await confirmButton.isVisible({ timeout: 1000 })) {
-        await confirmButton.click();
-      }
-
-      // Wait for save
+    if (await clickButtonIfVisible(page, /Ausgewogen|Balanced/i)) {
+      await confirmSecurityChangeIfNeeded(page);
       await page.waitForTimeout(500);
-
-      // Reload the page
       await page.reload();
-
-      // In balanced mode, the unlock modal should NOT appear
-      // (KEK is restored from IndexedDB)
       await page.waitForTimeout(1000);
 
       const unlockModal = page.locator('[data-testid="unlock-encryption-modal"]');
       const modalVisible = await unlockModal.isVisible({ timeout: 1000 }).catch(() => false);
-
-      // Modal should NOT be visible in balanced mode (auto-restored)
-      console.log('Balanced mode test:', { modalVisible });
+      expect(modalVisible).toBeFalsy();
     }
   });
 
   test('switching from balanced to paranoid clears persisted KEK', async ({ page }) => {
-    await page.goto('/settings');
-
-    // Check if encryption section exists
-    const encryptionSection = page.locator('text=Verschlüsselung');
-    if (!(await encryptionSection.isVisible())) {
-      test.skip();
+    if (!(await openSecuritySettings(page))) {
       return;
     }
 
-    // First set to balanced
-    const balancedButton = page.locator('button:has-text("Ausgewogen")');
-    if (await balancedButton.isVisible()) {
-      await balancedButton.click();
+    if (await clickButtonIfVisible(page, /Ausgewogen|Balanced/i)) {
+      await confirmSecurityChangeIfNeeded(page);
       await page.waitForTimeout(500);
     }
 
-    // Then switch to paranoid
-    const paranoidButton = page.locator('button:has-text("Paranoid")');
-    if (await paranoidButton.isVisible()) {
-      await paranoidButton.click();
-
-      // Confirm the dialog
-      const confirmButton = page.locator('button:has-text("Bestätigen")');
-      if (await confirmButton.isVisible({ timeout: 1000 })) {
-        await confirmButton.click();
-      }
-
-      // Wait for save and IndexedDB clear
+    if (await clickButtonIfVisible(page, /Paranoid/i)) {
+      await confirmSecurityChangeIfNeeded(page);
       await page.waitForTimeout(500);
-
-      // Check console for "Paranoid mode: KEK auto-restore disabled"
-      // or verify modal appears on reload
       await page.reload();
-
-      // Verify that KEK was not restored
       await page.waitForTimeout(1000);
 
-      // Check for unlock prompt
       const unlockModal = page.locator('[data-testid="unlock-encryption-modal"]');
-      const passwordInput = page.locator('input[type="password"][placeholder*="Passwort"]');
+      const passwordInput = page.locator('input[type="password"]');
 
       const modalVisible = await unlockModal.isVisible({ timeout: 2000 }).catch(() => false);
       const passwordVisible = await passwordInput.isVisible({ timeout: 2000 }).catch(() => false);
-
-      console.log('Balanced->Paranoid switch test:', { modalVisible, passwordVisible });
+      expect(modalVisible || passwordVisible).toBeTruthy();
     }
   });
 });
@@ -183,28 +113,16 @@ test.describe('Console Log Verification', () => {
       consoleLogs.push(msg.text());
     });
 
-    // Login
-    await page.goto('/login');
-    await page.fill('input[name="username"]', TEST_USER.username);
-    await page.fill('input[name="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL('/');
+    await registerAndLogin(page);
 
-    // Set paranoid mode via settings
-    await page.goto('/settings');
+    if (!(await openSecuritySettings(page))) {
+      return;
+    }
 
-    const paranoidButton = page.locator('button:has-text("Paranoid")');
-    if (await paranoidButton.isVisible()) {
-      await paranoidButton.click();
-
-      const confirmButton = page.locator('button:has-text("Bestätigen")');
-      if (await confirmButton.isVisible({ timeout: 1000 })) {
-        await confirmButton.click();
-      }
-
+    if (await clickButtonIfVisible(page, /Paranoid/i)) {
+      await confirmSecurityChangeIfNeeded(page);
       await page.waitForTimeout(500);
 
-      // Clear logs and reload
       consoleLogs.length = 0;
       await page.reload();
       await page.waitForTimeout(2000);
@@ -213,11 +131,7 @@ test.describe('Console Log Verification', () => {
       const hasParanoidLog = consoleLogs.some(
         (log) => log.includes('Paranoid mode') || log.includes('paranoid')
       );
-      console.log(
-        'Console logs:',
-        consoleLogs.filter((l) => l.includes('KEK') || l.includes('paranoid'))
-      );
-      console.log('Has paranoid log:', hasParanoidLog);
+      expect(hasParanoidLog).toBeTruthy();
     }
   });
 });

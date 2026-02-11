@@ -98,9 +98,13 @@ func (s *Server) moveFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := utils.ValidateFolderPath(req.NewParentPath); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+	// Virtual root ("/") is allowed as move target, but regular validation
+	// still applies for non-root paths.
+	if req.NewParentPath != "/" {
+		if err := utils.ValidateFolderPath(req.NewParentPath); err != nil {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 
 	err = s.noteService.MoveFolder(userID, id, req.NewParentPath)

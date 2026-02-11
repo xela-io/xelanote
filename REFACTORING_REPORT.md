@@ -190,6 +190,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - Neuer Helper: `frontend/src/lib/editor/editor-ui-actions.ts`.
   - `frontend/src/lib/components/Editor.svelte` nutzt ausgelagerte UI-Handler fuer
     More-Menu/Color-Picker/Markdown-Hilfe, Color-Tag-Insert und File-Input-Parsing.
+- **Editor-Modularisierung (Split-Resize-Controller)**
+  - `frontend/src/lib/editor/split-resize.ts` bietet jetzt `createSplitResizeController()`.
+  - `frontend/src/lib/components/Editor.svelte` nutzt den Controller statt lokaler Wrapper-Funktionen.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -324,7 +327,7 @@ frontend/src/lib/api/
 4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte` (z.B. Find/Replace- und DnD-bezogene lokale Handler).
+1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte` (z.B. Find/Replace- und Task/Image-bezogene lokale Handler).
 2. Optionale End-to-End-Szenarien nachziehen (insb. Playwright-Suite ausserhalb der Vitest-E2E-Feature-Tests).
 
 ## Fortschritt

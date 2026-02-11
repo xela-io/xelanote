@@ -67,10 +67,7 @@
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
   import {
-    handleSplitResizeDblClick,
-    handleSplitResizeEnd,
-    handleSplitResizeMove,
-    handleSplitResizeStart,
+    createSplitResizeController,
   } from '$lib/editor/split-resize';
   import { taskCollapse } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
@@ -139,47 +136,16 @@
   // Split resize state
   let isSplitResizing = $state(false);
   let splitContainerRef: HTMLDivElement | null = $state(null);
-
-  function handleSplitResizeStartLocal(e: PointerEvent) {
-    handleSplitResizeStart(e, {
+  const splitResizeController = createSplitResizeController(
+    {
       getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
       setSplitPosition: (pos) => ui.setSplitPosition(pos),
       setActive: (active) => {
         isSplitResizing = active;
       },
-    });
-  }
-
-  function handleSplitResizeMoveLocal(e: PointerEvent) {
-    if (!isSplitResizing) return;
-    handleSplitResizeMove(e, {
-      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
-      setSplitPosition: (pos) => ui.setSplitPosition(pos),
-      setActive: (active) => {
-        isSplitResizing = active;
-      },
-    });
-  }
-
-  function handleSplitResizeEndLocal() {
-    handleSplitResizeEnd({
-      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
-      setSplitPosition: (pos) => ui.setSplitPosition(pos),
-      setActive: (active) => {
-        isSplitResizing = active;
-      },
-    });
-  }
-
-  function handleSplitResizeDblClickLocal() {
-    handleSplitResizeDblClick({
-      getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
-      setSplitPosition: (pos) => ui.setSplitPosition(pos),
-      setActive: (active) => {
-        isSplitResizing = active;
-      },
-    });
-  }
+    },
+    () => isSplitResizing
+  );
 
   // Title to ID mapping for wikilink URLs
   const titleToIdMap = $derived.by(() => {
@@ -941,11 +907,11 @@
           <div
             class="split-resize-handle"
             class:active={isSplitResizing}
-            onpointerdown={handleSplitResizeStartLocal}
-            onpointermove={handleSplitResizeMoveLocal}
-            onpointerup={handleSplitResizeEndLocal}
-            onpointercancel={handleSplitResizeEndLocal}
-            ondblclick={handleSplitResizeDblClickLocal}
+            onpointerdown={splitResizeController.onStart}
+            onpointermove={splitResizeController.onMove}
+            onpointerup={splitResizeController.onEnd}
+            onpointercancel={splitResizeController.onEnd}
+            ondblclick={splitResizeController.onDblClick}
           ></div>
         {/if}
 

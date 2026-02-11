@@ -4,6 +4,28 @@ export interface SplitResizeHandlers {
   setActive: (active: boolean) => void;
 }
 
+export interface SplitResizeController {
+  onStart: (e: PointerEvent) => void;
+  onMove: (e: PointerEvent) => void;
+  onEnd: () => void;
+  onDblClick: () => void;
+}
+
+export function createSplitResizeController(
+  handlers: SplitResizeHandlers,
+  getActive: () => boolean
+): SplitResizeController {
+  return {
+    onStart: (e) => handleSplitResizeStart(e, handlers),
+    onMove: (e) => {
+      if (!getActive()) return;
+      handleSplitResizeMove(e, handlers);
+    },
+    onEnd: () => handleSplitResizeEnd(handlers),
+    onDblClick: () => handleSplitResizeDblClick(handlers),
+  };
+}
+
 export function handleSplitResizeStart(e: PointerEvent, handlers: SplitResizeHandlers) {
   e.preventDefault();
   handlers.setActive(true);

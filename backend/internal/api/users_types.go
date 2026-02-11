@@ -1,6 +1,9 @@
 package api
 
-import "github.com/xela-io/xelanote/internal/db"
+import (
+	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
+)
 
 // Request/Response types for user preferences
 
@@ -65,10 +68,16 @@ type apiKeyProvider struct {
 	name            string
 	setKey          func(int, string) error
 	deleteKey       func(int) error
-	getKeyStatus    func(int) (any, error)
+	getKeyStatus    func(int) (*apiKeyStatusResponse, error)
 	invalidateCache func(int)
 	validationErr   error
 	invalidKeyMsg   string
+}
+
+type apiKeyStatusResponse struct {
+	HasKey    bool    `json:"has_key"`
+	UpdatedAt *string `json:"updated_at,omitempty"`
+	MaskedKey *string `json:"masked_key,omitempty"`
 }
 
 // convertWebAuthnCredentials converts db.WebAuthnCredential slice to webAuthnCredentialInfo slice
@@ -84,4 +93,26 @@ func convertWebAuthnCredentials(creds []db.WebAuthnCredential) []webAuthnCredent
 		})
 	}
 	return result
+}
+
+func mapClaudeAPIKeyStatus(status *service.ClaudeAPIKeyStatus) *apiKeyStatusResponse {
+	if status == nil {
+		return &apiKeyStatusResponse{HasKey: false}
+	}
+	return &apiKeyStatusResponse{
+		HasKey:    status.HasKey,
+		UpdatedAt: status.UpdatedAt,
+		MaskedKey: status.MaskedKey,
+	}
+}
+
+func mapGeminiAPIKeyStatus(status *service.GeminiAPIKeyStatus) *apiKeyStatusResponse {
+	if status == nil {
+		return &apiKeyStatusResponse{HasKey: false}
+	}
+	return &apiKeyStatusResponse{
+		HasKey:    status.HasKey,
+		UpdatedAt: status.UpdatedAt,
+		MaskedKey: status.MaskedKey,
+	}
 }

@@ -30,7 +30,13 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 			name:            "claude",
 			setKey:          s.userService.SetClaudeAPIKey,
 			deleteKey:       s.userService.DeleteClaudeAPIKey,
-			getKeyStatus:    func(uid int) (any, error) { return s.userService.GetClaudeAPIKeyStatus(uid) },
+			getKeyStatus: func(uid int) (*apiKeyStatusResponse, error) {
+				status, err := s.userService.GetClaudeAPIKeyStatus(uid)
+				if err != nil {
+					return nil, err
+				}
+				return mapClaudeAPIKeyStatus(status), nil
+			},
 			invalidateCache: s.summarizeService.InvalidateClaudeClient,
 			validationErr:   service.ErrInvalidClaudeAPIKey,
 			invalidKeyMsg:   "invalid Claude API key format (must start with sk-ant-)",
@@ -43,7 +49,13 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 			name:            "gemini",
 			setKey:          s.userService.SetGeminiAPIKey,
 			deleteKey:       s.userService.DeleteGeminiAPIKey,
-			getKeyStatus:    func(uid int) (any, error) { return s.userService.GetGeminiAPIKeyStatus(uid) },
+			getKeyStatus: func(uid int) (*apiKeyStatusResponse, error) {
+				status, err := s.userService.GetGeminiAPIKeyStatus(uid)
+				if err != nil {
+					return nil, err
+				}
+				return mapGeminiAPIKeyStatus(status), nil
+			},
 			invalidateCache: s.summarizeService.InvalidateGeminiClient,
 			validationErr:   service.ErrInvalidGeminiAPIKey,
 			invalidKeyMsg:   "invalid Gemini API key format (must start with AIza)",

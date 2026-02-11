@@ -47,7 +47,8 @@ export function initAutoSaveSettings(): void {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const parsed = JSON.parse(stored) as Partial<AutoSaveSettings>;
+      const parsed = parseAutoSaveSettings(stored);
+      if (!parsed) return;
 
       // Merge with defaults
       autoSaveSettings = {
@@ -59,6 +60,28 @@ export function initAutoSaveSettings(): void {
     console.error('Failed to load auto-save settings from localStorage:', error);
     // Keep defaults
   }
+}
+
+function parseAutoSaveSettings(raw: string): Partial<AutoSaveSettings> | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const candidate = parsed as { enabled?: unknown; delayMs?: unknown };
+  if (candidate.enabled !== undefined && typeof candidate.enabled !== 'boolean') {
+    return null;
+  }
+  if (candidate.delayMs !== undefined && typeof candidate.delayMs !== 'number') {
+    return null;
+  }
+  return {
+    enabled: candidate.enabled,
+    delayMs: candidate.delayMs,
+  };
 }
 
 /**

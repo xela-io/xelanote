@@ -73,11 +73,23 @@ export function loadVirtualTreePreference(): void {
   try {
     const stored = localStorage.getItem(VIRTUAL_TREE_KEY);
     if (stored !== null) {
-      virtualTreeEnabled = JSON.parse(stored);
+      const parsed = parseBooleanPreference(stored);
+      if (parsed !== null) {
+        virtualTreeEnabled = parsed;
+      }
     }
   } catch (e) {
     console.error('[SETTINGS] Failed to load virtual tree preference:', e);
     virtualTreeEnabled = false; // Default: disabled
+  }
+}
+
+function parseBooleanPreference(raw: string): boolean | null {
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'boolean' ? parsed : null;
+  } catch {
+    return null;
   }
 }
 

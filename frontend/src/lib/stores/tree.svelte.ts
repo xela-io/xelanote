@@ -434,7 +434,11 @@ export function loadExpandedStateFromStorage() {
   try {
     const stored = localStorage.getItem(EXPANDED_KEY);
     if (stored) {
-      const paths = JSON.parse(stored) as string[];
+      const paths = parseExpandedPaths(stored);
+      if (!paths) {
+        expandedFolders = { '/': true };
+        return;
+      }
       const expanded: Record<string, boolean> = { '/': true };
       for (const p of paths) {
         expanded[p] = true;
@@ -448,6 +452,19 @@ export function loadExpandedStateFromStorage() {
     // localStorage might not be available - use default
     expandedFolders = { '/': true };
   }
+}
+
+function parseExpandedPaths(raw: string): string[] | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(parsed)) return null;
+  if (!parsed.every((entry) => typeof entry === 'string')) return null;
+  return parsed;
 }
 
 // Folder Operations

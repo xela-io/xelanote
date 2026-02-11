@@ -316,6 +316,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/auth.go` nutzt `ensureRowsAffected()` in User-Update-Pfaden und `validateLastInsertID()` bei `CreateUser()`.
   - `backend/internal/db/fido2.go` und `backend/internal/db/admin_users.go` nutzen `ensureRowsAffected()` fuer konsistentes NotFound-Handling bei Delete/Update-Pfaden.
   - `backend/internal/db/notes_ai.go`, `backend/internal/db/notes_color.go`, `backend/internal/db/notes_summary.go` nutzen `ensureRowsAffectedWithContext()`.
+  - `backend/internal/db/folders_color.go`, `backend/internal/db/folders_ai.go`, `backend/internal/db/folders_encryption.go` nutzen zentrale RowsAffected-Helper.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

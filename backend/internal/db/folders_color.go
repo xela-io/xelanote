@@ -18,14 +18,5 @@ func (d *DB) UpdateFolderColor(userID int, folderID int, color *string) error {
 	if err != nil {
 		return err
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-
-	return nil
+	return ensureRowsAffected(result)
 }

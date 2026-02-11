@@ -25,15 +25,7 @@ func (d *DB) UpdateFolderEncryptionDefault(userID int, folderID int, encrypted b
 	if err != nil {
 		return fmt.Errorf("failed to update encryption_default: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to get rows affected")
 }
 
 // GetFolderEncryptionDefault returns the encryption_default for a folder.

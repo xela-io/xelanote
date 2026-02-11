@@ -31,7 +31,11 @@ func (db *DB) CreateNoteShare(ownerUserID int, noteID string, sharedWithUserID i
 	if err != nil {
 		return nil, fmt.Errorf("failed to get note share id: %w", err)
 	}
-	return db.getNoteShareByID(int(id))
+	shareID, err := validateLastInsertID(id, "note share id")
+	if err != nil {
+		return nil, err
+	}
+	return db.getNoteShareByID(shareID)
 }
 
 // DeleteNoteShare removes a sharing record and cleans up any placements.
@@ -43,13 +47,8 @@ func (db *DB) DeleteNoteShare(ownerUserID int, noteID string, sharedWithUserID i
 	if err != nil {
 		return fmt.Errorf("failed to delete note share: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffectedWithContext(result, "failed to check rows affected"); err != nil {
+		return err
 	}
 
 	// Placement cleanup: remove placement for this note+user
@@ -332,15 +331,7 @@ func (db *DB) UpdateNoteShareRole(ownerUserID int, noteID string, sharedWithUser
 	if err != nil {
 		return fmt.Errorf("failed to update note share role: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // DeleteAllSharesForNote removes all shares for a note.
@@ -402,9 +393,9 @@ func (db *DB) UpdateSharedNote(noteID string, title, content string, expectedVer
 		return nil, fmt.Errorf("failed to update shared note: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return nil, fmt.Errorf("failed to check rows affected: %w", err)
+		return nil, err
 	}
 	if rows == 0 {
 		// Check if note exists

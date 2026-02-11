@@ -20,8 +20,12 @@ func (db *DB) CreateRecipeCollection(userID int, name string, description, color
 	if err != nil {
 		return nil, fmt.Errorf("failed to get collection id: %w", err)
 	}
+	collectionID, err := validateLastInsertID(id, "recipe collection id")
+	if err != nil {
+		return nil, err
+	}
 	return &RecipeCollection{
-		ID:          int(id),
+		ID:          collectionID,
 		UserID:      userID,
 		Name:        name,
 		Description: description,
@@ -84,14 +88,7 @@ func (db *DB) UpdateRecipeCollection(userID, collectionID int, name string, desc
 	if err != nil {
 		return fmt.Errorf("failed to update recipe collection: %w", err)
 	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "check rows affected")
 }
 
 // DeleteRecipeCollection deletes a collection owned by the user.
@@ -101,14 +98,7 @@ func (db *DB) DeleteRecipeCollection(userID, collectionID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete recipe collection: %w", err)
 	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "check rows affected")
 }
 
 // AddRecipeToCollection adds a recipe to a collection.
@@ -153,14 +143,7 @@ func (db *DB) RemoveRecipeFromCollection(userID, collectionID int, noteID string
 	if err != nil {
 		return fmt.Errorf("failed to remove recipe from collection: %w", err)
 	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "check rows affected")
 }
 
 // ListRecipesInCollection returns all recipe notes in a collection.

@@ -27,7 +27,11 @@ func (db *DB) CreateFolderShare(ownerUserID, folderID, sharedWithUserID int, rol
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder share id: %w", err)
 	}
-	return db.getFolderShareByID(int(id))
+	shareID, err := validateLastInsertID(id, "folder share id")
+	if err != nil {
+		return nil, err
+	}
+	return db.getFolderShareByID(shareID)
 }
 
 // DeleteFolderShare removes a folder sharing record and cleans up placements.
@@ -39,13 +43,8 @@ func (db *DB) DeleteFolderShare(ownerUserID, folderID, sharedWithUserID int) err
 	if err != nil {
 		return fmt.Errorf("failed to delete folder share: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffectedWithContext(result, "failed to check rows affected"); err != nil {
+		return err
 	}
 
 	// Placement cleanup: remove placements for notes in this folder
@@ -215,15 +214,7 @@ func (db *DB) UpdateFolderShareRole(ownerUserID, folderID, sharedWithUserID int,
 	if err != nil {
 		return fmt.Errorf("failed to update folder share role: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // GetFolderOwnerUserID returns the owner user_id for a folder.

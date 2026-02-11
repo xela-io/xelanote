@@ -41,7 +41,11 @@ func (db *DB) CreateCollectionShare(ownerUserID, collectionID, sharedWithUserID 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get collection share id: %w", err)
 	}
-	return db.getCollectionShareByID(int(id))
+	shareID, err := validateLastInsertID(id, "collection share id")
+	if err != nil {
+		return nil, err
+	}
+	return db.getCollectionShareByID(shareID)
 }
 
 // DeleteCollectionShare removes a collection sharing record.
@@ -53,15 +57,7 @@ func (db *DB) DeleteCollectionShare(ownerUserID, collectionID, sharedWithUserID 
 	if err != nil {
 		return fmt.Errorf("failed to delete collection share: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // GetCollectionShares returns all shares for a specific collection (owner view).
@@ -118,15 +114,7 @@ func (db *DB) UpdateCollectionShareRole(ownerUserID, collectionID, sharedWithUse
 	if err != nil {
 		return fmt.Errorf("failed to update collection share role: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // GetSharedCollectionsForUser returns all collections shared with a user.

@@ -78,6 +78,10 @@ func (db *DB) AddRecipeImage(noteID string, userID int, imageURL string, caption
 	if err != nil {
 		return nil, fmt.Errorf("get last insert id: %w", err)
 	}
+	imageID, err := validateLastInsertID(id, "recipe image id")
+	if err != nil {
+		return nil, err
+	}
 
 	// Bump metadata.updated_at
 	now := time.Now().UTC().Format(time.RFC3339Nano)
@@ -93,7 +97,7 @@ func (db *DB) AddRecipeImage(noteID string, userID int, imageURL string, caption
 	err = db.QueryRow(`
 		SELECT id, note_id, user_id, image_url, caption, display_order, created_at
 		FROM recipe_images WHERE id = ?
-	`, id).Scan(&img.ID, &img.NoteID, &img.UserID, &img.ImageURL, &cap, &img.DisplayOrder, &img.CreatedAt)
+	`, imageID).Scan(&img.ID, &img.NoteID, &img.UserID, &img.ImageURL, &cap, &img.DisplayOrder, &img.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("read back recipe image: %w", err)
 	}

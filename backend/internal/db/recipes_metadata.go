@@ -64,9 +64,9 @@ func (db *DB) SetRecipeMetadata(noteID string, ownerUserID int, m *RecipeMetadat
 		if err != nil {
 			return fmt.Errorf("update recipe metadata: %w", err)
 		}
-		rows, err := result.RowsAffected()
+		rows, err := rowsAffectedCount(result, "check rows affected")
 		if err != nil {
-			return fmt.Errorf("check rows affected: %w", err)
+			return err
 		}
 		if rows == 0 {
 			// Check if metadata exists at all
@@ -91,9 +91,9 @@ func (db *DB) SetRecipeMetadata(noteID string, ownerUserID int, m *RecipeMetadat
 	if err != nil {
 		return fmt.Errorf("update recipe metadata: %w", err)
 	}
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "check rows affected")
 	if err != nil {
-		return fmt.Errorf("check rows affected: %w", err)
+		return err
 	}
 	if rows == 0 {
 		// INSERT (decrypt fallback — metadata was deleted during encryption)

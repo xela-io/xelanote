@@ -314,6 +314,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen die Validierung nach `LastInsertId()`.
   - `backend/internal/db/preferences_core.go` nutzt `validateLastInsertID()` in `GetOrCreateUserPreferences()`.
   - `backend/internal/db/preferences_webauthn.go` validiert positive Insert-ID bei `AddWebAuthnCredential()`.
+  - `backend/internal/db/recipes_collections.go`, `backend/internal/db/recipes_sharing.go`, `backend/internal/db/sharing_notes.go`, `backend/internal/db/sharing_folders.go`, `backend/internal/db/recipes_images.go` nutzen `validateLastInsertID()` in Create-Pfaden.
   - Testlauf: `go test -tags fts5 ./internal/db` gruen.
 - **DB RowsAffected-Helper (ausgewaehlte Pfade)**
   - `backend/internal/db/helpers.go`: `ensureRowsAffected()` eingefuehrt.
@@ -328,6 +329,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/notes_crud.go` nutzt `rowsAffectedCount()` in Update/Delete-Pfaden mit Version-Mismatch-Abzweig.
   - `backend/internal/db/notes_encryption.go` nutzt `rowsAffectedCount()` in Encrypt/Decrypt-Pfaden mit Version-Mismatch-Abzweig.
   - `backend/internal/db/preferences_core.go`, `backend/internal/db/preferences_encryption.go`, `backend/internal/db/preferences_security.go`, `backend/internal/db/preferences_apikeys.go` nutzen `rowsAffectedCount()` fuer Upsert-Entscheidungen.
+  - `backend/internal/db/recipes_collections.go`, `backend/internal/db/recipes_sharing.go`, `backend/internal/db/sharing_notes.go`, `backend/internal/db/sharing_folders.go`, `backend/internal/db/sharing_placements.go`, `backend/internal/db/recipes_metadata.go` nutzen zentrale RowsAffected-Helper/Counter.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

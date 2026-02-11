@@ -40,9 +40,9 @@ func (db *DB) CreateOrUpdatePlacement(userID int, noteID string, folderID int) e
 		return fmt.Errorf("failed to create placement: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
+		return err
 	}
 	if rows == 0 {
 		return fmt.Errorf("no active share exists for this note")
@@ -60,15 +60,7 @@ func (db *DB) DeletePlacement(userID int, noteID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete placement: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // GetPlacement returns the folder_id where a shared note is placed for a user.

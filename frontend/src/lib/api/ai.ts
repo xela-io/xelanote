@@ -42,6 +42,12 @@ function asErrorFromEvent(value: unknown): string | null {
   return typeof maybe.error === 'string' ? maybe.error : null;
 }
 
+function asStreamToken(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const maybe = value as { stream_token?: unknown };
+  return typeof maybe.stream_token === 'string' ? maybe.stream_token : null;
+}
+
 /**
  * Generate or retrieve a summary for a note.
  * For plaintext notes: call without arguments to generate server-side
@@ -94,8 +100,13 @@ export async function summarizeNoteStream(
         onError(`Failed to prepare stream: HTTP ${prepareResponse.status}`);
         return;
       }
-      const { stream_token } = await prepareResponse.json();
-      url += `?token=${encodeURIComponent(stream_token)}`;
+      const preparePayload = await prepareResponse.json();
+      const streamToken = asStreamToken(preparePayload);
+      if (!streamToken) {
+        onError('Failed to parse stream preparation response');
+        return;
+      }
+      url += `?token=${encodeURIComponent(streamToken)}`;
     }
 
     const response = await fetch(url, {

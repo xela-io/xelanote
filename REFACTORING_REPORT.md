@@ -212,6 +212,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 - **Frontend Parse-Haertung (gezielte Follow-ups)**
   - `frontend/src/lib/stores/notes/encryption-toggle.ts` nutzt `parseRecipeContentPayload()` statt direktem `JSON.parse(... as ...)` fuer Recipe-Decrypt-Preprocessing.
+  - `frontend/src/lib/api/ai.ts` validiert `stream_token` aus dem Prepare-Endpoint explizit vor Nutzung.
 
 ### Offen
 - Keine offenen Findings in Phase 3.

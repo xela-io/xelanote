@@ -144,14 +144,8 @@ func (d *DB) UpdateSnippet(userID, snippetID int, name, description, content, sh
 	if err != nil {
 		return fmt.Errorf("failed to update snippet: %w", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
-	}
-
-	if affected == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffected(result); err != nil {
+		return err
 	}
 
 	return nil
@@ -166,14 +160,8 @@ func (d *DB) DeleteSnippet(userID, snippetID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete snippet: %w", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
-	}
-
-	if affected == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffected(result); err != nil {
+		return err
 	}
 
 	return nil

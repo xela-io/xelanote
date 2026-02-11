@@ -161,14 +161,8 @@ func (d *DB) UpdateTemplate(userID, templateID int, name, description, title, co
 	if err != nil {
 		return fmt.Errorf("failed to update template: %w", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
-	}
-
-	if affected == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffected(result); err != nil {
+		return err
 	}
 
 	return nil
@@ -183,14 +177,8 @@ func (d *DB) DeleteTemplate(userID, templateID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete template: %w", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
-	}
-
-	if affected == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffected(result); err != nil {
+		return err
 	}
 
 	return nil

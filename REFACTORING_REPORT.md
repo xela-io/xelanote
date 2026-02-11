@@ -294,6 +294,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/helpers.go`: `validateLastInsertID()` eingefuehrt (positiv + int-overflow-safe).
   - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen die Validierung nach `LastInsertId()`.
   - Testlauf: `go test -tags fts5 ./internal/db` gruen.
+- **DB RowsAffected-Helper (ausgewaehlte Pfade)**
+  - `backend/internal/db/helpers.go`: `ensureRowsAffected()` eingefuehrt.
+  - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen den Helper fuer konsistentes NotFound-Handling.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

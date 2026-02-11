@@ -215,14 +215,8 @@ func (d *DB) DeleteTag(userID int, tagID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete tag: %w", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
-	}
-
-	if affected == 0 {
-		return ErrNotFound
+	if err := ensureRowsAffected(result); err != nil {
+		return err
 	}
 
 	return nil

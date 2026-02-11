@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 	"math"
 )
@@ -22,4 +23,16 @@ func validateLastInsertID(id int64, field string) (int, error) {
 		return 0, fmt.Errorf("%s overflows int: %d", field, id)
 	}
 	return int(id), nil
+}
+
+// ensureRowsAffected checks that a SQL write operation affected at least one row.
+func ensureRowsAffected(result sql.Result) error {
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get affected rows: %w", err)
+	}
+	if affected == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

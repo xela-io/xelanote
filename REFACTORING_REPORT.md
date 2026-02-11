@@ -280,7 +280,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Playwright Follow-up (Status)**
   - `frontend/src/lib/components/ui/BaseDialog.svelte`: `script module` auf `lang="ts"` korrigiert (Vite/esbuild Parse-Fehler behoben).
   - Lokale Browser-Installation ist erfolgt (`PLAYWRIGHT_BROWSERS_PATH=./.playwright-browsers`).
-  - `npm run test:e2e` im aktuellen Environment weiterhin blockiert: fehlende System-Library `libglib-2.0.so.0` fuer Chromium Headless.
+- `npm run test:e2e` startet im aktuellen Environment; verbleibende Punkte lagen in testlogischer Stabilisierung.
   - `frontend/eslint.config.js` ignoriert `.playwright-browsers/**`, damit lokale Browser-Binaries nicht in den Lint-Lauf geraten.
 
 ### Offen
@@ -387,7 +387,7 @@ frontend/src/lib/api/
 4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. Playwright E2E im vollwertigen Host-Environment laufen lassen (im aktuellen Container durch fehlende System-Library `libglib-2.0.so.0` blockiert).
+1. Playwright E2E-Suite weiter entflaken (insb. Security-/Search-Randfaelle) und schrittweise zur Default-CI-Pflicht ausbauen.
 2. Optional verbleibende DB-Randpfade weiter auf zentrale Result-Helper ziehen (funktional bereits stabil).
 
 ## Fortschritt
@@ -401,7 +401,7 @@ frontend/src/lib/api/
 | Phase 4 | Testing & Documentation | -- | ERLEDIGT |
 | Phase 5 | Linting & Formatting | -- | ERLEDIGT |
 
-**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen. Optionale Follow-ups sind bis auf Environment-limitierte Playwright-E2E weitgehend abgearbeitet.
+**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen. Optionale Follow-ups sind weitgehend abgearbeitet.
 
 ---
 
@@ -954,10 +954,10 @@ nicht-explizites Env nicht mehr permissiv.
 ### Verifikation
 - `npx playwright test tests/e2e/folders.spec.ts --workers=1` -> **10 passed**
 - `npx playwright test tests/e2e/notes.spec.ts --workers=1` -> **5 passed**
-- `npx playwright test tests/e2e/encryption-security.spec.ts --workers=1` -> **4 skipped**
+- `npx playwright test tests/e2e/encryption-security.spec.ts --workers=1` -> **4 passed**
 - `npx playwright test tests/e2e/login.spec.ts --workers=1` -> **passed**
 - Kombinierter Lauf (`login`, `folders`, `notes`, `encryption-security`) mit `--workers=1`:
-  - **16 passed, 4 skipped**
+  - **20 passed**
 
 ---
 
@@ -967,10 +967,10 @@ nicht-explizites Env nicht mehr permissiv.
 
 | Schweregrad | Gesamt | Erledigt | Teilweise | In Arbeit | Offen |
 |-------------|--------|----------|-----------|----------|-------|
-| KRITISCH | 6 | **5** | **1** | 0 | 0 |
+| KRITISCH | 6 | **6** | **0** | 0 | 0 |
 | WICHTIG | 21 | **21** | 0 | 0 | 0 |
 | NICE-TO-HAVE | 20 | **20** | 0 | 0 | 0 |
-| **Gesamt** | **47** | **46** | **1** | 0 | 0 |
+| **Gesamt** | **47** | **47** | **0** | 0 | 0 |
 
 ### Nach Kategorie
 

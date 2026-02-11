@@ -163,8 +163,8 @@ func (jm *JobManager) executeJob(job *Job) {
 
 	handler, ok := jm.handlers[job.Type]
 	if !ok {
-		job.Status = JobStatusFailed
 		job.Error = fmt.Sprintf("no handler registered for job type: %s", job.Type)
+		job.Status = JobStatusFailed
 		job.UpdatedAt = time.Now()
 		jm.jobs.Store(job.ID, job)
 		return
@@ -172,8 +172,8 @@ func (jm *JobManager) executeJob(job *Job) {
 
 	err := handler(jm.ctx, job)
 	if err != nil {
-		job.Status = JobStatusFailed
 		job.Error = err.Error()
+		job.Status = JobStatusFailed
 	} else {
 		job.Status = JobStatusCompleted
 		job.Progress = 1.0

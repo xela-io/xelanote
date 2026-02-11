@@ -255,6 +255,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `npm run format` (Prettier) ausgefuehrt.
   - `make test-frontend` (Vitest) gruen.
   - `npm run typecheck` (svelte-check) gruen, Warnungen bereinigt.
+  - Follow-up: verbleibende `simple-import-sort`/unused-var-Warnungen in Settings/Dialog-Panels bereinigt; `npm run lint` wieder gruen.
 - **Playwright Follow-up (Status)**
   - `frontend/src/lib/components/ui/BaseDialog.svelte`: `script module` auf `lang="ts"` korrigiert (Vite/esbuild Parse-Fehler behoben).
   - `npm run test:e2e` weiterhin blockiert durch fehlende lokale Playwright-Browser-Binaries (`npx playwright install` erforderlich).

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { AlertTriangle, Eye, Key, Lock, Shield } from 'lucide-svelte';
   import DOMPurify from 'isomorphic-dompurify';
+  import { AlertTriangle, Eye, Key, Lock, Shield } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import * as encryption from '$lib/stores/encryption.svelte';

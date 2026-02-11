@@ -15,7 +15,7 @@
     backlinks = [],
     showTagSuggestions = false,
     showLinkSuggestions = false,
-    editorView,
+    editorView: _editorView,
     onInsertLink,
     onSummaryUpdated,
   } = $props<{

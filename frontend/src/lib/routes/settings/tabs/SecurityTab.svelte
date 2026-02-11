@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import {
     AlertTriangle,
     ArrowRight,
@@ -14,6 +13,7 @@
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import { goto } from '$app/navigation';
   import SecurityKeyManager from '$lib/components/SecurityKeyManager.svelte';
   import WebAuthnDeviceManager from '$lib/components/WebAuthnDeviceManager.svelte';
   import type { MigrationStats } from '$lib/routes/settings/migration-stats';

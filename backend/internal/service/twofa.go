@@ -100,10 +100,7 @@ func (s *TwoFactorService) GenerateTOTPSetup(userID int, email string) (*TOTPSet
 	}
 
 	// Format backup codes for display (XXXX-XXXX)
-	formattedCodes := make([]string, len(backupCodes))
-	for i, code := range backupCodes {
-		formattedCodes[i] = fmt.Sprintf("%s-%s", code[:4], code[4:])
-	}
+	formattedCodes := formatBackupCodesForDisplay(backupCodes)
 
 	// SEC-008: Use structured logging for security events
 	// SECURITY: NEVER log the secret or QR URL!
@@ -318,10 +315,7 @@ func (s *TwoFactorService) RegenerateBackupCodes(userID int) ([]string, error) {
 	}
 
 	// Format backup codes for display (XXXX-XXXX)
-	formattedCodes := make([]string, len(backupCodes))
-	for i, code := range backupCodes {
-		formattedCodes[i] = fmt.Sprintf("%s-%s", code[:4], code[4:])
-	}
+	formattedCodes := formatBackupCodesForDisplay(backupCodes)
 
 	return formattedCodes, nil
 }
@@ -347,12 +341,7 @@ func (s *TwoFactorService) RegenerateBackupCodesForFIDO2(userID int) ([]string, 
 		return nil, fmt.Errorf("failed to store backup codes: %w", err)
 	}
 
-	formattedCodes := make([]string, len(backupCodes))
-	for i, code := range backupCodes {
-		formattedCodes[i] = fmt.Sprintf("%s-%s", code[:4], code[4:])
-	}
-
-	return formattedCodes, nil
+	return formatBackupCodesForDisplay(backupCodes), nil
 }
 
 // generateBackupCodes generates random backup codes
@@ -372,4 +361,12 @@ func (s *TwoFactorService) generateBackupCodes() ([]string, error) {
 	}
 
 	return codes, nil
+}
+
+func formatBackupCodesForDisplay(backupCodes []string) []string {
+	formattedCodes := make([]string, len(backupCodes))
+	for i, code := range backupCodes {
+		formattedCodes[i] = fmt.Sprintf("%s-%s", code[:4], code[4:])
+	}
+	return formattedCodes
 }

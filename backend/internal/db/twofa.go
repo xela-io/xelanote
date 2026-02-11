@@ -165,8 +165,7 @@ func (db *DB) UpdateLastTOTPStep(userID int, step int64) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	return result.RowsAffected()
+	return rowsAffectedCount(result, "")
 }
 
 // CreateBackupCodes stores hashed backup codes
@@ -254,7 +253,7 @@ func (db *DB) MarkBackupCodeUsed(codeID int) error {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
 		return err
 	}

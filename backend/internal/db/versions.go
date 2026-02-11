@@ -239,9 +239,9 @@ func (db *DB) PruneVersions(userID int, noteID string, keepCount int) (int, erro
 		return 0, fmt.Errorf("failed to prune versions: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to get rows affected")
 	if err != nil {
-		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+		return 0, err
 	}
 
 	return int(rows), nil

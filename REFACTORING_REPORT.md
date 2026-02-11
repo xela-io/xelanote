@@ -334,6 +334,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/notes_encryption.go` nutzt `rowsAffectedCount()` in Encrypt/Decrypt-Pfaden mit Version-Mismatch-Abzweig.
   - `backend/internal/db/preferences_core.go`, `backend/internal/db/preferences_encryption.go`, `backend/internal/db/preferences_security.go`, `backend/internal/db/preferences_apikeys.go` nutzen `rowsAffectedCount()` fuer Upsert-Entscheidungen.
   - `backend/internal/db/recipes_collections.go`, `backend/internal/db/recipes_sharing.go`, `backend/internal/db/sharing_notes.go`, `backend/internal/db/sharing_folders.go`, `backend/internal/db/sharing_placements.go`, `backend/internal/db/recipes_metadata.go` nutzen zentrale RowsAffected-Helper/Counter.
+  - `backend/internal/db/twofa.go`, `backend/internal/db/activity.go`, `backend/internal/db/versions.go` nutzen `rowsAffectedCount()` fuer konsistente Count-/Fehlerbehandlung.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

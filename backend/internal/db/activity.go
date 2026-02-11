@@ -209,8 +209,7 @@ func (db *DB) CleanupOldActivity(retentionDays int) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	return result.RowsAffected()
+	return rowsAffectedCount(result, "")
 }
 
 // GetActivityByUser returns activity logs for a specific user

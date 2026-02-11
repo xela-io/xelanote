@@ -106,13 +106,8 @@ func (db *DB) RestoreNote(userID int, id string) (*Note, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to restore note: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return nil, fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return nil, ErrNotFound
+	if err := ensureRowsAffectedWithContext(result, "failed to check rows affected"); err != nil {
+		return nil, err
 	}
 
 	return db.GetNote(userID, id)
@@ -128,16 +123,7 @@ func (db *DB) PermanentlyDeleteNote(userID int, id string) error {
 	if err != nil {
 		return fmt.Errorf("failed to permanently delete note: %w", err)
 	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return ErrNotFound
-	}
-
-	return nil
+	return ensureRowsAffectedWithContext(result, "failed to check rows affected")
 }
 
 // GetDeletedNotesCount returns the count of soft-deleted notes for a user.

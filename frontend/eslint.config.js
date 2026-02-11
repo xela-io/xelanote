@@ -39,8 +39,8 @@ export default [
       'simple-import-sort': importSort,
     },
     rules: {
-      'simple-import-sort/imports': 'warn',
-      'simple-import-sort/exports': 'warn',
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
     },
   },
 
@@ -53,16 +53,16 @@ export default [
       'svelte/no-at-html-tags': 'off',
 
       // Svelte 5 rules - enforce
-      'svelte/require-each-key': 'warn',
-      'svelte/prefer-svelte-reactivity': 'warn',
-      'svelte/prefer-writable-derived': 'warn',
+      'svelte/require-each-key': 'error',
+      'svelte/prefer-svelte-reactivity': 'error',
+      'svelte/prefer-writable-derived': 'error',
 
       // TypeScript
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
 
       // Common patterns
-      'prefer-const': ['warn', { destructuring: 'all' }],
-      'no-useless-escape': 'warn',
+      'prefer-const': ['error', { destructuring: 'all' }],
+      'no-useless-escape': 'error',
     },
   },
 
@@ -83,7 +83,7 @@ export default [
     rules: {
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
     },
@@ -103,9 +103,9 @@ export default [
     },
     rules: {
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
     },

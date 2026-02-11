@@ -112,8 +112,12 @@ func (d *DB) CreateSnippet(userID int, name, description, content, shortcut stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to get snippet id: %w", err)
 	}
+	snippetID, err := validateLastInsertID(id, "snippet id")
+	if err != nil {
+		return nil, err
+	}
 
-	return d.GetSnippet(userID, int(id))
+	return d.GetSnippet(userID, snippetID)
 }
 
 // UpdateSnippet updates an existing snippet with ACL check.

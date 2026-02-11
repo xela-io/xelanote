@@ -121,8 +121,12 @@ func (d *DB) CreateTemplate(userID int, name, description, title, content string
 	if err != nil {
 		return nil, fmt.Errorf("failed to get template id: %w", err)
 	}
+	templateID, err := validateLastInsertID(id, "template id")
+	if err != nil {
+		return nil, err
+	}
 
-	return d.GetTemplate(userID, int(id))
+	return d.GetTemplate(userID, templateID)
 }
 
 // UpdateTemplate updates an existing template with ACL check.

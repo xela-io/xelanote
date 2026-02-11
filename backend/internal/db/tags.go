@@ -88,9 +88,13 @@ func (d *DB) GetOrCreateTag(userID int, name string) (*Tag, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tag id: %w", err)
 	}
+	tagID, err := validateLastInsertID(id, "tag id")
+	if err != nil {
+		return nil, err
+	}
 
 	tag = Tag{
-		ID:       int(id),
+		ID:       tagID,
 		Name:     name,
 		NameNorm: nameNorm,
 		UserID:   userID,
@@ -180,7 +184,10 @@ func (d *DB) SetNoteTags(noteID string, userID int, tagNames []string) error {
 			if err != nil {
 				return fmt.Errorf("failed to get tag id: %w", err)
 			}
-			tagID = int(id)
+			tagID, err = validateLastInsertID(id, "tag id")
+			if err != nil {
+				return err
+			}
 		} else if err != nil {
 			return fmt.Errorf("failed to query tag: %w", err)
 		}

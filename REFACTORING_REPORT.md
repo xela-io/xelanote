@@ -281,9 +281,14 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Error Report Service: Error Body Read Handling**
   - `backend/internal/service/errorreport.go`
 
+- **DB Insert-ID Guardrails (ausgewaehlte Pfade)**
+  - `backend/internal/db/helpers.go`: `validateLastInsertID()` eingefuehrt (positiv + int-overflow-safe).
+  - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen die Validierung nach `LastInsertId()`.
+  - Testlauf: `go test -tags fts5 ./internal/db` gruen.
+
 ### Offen
 - Keine offenen Findings im Reliability-Pass.
-- Follow-up (optional): weitere defensive Checks fuer `RowsAffected`/`LastInsertId` in ausgewaehlten DB-Pfaden.
+- Follow-up (optional): verbleibende DB-Pfade schrittweise auf gemeinsame `LastInsertId`/`RowsAffected`-Helper vereinheitlichen.
 
 ## Phase 3 Fortschritt (Frontend-Modularisierung)
 
@@ -974,9 +979,9 @@ Legende (Mapping-Auszug):
 | 25 | N-2 | P0 | -- | Job-Cleanup mit Retention |
 | 26 | N-5 | P1 | -- | Export streamt Notes seitenweise in ZIP |
 
-### Naechste Schritte (offen)
+### Naechste Schritte (historisch, bereits umgesetzt)
 
 | # | Finding | Aufwand | Beschreibung |
 |---|---------|---------|--------------|
-| 27 | W-2, W-3 | 3-5 Tage | God-Files aufteilen (Backend + Frontend) |
-| 28 | W-20 | 3-5 Tage | Testabdeckung fuer kritische Pakete verbessern |
+| 27 | W-2, W-3 | 3-5 Tage | God-Files aufteilen (Backend + Frontend) - umgesetzt |
+| 28 | W-20 | 3-5 Tage | Testabdeckung fuer kritische Pakete verbessern - umgesetzt |

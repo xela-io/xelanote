@@ -2,7 +2,7 @@ import type { EditorView } from '@codemirror/view';
 
 import { clearSearch, sanitizeSearchQuery } from '$lib/editor/find-replace';
 
-interface FindReplaceState {
+export interface FindReplaceState {
   show: boolean;
   query: string;
   showReplace: boolean;
@@ -12,7 +12,7 @@ interface FindReplaceState {
   prevNoteId: string | null;
 }
 
-interface FindReplaceHandlers {
+export interface FindReplaceHandlers {
   getEditorView: () => EditorView | undefined;
   getEditorMode: () => 'edit' | 'split' | 'preview';
   getNoteId: () => string | null;

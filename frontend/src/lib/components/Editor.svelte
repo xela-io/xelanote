@@ -43,8 +43,10 @@
     openMoreMenuAction,
     resetInputEventValue,
   } from '$lib/editor/editor-ui-actions';
+  import { readFindReplaceState, writeFindReplaceState } from '$lib/editor/find-replace-state';
   import {
     closeFindReplace as closeFindReplaceUI,
+    type FindReplaceState,
     handleExtensionsReady,
     handleNoteChange,
     handleUrlHighlight,
@@ -125,6 +127,7 @@
   let findReplaceCaseSensitive = $state(false);
   let pendingHighlightQuery = $state<string | null>(null);
   let editorExtensionsReady = $state(false);
+  let prevNoteId: string | null = $state(null);
 
   let dialogLoaders = $state<DialogLoaderState>({
     moveToFolderDialog: null,
@@ -203,22 +206,10 @@
     },
     onExtensionsReady: () => {
       const nextState = handleExtensionsReady(
-        {
-          show: showFindReplace,
-          query: findReplaceQuery,
-          showReplace: findReplaceShowReplace,
-          caseSensitive: findReplaceCaseSensitive,
-          pendingHighlightQuery,
-          editorExtensionsReady: true,
-          prevNoteId,
-        },
+        getFindReplaceState({ editorExtensionsReadyOverride: true }),
         findReplaceHandlers
       );
-      showFindReplace = nextState.show;
-      findReplaceQuery = nextState.query;
-      findReplaceShowReplace = nextState.showReplace;
-      pendingHighlightQuery = nextState.pendingHighlightQuery;
-      editorExtensionsReady = true;
+      setFindReplaceState(nextState);
     },
     setEditorView: (view) => {
       editorView = view;
@@ -698,42 +689,52 @@
     },
   };
 
-  function openFindReplace(query?: string, options?: { replace?: boolean }) {
-    const nextState = openFindReplaceUI(
-      {
-        show: showFindReplace,
-        query: findReplaceQuery,
-        showReplace: findReplaceShowReplace,
-        caseSensitive: findReplaceCaseSensitive,
-        pendingHighlightQuery,
-        editorExtensionsReady,
-        prevNoteId,
+  function getFindReplaceState(options?: { editorExtensionsReadyOverride?: boolean }): FindReplaceState {
+    return readFindReplaceState({
+      show: showFindReplace,
+      query: findReplaceQuery,
+      showReplace: findReplaceShowReplace,
+      caseSensitive: findReplaceCaseSensitive,
+      pendingHighlightQuery,
+      editorExtensionsReady: options?.editorExtensionsReadyOverride ?? editorExtensionsReady,
+      prevNoteId,
+    });
+  }
+
+  function setFindReplaceState(nextState: FindReplaceState) {
+    writeFindReplaceState(nextState, {
+      setShow: (value) => {
+        showFindReplace = value;
       },
-      findReplaceHandlers,
-      query,
-      options
-    );
-    showFindReplace = nextState.show;
-    findReplaceQuery = nextState.query;
-    findReplaceShowReplace = nextState.showReplace;
+      setQuery: (value) => {
+        findReplaceQuery = value;
+      },
+      setShowReplace: (value) => {
+        findReplaceShowReplace = value;
+      },
+      setCaseSensitive: (value) => {
+        findReplaceCaseSensitive = value;
+      },
+      setPendingHighlightQuery: (value) => {
+        pendingHighlightQuery = value;
+      },
+      setEditorExtensionsReady: (value) => {
+        editorExtensionsReady = value;
+      },
+      setPrevNoteId: (value) => {
+        prevNoteId = value;
+      },
+    });
+  }
+
+  function openFindReplace(query?: string, options?: { replace?: boolean }) {
+    const nextState = openFindReplaceUI(getFindReplaceState(), findReplaceHandlers, query, options);
+    setFindReplaceState(nextState);
   }
 
   function closeFindReplace() {
-    const nextState = closeFindReplaceUI(
-      {
-        show: showFindReplace,
-        query: findReplaceQuery,
-        showReplace: findReplaceShowReplace,
-        caseSensitive: findReplaceCaseSensitive,
-        pendingHighlightQuery,
-        editorExtensionsReady,
-        prevNoteId,
-      },
-      findReplaceHandlers
-    );
-    showFindReplace = nextState.show;
-    findReplaceQuery = nextState.query;
-    findReplaceShowReplace = nextState.showReplace;
+    const nextState = closeFindReplaceUI(getFindReplaceState(), findReplaceHandlers);
+    setFindReplaceState(nextState);
   }
 
   $effect(() => {
@@ -771,44 +772,15 @@
   // Close FindReplaceBar when note changes (not on initial mount).
   // MUST be declared BEFORE the URL highlight effect: Svelte 5 runs effects
   // in declaration order, so close runs first, then re-open with ?highlight=.
-  let prevNoteId: string | null = null;
   $effect(() => {
-    const nextState = handleNoteChange(
-      {
-        show: showFindReplace,
-        query: findReplaceQuery,
-        showReplace: findReplaceShowReplace,
-        caseSensitive: findReplaceCaseSensitive,
-        pendingHighlightQuery,
-        editorExtensionsReady,
-        prevNoteId,
-      },
-      findReplaceHandlers
-    );
-    showFindReplace = nextState.show;
-    findReplaceQuery = nextState.query;
-    findReplaceShowReplace = nextState.showReplace;
-    prevNoteId = nextState.prevNoteId;
+    const nextState = handleNoteChange(getFindReplaceState(), findReplaceHandlers);
+    setFindReplaceState(nextState);
   });
 
   // URL highlight param: open FindReplaceBar when ?highlight= is present
   $effect(() => {
-    const nextState = handleUrlHighlight(
-      {
-        show: showFindReplace,
-        query: findReplaceQuery,
-        showReplace: findReplaceShowReplace,
-        caseSensitive: findReplaceCaseSensitive,
-        pendingHighlightQuery,
-        editorExtensionsReady,
-        prevNoteId,
-      },
-      findReplaceHandlers
-    );
-    showFindReplace = nextState.show;
-    findReplaceQuery = nextState.query;
-    findReplaceShowReplace = nextState.showReplace;
-    pendingHighlightQuery = nextState.pendingHighlightQuery;
+    const nextState = handleUrlHighlight(getFindReplaceState(), findReplaceHandlers);
+    setFindReplaceState(nextState);
   });
 </script>
 

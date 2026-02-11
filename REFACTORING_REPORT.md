@@ -193,6 +193,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Editor-Modularisierung (Split-Resize-Controller)**
   - `frontend/src/lib/editor/split-resize.ts` bietet jetzt `createSplitResizeController()`.
   - `frontend/src/lib/components/Editor.svelte` nutzt den Controller statt lokaler Wrapper-Funktionen.
+- **Editor-Modularisierung (Find/Replace-State-Adapter)**
+  - Neuer Helper: `frontend/src/lib/editor/find-replace-state.ts`.
+  - `frontend/src/lib/editor/find-replace-ui.ts` exportiert `FindReplaceState`/`FindReplaceHandlers`.
+  - `frontend/src/lib/components/Editor.svelte` nutzt `readFindReplaceState()`/`writeFindReplaceState()` statt mehrfacher manueller State-Assignments.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -327,7 +331,7 @@ frontend/src/lib/api/
 4. Bestehende Call-Sites bleiben auf `import * as api from '$lib/api'`.
 
 ### Nächste Schritte (Resume)
-1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte` (z.B. Find/Replace- und Task/Image-bezogene lokale Handler).
+1. Optionale weitere Modularisierung von `frontend/src/lib/components/Editor.svelte` (z.B. Task/Image-bezogene lokale Handler).
 2. Optionale End-to-End-Szenarien nachziehen (insb. Playwright-Suite ausserhalb der Vitest-E2E-Feature-Tests).
 
 ## Fortschritt

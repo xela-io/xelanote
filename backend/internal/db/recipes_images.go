@@ -7,6 +7,18 @@ import (
 	"time"
 )
 
+type sqlExecer interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+
+func touchRecipeMetadata(execer sqlExecer, noteID string) error {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	if _, err := execer.Exec("UPDATE recipe_metadata SET updated_at = ? WHERE note_id = ?", now, noteID); err != nil {
+		return fmt.Errorf("touch recipe metadata updated_at: %w", err)
+	}
+	return nil
+}
+
 // GetRecipeImages retrieves all images for a recipe note.
 func (db *DB) GetRecipeImages(noteID string) ([]RecipeImage, error) {
 	rows, err := db.Query(`
@@ -84,8 +96,9 @@ func (db *DB) AddRecipeImage(noteID string, userID int, imageURL string, caption
 	}
 
 	// Bump metadata.updated_at
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	_, _ = tx.Exec("UPDATE recipe_metadata SET updated_at = ? WHERE note_id = ?", now, noteID)
+	if err := touchRecipeMetadata(tx, noteID); err != nil {
+		return nil, err
+	}
 
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("commit transaction: %w", err)
@@ -109,9 +122,15 @@ func (db *DB) AddRecipeImage(noteID string, userID int, imageURL string, caption
 
 // DeleteRecipeImage deletes a recipe image by its ID.
 func (db *DB) DeleteRecipeImage(imageID int) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
 	// Get note_id before deleting so we can bump metadata
 	var noteID string
-	err := db.QueryRow("SELECT note_id FROM recipe_images WHERE id = ?", imageID).Scan(&noteID)
+	err = tx.QueryRow("SELECT note_id FROM recipe_images WHERE id = ?", imageID).Scan(&noteID)
 	if err == sql.ErrNoRows {
 		return ErrNotFound
 	}
@@ -119,23 +138,33 @@ func (db *DB) DeleteRecipeImage(imageID int) error {
 		return fmt.Errorf("get image note_id: %w", err)
 	}
 
-	_, err = db.Exec("DELETE FROM recipe_images WHERE id = ?", imageID)
+	_, err = tx.Exec("DELETE FROM recipe_images WHERE id = ?", imageID)
 	if err != nil {
 		return fmt.Errorf("delete recipe image: %w", err)
 	}
 
 	// Bump metadata.updated_at
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	_, _ = db.Exec("UPDATE recipe_metadata SET updated_at = ? WHERE note_id = ?", now, noteID)
+	if err := touchRecipeMetadata(tx, noteID); err != nil {
+		return err
+	}
 
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
 	return nil
 }
 
 // UpdateRecipeImageCaption updates the caption of a recipe image.
 func (db *DB) UpdateRecipeImageCaption(imageID int, caption *string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
 	// Get note_id before updating so we can bump metadata
 	var noteID string
-	err := db.QueryRow("SELECT note_id FROM recipe_images WHERE id = ?", imageID).Scan(&noteID)
+	err = tx.QueryRow("SELECT note_id FROM recipe_images WHERE id = ?", imageID).Scan(&noteID)
 	if err == sql.ErrNoRows {
 		return ErrNotFound
 	}
@@ -143,15 +172,19 @@ func (db *DB) UpdateRecipeImageCaption(imageID int, caption *string) error {
 		return fmt.Errorf("get image note_id: %w", err)
 	}
 
-	_, err = db.Exec("UPDATE recipe_images SET caption = ? WHERE id = ?", caption, imageID)
+	_, err = tx.Exec("UPDATE recipe_images SET caption = ? WHERE id = ?", caption, imageID)
 	if err != nil {
 		return fmt.Errorf("update recipe image caption: %w", err)
 	}
 
 	// Bump metadata.updated_at
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	_, _ = db.Exec("UPDATE recipe_metadata SET updated_at = ? WHERE note_id = ?", now, noteID)
+	if err := touchRecipeMetadata(tx, noteID); err != nil {
+		return err
+	}
 
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
 	return nil
 }
 
@@ -204,8 +237,9 @@ func (db *DB) ReorderRecipeImages(noteID string, imageIDs []int) error {
 	}
 
 	// Bump metadata.updated_at
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	_, _ = tx.Exec("UPDATE recipe_metadata SET updated_at = ? WHERE note_id = ?", now, noteID)
+	if err := touchRecipeMetadata(tx, noteID); err != nil {
+		return err
+	}
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)

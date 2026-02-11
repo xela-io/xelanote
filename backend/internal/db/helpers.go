@@ -49,3 +49,15 @@ func ensureRowsAffectedWithContext(result sql.Result, context string) error {
 	}
 	return fmt.Errorf("%s: %w", context, err)
 }
+
+// rowsAffectedCount returns rows affected with optional context decoration.
+func rowsAffectedCount(result sql.Result, context string) (int64, error) {
+	rows, err := result.RowsAffected()
+	if err != nil {
+		if context == "" {
+			return 0, err
+		}
+		return 0, fmt.Errorf("%s: %w", context, err)
+	}
+	return rows, nil
+}

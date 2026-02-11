@@ -279,9 +279,9 @@ func (db *DB) UpdateNote(userID int, id, title, content, folderPath string, expe
 		return nil, fmt.Errorf("failed to update note: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return nil, fmt.Errorf("failed to check rows affected: %w", err)
+		return nil, err
 	}
 	if rows == 0 {
 		// Check if note exists
@@ -312,9 +312,9 @@ func (db *DB) UpdateNoteTitle(userID int, id, newTitle string, expectedVersion i
 		return nil, fmt.Errorf("failed to update note title: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return nil, fmt.Errorf("failed to check rows affected: %w", err)
+		return nil, err
 	}
 
 	if rows == 0 {
@@ -342,9 +342,9 @@ func (db *DB) DeleteNote(userID int, id string) error {
 		return fmt.Errorf("failed to delete note: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
+		return err
 	}
 	if rows == 0 {
 		return ErrNotFound

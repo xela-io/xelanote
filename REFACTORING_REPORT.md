@@ -315,12 +315,14 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **DB RowsAffected-Helper (ausgewaehlte Pfade)**
   - `backend/internal/db/helpers.go`: `ensureRowsAffected()` eingefuehrt.
   - `backend/internal/db/helpers.go`: `ensureRowsAffectedWithContext()` fuer kontextreiche Fehlertexte bei zentralem RowsAffected-Check.
+  - `backend/internal/db/helpers.go`: `rowsAffectedCount()` fuer Pfade mit differenzierter Folge-Logik (z.B. Version-Mismatch vs NotFound).
   - `backend/internal/db/tags.go`, `backend/internal/db/templates.go`, `backend/internal/db/snippets.go` nutzen den Helper fuer konsistentes NotFound-Handling.
   - `backend/internal/db/auth.go` nutzt `ensureRowsAffected()` in User-Update-Pfaden und `validateLastInsertID()` bei `CreateUser()`.
   - `backend/internal/db/fido2.go` und `backend/internal/db/admin_users.go` nutzen `ensureRowsAffected()` fuer konsistentes NotFound-Handling bei Delete/Update-Pfaden.
   - `backend/internal/db/notes_ai.go`, `backend/internal/db/notes_color.go`, `backend/internal/db/notes_summary.go` nutzen `ensureRowsAffectedWithContext()`.
   - `backend/internal/db/folders_color.go`, `backend/internal/db/folders_ai.go`, `backend/internal/db/folders_encryption.go` nutzen zentrale RowsAffected-Helper.
   - `backend/internal/db/notes_trash.go` nutzt `ensureRowsAffectedWithContext()` in Restore/Hard-Delete-Pfaden.
+  - `backend/internal/db/notes_crud.go` nutzt `rowsAffectedCount()` in Update/Delete-Pfaden mit Version-Mismatch-Abzweig.
 
 ### Offen
 - Keine offenen Findings im Reliability-Pass.

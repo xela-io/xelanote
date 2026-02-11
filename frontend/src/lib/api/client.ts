@@ -177,7 +177,8 @@ function isNoteRoute(path: string): boolean {
 function safeJsonParse(s: string | undefined | null): Record<string, unknown> {
   if (!s) return {};
   try {
-    return JSON.parse(s);
+    const parsed = JSON.parse(s);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
   } catch {
     return {};
   }

@@ -215,6 +215,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Editor-Modularisierung (Dialog-Loader-Trigger)**
   - `frontend/src/lib/editor/dialog-loaders.ts` exportiert `maybeLoadDialog()` fuer wiederverwendbare lazy-load Trigger.
   - `frontend/src/lib/components/Editor.svelte` nutzt den Trigger statt vier nahezu identischer Loader-Effects.
+- **Editor-Modularisierung (Spellcheck-Event-Bridge)**
+  - Neuer Helper: `frontend/src/lib/editor/editor-spellcheck.ts`.
+  - `frontend/src/lib/components/Editor.svelte` nutzt den ausgelagerten Spellcheck-Replace-Listener.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -226,6 +229,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/stores/notes/encryption-toggle.ts` nutzt `parseRecipeContentPayload()` statt direktem `JSON.parse(... as ...)` fuer Recipe-Decrypt-Preprocessing.
   - `frontend/src/lib/api/ai.ts` validiert `stream_token` aus dem Prepare-Endpoint explizit vor Nutzung.
   - `frontend/src/lib/stores/auth.svelte.ts` validiert JWT-Claims (`exp`/`iat`) strikt als Number-Felder im Payload-Parser.
+  - `frontend/src/lib/api/client.ts` gibt in `safeJsonParse()` nur noch Objekt-Payloads zurueck (keine primitiven/Array-Rueckgaben).
 
 ### Offen
 - Keine offenen Findings in Phase 3.

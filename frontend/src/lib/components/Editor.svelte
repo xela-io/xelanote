@@ -41,6 +41,7 @@
     handleInsertLinkAction,
     updateCurrentNoteSummary,
   } from '$lib/editor/editor-note-content';
+  import { registerSpellCheckReplaceListener } from '$lib/editor/editor-spellcheck';
   import {
     extractFilesFromInputChangeEvent,
     handleColorSelectAction,
@@ -245,23 +246,10 @@
 
   // Handle spell-check replacement events
   $effect(() => {
-    function handleSpellCheckReplace(
-      e: CustomEvent<{ from: number; to: number; replacement: string }>
-    ) {
-      if (!editorView) return;
-
-      const { from, to, replacement } = e.detail;
-      editorView.dispatch({
-        changes: { from, to, insert: replacement },
-      });
-      notes.scheduleAutoSave();
-    }
-
-    document.addEventListener('spell-check-replace', handleSpellCheckReplace);
-
-    return () => {
-      document.removeEventListener('spell-check-replace', handleSpellCheckReplace);
-    };
+    return registerSpellCheckReplaceListener({
+      getEditorView: () => editorView,
+      scheduleAutoSave: () => notes.scheduleAutoSave(),
+    });
   });
 
   async function handleSave() {

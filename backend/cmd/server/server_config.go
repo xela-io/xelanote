@@ -90,8 +90,8 @@ func parseAllowedOrigins(raw string) []string {
 func checkEnvironment(logger *slog.Logger) string {
 	env := os.Getenv("XELANOTE_ENV")
 	if env == "" {
-		logger.Warn("XELANOTE_ENV not set, running in development mode",
-			slog.String("advice", "Set XELANOTE_ENV=production for production deployments"))
+		logger.Warn("XELANOTE_ENV not set",
+			slog.String("advice", "Set XELANOTE_ENV explicitly (development/test/production). Empty env is treated as strict mode for security checks."))
 	}
 	return env
 }

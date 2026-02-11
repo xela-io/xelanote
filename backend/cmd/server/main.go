@@ -99,6 +99,9 @@ func main() {
 
 	// Create API server
 	allowedOrigins := parseAllowedOrigins(os.Getenv("CORS_ALLOWED_ORIGINS"))
+	if env == "" && len(allowedOrigins) == 0 {
+		log.Fatal("CORS_ALLOWED_ORIGINS must be set when XELANOTE_ENV is empty (strict default)")
+	}
 	server := api.NewServer(api.ServerConfig{
 		NoteService:      core.note,
 		AuthService:      core.auth,

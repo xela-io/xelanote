@@ -105,8 +105,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - WebSocket nutzt `getWsBaseUrl()` (K-3 wirkt umgesetzt)
 - Gemini API-Key via Header (`x-goog-api-key`) (K-5 wirkt umgesetzt)
 
-**Abweichung/Teilweise**
-- CORS-Fix (K-4): In `backend/internal/api/api.go` greift der Fatal-Check nur, wenn `XELANOTE_ENV` gesetzt ist. Leeres `XELANOTE_ENV` bleibt permissiv. Das widerspricht dem Anspruch "nicht-explizites Env == streng". Status: **teilweise umgesetzt**.
+**Update**
+- CORS-Fix (K-4): Strenger Default fuer leeres `XELANOTE_ENV` ist umgesetzt. In `backend/cmd/server/main.go` wird der Serverstart jetzt abgebrochen, wenn `XELANOTE_ENV` leer **und** `CORS_ALLOWED_ORIGINS` nicht gesetzt ist.
 
 **Nicht verifiziert (nur statisch, keine historische Commit-Pruefung)**
 - K-1/K-2/K-6 und einige W-4+ Items aus dem Alt-Report habe ich nicht separat gegen historische Commits geprueft. Wenn du willst, kann ich die konkrete Implementierung/Regressionen tief pruefen.
@@ -289,7 +289,7 @@ frontend/src/lib/api/
 | Phase 4 | Testing & Documentation | -- | ERLEDIGT |
 | Phase 5 | Linting & Formatting | -- | ERLEDIGT |
 
-**Status-Update:** 46 von 47 Findings erledigt, 1 teilweise, 0 offen.
+**Status-Update:** 47 von 47 Findings erledigt, 0 teilweise, 0 offen.
 
 ---
 
@@ -363,15 +363,15 @@ frontend/src/lib/api/
 
 ---
 
-### K-4: CORS erlaubt jede Origin bei nicht-explizitem `XELANOTE_ENV` -- TEILWEISE ERLEDIGT (Phase 1, `c799968`)
+### K-4: CORS erlaubt jede Origin bei nicht-explizitem `XELANOTE_ENV` -- ERLEDIGT
 
 **Datei:** `backend/internal/api/api.go:557-573, 88-96`
 
 **Problem:** Fatal-Check greift nur bei `env == "production"`. Staging oder leerer `XELANOTE_ENV` laeuft mit vollständig permissivem CORS.
 
-**Fix (teilweise):** Fatal-Check auf `env != "development" && env != "test"` geaendert, greift aber nur wenn
-`XELANOTE_ENV` gesetzt ist. Bei leerem `XELANOTE_ENV` bleibt die CORS-Konfiguration permissiv. Offener Punkt:
-Default sollte streng sein, wenn `XELANOTE_ENV` leer ist.
+**Fix:** Strikter Guard in `backend/cmd/server/main.go`: Start wird mit `log.Fatal` abgebrochen, wenn
+`XELANOTE_ENV` leer ist und `CORS_ALLOWED_ORIGINS` nicht gesetzt ist. Damit ist der Security-Default fuer
+nicht-explizites Env nicht mehr permissiv.
 
 ---
 
@@ -894,7 +894,7 @@ Legende (Mapping-Auszug):
 | 1 | K-1 | 1 | `c799968` | `sig` -> `signature` in `recipes.go` |
 | 2 | K-2 | 1 | `c799968` | `getUserID`-Fehler in `admin.go` geprüeft |
 | 3 | K-3 | 1 | `c799968` | `WS_URL` durch `getWsBaseUrl()` ersetzt |
-| 4 | K-4 | 1 | `c799968` | CORS-Fatal-Check fuer Non-Dev verschaerft (teilweise: greift nur wenn `XELANOTE_ENV` gesetzt) |
+| 4 | K-4 | 1 | `c799968` + Follow-up | CORS-Default gehaertet: bei leerem `XELANOTE_ENV` ohne `CORS_ALLOWED_ORIGINS` bricht der Start ab |
 | 5 | K-5 | 1 | `c799968` | Gemini API-Key in Header statt URL |
 | 6 | K-6 | 1 | `c799968` | Type-Assertions durch `getUserID()` ersetzt |
 | 7 | W-4 | 2 | `7856b6b` | `cleanJSON` ins `llm`-Paket verschoben |

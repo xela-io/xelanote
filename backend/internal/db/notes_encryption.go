@@ -179,9 +179,9 @@ func (db *DB) UpdateEncryptedNote(
 		return nil, fmt.Errorf("failed to update encrypted note: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return nil, fmt.Errorf("failed to check rows affected: %w", err)
+		return nil, err
 	}
 
 	if rows == 0 {
@@ -219,9 +219,9 @@ func (db *DB) DecryptNote(userID int, id, title, content string, expectedVersion
 		return nil, fmt.Errorf("failed to decrypt note: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffectedCount(result, "failed to check rows affected")
 	if err != nil {
-		return nil, fmt.Errorf("failed to check rows affected: %w", err)
+		return nil, err
 	}
 	if rows == 0 {
 		existing, err := db.GetNote(userID, id)

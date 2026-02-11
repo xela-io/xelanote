@@ -326,6 +326,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/db/folders_color.go`, `backend/internal/db/folders_ai.go`, `backend/internal/db/folders_encryption.go` nutzen zentrale RowsAffected-Helper.
   - `backend/internal/db/notes_trash.go` nutzt `ensureRowsAffectedWithContext()` in Restore/Hard-Delete-Pfaden.
   - `backend/internal/db/notes_crud.go` nutzt `rowsAffectedCount()` in Update/Delete-Pfaden mit Version-Mismatch-Abzweig.
+  - `backend/internal/db/notes_encryption.go` nutzt `rowsAffectedCount()` in Encrypt/Decrypt-Pfaden mit Version-Mismatch-Abzweig.
   - `backend/internal/db/preferences_core.go`, `backend/internal/db/preferences_encryption.go`, `backend/internal/db/preferences_security.go`, `backend/internal/db/preferences_apikeys.go` nutzen `rowsAffectedCount()` fuer Upsert-Entscheidungen.
 
 ### Offen

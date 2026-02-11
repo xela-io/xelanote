@@ -34,6 +34,7 @@
     handleSaveNote as handleSaveNoteAction,
     handleTitleInput as handleTitleInputAction,
   } from '$lib/editor/editor-actions';
+  import { handleImageResizeAction, handleTaskReorderAction } from '$lib/editor/editor-content-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
   import {
     extractFilesFromInputChangeEvent,
@@ -52,7 +53,7 @@
     handleUrlHighlight,
     openFindReplace as openFindReplaceUI,
   } from '$lib/editor/find-replace-ui';
-  import { imageResize, updateImageWidthByIndex } from '$lib/editor/image-resize';
+  import { imageResize } from '$lib/editor/image-resize';
   import {
     handleEditorDragOver,
     handleEditorDrop,
@@ -89,7 +90,6 @@
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import { calculateMoveChanges } from '$lib/utils/task-reorder';
 
   import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
@@ -513,37 +513,24 @@
 
   // Task Drag & Drop Reorder Handler
   function handleTaskReorder(fromTaskIndex: number, toTaskIndex: number) {
-    if (!editorView) return;
-
-    const doc = editorView.state.doc;
-    const changes = calculateMoveChanges(doc, fromTaskIndex, toTaskIndex);
-
-    if (changes.length > 0) {
-      editorView.dispatch({ changes, scrollIntoView: true });
-      notes.scheduleAutoSave();
-    }
+    handleTaskReorderAction({
+      editorView,
+      fromTaskIndex,
+      toTaskIndex,
+      scheduleAutoSave: () => notes.scheduleAutoSave(),
+    });
   }
 
   // Image Resize Handler
   function handleImageResize(imageIndex: number, newWidth: number) {
-    // Get content from CodeMirror or notes store
-    const content = editorView
-      ? editorView.state.doc.toString()
-      : (notes.getCurrentNote()?.content ?? '');
-
-    const newContent = updateImageWidthByIndex(content, imageIndex, newWidth);
-
-    if (editorView) {
-      // Update via CodeMirror dispatch
-      editorView.dispatch({
-        changes: { from: 0, to: editorView.state.doc.length, insert: newContent },
-      });
-    } else {
-      // Update via notes store (preview mode)
-      notes.updateCurrentNoteContent(newContent);
-    }
-
-    notes.scheduleAutoSave();
+    handleImageResizeAction({
+      editorView,
+      imageIndex,
+      newWidth,
+      getFallbackContent: () => notes.getCurrentNote()?.content ?? '',
+      setFallbackContent: (content) => notes.updateCurrentNoteContent(content),
+      scheduleAutoSave: () => notes.scheduleAutoSave(),
+    });
   }
 
   // Upload Logic

@@ -36,6 +36,7 @@
   } from '$lib/editor/editor-actions';
   import { handleImageResizeAction, handleTaskReorderAction } from '$lib/editor/editor-content-actions';
   import { initEditorAction } from '$lib/editor/editor-init';
+  import { ensureEditorReady } from '$lib/editor/editor-mode';
   import {
     extractFilesFromInputChangeEvent,
     handleColorSelectAction,
@@ -612,31 +613,33 @@
   }
 
   async function handleInsertTask() {
-    // Switch to edit mode if in preview (e.g. on mobile)
-    if (!editorView) {
-      ui.setEditorMode('edit');
-      await tick(); // Wait for editor DOM to render and initEditor action to run
-      if (!editorView) return; // Editor still not ready
-    }
-    insertTask(editorView);
+    const view = await ensureEditorReady({
+      getEditorView: () => editorView,
+      setEditorMode: (mode) => ui.setEditorMode(mode),
+      tick,
+    });
+    if (!view) return;
+    insertTask(view);
   }
 
   async function handleIndent() {
-    if (!editorView) {
-      ui.setEditorMode('edit');
-      await tick();
-      if (!editorView) return;
-    }
-    indentSelection(editorView);
+    const view = await ensureEditorReady({
+      getEditorView: () => editorView,
+      setEditorMode: (mode) => ui.setEditorMode(mode),
+      tick,
+    });
+    if (!view) return;
+    indentSelection(view);
   }
 
   async function handleOutdent() {
-    if (!editorView) {
-      ui.setEditorMode('edit');
-      await tick();
-      if (!editorView) return;
-    }
-    outdentSelection(editorView);
+    const view = await ensureEditorReady({
+      getEditorView: () => editorView,
+      setEditorMode: (mode) => ui.setEditorMode(mode),
+      tick,
+    });
+    if (!view) return;
+    outdentSelection(view);
   }
 
   const findReplaceHandlers = {

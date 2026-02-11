@@ -200,6 +200,9 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
 - **Editor-Modularisierung (Task/Image-Content-Handler)**
   - Neuer Helper: `frontend/src/lib/editor/editor-content-actions.ts`.
   - `frontend/src/lib/components/Editor.svelte` nutzt ausgelagerte Handler fuer Task-Reorder und Image-Resize.
+- **Editor-Modularisierung (Editor-Mode-Readiness)**
+  - Neuer Helper: `frontend/src/lib/editor/editor-mode.ts` mit `ensureEditorReady()`.
+  - `frontend/src/lib/components/Editor.svelte` nutzt den Helper fuer Task-Insert, Indent und Outdent.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -589,6 +592,7 @@ nicht-explizites Env nicht mehr permissiv.
 - `frontend/src/lib/components/Editor.svelte`: Save/Title/AutoSave/AI/Encryption-Handler nach `frontend/src/lib/editor/editor-actions.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: CodeMirror-Init/Action nach `frontend/src/lib/editor/editor-init.ts` ausgelagert.
 - `frontend/src/lib/components/Editor.svelte`: Task-Reorder + Image-Resize-Handler nach `frontend/src/lib/editor/editor-content-actions.ts` ausgelagert.
+- `frontend/src/lib/components/Editor.svelte`: Edit-Mode/Readiness-Logik fuer Insert/Indent/Outdent nach `frontend/src/lib/editor/editor-mode.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Resize-Handler nach `frontend/src/lib/components/sidebar/sidebar-resize.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: onMount-Init nach `frontend/src/lib/components/sidebar/sidebar-init.ts` ausgelagert.
 - `frontend/src/lib/components/Sidebar.svelte`: Drag/Drop + Touch-Reorder nach `frontend/src/lib/components/sidebar/sidebar-dnd.ts` ausgelagert.

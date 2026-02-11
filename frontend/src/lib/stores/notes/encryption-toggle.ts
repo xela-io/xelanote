@@ -13,6 +13,57 @@ type RecipeContentPayload = {
   recipe_ingredients?: RecipeIngredient[];
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object';
+}
+
+function isRecipeMetadata(value: unknown): value is RecipeMetadata {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.note_id === 'string' &&
+    typeof value.user_id === 'number' &&
+    typeof value.servings === 'number' &&
+    typeof value.updated_at === 'string'
+  );
+}
+
+function isRecipeIngredient(value: unknown): value is RecipeIngredient {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.name === 'string' &&
+    typeof value.display_order === 'number' &&
+    typeof value.optional === 'boolean' &&
+    typeof value.scalable === 'boolean'
+  );
+}
+
+function isRecipeIngredientArray(value: unknown): value is RecipeIngredient[] {
+  return Array.isArray(value) && value.every((entry) => isRecipeIngredient(entry));
+}
+
+function parseRecipeContentPayload(raw: string): RecipeContentPayload | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (!isRecord(parsed)) return null;
+
+    const content = typeof parsed.content === 'string' ? parsed.content : undefined;
+    const recipeMetadata = isRecipeMetadata(parsed.recipe_metadata)
+      ? parsed.recipe_metadata
+      : undefined;
+    const recipeIngredients = isRecipeIngredientArray(parsed.recipe_ingredients)
+      ? parsed.recipe_ingredients
+      : undefined;
+
+    return {
+      content,
+      recipe_metadata: recipeMetadata,
+      recipe_ingredients: recipeIngredients,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export interface ToggleEncryptionDeps {
   getCurrentNote: () => Note | null;
   getIsSaving: () => boolean;
@@ -75,17 +126,13 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
 
       let recipeData: RecipeDecryptPayload | undefined;
       if (currentNote.note_type === 'recipe' && currentNote.content) {
-        try {
-          const parsed = JSON.parse(currentNote.content) as RecipeContentPayload;
-          if (parsed.recipe_metadata || parsed.recipe_ingredients) {
-            recipeData = {
-              recipe_metadata: parsed.recipe_metadata,
-              recipe_ingredients: parsed.recipe_ingredients,
-            };
-            deps.setCurrentNote({ ...currentNote, content: parsed.content ?? '' });
-          }
-        } catch {
-          // ignore legacy content
+        const parsed = parseRecipeContentPayload(currentNote.content);
+        if (parsed?.recipe_metadata || parsed?.recipe_ingredients) {
+          recipeData = {
+            recipe_metadata: parsed.recipe_metadata,
+            recipe_ingredients: parsed.recipe_ingredients,
+          };
+          deps.setCurrentNote({ ...currentNote, content: parsed.content ?? '' });
         }
       }
 

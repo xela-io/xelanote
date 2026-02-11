@@ -207,6 +207,8 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/import.go` validiert File-Anzahl, leere Inhalte, Notiz-/Folder-Felder und begrenzt Error-Listen.
   - `backend/internal/service/notes_crud.go`, `backend/internal/service/notes_encryption.go` loggen Snapshot-Query-Fehler (und snapshoten konservativ).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
+- **Frontend Parse-Haertung (gezielte Follow-ups)**
+  - `frontend/src/lib/stores/notes/encryption-toggle.ts` nutzt `parseRecipeContentPayload()` statt direktem `JSON.parse(... as ...)` fuer Recipe-Decrypt-Preprocessing.
 
 ### Offen
 - Keine offenen Findings in Phase 3.

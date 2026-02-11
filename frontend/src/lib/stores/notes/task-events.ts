@@ -17,7 +17,12 @@ export function createTaskEventQueue(storageKey = 'pendingTaskEvents'): TaskEven
   if (typeof window !== 'undefined') {
     try {
       const stored = sessionStorage.getItem(storageKey);
-      if (stored) pendingTaskEvents = JSON.parse(stored);
+      if (stored) {
+        const parsed = parsePendingTaskEvents(stored);
+        if (parsed) {
+          pendingTaskEvents = parsed;
+        }
+      }
     } catch {
       /* ignore */
     }
@@ -43,4 +48,31 @@ export function createTaskEventQueue(storageKey = 'pendingTaskEvents'): TaskEven
       persist();
     },
   };
+}
+
+function parsePendingTaskEvents(raw: string): PendingTaskEvent[] | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(parsed)) return null;
+  if (
+    !parsed.every(
+      (entry) =>
+        !!entry &&
+        typeof entry === 'object' &&
+        typeof (entry as { noteId?: unknown }).noteId === 'string' &&
+        typeof (entry as { taskText?: unknown }).taskText === 'string' &&
+        typeof (entry as { taskIndex?: unknown }).taskIndex === 'number' &&
+        ((entry as { eventType?: unknown }).eventType === 'completed' ||
+          (entry as { eventType?: unknown }).eventType === 'reopened')
+    )
+  ) {
+    return null;
+  }
+
+  return parsed as PendingTaskEvent[];
 }

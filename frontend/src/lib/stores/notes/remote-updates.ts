@@ -1,5 +1,6 @@
 import type { Note } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 export interface RemoteUpdateDeps {
   getCurrentNote: () => Note | null;
@@ -69,7 +70,7 @@ export function handleRemoteUpdate(remoteNote: Note, deps: RemoteUpdateDeps) {
       try {
         const encryptedPayload: EncryptedPayload = {
           ciphertext: remoteNote.encrypted_content,
-          metadata: JSON.parse(remoteNote.encryption_metadata || '{}'),
+          metadata: parseEncryptionMetadata(remoteNote.encryption_metadata),
         };
         const decrypted = deps.decryptNote(remoteNote.encrypted_title || null, encryptedPayload);
         processedNote = {

@@ -59,6 +59,21 @@ interface JWTPayload {
   iat: number; // SECONDS (Unix timestamp)
 }
 
+function parseJWTPayload(raw: string): { exp: number; iat: number } | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const payload = parsed as { exp?: unknown; iat?: unknown };
+  const exp = Number(payload.exp);
+  const iat = Number(payload.iat);
+  return { exp, iat };
+}
+
 /**
  * Parse exp and iat claims from a JWT token.
  * Returns {exp: 0, iat: 0} on SSR or parse failure.
@@ -82,7 +97,11 @@ function parseJWTClaims(token: string): JWTPayload {
       base64 += '=';
     }
 
-    const payload = JSON.parse(atob(base64));
+    const payload = parseJWTPayload(atob(base64));
+    if (!payload) {
+      console.warn('[Auth] Invalid JWT payload JSON');
+      return { exp: 0, iat: 0 };
+    }
 
     // Strict type validation
     const exp = Number(payload.exp);

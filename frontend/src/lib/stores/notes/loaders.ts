@@ -1,5 +1,6 @@
 import type { Backlink, Note } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 export interface LoadNotesDeps {
   listNotes: (options: { limit: number }) => Promise<{ notes: Note[] }>;
@@ -87,7 +88,7 @@ export async function loadNote(deps: LoadNoteDeps) {
       try {
         const encryptedPayload: EncryptedPayload = {
           ciphertext: note.encrypted_content,
-          metadata: JSON.parse(note.encryption_metadata || '{}'),
+          metadata: parseEncryptionMetadata(note.encryption_metadata),
         };
         console.log(
           '[NOTES] Decrypting loaded note, wrapped_dek length:',

@@ -159,6 +159,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/stores/search-index.svelte.ts` und `frontend/src/lib/offline/sync-manager.svelte.ts` verwenden validiertes Encryption-Metadata-Parsing.
   - `frontend/src/lib/stores/graph.svelte.ts` validiert persistiertes Layout aus localStorage.
   - Gemeinsamer Helper: `frontend/src/lib/stores/encryption-metadata.ts`.
+- **Type-Safety: Weitere Store-Parse-Haertungen**
+  - `frontend/src/lib/stores/auth.svelte.ts` validiert JWT-Payload-Struktur vor Claim-Auswertung.
+  - `frontend/src/lib/stores/notes/task-events.ts` validiert persistierte Queue-Events aus `sessionStorage`.
+  - `frontend/src/lib/stores/notes/loaders.ts` und `frontend/src/lib/stores/notes/remote-updates.ts` nutzen den zentralen Metadata-Parser.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).

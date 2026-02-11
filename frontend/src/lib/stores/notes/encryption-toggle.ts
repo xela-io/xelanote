@@ -1,6 +1,6 @@
 import type { Note, NotePayload, RecipeIngredient, RecipeMetadata } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
-import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 type RecipeDecryptPayload = {
   recipe_metadata?: RecipeMetadata;

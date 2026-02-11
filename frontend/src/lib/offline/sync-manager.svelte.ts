@@ -7,6 +7,7 @@ import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 import * as encryption from '$lib/stores/encryption.svelte';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 import * as notes from '$lib/stores/notes.svelte';
 import * as toast from '$lib/stores/toast.svelte';
 
@@ -461,7 +462,7 @@ function decryptServerNote(note: Note): Note {
   try {
     const encryptedPayload: EncryptedPayload = {
       ciphertext: note.encrypted_content,
-      metadata: JSON.parse(note.encryption_metadata || '{}'),
+      metadata: parseEncryptionMetadata(note.encryption_metadata),
     };
 
     const { title, content } = encryption.decryptNote(
@@ -491,7 +492,7 @@ function decryptPayload(notePayload: NotePayload): { title: string; content: str
   try {
     const encryptedPayload: EncryptedPayload = {
       ciphertext: notePayload.encrypted_content,
-      metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
+      metadata: parseEncryptionMetadata(notePayload.encryption_metadata),
     };
 
     const { title, content } = encryption.decryptNote(

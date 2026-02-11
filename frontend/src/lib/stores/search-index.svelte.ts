@@ -8,6 +8,7 @@ import type { SearchResult } from '$lib/api';
 import { getAllEncryptedNotes } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 import * as encryption from '$lib/stores/encryption.svelte';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 const MAX_CONTENT_LENGTH = 50_000; // 50 KB per note
 
@@ -79,7 +80,7 @@ function decryptNotePayload(note: {
 }): { title: string | null; content: string } {
   const encryptedPayload: EncryptedPayload = {
     ciphertext: note.encrypted_content!,
-    metadata: JSON.parse(note.encryption_metadata || '{}'),
+    metadata: parseEncryptionMetadata(note.encryption_metadata),
   };
   return encryption.decryptNote(note.encrypted_title || null, encryptedPayload);
 }

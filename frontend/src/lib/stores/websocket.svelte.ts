@@ -4,6 +4,7 @@
 import type { Note } from '$lib/api';
 import { getWsBaseUrl } from '$lib/config';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 import { getAccessToken } from './auth.svelte';
 import * as encryption from './encryption.svelte';
@@ -26,15 +27,31 @@ type RecipeEventPayload = {
   note_id: string;
 };
 
-function asNote(payload: unknown): Note {
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object';
+}
+
+function parseMessage(raw: unknown): WebSocketMessage | null {
+  if (!isObjectRecord(raw)) return null;
+  if (typeof raw.type !== 'string') return null;
+  return { type: raw.type, payload: raw.payload };
+}
+
+function parseNote(payload: unknown): Note | null {
+  if (!isObjectRecord(payload)) return null;
+  if (typeof payload.id !== 'string') return null;
   return payload as Note;
 }
 
-function asNoteEventPayload(payload: unknown): NoteEventPayload {
+function parseNoteEventPayload(payload: unknown): NoteEventPayload | null {
+  if (!isObjectRecord(payload)) return null;
+  if (typeof payload.id !== 'string') return null;
   return payload as NoteEventPayload;
 }
 
-function asRecipeEventPayload(payload: unknown): RecipeEventPayload {
+function parseRecipeEventPayload(payload: unknown): RecipeEventPayload | null {
+  if (!isObjectRecord(payload)) return null;
+  if (typeof payload.note_id !== 'string') return null;
   return payload as RecipeEventPayload;
 }
 
@@ -95,7 +112,11 @@ export function connect() {
 
   ws.onmessage = (event) => {
     try {
-      const message = JSON.parse(event.data);
+      const message = parseMessage(JSON.parse(event.data));
+      if (!message) {
+        console.warn('WebSocket: Invalid message payload shape');
+        return;
+      }
       handleMessage(message);
     } catch (e) {
       console.error('WebSocket: Failed to parse message', e);
@@ -129,16 +150,24 @@ function handleMessage(message: WebSocketMessage) {
 
   switch (message.type) {
     case 'note.updated':
-      notes.handleRemoteUpdate(asNote(message.payload));
+      {
+        const note = parseNote(message.payload);
+        if (!note) {
+          console.warn('WebSocket: Invalid note.updated payload');
+          return;
+        }
+        notes.handleRemoteUpdate(note);
+      }
       tree.loadTree();
       {
-        const notePayload = asNoteEventPayload(message.payload);
+        const notePayload = parseNoteEventPayload(message.payload);
+        if (!notePayload) return;
         if (notePayload.content_encrypted && encryption.isEncryptionUnlocked()) {
           if (notePayload.encrypted_content) {
             try {
               const encryptedPayload: EncryptedPayload = {
                 ciphertext: notePayload.encrypted_content,
-                metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
+                metadata: parseEncryptionMetadata(notePayload.encryption_metadata),
               };
               const decrypted = encryption.decryptNote(
                 notePayload.encrypted_title || null,
@@ -157,16 +186,24 @@ function handleMessage(message: WebSocketMessage) {
       }
       break;
     case 'note.created':
-      notes.handleRemoteCreate(asNote(message.payload));
+      {
+        const note = parseNote(message.payload);
+        if (!note) {
+          console.warn('WebSocket: Invalid note.created payload');
+          return;
+        }
+        notes.handleRemoteCreate(note);
+      }
       tree.loadTree();
       {
-        const notePayload = asNoteEventPayload(message.payload);
+        const notePayload = parseNoteEventPayload(message.payload);
+        if (!notePayload) return;
         if (notePayload.content_encrypted && encryption.isEncryptionUnlocked()) {
           if (notePayload.encrypted_content) {
             try {
               const encryptedPayload: EncryptedPayload = {
                 ciphertext: notePayload.encrypted_content,
-                metadata: JSON.parse(notePayload.encryption_metadata || '{}'),
+                metadata: parseEncryptionMetadata(notePayload.encryption_metadata),
               };
               const decrypted = encryption.decryptNote(
                 notePayload.encrypted_title || null,
@@ -186,17 +223,35 @@ function handleMessage(message: WebSocketMessage) {
       break;
     case 'note.deleted':
       {
-        const notePayload = asNoteEventPayload(message.payload);
+        const notePayload = parseNoteEventPayload(message.payload);
+        if (!notePayload) {
+          console.warn('WebSocket: Invalid note.deleted payload');
+          return;
+        }
         notes.handleRemoteDelete(notePayload.id);
         tree.loadTree();
         searchIndex.removeFromIndex(notePayload.id);
       }
       break;
     case 'recipe.metadata.updated':
-      recipes.handleRemoteMetadataUpdate(asRecipeEventPayload(message.payload));
+      {
+        const payload = parseRecipeEventPayload(message.payload);
+        if (!payload) {
+          console.warn('WebSocket: Invalid recipe.metadata.updated payload');
+          return;
+        }
+        recipes.handleRemoteMetadataUpdate(payload);
+      }
       break;
     case 'recipe.ingredients.updated':
-      recipes.handleRemoteIngredientsUpdate(asRecipeEventPayload(message.payload));
+      {
+        const payload = parseRecipeEventPayload(message.payload);
+        if (!payload) {
+          console.warn('WebSocket: Invalid recipe.ingredients.updated payload');
+          return;
+        }
+        recipes.handleRemoteIngredientsUpdate(payload);
+      }
       break;
     default:
       console.log('WebSocket: Unknown message type', message.type);

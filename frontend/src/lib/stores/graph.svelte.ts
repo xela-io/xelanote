@@ -99,12 +99,34 @@ export function loadLayout(): Record<string, { x: number; y: number }> | null {
   if (typeof localStorage !== 'undefined') {
     try {
       const saved = localStorage.getItem('xelanote_graph_layout');
-      return saved ? JSON.parse(saved) : null;
+      return saved ? parseGraphLayout(saved) : null;
     } catch (err) {
       console.error('Failed to load graph layout:', err);
     }
   }
   return null;
+}
+
+function parseGraphLayout(raw: string): Record<string, { x: number; y: number }> | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const entries = Object.entries(parsed as Record<string, unknown>);
+  const layout: Record<string, { x: number; y: number }> = {};
+
+  for (const [id, value] of entries) {
+    if (!value || typeof value !== 'object') return null;
+    const point = value as { x?: unknown; y?: unknown };
+    if (typeof point.x !== 'number' || typeof point.y !== 'number') return null;
+    layout[id] = { x: point.x, y: point.y };
+  }
+
+  return layout;
 }
 
 // Clear all state (useful for logout)

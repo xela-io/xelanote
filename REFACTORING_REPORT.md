@@ -154,6 +154,11 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/stores/notes/saver.ts`, `frontend/src/lib/stores/notes/creator.ts`, `frontend/src/lib/stores/notes/mutations.ts`, `frontend/src/lib/stores/notes/encryption-toggle.ts`
     nutzen jetzt konkrete API-/Crypto-Typen (`NotePayload`, `TaskEventPayload`, `RecipeMetadata`, `RecipeIngredient`, `EncryptedPayload`).
   - `frontend/src/lib/stores/notes/helpers.ts` enthaelt `parseEncryptionMetadata()` fuer validierte Metadata-Deserialisierung.
+- **Type-Safety: Parse-Guards fuer Realtime/Index/Offline**
+  - `frontend/src/lib/stores/websocket.svelte.ts` validiert WebSocket-Message-/Payload-Form vor Verarbeitung.
+  - `frontend/src/lib/stores/search-index.svelte.ts` und `frontend/src/lib/offline/sync-manager.svelte.ts` verwenden validiertes Encryption-Metadata-Parsing.
+  - `frontend/src/lib/stores/graph.svelte.ts` validiert persistiertes Layout aus localStorage.
+  - Gemeinsamer Helper: `frontend/src/lib/stores/encryption-metadata.ts`.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -163,7 +168,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
-- Weitere unsaubere Casts in anderen Stores/Modulen (z.B. Graph/WebSocket/Search-Index/Offline-Sync JSON-Deserialisierung).
+- Weitere unsaubere Casts in anderen Stores/Modulen ausserhalb der bereits gehaerteten Pfade.
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 

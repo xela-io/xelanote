@@ -1,6 +1,6 @@
 import type { Backlink, Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
-import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 export interface CreateNoteDeps {
   title: string;

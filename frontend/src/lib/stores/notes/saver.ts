@@ -1,6 +1,6 @@
 import type { Note, NotePayload, OfflineNoteContext, TaskEventPayload } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
-import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
+import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 import type { TaskEventQueue } from '$lib/stores/notes/task-events';
 
 export interface SaveNoteDeps {

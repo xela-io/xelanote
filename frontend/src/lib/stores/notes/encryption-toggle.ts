@@ -1,5 +1,17 @@
-import type { Note, NotePayload } from '$lib/api';
+import type { Note, NotePayload, RecipeIngredient, RecipeMetadata } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
+
+type RecipeDecryptPayload = {
+  recipe_metadata?: RecipeMetadata;
+  recipe_ingredients?: RecipeIngredient[];
+};
+
+type RecipeContentPayload = {
+  content?: string;
+  recipe_metadata?: RecipeMetadata;
+  recipe_ingredients?: RecipeIngredient[];
+};
 
 export interface ToggleEncryptionDeps {
   getCurrentNote: () => Note | null;
@@ -19,7 +31,7 @@ export interface ToggleEncryptionDeps {
     content: string
   ) => {
     encryptedTitle: string | null;
-    encryptedContent: { ciphertext: string; metadata: any };
+    encryptedContent: EncryptedPayload;
     keywords: string[];
   };
   decryptNote: (
@@ -33,9 +45,12 @@ export interface ToggleEncryptionDeps {
     title: string,
     content: string,
     version: number,
-    recipeData?: { recipe_metadata?: any; recipe_ingredients?: any[] }
+    recipeData?: RecipeDecryptPayload
   ) => Promise<Note>;
-  getRecipeDetail: (id: string) => Promise<{ metadata?: any; ingredients?: any[] }>;
+  getRecipeDetail: (id: string) => Promise<{
+    metadata?: RecipeMetadata | null;
+    ingredients?: RecipeIngredient[];
+  }>;
   removeFromSearchIndex: (id: string) => void;
   addToSearchIndex: (id: string, title: string, content: string) => void;
 }
@@ -58,10 +73,10 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
     if (currentNote.content_encrypted !== false) {
       console.log('[NOTES] Decrypting note:', currentNote.id);
 
-      let recipeData: { recipe_metadata?: any; recipe_ingredients?: any[] } | undefined;
+      let recipeData: RecipeDecryptPayload | undefined;
       if (currentNote.note_type === 'recipe' && currentNote.content) {
         try {
-          const parsed = JSON.parse(currentNote.content);
+          const parsed = JSON.parse(currentNote.content) as RecipeContentPayload;
           if (parsed.recipe_metadata || parsed.recipe_ingredients) {
             recipeData = {
               recipe_metadata: parsed.recipe_metadata,
@@ -141,7 +156,7 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
     if (updated.content_encrypted && updated.encrypted_content) {
       const encryptedPayload: EncryptedPayload = {
         ciphertext: updated.encrypted_content,
-        metadata: JSON.parse(updated.encryption_metadata || '{}'),
+        metadata: parseEncryptionMetadata(updated.encryption_metadata),
       };
 
       const dec = deps.decryptNote(updated.encrypted_title || null, encryptedPayload);

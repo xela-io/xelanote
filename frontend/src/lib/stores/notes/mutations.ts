@@ -1,5 +1,6 @@
 import type { Backlink, Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
 
 export interface DeleteNoteDeps {
   getCurrentNote: () => Note | null;
@@ -59,14 +60,14 @@ export interface MoveNoteDeps {
     content: string
   ) => {
     encryptedTitle: string | null;
-    encryptedContent: { ciphertext: string; metadata: any };
+    encryptedContent: EncryptedPayload;
     keywords: string[];
   };
   extractUniqueLinks: (content: string) => { title: string }[];
   extractDueDates: (content: string) => NotePayload['due_dates'];
   updateNote: (
     id: string,
-    payload: any,
+    payload: NotePayload,
     version: number,
     offlineContext?: OfflineNoteContext
   ) => Promise<Note>;
@@ -84,7 +85,7 @@ export async function moveNote(deps: MoveNoteDeps) {
       if (note.content_encrypted && note.encrypted_content) {
         const encryptedPayload: EncryptedPayload = {
           ciphertext: note.encrypted_content,
-          metadata: JSON.parse(note.encryption_metadata || '{}'),
+          metadata: parseEncryptionMetadata(note.encryption_metadata),
         };
         const decrypted = deps.decryptNote(note.encrypted_title || null, encryptedPayload);
         note.content = decrypted.content;
@@ -148,7 +149,7 @@ export async function moveNote(deps: MoveNoteDeps) {
     if (updated.content_encrypted && updated.encrypted_content) {
       const encryptedPayload: EncryptedPayload = {
         ciphertext: updated.encrypted_content,
-        metadata: JSON.parse(updated.encryption_metadata || '{}'),
+        metadata: parseEncryptionMetadata(updated.encryption_metadata),
       };
       const decrypted = deps.decryptNote(updated.encrypted_title || null, encryptedPayload);
       processedUpdate = {

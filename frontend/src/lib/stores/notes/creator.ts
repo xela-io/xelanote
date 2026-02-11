@@ -1,5 +1,6 @@
 import type { Backlink, Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
 
 export interface CreateNoteDeps {
   title: string;
@@ -14,7 +15,7 @@ export interface CreateNoteDeps {
     content: string
   ) => {
     encryptedTitle: string | null;
-    encryptedContent: { ciphertext: string; metadata: any };
+    encryptedContent: EncryptedPayload;
     keywords: string[];
   };
   decryptNote: (
@@ -113,7 +114,7 @@ export async function createNote(deps: CreateNoteDeps) {
         try {
           const encryptedPayload: EncryptedPayload = {
             ciphertext: note.encrypted_content,
-            metadata: JSON.parse(note.encryption_metadata || '{}'),
+            metadata: parseEncryptionMetadata(note.encryption_metadata),
           };
 
           const decrypted = deps.decryptNote(note.encrypted_title || null, encryptedPayload);

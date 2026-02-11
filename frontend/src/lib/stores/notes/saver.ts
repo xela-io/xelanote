@@ -1,5 +1,6 @@
-import type { Note, NotePayload, OfflineNoteContext } from '$lib/api';
+import type { Note, NotePayload, OfflineNoteContext, TaskEventPayload } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { parseEncryptionMetadata } from '$lib/stores/notes/helpers';
 import type { TaskEventQueue } from '$lib/stores/notes/task-events';
 
 export interface SaveNoteDeps {
@@ -27,7 +28,7 @@ export interface SaveNoteDeps {
     content: string
   ) => {
     encryptedTitle: string | null;
-    encryptedContent: { ciphertext: string; metadata: any };
+    encryptedContent: EncryptedPayload;
     keywords: string[];
   };
   decryptNote: (
@@ -39,12 +40,12 @@ export interface SaveNoteDeps {
   extractDueDates: (content: string) => NotePayload['due_dates'];
   updateNote: (
     id: string,
-    payload: any,
+    payload: NotePayload,
     version: number,
     offlineContext?: OfflineNoteContext
   ) => Promise<Note>;
   updateSearchIndex: (id: string, title: string, content: string) => void;
-  recordTaskEvent: (noteId: string, payload: any) => Promise<void>;
+  recordTaskEvent: (noteId: string, payload: TaskEventPayload) => Promise<void>;
   isConflictError: (err: unknown) => boolean;
 }
 
@@ -163,7 +164,7 @@ export async function saveNote(deps: SaveNoteDeps) {
         try {
           const encryptedPayload: EncryptedPayload = {
             ciphertext: updated.encrypted_content,
-            metadata: JSON.parse(updated.encryption_metadata || '{}'),
+            metadata: parseEncryptionMetadata(updated.encryption_metadata),
           };
 
           const decrypted = deps.decryptNote(updated.encrypted_title || null, encryptedPayload);
@@ -203,7 +204,7 @@ export async function saveNote(deps: SaveNoteDeps) {
     if (noteEvents.length > 0) {
       deps.taskEventQueue.clearForNote(processedUpdate.id);
       for (const evt of noteEvents) {
-        const payload: any = {
+        const payload: TaskEventPayload = {
           event_type: evt.eventType,
           task_index: evt.taskIndex,
         };

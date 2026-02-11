@@ -150,6 +150,10 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `frontend/src/lib/stores/autosave.svelte.ts` validiert AutoSave-Settings vor Anwendung.
   - `frontend/src/lib/stores/folders.svelte.ts` und `frontend/src/lib/stores/tree.svelte.ts` validieren Expanded-Path-Arrays.
   - `frontend/src/lib/stores/settings.svelte.ts` validiert boolesche Preferences vor dem Laden.
+- **Type-Safety: Notes-Store Signaturen ohne `any` (Teilbereich)**
+  - `frontend/src/lib/stores/notes/saver.ts`, `frontend/src/lib/stores/notes/creator.ts`, `frontend/src/lib/stores/notes/mutations.ts`, `frontend/src/lib/stores/notes/encryption-toggle.ts`
+    nutzen jetzt konkrete API-/Crypto-Typen (`NotePayload`, `TaskEventPayload`, `RecipeMetadata`, `RecipeIngredient`, `EncryptedPayload`).
+  - `frontend/src/lib/stores/notes/helpers.ts` enthaelt `parseEncryptionMetadata()` fuer validierte Metadata-Deserialisierung.
 - **Backend: Fehlerbehandlung & Validierung gehaertet**
   - `backend/internal/api/journal.go` validiert `year`/`month` strikt (inkl. Range-Checks).
   - `backend/internal/api/notes_helpers.go`, `backend/internal/api/notes_crud.go`, `backend/internal/api/import.go` behandeln WS-JSON-Encode-Errors (loggen statt ignorieren).
@@ -159,7 +163,7 @@ Aktuell keine offenen Punkte (bereinigte Error-Handling-Hotspots).
   - `backend/internal/api/admin.go` behandelt Fehler beim Laden von User-Details mit klaren HTTP-Antworten.
 
 ### Offen
-- Weitere unsaubere Casts in anderen Stores/Modulen (insbesondere `frontend/src/lib/stores/notes/*` mit `any`-Payloads/Metadaten).
+- Weitere unsaubere Casts in anderen Stores/Modulen (z.B. Graph/WebSocket/Search-Index/Offline-Sync JSON-Deserialisierung).
 
 ## Phase 4 Fortschritt (Testing & Dokumentation)
 

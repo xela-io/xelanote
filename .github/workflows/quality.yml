@@ -70,6 +70,20 @@ jobs:
       - name: Check env var sync
         run: bash scripts/check-env-sync.sh
 
+  action-pinning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check GitHub Action pinning policy
+        run: bash scripts/check-action-pinning.sh
+
+  binary-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tracked binary artifacts
+        run: bash scripts/check-binary-hygiene.sh
+
   changelog:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

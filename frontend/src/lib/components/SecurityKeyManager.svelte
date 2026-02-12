@@ -203,7 +203,7 @@
     font-size: 0.875rem;
     color: var(--color-warning);
     background: color-mix(in oklch, var(--color-warning), transparent 90%);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   .add-key-row {
@@ -218,7 +218,7 @@
     font-size: 0.875rem;
     background: var(--color-background);
     border: 1px solid var(--color-border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--color-foreground);
   }
 
@@ -237,7 +237,7 @@
     color: var(--color-primary-foreground);
     background: var(--color-primary);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     white-space: nowrap;
   }
@@ -264,7 +264,7 @@
     padding: 0.75rem;
     background: var(--color-background);
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   .credential-info {
@@ -280,7 +280,7 @@
     width: 36px;
     height: 36px;
     background: color-mix(in oklch, var(--color-primary), transparent 85%);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--color-primary);
   }
 
@@ -306,7 +306,7 @@
     color: var(--color-muted-foreground);
     background: transparent;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
   }
 
@@ -341,7 +341,7 @@
     padding: 1.5rem;
     background: var(--color-card);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   }
 
@@ -371,7 +371,7 @@
     text-align: center;
     background: var(--color-background);
     border: 1px solid var(--color-border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--color-foreground);
   }
 
@@ -393,7 +393,7 @@
     color: var(--color-primary-foreground);
     background: var(--color-primary);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
   }
 

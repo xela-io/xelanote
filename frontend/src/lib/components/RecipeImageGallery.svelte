@@ -194,7 +194,7 @@
     position: relative;
     aspect-ratio: 1;
     overflow: hidden;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-lg);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
   }
@@ -225,7 +225,7 @@
     border: none;
     cursor: pointer;
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--duration-fast) var(--ease-default);
   }
 
   .image-wrapper:hover .delete-button {
@@ -240,7 +240,7 @@
     flex-direction: column;
     gap: 0.125rem;
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--duration-fast) var(--ease-default);
   }
 
   .image-wrapper:hover .reorder-buttons {
@@ -249,7 +249,7 @@
 
   .reorder-button {
     padding: 0.125rem;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
     background: color-mix(in oklch, var(--color-bg) 80%, transparent);
     color: var(--color-text);
     border: 1px solid var(--color-border);
@@ -261,7 +261,7 @@
     padding: 0.125rem 0.25rem;
     font-size: 0.75rem;
     border: 1px solid var(--color-border);
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
     background: var(--color-bg);
     color: var(--color-text);
   }
@@ -285,7 +285,7 @@
     gap: 0.5rem;
     aspect-ratio: 1;
     border: 2px dashed var(--color-border);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-lg);
     background: var(--color-bg);
     color: var(--color-muted);
     cursor: pointer;
@@ -329,7 +329,7 @@
     max-width: 100%;
     max-height: 85vh;
     object-fit: contain;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-lg);
   }
 
   .lightbox-caption {

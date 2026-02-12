@@ -125,7 +125,7 @@
     -webkit-user-select: none;
     padding: 0 8px;
     font-size: 12px;
-    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color var(--duration-fast) var(--ease-default);
   }
 
   /* Electron: use CSS for drag region */
@@ -156,11 +156,11 @@
     border: none;
     color: var(--color-sidebar-foreground);
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition:
-      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-      color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-      transform 100ms cubic-bezier(0.4, 0, 0.2, 1);
+      background-color var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default),
+      transform var(--duration-fast) var(--ease-default);
   }
 
   .titlebar-buttons button:hover {

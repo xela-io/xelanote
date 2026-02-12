@@ -30,7 +30,7 @@
     font-size: 0.875rem;
     background: transparent;
     border: 1px solid var(--color-border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--color-muted-foreground);
     cursor: pointer;
   }

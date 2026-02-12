@@ -44,10 +44,10 @@
     padding: 0.5rem 0.75rem;
     background: var(--color-surface-200);
     border: 1px solid var(--color-surface-300);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-lg);
     color: var(--color-text);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
     font-size: 0.875rem;
   }
 

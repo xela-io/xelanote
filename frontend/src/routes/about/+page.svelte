@@ -203,7 +203,7 @@
     padding: 3rem;
     background: var(--color-card);
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
   }
 
@@ -271,7 +271,7 @@
   .feature-card {
     background: var(--color-background);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     text-align: center;
     transition:
@@ -341,7 +341,7 @@
   .security-card {
     background: var(--color-background);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     text-align: center;
     transition:
@@ -382,7 +382,7 @@
   .platform-card {
     background: var(--color-background);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     text-align: center;
     transition:
@@ -414,10 +414,10 @@
     color: var(--color-primary-foreground);
     background: var(--color-primary);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     text-decoration: none;
-    transition: background 0.2s;
+    transition: background var(--duration-base) var(--ease-default);
   }
 
   .login-link:hover {

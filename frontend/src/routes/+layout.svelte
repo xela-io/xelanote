@@ -4,6 +4,7 @@
   import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { get } from 'svelte/store';
+  import { fade } from 'svelte/transition';
   import { _, locale } from 'svelte-i18n';
 
   import { browser } from '$app/environment';
@@ -15,6 +16,7 @@
   import ConflictDialog from '$lib/components/ConflictDialog.svelte';
   import DesktopTitleBar from '$lib/components/DesktopTitleBar.svelte';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
+  import Logo from '$lib/components/Logo.svelte';
   import MobileHeader from '$lib/components/MobileHeader.svelte';
   import OfflineBanner from '$lib/components/OfflineBanner.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
@@ -426,13 +428,12 @@
     <!-- Loading state while checking auth - uses CSS variables for instant theming -->
     <div
       class="flex-1 flex items-center justify-center"
-      style="background-color: var(--color-background, #111);"
+      style="background-color: var(--color-background, oklch(97% 0.03 85)); color-scheme: light dark;"
     >
-      <div class="text-center">
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-          style="border-color: var(--color-muted-foreground, #666);"
-        ></div>
+      <div class="text-center animate-pulse">
+        <div class="mx-auto mb-4">
+          <Logo size="xl" />
+        </div>
         <p style="color: var(--color-muted-foreground, #888);">{$_('common.loading')}</p>
       </div>
     </div>
@@ -470,7 +471,8 @@
       <!-- Mobile backdrop - after main for correct stacking -->
       {#if ui.getIsMobile() && ui.getSidebarOpen()}
         <div
-          class="fixed inset-0 bg-black/50 z-40"
+          class="fixed inset-0 bg-black/40 backdrop-blur-md motion-reduce:backdrop-blur-none motion-reduce:bg-black/50 z-40"
+          transition:fade={{ duration: 200 }}
           onclick={() => ui.setSidebarOpen(false)}
           onkeydown={(e) => {
             if (e.key === 'Escape') ui.setSidebarOpen(false);

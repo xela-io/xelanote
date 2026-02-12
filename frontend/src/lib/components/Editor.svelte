@@ -1044,7 +1044,7 @@
     flex-shrink: 0;
     position: relative;
     background: var(--color-border, #333);
-    transition: background-color 0.15s ease;
+    transition: background-color var(--duration-fast) var(--ease-default);
   }
 
   .split-resize-handle:hover,

@@ -210,7 +210,7 @@
 						rounded-lg font-medium
 						hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/40
 						disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0
-						transition-all duration-200"
+						transition-[transform,box-shadow,opacity] duration-200"
           onclick={handleWebAuthnUnlock}
           disabled={isWebAuthnUnlocking || isUnlocking}
         >

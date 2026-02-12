@@ -386,7 +386,7 @@
     font-size: 0.875rem;
     color: var(--color-text-muted, hsl(var(--muted-foreground)));
     border-bottom: 2px solid transparent;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .tab-button:hover {

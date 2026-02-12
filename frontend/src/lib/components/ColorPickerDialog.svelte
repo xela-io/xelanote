@@ -155,6 +155,6 @@
 
   input[type='color']::-webkit-color-swatch {
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
   }
 </style>

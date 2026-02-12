@@ -114,7 +114,7 @@
   .changelog-content :global(code) {
     font-size: 0.8rem;
     padding: 0.1rem 0.3rem;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
     background: var(--color-muted);
   }
 </style>

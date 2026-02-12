@@ -61,8 +61,8 @@
     cursor: grab;
     overflow: hidden;
     white-space: nowrap;
-    border-radius: 4px;
-    transition: background-color 0.15s;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--duration-fast) var(--ease-default);
     display: flex;
     align-items: center;
     gap: 6px;

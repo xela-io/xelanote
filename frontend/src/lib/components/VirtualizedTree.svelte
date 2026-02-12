@@ -290,7 +290,7 @@
   [role='treeitem'][aria-selected='true'] {
     outline: 2px solid var(--color-primary, #3b82f6);
     outline-offset: -2px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
   }
 
   /* Ensure focus is visible for accessibility */

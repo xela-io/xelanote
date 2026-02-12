@@ -599,8 +599,7 @@
 </script>
 
 <div
-  class="h-full bg-background overflow-y-auto overflow-x-hidden"
-  style="scrollbar-width: none !important; scrollbar-gutter: stable;"
+  class="h-full bg-background overflow-y-auto overflow-x-hidden scrollbar-none"
 >
   <div class="max-w-3xl mx-auto p-4 md:p-8">
     <!-- Header -->

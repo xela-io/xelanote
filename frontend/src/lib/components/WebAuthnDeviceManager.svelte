@@ -318,7 +318,7 @@
     padding: 1rem;
     background: var(--color-card);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.875rem;
     color: var(--color-muted-foreground);
   }
@@ -363,10 +363,10 @@
     padding: 0.625rem 0.875rem;
     background: var(--color-card);
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
     color: var(--color-foreground);
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .input-row input:focus {
@@ -388,11 +388,11 @@
     background: var(--color-primary);
     color: var(--color-primary-foreground);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
     white-space: nowrap;
   }
 
@@ -426,8 +426,8 @@
     padding: 1rem;
     background: var(--color-card);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
-    transition: all 0.15s ease;
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .device-card:hover {
@@ -444,7 +444,7 @@
     justify-content: center;
     background: var(--color-background);
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--color-muted-foreground);
   }
 
@@ -481,10 +481,10 @@
     justify-content: center;
     background: transparent;
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--color-muted-foreground);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .btn-remove:hover:not(:disabled) {

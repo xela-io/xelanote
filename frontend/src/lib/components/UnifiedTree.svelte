@@ -769,7 +769,7 @@
     top: 2px;
     bottom: 2px;
     width: 3px;
-    border-radius: 1.5px;
+    border-radius: var(--radius-xs);
   }
 
   .tree-item.drop-before::before,
@@ -806,7 +806,7 @@
     align-items: center;
     justify-content: center;
     color: var(--color-muted-foreground);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
@@ -833,10 +833,10 @@
     cursor: pointer;
     font-size: 13px;
     color: var(--color-sidebar-foreground);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     max-width: 100%;
     text-align: left;
-    transition: background 0.1s;
+    transition: background var(--duration-fast) var(--ease-default);
     min-width: 0;
     -webkit-tap-highlight-color: transparent;
   }
@@ -874,10 +874,10 @@
     color: var(--color-muted-foreground);
     background: var(--color-sidebar-accent);
     padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: var(--radius-xl);
     font-weight: 500;
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--duration-fast) var(--ease-default);
   }
 
   .folder-row-container:focus-within .note-count {
@@ -952,9 +952,9 @@
     border: none;
     cursor: pointer;
     color: var(--color-muted-foreground);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--duration-fast) var(--ease-default);
     -webkit-tap-highlight-color: transparent;
   }
 

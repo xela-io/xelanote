@@ -159,8 +159,8 @@
     font-size: 13px;
     text-align: left;
     cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.15s;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--duration-fast) var(--ease-default);
   }
 
   .folder-button:hover {
@@ -190,7 +190,7 @@
     background: transparent;
     color: var(--color-muted-foreground);
     cursor: pointer;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
     flex-shrink: 0;
   }
 
@@ -216,7 +216,7 @@
     color: var(--color-muted-foreground);
     background-color: var(--color-sidebar-accent);
     padding: 1px 6px;
-    border-radius: 10px;
+    border-radius: var(--radius-xl);
     flex-shrink: 0;
   }
 </style>

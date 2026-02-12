@@ -2,8 +2,6 @@
   import { ChevronDown } from 'lucide-svelte';
   import { type Snippet, untrack } from 'svelte';
 
-  import { animationDurations, easing } from '$lib/design/tokens';
-
   interface Props {
     title: string;
     collapsible?: boolean;
@@ -29,14 +27,14 @@
       onclick={toggleOpen}
       class="flex items-center justify-between px-4 py-2 text-xs text-sidebar-foreground uppercase tracking-wider
 				border-t border-sidebar-border hover:bg-sidebar-accent/20
-				transition-colors duration-[{animationDurations.fast}ms] ease-[{easing.default}]
+				transition-colors duration-fast ease-default
 				focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-ring"
       aria-expanded={isOpen}
     >
       <span>{title}</span>
       <ChevronDown
         size={16}
-        class="transition-transform duration-[{animationDurations.base}ms] ease-[{easing.default}]
+        class="transition-transform duration-base ease-default
 					{isOpen ? 'rotate-0' : '-rotate-90'}"
       />
     </button>
@@ -51,7 +49,7 @@
   <!-- Section Content -->
   {#if !collapsible || isOpen}
     <div
-      class="overflow-hidden max-h-screen transition-all duration-[{animationDurations.slow}ms] ease-[{easing.default}]"
+      class="overflow-hidden max-h-screen transition-all duration-slow ease-default"
       style={`max-height: ${isOpen ? '500px' : '0'}; opacity: ${isOpen ? '1' : '0'}`}
     >
       {@render children?.()}
@@ -62,7 +60,7 @@
 <style>
   section {
     transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-timing-function: var(--ease-default);
   }
 
   button:hover {
@@ -77,7 +75,7 @@
 
   div {
     transition:
-      max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      max-height var(--duration-slow) var(--ease-default),
+      opacity var(--duration-base) var(--ease-default);
   }
 </style>

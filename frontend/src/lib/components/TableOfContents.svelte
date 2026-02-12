@@ -126,13 +126,13 @@
     align-items: center;
     gap: 4px;
     padding: 6px 8px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: color-mix(in oklch, var(--color-background) 85%, transparent);
     backdrop-filter: blur(8px);
     border: 1px solid var(--color-border);
     color: var(--color-muted-foreground);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
     font-size: 0.75rem;
   }
 
@@ -149,7 +149,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9999px;
+    border-radius: 9999px; /* rounded-full */
     background: var(--color-muted);
     color: var(--color-muted-foreground);
   }
@@ -163,7 +163,7 @@
     overflow-y: auto;
     background: var(--color-background);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     box-shadow:
       0 4px 6px -1px rgb(0 0 0 / 0.1),
       0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -197,7 +197,7 @@
     text-align: left;
     padding: 4px 8px;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: none;
     color: var(--color-muted-foreground);
     font-size: 0.8rem;
@@ -205,7 +205,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all 0.1s ease;
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .toc-entry:hover {

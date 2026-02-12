@@ -1,8 +1,6 @@
 <script lang="ts">
   import type { ComponentType } from 'svelte';
 
-  import { animationDurations, easing } from '$lib/design/tokens';
-
   interface Props {
     icon?: ComponentType;
     label: string;
@@ -47,7 +45,7 @@
 </script>
 
 <div
-  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-[{animationDurations.fast}ms] ease-[{easing.default}]
+  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-fast ease-default
 		{isActive
     ? 'bg-sidebar-accent/40 text-sidebar-primary border-l-3 border-l-sidebar-primary'
     : 'text-sidebar-foreground hover:bg-sidebar-accent/30'}"
@@ -102,8 +100,8 @@
 <style>
   div {
     transition-property: background-color, color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+    transition-timing-function: var(--ease-default);
+    transition-duration: var(--duration-fast);
   }
 
   @media (hover: hover) {

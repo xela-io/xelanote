@@ -2,8 +2,6 @@
   import type { ComponentType, Snippet } from 'svelte';
   import type { HTMLButtonAttributes } from 'svelte/elements';
 
-  import { animationDurations, easing } from '$lib/design/tokens';
-
   type IconComponent = ComponentType;
 
   interface Props extends HTMLButtonAttributes {
@@ -67,7 +65,7 @@
 <button
   class="{getVariantClasses(variant)} {getSizeClasses(size)}
 		flex items-center justify-center gap-2 rounded-lg font-medium
-		transition-all duration-[{animationDurations.fast}ms] ease-[{easing.default}]
+		transition-all duration-fast ease-default
 		focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
 		disabled:opacity-50 disabled:cursor-not-allowed
 		{fullWidth ? 'w-full' : ''}
@@ -107,8 +105,8 @@
   button {
     /* Ensure smooth transitions for color and shadow changes */
     transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+    transition-timing-function: var(--ease-default);
+    transition-duration: var(--duration-fast);
   }
 
   button:active:not(:disabled) {

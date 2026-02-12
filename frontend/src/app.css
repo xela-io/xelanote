@@ -89,61 +89,64 @@ body.touch-drag-active * {
   user-select: none !important;
 }
 
-/* Scrollbar styling - MUST come before @theme */
+/* Thin scrollbar opt-in — apply .thin-scrollbar to scroll containers */
 html,
 body,
-* {
-  scrollbar-width: thin !important;
+.thin-scrollbar,
+.cm-scroller {
+  scrollbar-width: thin;
 }
 
 /* Dark mode scrollbar colors */
 .theme-gruvbox-dark,
-.theme-gruvbox-dark * {
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent !important;
+.theme-gruvbox-dark .thin-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-/* WebKit scrollbar styling for Electron/Chrome */
-.theme-gruvbox-dark ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* WebKit scrollbar styling (Safari still needs pseudo-elements) */
+@supports not (scrollbar-width: thin) {
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-.theme-gruvbox-dark ::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.theme-gruvbox-dark ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+  }
 
-.theme-gruvbox-dark ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.5);
-}
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.4);
+  }
 
-/* Light mode scrollbar colors */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+  .theme-gruvbox-dark .thin-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .theme-gruvbox-dark .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
+  .theme-gruvbox-dark .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.4);
+  .theme-gruvbox-dark .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+  }
 }
 
 .scrollbar-none {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
   overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 .scrollbar-none::-webkit-scrollbar {
@@ -187,7 +190,7 @@ body,
   --color-ring: oklch(38% 0.1 230);
   --color-selection: oklch(82% 0.04 85);
   --color-selection-foreground: oklch(15% 0.02 60);
-  --color-sidebar-background: oklch(95% 0.03 85);
+  --color-sidebar-background: oklch(92% 0.03 85);
   --color-sidebar-foreground: oklch(38% 0.08 60);
   --color-sidebar-primary: oklch(38% 0.1 230);
   --color-sidebar-primary-foreground: oklch(97% 0.03 85);
@@ -196,8 +199,25 @@ body,
   --color-sidebar-border: oklch(88% 0.03 85);
   --color-sidebar-ring: oklch(38% 0.1 230);
 
-  /* Border radius */
+  /* Border radius (Tailwind v4 default scale) */
   --radius: 0.5rem;
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  /* Motion tokens */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-entrance: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
 
   /* Fonts */
   --font-sans: ui-sans-serif, system-ui, sans-serif;
@@ -231,7 +251,7 @@ body,
   --color-ring: oklch(38% 0.1 230);
   --color-selection: oklch(82% 0.04 85);
   --color-selection-foreground: oklch(15% 0.02 60);
-  --color-sidebar-background: oklch(95% 0.03 85);
+  --color-sidebar-background: oklch(92% 0.03 85);
   --color-sidebar-foreground: oklch(38% 0.08 60);
   --color-sidebar-primary: oklch(38% 0.1 230);
   --color-sidebar-primary-foreground: oklch(97% 0.03 85);
@@ -268,7 +288,7 @@ body,
   --color-ring: oklch(72% 0.1 155);
   --color-selection: oklch(38% 0.04 60);
   --color-selection-foreground: oklch(90% 0.03 85);
-  --color-sidebar-background: oklch(20% 0.02 60);
+  --color-sidebar-background: oklch(17% 0.02 60);
   --color-sidebar-foreground: oklch(72% 0.12 155);
   --color-sidebar-primary: oklch(72% 0.1 155);
   --color-sidebar-primary-foreground: oklch(22% 0.02 60);
@@ -497,9 +517,9 @@ button,
 [role='menuitem'],
 a {
   transition:
-    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default);
 }
 
 /* Smooth shadow transitions for cards and elevated elements */
@@ -508,61 +528,61 @@ a {
 .surface,
 .popover {
   transition:
-    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow var(--duration-base) var(--ease-default),
+    transform var(--duration-base) var(--ease-default);
 }
 
 /* Smooth focus ring transitions */
 :focus-visible {
   transition:
-    outline-offset 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    outline-width 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-offset var(--duration-fast) var(--ease-default),
+    outline-width var(--duration-fast) var(--ease-default);
 }
 
 /* Collapsible items collapse/expand animation */
 .collapsible {
   transition:
-    max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    max-height var(--duration-slow) var(--ease-default),
+    opacity var(--duration-base) var(--ease-default);
 }
 
 /* Smooth theme transitions */
 html {
   transition:
-    background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color var(--duration-slow) var(--ease-default),
+    color var(--duration-slow) var(--ease-default);
 }
 
 /* ===== Animation Utility Classes ===== */
 
 /* Entrance animations - use these classes for appearing elements */
 .animate-fade-in {
-  animation: fadeIn 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: fadeIn var(--duration-base) var(--ease-entrance);
 }
 
 .animate-slide-up {
-  animation: slideUp 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: slideUp var(--duration-base) var(--ease-entrance);
 }
 
 .animate-slide-down {
-  animation: slideDown 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: slideDown var(--duration-base) var(--ease-entrance);
 }
 
 .animate-slide-right {
-  animation: slideRight 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: slideRight var(--duration-base) var(--ease-entrance);
 }
 
 .animate-slide-left {
-  animation: slideLeft 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: slideLeft var(--duration-base) var(--ease-entrance);
 }
 
 .animate-scale-up {
-  animation: scaleUp 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: scaleUp var(--duration-base) var(--ease-entrance);
 }
 
 /* Exit animations */
 .animate-fade-out {
-  animation: fadeOut 200ms cubic-bezier(0.3, 0, 0.8, 0.15);
+  animation: fadeOut var(--duration-base) var(--ease-exit);
 }
 
 /* Loading animations */
@@ -580,11 +600,11 @@ html {
 
 /* Popover/Tooltip animations */
 .animate-pop-in {
-  animation: popIn 200ms cubic-bezier(0.2, 0, 0, 1);
+  animation: popIn var(--duration-base) var(--ease-entrance);
 }
 
 .animate-pop-out {
-  animation: popOut 200ms cubic-bezier(0.3, 0, 0.8, 0.15);
+  animation: popOut var(--duration-base) var(--ease-exit);
 }
 
 /* CodeMirror customization */
@@ -634,7 +654,7 @@ html {
 /* Due date syntax highlighting in editor */
 .cm-due-date {
   background-color: var(--color-muted);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   padding: 0 2px;
 }
 
@@ -654,14 +674,14 @@ html {
 /* Preview Search Highlights */
 .markdown-preview mark.search-highlight {
   background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   padding: 0 1px;
 }
 
 /* Color tag styling in editor */
 .cm-color-tag {
   background-color: var(--color-muted);
-  border-radius: 0.125rem;
+  border-radius: var(--radius-xs);
   padding: 0 0.125rem;
   opacity: 0.7;
 }
@@ -758,7 +778,7 @@ html {
 .markdown-preview :not(pre) > code {
   background-color: var(--color-muted);
   padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 0.875em;
   /* Inline-Code umbrechen, aber Formatierung bewahren */
@@ -770,7 +790,7 @@ html {
 .markdown-preview pre {
   background-color: var(--color-muted);
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
   overflow-x: auto;
   margin-bottom: 1rem;
 }
@@ -842,7 +862,7 @@ html {
   height: auto;
   display: block;
   margin: 1rem 0;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
 }
 
 /* ===== Resizable Image Wrapper ===== */
@@ -867,7 +887,7 @@ html {
   width: 12px;
   height: 12px;
   background: var(--color-primary);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   opacity: 0;
   cursor: nwse-resize;
   transition: opacity 150ms ease;
@@ -931,7 +951,7 @@ html {
 .due-date {
   display: inline-block;
   padding: 0.1rem 0.4rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
@@ -1034,9 +1054,9 @@ html {
   padding: 2px 4px;
   color: var(--color-muted-foreground);
   transition:
-    opacity 150ms ease,
-    color 150ms ease;
-  border-radius: 2px;
+    opacity var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+  border-radius: var(--radius-xs);
 }
 
 .markdown-preview .drag-handle:hover {
@@ -1065,12 +1085,12 @@ html {
 .markdown-preview .task-drag-ghost {
   opacity: 0.4;
   background: var(--color-accent);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .markdown-preview .task-drag-chosen {
   background: var(--color-selection);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .markdown-preview .task-drag-active {
@@ -1111,7 +1131,7 @@ html {
 }
 
 .completed-tasks-summary .chevron-icon {
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--duration-base) var(--ease-default);
   width: 14px;
   height: 14px;
   flex-shrink: 0;
@@ -1151,25 +1171,6 @@ details.completed-tasks-group[open] .chevron-icon {
   }
 }
 
-/* Hide scrollbar while keeping scroll functionality */
-.scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-  overflow-y: scroll; /* Force scrollbar, then hide it */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
-}
-
-.scrollbar-hide {
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-}
-
-/* For settings page - hide scrollbar on outer container */
-[style*='scrollbar-width: none']::-webkit-scrollbar {
-  display: none;
-}
 
 /* Slide-up animation for mobile bottom sheet */
 @keyframes slide-up {
@@ -1282,7 +1283,7 @@ details.completed-tasks-group[open] .chevron-icon {
 .cm-tooltip-autocomplete {
   background-color: var(--color-popover) !important;
   border: 1px solid var(--color-border) !important;
-  border-radius: 0.5rem !important;
+  border-radius: var(--radius-lg) !important;
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;

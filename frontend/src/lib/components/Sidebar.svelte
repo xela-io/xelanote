@@ -316,7 +316,7 @@
       (ui.getSidebarOpen() ? 'translate-x-0' : '-translate-x-full')
     : ui.getSidebarOpen()
       ? 'relative shrink-0'
-      : 'relative w-12 shrink-0 transition-all duration-200'}"
+      : 'relative w-12 shrink-0 transition-[width,opacity] duration-200'}"
   style={!ui.getIsMobile() && ui.getSidebarOpen() ? `width: ${ui.getSidebarWidth()}px` : undefined}
   use:swipe={{
     direction: 'left',
@@ -396,7 +396,7 @@
 
       <!-- Notes Tree (main content - maximized space) -->
       <div
-        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2 thin-scrollbar"
         use:touchdrag={{
           holdDuration: 300,
           enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
@@ -515,7 +515,7 @@
           <div class="px-4 py-1.5 text-xs text-muted-foreground truncate">
             {auth.getCurrentUser()?.email}{#if appVersion}<button
                 onclick={() => (showChangelogDialog = true)}
-                class="opacity-60 hover:opacity-100 hover:text-primary transition-all cursor-pointer"
+                class="opacity-60 hover:opacity-100 hover:text-primary transition-[opacity,color] cursor-pointer"
                 title="Changelog"
               >
                 · {appVersion}</button
@@ -638,7 +638,7 @@
 
       <!-- Notes Tree (main content - maximized space) -->
       <div
-        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2 thin-scrollbar"
         use:touchdrag={{
           holdDuration: 300,
           enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
@@ -748,7 +748,7 @@
           <div class="px-4 py-1.5 text-xs text-muted-foreground truncate">
             {auth.getCurrentUser()?.email}{#if appVersion}<button
                 onclick={() => (showChangelogDialog = true)}
-                class="opacity-60 hover:opacity-100 hover:text-primary transition-all cursor-pointer"
+                class="opacity-60 hover:opacity-100 hover:text-primary transition-[opacity,color] cursor-pointer"
                 title="Changelog"
               >
                 · {appVersion}</button
@@ -980,9 +980,9 @@
     margin: 4px 8px;
     padding: 0;
     border: 1px dashed transparent;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     text-align: center;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-default);
     opacity: 0;
     height: 0;
     overflow: hidden;
@@ -992,19 +992,20 @@
     opacity: 1;
     height: auto;
     padding: 8px 12px;
-    border-color: var(--text-accent, #3b82f6);
-    background: var(--bg-accent-subtle, rgba(59, 130, 246, 0.05));
+    border-color: var(--color-primary);
+    background: rgba(59, 130, 246, 0.05);
+    background: color-mix(in oklch, var(--color-primary), transparent 90%);
   }
 
   .drop-zone-hint {
     font-size: 0.75rem;
-    color: var(--text-muted, #6b7280);
+    color: var(--color-muted-foreground);
     pointer-events: none;
     font-weight: 500;
   }
 
   .drop-zone.active .drop-zone-hint {
-    color: var(--text-accent, #3b82f6);
+    color: var(--color-primary);
   }
 
   /* Touch devices: show drop zone only during active touch drag.
@@ -1040,7 +1041,7 @@
     height: 100%;
     cursor: col-resize;
     z-index: 10;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--duration-fast) var(--ease-default);
   }
 
   .resize-handle:hover,

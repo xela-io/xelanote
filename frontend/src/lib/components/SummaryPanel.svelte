@@ -185,7 +185,7 @@
 
 <style>
   .summary-panel {
-    transition: all 150ms ease;
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .summary-panel:hover {

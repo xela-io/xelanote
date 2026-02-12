@@ -67,7 +67,7 @@ Seit 2026-02-06 wird das Staging-Deployment vollautomatisch ueber Forgejo Action
 2. **Checkout** (SHA-pinned `actions/checkout@v4`)
 3. **Pre-Flight Checks:**
    - Env-File lesbar (`/home/container/.xelanote.env`)
-   - Pflicht-Variablen vorhanden (`JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `XELANOTE_DB`, `XELANOTE_ENV`)
+   - Pflicht-Variablen vorhanden (`JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `XELANOTE_DB`, `XELANOTE_ENV`, `TRUSTED_PROXIES`)
    - `JWT_SECRET` mindestens 64 Zeichen
    - Docker-Daemon erreichbar
    - Docker-Netzwerk `nginx_default` existiert
@@ -126,6 +126,17 @@ Das Script erstellt:
 ```bash
 # Installation (Debian/Ubuntu)
 sudo apt install nodejs
+```
+
+**`TRUSTED_PROXIES` in Env-File setzen:**
+Im Production-Mode (`XELANOTE_ENV=production`) muss `TRUSTED_PROXIES` gesetzt sein, sonst startet der Server nicht (`log.Fatal`). Format: Komma-getrennte CIDRs.
+
+```bash
+# In ~/.xelanote.env hinzufuegen:
+# Caddy/Nginx auf dem gleichen Host:
+TRUSTED_PROXIES=127.0.0.1/32
+# Docker-Netzwerk (z.B. nginx-proxy-manager):
+# TRUSTED_PROXIES=172.18.0.0/16
 ```
 
 **`WEBAUTHN_RP_ID` in Env-File setzen:**
@@ -331,6 +342,7 @@ ssh xelanote-prod "sudo docker logs xelanote --tail 20"
 | `XELANOTE_DB` | `/app/data/xelanote.db` | Datenbank-Pfad im Container |
 | `XELANOTE_ENV` | `production` | Aktiviert Secure Cookies (SameSite=Strict) |
 | `CORS_ALLOWED_ORIGINS` | `https://<STAGING_URL>` | Erlaubte Origins für CORS & WebSocket |
+| `TRUSTED_PROXIES` | `127.0.0.1/32` | Trusted Reverse-Proxy CIDRs fuer X-Forwarded-For |
 
 **Wichtig**: `CORS_ALLOWED_ORIGINS` MUSS gesetzt sein, sonst werden WebSocket-Verbindungen abgelehnt!
 
@@ -357,6 +369,7 @@ docker run -d --name xelanote --restart unless-stopped \
 - `XELANOTE_DB=/app/data/xelanote.db`
 - `XELANOTE_ENV=production`
 - `CORS_ALLOWED_ORIGINS=https://your-domain.com`
+- `TRUSTED_PROXIES=127.0.0.1/32` (CIDR des Reverse Proxy)
 
 **Parameter erklärt:**
 - `-d`: Detached mode (Hintergrund)

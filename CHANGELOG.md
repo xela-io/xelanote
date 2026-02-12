@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- CI/CD: `TRUSTED_PROXIES` zu Pre-flight Checks in Staging- und Production-Workflows hinzugefuegt (fehlende Variable verursachte `log.Fatal` beim Container-Start und Health-Check-Failure mit Auto-Rollback)
+
 ### Added
 
 - Backend API route wiring modularized into domain-specific route files for improved maintainability.

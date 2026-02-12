@@ -41,7 +41,7 @@ jobs:
           fi
 
           echo "--- Validating required variables ---"
-          REQUIRED_VARS="JWT_SECRET CORS_ALLOWED_ORIGINS XELANOTE_DB XELANOTE_ENV"
+          REQUIRED_VARS="JWT_SECRET CORS_ALLOWED_ORIGINS XELANOTE_DB XELANOTE_ENV TRUSTED_PROXIES"
           for var in $REQUIRED_VARS; do
             val=$(grep "^${var}=" "$ENV_FILE" | head -1 | cut -d'=' -f2-)
             if [ -z "$val" ]; then

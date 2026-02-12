@@ -24,8 +24,8 @@
 
   import type { Note } from '$lib/api';
   import { FEATURE_FLAGS } from '$lib/config';
+  import { formatRelativeTime } from '$lib/utils/time';
 
-  import Breadcrumb from '../Breadcrumb.svelte';
   import SpellCheckToggle from '../SpellCheckToggle.svelte';
 
   type EditorMode = 'edit' | 'split' | 'preview';
@@ -96,17 +96,10 @@
 
 <!-- Toolbar (fixed header, not in scroll container) -->
 <div class="flex-shrink-0 z-10 border-b border-border bg-background">
-  <!-- Breadcrumb Navigation - hidden on mobile -->
-  {#if !isMobile && note}
-    <div class="px-4 pt-2">
-      <Breadcrumb folderPath={note.folder_path} noteTitle={note.title} />
-    </div>
-  {/if}
-
-  <!-- Mobile: Two-row layout | Desktop: Single-row layout -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 gap-2">
-    <!-- Title (auto-sized on mobile so save icon sits next to text, limited on desktop) -->
-    <div class="flex items-center gap-1 flex-shrink min-w-0 sm:max-w-[30%]">
+  <!-- Mobile: flex-col stacked | Desktop: 3-column grid for true centering -->
+  <div class="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center px-4 py-2 gap-2">
+    <!-- Left: Title + Last Updated + Sync status -->
+    <div class="flex items-center gap-2 min-w-0">
       <input
         type="text"
         value={note?.title ?? ''}
@@ -116,10 +109,8 @@
         spellcheck="true"
         inputmode="text"
         aria-label={$_('component.editor.title_input')}
-        class="text-lg font-semibold bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring rounded px-1 min-w-0 {isMobile
-          ? ''
-          : 'w-full'}"
-        style={isMobile ? `width: ${Math.max((note?.title ?? '').length, 2) + 1}ch` : ''}
+        class="text-lg font-semibold bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring rounded px-1 min-w-0"
+        style="width: {Math.max((note?.title ?? '').length, 2) + 1}ch; max-width: 100%"
       />
       {#if isMobile}
         <span class="flex-shrink-0">
@@ -132,45 +123,54 @@
           {/if}
         </span>
       {/if}
+      {#if note?.updated_at}
+        <span
+          class="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0 hidden sm:inline"
+          title={new Date(note.updated_at).toLocaleString()}
+        >
+          {$_('component.editor.last_updated', {
+            values: { date: formatRelativeTime(note.updated_at, $_) },
+          })}
+        </span>
+      {/if}
+      <!-- Offline/Sync status pill -->
+      {#if syncing}
+        <div
+          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-blue-500"
+        >
+          <RefreshCw size={12} class="animate-spin" />
+          <span
+            >{syncProgress.total > 0
+              ? `${syncProgress.current}/${syncProgress.total}`
+              : 'Sync...'}</span
+          >
+        </div>
+      {:else if !isOnline && !isEncryptionUnlocked}
+        <div
+          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
+        >
+          <Lock size={12} />
+          <span>Gesperrt</span>
+        </div>
+      {:else if !isOnline && pendingCount > 0}
+        <div
+          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
+        >
+          <WifiOff size={12} />
+          <span>{pendingCount}</span>
+        </div>
+      {:else if !isOnline}
+        <div
+          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
+        >
+          <WifiOff size={12} />
+          <span>Offline</span>
+        </div>
+      {/if}
     </div>
 
-    <!-- Offline/Sync status pill -->
-    {#if syncing}
-      <div
-        class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-blue-500"
-      >
-        <RefreshCw size={12} class="animate-spin" />
-        <span
-          >{syncProgress.total > 0
-            ? `${syncProgress.current}/${syncProgress.total}`
-            : 'Sync...'}</span
-        >
-      </div>
-    {:else if !isOnline && !isEncryptionUnlocked}
-      <div
-        class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
-      >
-        <Lock size={12} />
-        <span>Gesperrt</span>
-      </div>
-    {:else if !isOnline && pendingCount > 0}
-      <div
-        class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
-      >
-        <WifiOff size={12} />
-        <span>{pendingCount}</span>
-      </div>
-    {:else if !isOnline}
-      <div
-        class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
-      >
-        <WifiOff size={12} />
-        <span>Offline</span>
-      </div>
-    {/if}
-
-    <!-- Buttons (horizontally scrollable with fade indicator) + fixed More button -->
-    <div class="flex items-center gap-1 flex-1 min-w-0">
+    <!-- Center: Toolbar buttons (truly centered via grid) -->
+    <div class="flex items-center justify-center gap-1 min-w-0">
       <div class="toolbar-scroll-wrapper">
         <div class="toolbar-buttons flex items-center gap-1" use:scrollFade>
           <!-- Sidebar toggle - always visible on mobile since MobileHeader is hidden on note pages -->
@@ -337,16 +337,17 @@
           </button>
         </div>
       </div>
-      <!-- More menu button - fixed right, always visible outside scroll area -->
-      <button
-        onclick={handleMoreMenuClick}
-        class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-        aria-expanded={showMoreMenu}
-        aria-haspopup="menu"
-        title={$_('component.editor.toolbar.more_options')}
-      >
-        <MoreVertical size={16} />
-      </button>
     </div>
+
+    <!-- Right: More menu button (third grid column) -->
+    <button
+      onclick={handleMoreMenuClick}
+      class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn sm:justify-self-end"
+      aria-expanded={showMoreMenu}
+      aria-haspopup="menu"
+      title={$_('component.editor.toolbar.more_options')}
+    >
+      <MoreVertical size={16} />
+    </button>
   </div>
 </div>

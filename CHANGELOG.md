@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Editor-Toolbar: Breadcrumb-Navigation (Home > Ordner > Notiz) entfernt, da Sidebar-Navigation ausreicht
+- Editor-Toolbar: "Edited X Min"-Timestamp direkt neben den Notiztitel verschoben (dynamische Breite, passt sich an Titellaenge an)
+- Editor-Toolbar: 3-Spalten CSS Grid Layout fuer echte Zentrierung der Toolbar-Buttons
+
+### Removed
+
+- `Breadcrumb.svelte` Komponente (nicht mehr verwendet)
+
+### Added
+
+- lefthook pre-commit Hook (`scripts/check-changelog.sh`): Blockiert Commits mit Code-Aenderungen wenn CHANGELOG.md nicht aktualisiert wurde. Ueberspringbar mit `LEFTHOOK=0` fuer reine Refactorings.
+
 ### Fixed
 
 - CI/CD: `TRUSTED_PROXIES` zu Pre-flight Checks in Staging- und Production-Workflows hinzugefuegt (fehlende Variable verursachte `log.Fatal` beim Container-Start und Health-Check-Failure mit Auto-Rollback)

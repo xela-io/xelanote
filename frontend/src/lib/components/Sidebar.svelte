@@ -396,7 +396,7 @@
 
       <!-- Notes Tree (main content - maximized space) -->
       <div
-        class="flex-1 min-h-0 overflow-y-auto px-2 py-2"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2"
         use:touchdrag={{
           holdDuration: 300,
           enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
@@ -638,7 +638,7 @@
 
       <!-- Notes Tree (main content - maximized space) -->
       <div
-        class="flex-1 min-h-0 overflow-y-auto px-2 py-2"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2"
         use:touchdrag={{
           holdDuration: 300,
           enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),

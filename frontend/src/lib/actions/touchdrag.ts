@@ -57,7 +57,6 @@ export function touchdrag(container: HTMLElement, options: TouchDragOptions) {
   let currentTarget: HTMLElement | null = null;
   let currentPosition: DropPosition | null = null;
   let scrollRAF: number | null = null;
-  let pendingScrollBlocker: ((e: TouchEvent) => void) | null = null;
 
   // --- Helpers ---
 
@@ -243,22 +242,10 @@ export function touchdrag(container: HTMLElement, options: TouchDragOptions) {
       enterDragging(e.clientX, e.clientY);
     }, holdDuration);
 
-    // Block scroll during PENDING so browser doesn't fire pointercancel.
-    // If finger moves beyond MOVE_THRESHOLD, cancel drag and let scroll happen.
-    pendingScrollBlocker = (te: TouchEvent) => {
-      if (state !== 'PENDING') return;
-      const touch = te.touches[0];
-      if (touch) {
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD) {
-          cancelDrag();
-          return; // allow scroll through
-        }
-      }
-      te.preventDefault();
-    };
-    document.addEventListener('touchmove', pendingScrollBlocker, { passive: false });
+    // Don't block scroll during PENDING. If the user scrolls, the browser
+    // fires pointercancel which cancels the drag via handleCancel.
+    // This preserves smooth native scrolling on touch devices.
+    // Drag only starts if the user holds perfectly still for holdDuration.
 
     // Listen on window for move/up/cancel during PENDING
     window.addEventListener('pointermove', handlePointerMovePending, { passive: true });
@@ -390,10 +377,6 @@ export function touchdrag(container: HTMLElement, options: TouchDragOptions) {
     window.removeEventListener('pointermove', handlePointerMovePending);
     window.removeEventListener('pointerup', handlePointerUpPending);
     window.removeEventListener('pointercancel', handleCancel);
-    if (pendingScrollBlocker) {
-      document.removeEventListener('touchmove', pendingScrollBlocker);
-      pendingScrollBlocker = null;
-    }
   }
 
   function removeDraggingListeners() {

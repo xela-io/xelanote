@@ -1,19 +1,27 @@
 # Design-Verbesserungen: Implementierungsplan
 
+## Review-Status
+
+> **Letzter Review**: 2026-02-12 — Codebase-Verifikation durchgefuehrt. Alle Behauptungen gegen den tatsaechlichen Code geprueft. Ergebnisse und Korrekturen sind im Plan eingearbeitet (markiert mit `[REVIEW]`).
+
 ## Kontext
 
 Die xelanote Web-App hat ein funktionales Gruvbox-basiertes Design-System mit Tailwind v4, OKLch-Farben und definierten Design-Tokens (`frontend/src/lib/design/tokens.ts`). Die Codebase-Analyse hat aufgedeckt:
 
 - **Fehlende Transitions**: Mobile Backdrop erscheint/verschwindet ohne Fade — harter visueller Bruch
 - **Aktiver Bug**: Sidebar Drop-Zone nutzt undefinierte CSS-Variablen, rendert immer Blau statt Theme-Farbe
-- **Inkonsistente Easings**: 3 verschiedene Easing-Kurven wild gemischt (`ease`, `cubic-bezier(0.4,0,0.2,1)`, Token-Werte)
-- **Performance**: `transition-all` auf Sidebar-Collapse loest unnoetige Layout-Reflows aus
-- 59 hardcodierte `border-radius`-Werte in 16 Dateien trotz vorhandener Tokens
+- **Inkonsistente Easings**: 3-4 verschiedene Easing-Kurven wild gemischt (`ease`, `cubic-bezier(0.4,0,0.2,1)`, `linear`, implizit/kein Easing)
+- **Performance**: `transition-all` auf Sidebar-Collapse loest unnoetige Layout-Reflows aus (auch in `UnlockEncryptionModal.svelte:213`)
+- ~56 hardcodierte `border-radius`-Werte in ~20 Dateien trotz vorhandener Tokens `[REVIEW: korrigiert von 59/16]`
 - Sidebar-Kontrast nur 2% Lightness-Differenz zum Hauptbereich
 
 **Priorisierung**: Erst was der User spuert (Fluidity, Bugs, Konsistenz), dann technische Hygiene (Token-Vereinheitlichung).
 
 > **Entscheidung**: Primary-Farbton bleibt theme-spezifisch (Blau im Light, Cyan/Gruen im Dark) — authentischer Gruvbox-Look hat Vorrang vor Brand-Einheitlichkeit.
+
+### Bekannte Blocker
+
+> **BLOCKER Phase 4**: Die gestaffelten Tailwind-v4-Radius-Variablen (`--radius-xs`, `--radius-sm`, etc.) existieren **nicht** im aktuellen Build. In `app.css` `@theme` ist nur `--radius: 0.5rem;` definiert (Zeile 200). Phase 4 kann nicht wie geplant umgesetzt werden — siehe Details im Phase-4-Abschnitt.
 
 ---
 
@@ -54,7 +62,7 @@ Import `import { fade } from 'svelte/transition';` ergaenzen (falls nicht vorhan
 
 **Problem**: `Sidebar.svelte:995-1007` verwendet CSS-Variablen `--text-accent` und `--bg-accent-subtle`, die **nirgends definiert** sind. Die Fallback-Werte (`#3b82f6` = hardcoded Blau) greifen immer, unabhaengig vom aktiven Theme.
 
-Zeile 1023 nutzt korrekt `var(--color-primary)` — die Drop-Zone-Styles darueber nicht.
+Zeile ~1030 nutzt korrekt `var(--color-primary)` (in `.drop-zone.touch-drop-into`) — die Drop-Zone-Styles darueber nicht. `[REVIEW: Zeilennummer korrigiert von 1023 auf ~1030]`
 
 **Datei**: `frontend/src/lib/components/Sidebar.svelte` (Z.991-1008)
 
@@ -69,7 +77,7 @@ Zeile 1023 nutzt korrekt `var(--color-primary)` — die Drop-Zone-Styles daruebe
 }
 ```
 
-**Soll-Zustand** (konsistent mit Z.1023):
+**Soll-Zustand** (konsistent mit Z.~1030):
 ```css
 .drop-zone.active {
   border-color: var(--color-primary);
@@ -81,6 +89,12 @@ Zeile 1023 nutzt korrekt `var(--color-primary)` — die Drop-Zone-Styles daruebe
 ```
 
 Ebenso `.drop-zone-hint` (Z.1001): `var(--text-muted, #6b7280)` → `var(--color-muted-foreground)` (korrekte Theme-Variable).
+
+> `[REVIEW]` **Browser-Kompatibilitaet**: `color-mix(in oklch, ...)` hat ~93% Browser-Support (caniuse.com). Fuer die restlichen ~7% einen Fallback mitliefern:
+> ```css
+> background: rgba(59, 130, 246, 0.05); /* Fallback */
+> background: color-mix(in oklch, var(--color-primary), transparent 90%);
+> ```
 
 ### 1c: `transition-all` durch spezifische Properties ersetzen
 
@@ -102,7 +116,7 @@ Nur `width` und `opacity` aendern sich tatsaechlich beim Collapse. Tailwinds Arb
 
 > **Alternativ** (falls keine Arbitrary Values gewuenscht — siehe Phase 4 Guardrails): Inline-Style `style="transition-property: width, opacity; transition-duration: 200ms;"` verwenden. Konsistenz-Entscheidung beim Implementieren treffen.
 
-**Aufwand Phase 1 gesamt**: ~15 Minuten
+**Aufwand Phase 1 gesamt**: ~30-45 Minuten `[REVIEW: korrigiert von 15 Min — inkl. Build-Verifikation, manueller Mobile-Check, Browser-Fallback-Test]`
 
 ---
 
@@ -169,7 +183,11 @@ Alle `transition`-Deklarationen in Scoped `<style>`-Bloecken auf die neuen Custo
 
 **Hinweis zu `transition: all`**: Bei dieser Migration `all` beibehalten wo es steht — das Ersetzen durch spezifische Properties ist ein eigener Schritt (aehnlich Phase 1c), der mehr Kontext pro Komponente erfordert. Hier geht es nur um Easing/Duration-Konsistenz.
 
-**Aufwand**: ~30 Minuten mechanische Ersetzungen + ~15 Minuten visueller QA
+> `[REVIEW]` **`tokens.ts`-Konflikt aufloesen**: `tokens.ts` definiert `easing.default` und `animationDurations.fast` — dieselben Werte, die jetzt als CSS Custom Properties existieren werden. 4 Komponenten importieren diese Werte (Button.svelte, SidebarItem.svelte, SidebarButton.svelte, Section.svelte) plus `animations.ts`. Diese Imports muessen im Rahmen von Phase 2 auf die neuen CSS Custom Properties umgestellt werden, sonst gibt es **zwei konkurrierende Quellen** fuer dieselben Werte. Konkret:
+> - In den 4 Komponenten: JS-Import `tokens.easing.default` durch CSS `var(--ease-default)` ersetzen
+> - In `animations.ts`: Pruefen ob die Werte dort programmatisch benoetigt werden (Svelte `animate:`/`transition:` Direktiven mit JS-Parametern) — falls ja, koennen die CSS-Variablen per `getComputedStyle` gelesen werden, oder `tokens.ts` verweist auf dieselben Literal-Werte wie die CSS-Properties
+
+**Aufwand**: ~60-90 Minuten `[REVIEW: korrigiert von 45 Min — 28 Stellen sind nicht rein mechanisch, jede Duration-Kategorie (fast/base/slow) muss zur Intent passen. Dazu kommen die 4+1 tokens.ts-Migrationen und visueller QA]`
 
 > **QA-Hinweis**: Die Easing-Kurve aendert sich von `ease` (`cubic-bezier(0.25, 0.1, 0.25, 1)`) auf `cubic-bezier(0.4, 0, 0.2, 1)` (schnellerer Start, langsamerer Auslauf). Bei 150ms-Transitions ist der Unterschied kaum wahrnehmbar, bei 300ms (Logo.svelte:49) kann er spuerbar sein. Deshalb: Alle Komponenten mit `--duration-slow` (300ms) einzeln im Browser pruefen — Hover-Feeling und Focus-Transitions muessen sich natuerlich anfuehlen. Bei den 150ms-Stellen reicht ein Stichproben-Check (2-3 Buttons/Tree-Items).
 

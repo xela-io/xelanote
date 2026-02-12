@@ -25,3 +25,15 @@ pre-commit:
       glob: "**/*.md"
       exclude: "node_modules|archive|.cache|SALT_BUG_FIX.md|ENCRYPTION_DEBUG_LOG.md|LIBSODIUM_ROLLBACK.md"
       run: cd frontend && npx markdownlint-cli2 {staged_files}
+
+    layer-check:
+      glob: "backend/internal/api/**/*.go"
+      run: bash scripts/check-layer-violations.sh
+
+    svelte4-check:
+      glob: "frontend/src/**/*.{ts,svelte,js}"
+      run: bash scripts/check-svelte4-imports.sh
+
+    security-check:
+      glob: "frontend/src/**/*.{ts,svelte,js}"
+      run: bash scripts/check-security-patterns.sh

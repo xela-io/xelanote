@@ -1,4 +1,4 @@
-.PHONY: all build run test clean frontend backend docker dev dev-full fmt fmt-check lint lint-frontend lint-backend lint-md typecheck typecheck-frontend typecheck-backend quality demo-db
+.PHONY: all build run test clean frontend backend docker dev dev-full fmt fmt-check lint lint-frontend lint-backend lint-md typecheck typecheck-frontend typecheck-backend lint-golangci check-policy quality demo-db
 
 # Default target
 all: build
@@ -130,11 +130,24 @@ typecheck-backend:
 typecheck-frontend:
 	cd frontend && npm run typecheck
 
+lint-golangci:
+	@command -v golangci-lint >/dev/null 2>&1 || command -v $(shell go env GOPATH)/bin/golangci-lint >/dev/null 2>&1 || \
+		{ echo "golangci-lint not found. Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; exit 1; }
+	cd backend && golangci-lint run ./...
+
+check-policy:
+	@echo "=== Policy Checks ==="
+	@bash scripts/check-layer-violations.sh
+	@bash scripts/check-svelte4-imports.sh
+	@bash scripts/check-security-patterns.sh
+
 quality:
 	@$(MAKE) fmt-check
 	@$(MAKE) lint
 	@$(MAKE) lint-md
 	@$(MAKE) typecheck
+	@$(MAKE) lint-golangci
+	@$(MAKE) check-policy
 
 # Generate demo database with sample data (user: demo / demo1234)
 demo-db:

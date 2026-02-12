@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CI Guidelines Enforcement: Automatisierte Durchsetzung der Architektur- und Security-Konventionen aus `docs/conventions.md`
+  - **golangci-lint** in CI integriert (revive, misspell, bodyclose, gocritic, unused) mit build-tags fuer fts5/sqlite_crypt; 63 pre-existierende Findings via targeted exclude-rules suppressed (inkrementelle Bereinigung geplant), bewusst NICHT als pre-commit Hook (30-60s first-run wuerde Commit-Velocity beeintraechtigen)
+  - **Layer-Violation Ratchet** (`scripts/check-layer-violations.sh`): Prueft API->DB Layer-Verletzungen gegen Baseline (37 bekannte Violations); neue Violations blockieren CI, behobene Violations erfordern Baseline-Update
+  - **Svelte 4 Import Guard** (`scripts/check-svelte4-imports.sh`): Blockiert verbotene `svelte/store` Imports (nur `{ get }` erlaubt fuer Svelte 5 Kompatibilitaet)
+  - **Security Pattern Check** (`scripts/check-security-patterns.sh`): Blockiert `localStorage.setItem` fuer Auth-Tokens (token/auth/jwt Keys); Limitation: Nur String-Literal-Keys erkannt, variable-basierte Keys erfordern Code Review
+  - 3 neue lefthook pre-commit Hooks (layer-check, svelte4-check, security-check) fuer sofortiges Feedback bei lokaler Entwicklung
+  - 2 neue GitHub Actions CI Jobs: `golangci-lint` (mit CGO+sqlite3) und `policy` (alle 3 Check-Scripts)
+  - Neue Makefile-Targets: `lint-golangci`, `check-policy`; `quality` Target um beide erweitert
 - Backend API route wiring modularized into domain-specific route files for improved maintainability.
 - Unit tests for typed API key status mapping and forwarded IP parsing edge cases.
 - Frontend API-Modularisierung: `frontend/src/lib/api.ts` ist jetzt Facade, API in Module unter `frontend/src/lib/api/` ausgelagert
@@ -86,6 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend Rate-Limiting (5/Stunde) und 16KB Body-Limit fuer Error Reports
 
 ### Changed
+- `make quality` Target um golangci-lint und Policy-Checks erweitert (prueft jetzt Format, Lint, Typecheck, golangci-lint und Architektur-/Security-Policies in einem Lauf)
+- Pre-commit Hooks (lefthook) um 3 neue Checks erweitert: Layer-Violation Ratchet, Svelte 4 Import Guard, Security Pattern Check
+- golangci-lint Konfiguration (`.golangci.yml`) erweitert um build-tags (fts5, sqlite_crypt) und 5 zusaetzliche Linter (revive, misspell, bodyclose, gocritic, unused) mit targeted exclude-rules fuer 63 pre-existierende Findings
 - API key status handlers now use explicit typed responses instead of untyped status payloads.
 - Client IP extraction now validates `X-Forwarded-For` / `X-Real-IP` values before trusting them.
 - Recipe image metadata timestamp updates are now handled transactionally in DB operations.

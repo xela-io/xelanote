@@ -84,6 +84,35 @@ jobs:
       - name: Check tracked binary artifacts
         run: bash scripts/check-binary-hygiene.sh
 
+  golangci-lint:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          cache: true
+      - name: Install sqlite3 dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+          working-directory: backend
+          args: --timeout=5m
+
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Layer violation check
+        run: bash scripts/check-layer-violations.sh
+      - name: Svelte 4 import check
+        run: bash scripts/check-svelte4-imports.sh
+      - name: Security pattern check
+        run: bash scripts/check-security-patterns.sh
+
   changelog:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

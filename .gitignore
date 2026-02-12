@@ -82,6 +82,9 @@ frontend/test-results/
 CLAUDE.md
 .git.old/
 
+# Claude Code plan files
+moonlit-discovering-gray.md
+
 # Archive
 archive/
 frontend/dev-dist/

@@ -1,6 +1,13 @@
 # Architecture & Conventions
 
-Regeln, die kein Linter pruefen kann. Bei Verstoessen Code anpassen, nicht die Regeln.
+Regeln fuer neuen Code. Bei Verstoessen Code anpassen, nicht die Regeln.
+
+**Automatisierte Durchsetzung:** Viele dieser Regeln werden seit 2026-02-12 automatisch geprueft:
+- **Layer Pattern**: `scripts/check-layer-violations.sh` (pre-commit + CI) prueft API->DB Violations gegen Baseline
+- **Svelte 5 Only**: `scripts/check-svelte4-imports.sh` (pre-commit + CI) blockiert verbotene `svelte/store` Imports
+- **Kein localStorage fuer Auth**: `scripts/check-security-patterns.sh` (pre-commit + CI) blockiert Auth-Token Persistenz in localStorage
+- **Code Quality**: golangci-lint (CI) mit revive, misspell, bodyclose, gocritic, unused
+- **Alle Checks**: `make quality` (lokal) oder `make check-policy` (nur Policy-Checks)
 
 ## Backend: 3-Layer Pattern
 

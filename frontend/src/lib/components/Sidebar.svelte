@@ -1007,15 +1007,22 @@
     color: var(--text-accent, #3b82f6);
   }
 
-  /* Touch devices: show drop zone only during active touch drag */
+  /* Touch devices: show drop zone only during active touch drag.
+     Use sticky + negative margin so it overlays the first item
+     instead of pushing the tree content down (prevents layout shift). */
   .drop-zone.touch-drag-visible {
+    position: sticky;
+    top: 0;
+    z-index: 5;
     opacity: 1;
-    height: auto;
-    min-height: 48px;
+    height: 48px;
+    margin-bottom: -48px;
     padding: 8px 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-color: var(--color-border);
+    background: var(--color-sidebar-background);
   }
 
   /* Touch drag: highlight root drop zone when hovered */

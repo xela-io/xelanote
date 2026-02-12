@@ -12,6 +12,7 @@ Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 
 -   **[Development Guide](./development.md)** — Setup, Workflow, Build-Prozesse
 -   **[Architektur](./architecture.md)** — Systemarchitektur, Datenbankschema, Design-Entscheidungen
+-   **[Coding Conventions](./conventions.md)** — Architektur-Regeln und Patterns fuer neuen Code
 -   **[API Dokumentation](./api.md)** — Vollständige REST-API-Referenz
 -   **[Testing Guide](../TESTING.md)** — Tests ausführen und schreiben
 -   **[Environment Variables](./environment-variables.md)** — Vollständige Konfigurationsreferenz

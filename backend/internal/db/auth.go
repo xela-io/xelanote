@@ -1,6 +1,7 @@
 package db
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
@@ -109,10 +110,14 @@ func (db *DB) GetUserByUsernameOrEmail(usernameOrEmail string) (*User, error) {
 func (db *DB) CreateRefreshToken(userID int, token string) error {
 	expiresAt := time.Now().Add(auth.RefreshTokenDuration).Format(time.RFC3339)
 	tokenHash := hashRefreshToken(token)
-	_, err := db.Exec(`
-		INSERT INTO refresh_tokens (user_id, token, expires_at)
-		VALUES (?, ?, ?)
-	`, userID, tokenHash, expiresAt)
+	familyID, err := generateTokenFamilyID()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`
+		INSERT INTO refresh_tokens (user_id, token, expires_at, family_id)
+		VALUES (?, ?, ?, ?)
+	`, userID, tokenHash, expiresAt, familyID)
 	return err
 }
 
@@ -121,12 +126,13 @@ func (db *DB) CreateRefreshToken(userID int, token string) error {
 func (db *DB) ValidateRefreshToken(token string) (int, error) {
 	var userID int
 	var expiresAt string
+	var consumedAt, revokedAt sql.NullString
 	tokenHash := hashRefreshToken(token)
 
 	err := db.QueryRow(`
-		SELECT user_id, expires_at FROM refresh_tokens
+		SELECT user_id, expires_at, consumed_at, revoked_at FROM refresh_tokens
 		WHERE token = ?
-	`, tokenHash).Scan(&userID, &expiresAt)
+	`, tokenHash).Scan(&userID, &expiresAt, &consumedAt, &revokedAt)
 
 	if err == sql.ErrNoRows {
 		return 0, ErrNotFound
@@ -141,9 +147,12 @@ func (db *DB) ValidateRefreshToken(token string) (int, error) {
 		return 0, err
 	}
 
+	if consumedAt.Valid || revokedAt.Valid {
+		return 0, ErrRefreshTokenReuse
+	}
+
 	if time.Now().After(expiresTime) {
-		// Token expired, clean it up
-		db.DeleteRefreshToken(token)
+		_, _ = db.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE token = ?`, tokenHash)
 		return 0, errors.New("refresh token expired")
 	}
 
@@ -160,19 +169,78 @@ func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) e
 	defer tx.Rollback()
 
 	oldTokenHash := hashRefreshToken(oldToken)
-	// Delete old token
-	_, err = tx.Exec(`DELETE FROM refresh_tokens WHERE token = ?`, oldTokenHash)
+	newTokenHash := hashRefreshToken(newToken)
+
+	var dbUserID int
+	var familyID, expiresAt string
+	var consumedAt, revokedAt sql.NullString
+	err = tx.QueryRow(`
+		SELECT user_id, family_id, expires_at, consumed_at, revoked_at
+		FROM refresh_tokens
+		WHERE token = ?
+	`, oldTokenHash).Scan(&dbUserID, &familyID, &expiresAt, &consumedAt, &revokedAt)
+	if err == sql.ErrNoRows {
+		return ErrNotFound
+	}
 	if err != nil {
 		return err
 	}
 
-	// Create new token
-	expiresAt := time.Now().Add(auth.RefreshTokenDuration).Format(time.RFC3339)
-	newTokenHash := hashRefreshToken(newToken)
+	if dbUserID != userID {
+		return ErrNotFound
+	}
+	if familyID == "" {
+		familyID, err = generateTokenFamilyID()
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`UPDATE refresh_tokens SET family_id = ? WHERE token = ?`, familyID, oldTokenHash); err != nil {
+			return err
+		}
+	}
+
+	if consumedAt.Valid || revokedAt.Valid {
+		if _, err := tx.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL`, familyID); err != nil {
+			return err
+		}
+		return ErrRefreshTokenReuse
+	}
+
+	expiry, err := time.Parse(time.RFC3339, expiresAt)
+	if err != nil {
+		return err
+	}
+	if time.Now().After(expiry) {
+		if _, err := tx.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE token = ?`, oldTokenHash); err != nil {
+			return err
+		}
+		return errors.New("refresh token expired")
+	}
+
+	result, err := tx.Exec(`
+		UPDATE refresh_tokens
+		SET consumed_at = datetime('now'), replaced_by = ?
+		WHERE token = ? AND consumed_at IS NULL AND revoked_at IS NULL
+	`, newTokenHash, oldTokenHash)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		if _, err := tx.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL`, familyID); err != nil {
+			return err
+		}
+		return ErrRefreshTokenReuse
+	}
+
+	newExpiresAt := time.Now().Add(auth.RefreshTokenDuration).Format(time.RFC3339)
 	_, err = tx.Exec(`
-		INSERT INTO refresh_tokens (user_id, token, expires_at)
-		VALUES (?, ?, ?)
-	`, userID, newTokenHash, expiresAt)
+		INSERT INTO refresh_tokens (user_id, token, expires_at, family_id)
+		VALUES (?, ?, ?, ?)
+	`, userID, newTokenHash, newExpiresAt, familyID)
 	if err != nil {
 		return err
 	}
@@ -198,6 +266,28 @@ func (db *DB) CleanupExpiredRefreshTokens() error {
 func hashRefreshToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+func generateTokenFamilyID() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// RevokeRefreshTokenFamilyByToken revokes all refresh tokens in the family of token.
+func (db *DB) RevokeRefreshTokenFamilyByToken(token string) error {
+	tokenHash := hashRefreshToken(token)
+	_, err := db.Exec(`
+		UPDATE refresh_tokens
+		SET revoked_at = datetime('now')
+		WHERE family_id = (
+			SELECT family_id FROM refresh_tokens WHERE token = ?
+		)
+		AND revoked_at IS NULL
+	`, tokenHash)
+	return err
 }
 
 // DeleteAllUserRefreshTokensExcept deletes all refresh tokens for a user except the current one

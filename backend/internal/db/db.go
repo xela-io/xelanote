@@ -179,6 +179,8 @@ func (db *DB) runMigrations() error {
 		"041_fix_keyword_fts_triggers.sql",
 		"042_note_due_dates.sql",
 		"043_enable_journal_recipe_default.sql",
+		"044_refresh_token_reuse_detection.sql",
+		"045_registration_secure_default.sql",
 	}
 
 	for _, migrationFile := range migrations {

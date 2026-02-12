@@ -86,7 +86,7 @@ func (db *DB) SetSettings(settings map[string]string) error {
 func (db *DB) IsRegistrationEnabled() (bool, error) {
 	value, err := db.GetSetting("registration_enabled")
 	if err == ErrNotFound {
-		return true, nil // Default to enabled
+		return false, nil // Secure default: disabled
 	}
 	if err != nil {
 		return false, err

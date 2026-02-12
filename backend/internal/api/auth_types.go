@@ -2,10 +2,11 @@ package api
 
 // RegisterRequest represents the request body for user registration
 type RegisterRequest struct {
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	CaptchaToken string `json:"captcha_token,omitempty"`
+	Username       string `json:"username"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	CaptchaToken   string `json:"captcha_token,omitempty"`
+	BootstrapToken string `json:"bootstrap_token,omitempty"`
 }
 
 // LoginRequest represents the request body for user login

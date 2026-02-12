@@ -14,4 +14,7 @@ var (
 
 	// ErrInvalidQuery is returned when a query is malformed or exceeds limits.
 	ErrInvalidQuery = errors.New("invalid query")
+
+	// ErrRefreshTokenReuse is returned when a rotated/revoked refresh token is reused.
+	ErrRefreshTokenReuse = errors.New("refresh token reuse detected")
 )

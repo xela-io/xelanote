@@ -25,6 +25,9 @@ func TestSaltOverwritePrevention(t *testing.T) {
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("failed to migrate db: %v", err)
 	}
+	if err := database.SetSetting("registration_enabled", "true"); err != nil {
+		t.Fatalf("failed to enable registration in test: %v", err)
+	}
 	defer database.Close()
 
 	// Generate JWT secret
@@ -109,6 +112,9 @@ func TestSaltGenerationAllowedForNewUsers(t *testing.T) {
 	}
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("failed to migrate db: %v", err)
+	}
+	if err := database.SetSetting("registration_enabled", "true"); err != nil {
+		t.Fatalf("failed to enable registration in test: %v", err)
 	}
 	defer database.Close()
 

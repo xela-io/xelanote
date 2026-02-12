@@ -43,6 +43,62 @@ func NewAuthService(database *db.DB, jwtSecret []byte, tfaService *TwoFactorServ
 // ErrRegistrationDisabled is returned when registration is disabled
 var ErrRegistrationDisabled = errors.New("registration is currently disabled")
 
+// ErrRefreshTokenReuseDetected signals attempted reuse of a rotated/revoked refresh token.
+var ErrRefreshTokenReuseDetected = errors.New("refresh token reuse detected")
+
+func validateRegistrationInput(username, email, password string) (string, string, error) {
+	username = strings.TrimSpace(username)
+	email = strings.TrimSpace(email)
+
+	if username == "" {
+		return "", "", errors.New("username is required")
+	}
+	if len(username) > MaxUsernameLength {
+		return "", "", errors.New("username too long")
+	}
+	if email == "" {
+		return "", "", errors.New("email is required")
+	}
+	if len(email) > MaxEmailLength {
+		return "", "", errors.New("email too long")
+	}
+	if len(password) < 8 {
+		return "", "", errors.New("password must be at least 8 characters")
+	}
+	if len(password) > MaxPasswordLength {
+		return "", "", errors.New("password too long")
+	}
+	if !strings.Contains(email, "@") {
+		return "", "", errors.New("invalid email format")
+	}
+
+	return username, email, nil
+}
+
+func (s *AuthService) createUser(username, email, password string, forceAdmin bool) (*db.User, error) {
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.db.CreateUser(username, email, string(passwordHash))
+	if err != nil {
+		if err == db.ErrDuplicate {
+			return nil, errors.New("unable to complete registration")
+		}
+		return nil, err
+	}
+
+	if forceAdmin {
+		if err := s.db.SetUserAdmin(user.ID, true); err != nil {
+			return nil, err
+		}
+		user.IsAdmin = true
+	}
+
+	return user, nil
+}
+
 // Register creates a new user account with password hashing
 func (s *AuthService) Register(ctx context.Context, username, email, password string) (*db.User, error) {
 	// Check if registration is enabled
@@ -54,32 +110,9 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 		return nil, ErrRegistrationDisabled
 	}
 
-	// Validate inputs
-	username = strings.TrimSpace(username)
-	email = strings.TrimSpace(email)
-
-	if username == "" {
-		return nil, errors.New("username is required")
-	}
-	if len(username) > MaxUsernameLength {
-		return nil, errors.New("username too long")
-	}
-	if email == "" {
-		return nil, errors.New("email is required")
-	}
-	if len(email) > MaxEmailLength {
-		return nil, errors.New("email too long")
-	}
-	if len(password) < 8 {
-		return nil, errors.New("password must be at least 8 characters")
-	}
-	if len(password) > MaxPasswordLength {
-		return nil, errors.New("password too long")
-	}
-
-	// Basic email validation
-	if !strings.Contains(email, "@") {
-		return nil, errors.New("invalid email format")
+	validUsername, validEmail, err := validateRegistrationInput(username, email, password)
+	if err != nil {
+		return nil, err
 	}
 
 	// Check if this will be the first user (should become admin)
@@ -89,28 +122,25 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 	}
 	isFirstUser := userCount == 0
 
-	// Hash password with bcrypt (cost 12 for strong security)
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	return s.createUser(validUsername, validEmail, password, isFirstUser)
+}
+
+// BootstrapAdmin creates the first admin account even when registration is disabled.
+// It is only allowed if the instance has no users yet.
+func (s *AuthService) BootstrapAdmin(ctx context.Context, username, email, password string) (*db.User, error) {
+	validUsername, validEmail, err := validateRegistrationInput(username, email, password)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create user in database
-	user, err := s.db.CreateUser(username, email, string(passwordHash))
+	userCount, err := s.db.CountUsers()
 	if err != nil {
-		if err == db.ErrDuplicate {
-			return nil, errors.New("unable to complete registration")
-		}
 		return nil, err
 	}
-
-	// If first user, make them admin
-	if isFirstUser {
-		s.db.SetUserAdmin(user.ID, true)
-		user.IsAdmin = true
+	if userCount > 0 {
+		return nil, errors.New("bootstrap is only allowed on fresh instances")
 	}
-
-	return user, nil
+	return s.createUser(validUsername, validEmail, password, true)
 }
 
 // Login authenticates a user and returns JWT tokens.
@@ -181,6 +211,10 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 		if err == db.ErrNotFound {
 			return "", "", errors.New("invalid refresh token")
 		}
+		if err == db.ErrRefreshTokenReuse {
+			_ = s.db.RevokeRefreshTokenFamilyByToken(refreshToken)
+			return "", "", ErrRefreshTokenReuseDetected
+		}
 		return "", "", err
 	}
 
@@ -206,6 +240,10 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 	// Atomic rotation: delete old, insert new
 	err = s.db.RotateRefreshToken(refreshToken, userID, newRefreshToken)
 	if err != nil {
+		if err == db.ErrRefreshTokenReuse {
+			_ = s.db.RevokeRefreshTokenFamilyByToken(refreshToken)
+			return "", "", ErrRefreshTokenReuseDetected
+		}
 		return "", "", err
 	}
 

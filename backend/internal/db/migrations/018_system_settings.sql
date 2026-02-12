@@ -7,7 +7,7 @@ CREATE TABLE system_settings (
 
 -- Default settings
 INSERT INTO system_settings (key, value) VALUES
-    ('registration_enabled', 'true'),
+    ('registration_enabled', 'false'),
     ('max_notes_per_user', '0'),        -- 0 = unlimited
     ('max_storage_mb_per_user', '0'),   -- 0 = unlimited
     ('maintenance_mode', 'false'),

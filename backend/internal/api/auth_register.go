@@ -2,9 +2,13 @@ package api
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"log/slog"
 	"net/http"
+	"os"
+
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // register handles user registration endpoint
@@ -47,8 +51,25 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	// Register user
 	user, err := s.authService.Register(r.Context(), req.Username, req.Email, req.Password)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		if err == service.ErrRegistrationDisabled {
+			bootstrapSecret := os.Getenv("XELANOTE_BOOTSTRAP_TOKEN")
+			if bootstrapSecret == "" {
+				respondError(w, http.StatusForbidden, "registration is disabled")
+				return
+			}
+			if subtle.ConstantTimeCompare([]byte(req.BootstrapToken), []byte(bootstrapSecret)) != 1 {
+				respondError(w, http.StatusForbidden, "invalid bootstrap token")
+				return
+			}
+			user, err = s.authService.BootstrapAdmin(r.Context(), req.Username, req.Email, req.Password)
+			if err != nil {
+				respondError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 
 	// Generate encryption salt for E2E encryption

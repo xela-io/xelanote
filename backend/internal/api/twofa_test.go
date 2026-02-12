@@ -45,6 +45,9 @@ func newTestServer(t *testing.T) *testServer {
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("failed to migrate db: %v", err)
 	}
+	if err := database.SetSetting("registration_enabled", "true"); err != nil {
+		t.Fatalf("failed to enable registration in test: %v", err)
+	}
 
 	jwtSecret := make([]byte, 32)
 	_, err = rand.Read(jwtSecret)

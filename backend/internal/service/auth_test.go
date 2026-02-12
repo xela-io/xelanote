@@ -315,3 +315,33 @@ func TestAuthService_Logout_RevokesRefreshToken(t *testing.T) {
 		t.Fatalf("Expected refresh token to be invalid after logout")
 	}
 }
+
+func TestAuthService_RefreshAccessToken_ReuseRevokesFamily(t *testing.T) {
+	testDB, authService := setupAuthServiceTest(t)
+	defer testDB.Close()
+
+	user, err := authService.Register(context.Background(), "reuseuser", "reuse@example.com", "password123")
+	if err != nil {
+		t.Fatalf("Failed to register test user: %v", err)
+	}
+
+	_, oldRefresh, err := authService.IssueTokens(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("Failed to issue tokens: %v", err)
+	}
+
+	_, newRefresh, err := authService.RefreshAccessToken(context.Background(), oldRefresh)
+	if err != nil {
+		t.Fatalf("Failed initial refresh: %v", err)
+	}
+
+	// Reuse of old token should be detected.
+	if _, _, err := authService.RefreshAccessToken(context.Background(), oldRefresh); err == nil {
+		t.Fatalf("Expected refresh token reuse detection")
+	}
+
+	// Family should be revoked, so the newest token should also be invalid now.
+	if _, _, err := authService.RefreshAccessToken(context.Background(), newRefresh); err == nil {
+		t.Fatalf("Expected family revocation after token reuse")
+	}
+}

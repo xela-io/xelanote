@@ -1,8 +1,11 @@
 package api
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
+
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // refresh issues new access token using refresh token
@@ -28,6 +31,11 @@ func (s *Server) refresh(w http.ResponseWriter, r *http.Request) {
 	// Refresh tokens (implements token rotation)
 	newAccessToken, newRefreshToken, err := s.authService.RefreshAccessToken(r.Context(), refreshToken)
 	if err != nil {
+		if errors.Is(err, service.ErrRefreshTokenReuseDetected) {
+			s.logger().Warn("refresh_token_reuse_detected",
+				slog.String("event", "refresh_token_reuse"),
+				securityIPAttr(r))
+		}
 		respondError(w, http.StatusUnauthorized, err.Error())
 		return
 	}

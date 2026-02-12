@@ -15,7 +15,7 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 		// Cloudflare Turnstile requires: script-src, frame-src, connect-src for challenges.cloudflare.com
 		csp := "default-src 'self'; " +
 			"script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com; " +
-			"style-src 'self' 'unsafe-inline'; " +
+			"style-src 'self'; " +
 			"img-src 'self' data: blob:; " +
 			"connect-src 'self' ws: wss: https://challenges.cloudflare.com; " +
 			"frame-src https://challenges.cloudflare.com; " +

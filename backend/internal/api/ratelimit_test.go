@@ -52,10 +52,11 @@ func TestRateLimiter_DifferentIPs(t *testing.T) {
 
 func TestGetClientIP(t *testing.T) {
 	// Initialize trusted proxies for this test
-	InitTrustedProxies("")
+	InitTrustedProxies("10.0.0.0/8")
 
 	// Security note: X-Forwarded-For is checked first, then X-Real-IP.
-	// For X-Forwarded-For, we take the FIRST IP (original client).
+	// For X-Forwarded-For, we scan from right to left and return the first
+	// untrusted hop after the trusted proxy chain.
 	// Headers are only trusted if RemoteAddr is from a trusted proxy.
 	tests := []struct {
 		name       string
@@ -76,10 +77,10 @@ func TestGetClientIP(t *testing.T) {
 			expected:   "203.0.113.195",
 		},
 		{
-			name:       "X-Forwarded-For multiple IPs takes FIRST (original client)",
+			name:       "X-Forwarded-For multiple IPs returns first untrusted from right",
 			headers:    map[string]string{"X-Forwarded-For": "203.0.113.195, 70.41.3.18, 150.172.238.178"},
 			remoteAddr: "10.0.0.1:12345",
-			expected:   "203.0.113.195", // First IP = original client
+			expected:   "150.172.238.178",
 		},
 		{
 			name:       "X-Real-IP from trusted proxy",
@@ -97,10 +98,10 @@ func TestGetClientIP(t *testing.T) {
 			expected:   "203.0.113.195", // X-Forwarded-For is checked first
 		},
 		{
-			name:       "X-Forwarded-For with spaces takes FIRST trimmed",
+			name:       "X-Forwarded-For with spaces is parsed correctly",
 			headers:    map[string]string{"X-Forwarded-For": "  203.0.113.195  ,  70.41.3.18  "},
 			remoteAddr: "10.0.0.1:12345",
-			expected:   "203.0.113.195", // First IP, trimmed
+			expected:   "70.41.3.18",
 		},
 		{
 			name:       "RemoteAddr without port",
@@ -140,6 +141,18 @@ func TestGetClientIP(t *testing.T) {
 			headers:    map[string]string{"X-Forwarded-For": "203.0.113.195:4321"},
 			remoteAddr: "10.0.0.1:12345",
 			expected:   "203.0.113.195",
+		},
+		{
+			name:       "Right-to-left trusted chain resists leftmost spoofing",
+			headers:    map[string]string{"X-Forwarded-For": "6.6.6.6, 203.0.113.195, 10.0.0.1"},
+			remoteAddr: "10.0.0.2:12345",
+			expected:   "203.0.113.195",
+		},
+		{
+			name:       "All trusted hops fall back to remote address",
+			headers:    map[string]string{"X-Forwarded-For": "10.0.0.5, 10.0.0.1"},
+			remoteAddr: "10.0.0.2:12345",
+			expected:   "10.0.0.2",
 		},
 	}
 

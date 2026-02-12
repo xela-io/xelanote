@@ -55,7 +55,7 @@ func (s *Server) changeEmail(w http.ResponseWriter, r *http.Request) {
 	s.logger().Info("email_changed",
 		slog.Int("user_id", userID),
 		slog.String("event", "email_change"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	respondJSON(w, http.StatusOK, map[string]string{"message": "email changed successfully"})
 }
@@ -121,7 +121,7 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) {
 	s.logger().Info("password_changed",
 		slog.Int("user_id", userID),
 		slog.String("event", "password_change"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"message":                  "password changed successfully",

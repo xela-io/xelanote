@@ -124,7 +124,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 			slog.String("identifier_hash", hashIdentifier(req.UsernameOrEmail)),
 			slog.String("event", "login_failed"),
 			slog.String("reason", "invalid_credentials"),
-			slog.String("remote_ip", getClientIPSafe(r)))
+			securityIPAttr(r))
 
 		respondError(w, http.StatusUnauthorized, err.Error())
 		return
@@ -161,7 +161,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	s.logger().Info("user_logged_in",
 		slog.String("identifier_hash", hashIdentifier(req.UsernameOrEmail)),
 		slog.String("event", "login_success"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	// Get user info for response
 	user, err := s.authService.GetUserByUsernameOrEmail(req.UsernameOrEmail)

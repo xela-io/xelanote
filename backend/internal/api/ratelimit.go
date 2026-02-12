@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -43,18 +44,19 @@ func NewRateLimiter(events int, per time.Duration, burst int) *RateLimiter {
 	return rl
 }
 
-// Allow checks if a request from the given IP is allowed.
-func (rl *RateLimiter) Allow(ip string) bool {
+// Allow checks if a request for the given key is allowed.
+// Key can be IP-only or a composite key such as "user:<id>|ip:<ip>".
+func (rl *RateLimiter) Allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
-	client, exists := rl.clients[ip]
+	client, exists := rl.clients[key]
 	if !exists {
 		client = &clientLimiter{
 			limiter:  rate.NewLimiter(rl.limit, rl.burst),
 			lastSeen: time.Now(),
 		}
-		rl.clients[ip] = client
+		rl.clients[key] = client
 	} else {
 		client.lastSeen = time.Now()
 	}
@@ -101,8 +103,13 @@ func rateLimitMiddleware(limiter *RateLimiter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := getClientIPSafe(r)
+			key := "ip:" + ip
+			if userID, ok := getUserID(r); ok {
+				// Dual keying limits abuse from shared IPs while preserving per-user controls.
+				key = "user:" + strconv.Itoa(userID) + "|ip:" + ip
+			}
 
-			if !limiter.Allow(ip) {
+			if !limiter.Allow(key) {
 				w.Header().Set("Retry-After", "60")
 				respondError(w, http.StatusTooManyRequests, "rate limit exceeded")
 				return

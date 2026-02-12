@@ -41,7 +41,7 @@ func (s *Server) handleSetAPIKey(p apiKeyProvider) http.HandlerFunc {
 		s.logger().Info(p.name+"_api_key_set",
 			slog.Int("user_id", userID),
 			slog.String("event", "api_key_set"),
-			slog.String("remote_ip", getClientIPSafe(r)))
+			securityIPAttr(r))
 
 		respondJSON(w, http.StatusOK, map[string]string{"message": "API key stored successfully"})
 	}
@@ -65,7 +65,7 @@ func (s *Server) handleDeleteAPIKey(p apiKeyProvider) http.HandlerFunc {
 		s.logger().Info(p.name+"_api_key_deleted",
 			slog.Int("user_id", userID),
 			slog.String("event", "api_key_deleted"),
-			slog.String("remote_ip", getClientIPSafe(r)))
+			securityIPAttr(r))
 
 		respondJSON(w, http.StatusOK, map[string]string{"message": "API key deleted successfully"})
 	}

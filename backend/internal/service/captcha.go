@@ -3,6 +3,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -68,6 +70,14 @@ func (s *TurnstileService) GetSiteKey() string {
 	return s.siteKey
 }
 
+func hashRemoteIP(remoteIP string) string {
+	if remoteIP == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(remoteIP))
+	return hex.EncodeToString(sum[:8])
+}
+
 // Verify validates a Turnstile CAPTCHA token.
 // If CAPTCHA is disabled, it always returns nil (success).
 // If CAPTCHA is enabled and the token is empty, it returns an error.
@@ -121,7 +131,7 @@ func (s *TurnstileService) Verify(ctx context.Context, token, remoteIP string) e
 	if !result.Success {
 		s.log.Warn("turnstile verification failed",
 			"error_codes", result.ErrorCodes,
-			"remote_ip", remoteIP,
+			"remote_ip_hash", hashRemoteIP(remoteIP),
 		)
 
 		// Return user-friendly error message based on error codes

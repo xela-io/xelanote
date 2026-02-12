@@ -156,7 +156,7 @@ func (s *Server) csrfMiddleware(next http.Handler) http.Handler {
 				slog.String("error", result.err.Error()),
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
-				slog.String("remote_ip", getClientIPSafe(r)),
+				securityIPAttr(r),
 				slog.Int("csrf_cookie_count", result.cookieCount),
 				slog.Bool("multiple_csrf_cookies", result.multipleCookies),
 			}
@@ -177,7 +177,7 @@ func (s *Server) csrfMiddleware(next http.Handler) http.Handler {
 			clearLegacyCSRFCookie(w)
 			s.logger().Info("Cleaned up legacy CSRF cookie",
 				slog.String("path", r.URL.Path),
-				slog.String("remote_ip", getClientIPSafe(r)))
+				securityIPAttr(r))
 		}
 
 		next.ServeHTTP(w, r)

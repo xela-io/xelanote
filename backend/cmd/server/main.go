@@ -77,8 +77,13 @@ func main() {
 	summarizeService := initSummarizeService(database, providerRouter, logger)
 	jobManager := startJobManager(core.note)
 
-	// Initialize trusted proxies
+	// Initialize trusted proxies.
+	// Security hardening: in production, explicit trusted proxies are required.
+	env := os.Getenv("XELANOTE_ENV")
 	trustedProxiesEnv := os.Getenv("TRUSTED_PROXIES")
+	if env == "production" && trustedProxiesEnv == "" {
+		log.Fatal("TRUSTED_PROXIES must be set when XELANOTE_ENV=production")
+	}
 	api.InitTrustedProxies(trustedProxiesEnv)
 
 	pruneCancel := startVersionPruner(core.note)
@@ -91,7 +96,7 @@ func main() {
 	sharingService := service.NewSharingService(database)
 	errorReportService := initErrorReportService(logger)
 	wsManager := startWebSocketManager(logger)
-	env := checkEnvironment(logger)
+	env = checkEnvironment(logger)
 	fido2Service := initFIDO2Service(database, core.tfa, logger, env)
 	turnstileService := initTurnstileService(logger)
 	recipeService := service.NewRecipeService(database, core.note)

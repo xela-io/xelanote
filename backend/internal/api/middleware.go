@@ -10,20 +10,18 @@ import (
 	"github.com/xela-io/xelanote/internal/auth"
 )
 
-// Default trusted CIDR ranges for reverse proxies (private networks)
+// Default trusted CIDR ranges for reverse proxies.
+// Secure default: trust only loopback unless explicitly configured.
 var defaultTrustedCIDRs = []string{
-	"127.0.0.1/32",   // localhost IPv4
-	"::1/128",        // localhost IPv6
-	"10.0.0.0/8",     // Private class A
-	"172.16.0.0/12",  // Private class B
-	"192.168.0.0/16", // Private class C
+	"127.0.0.1/32", // localhost IPv4
+	"::1/128",      // localhost IPv6
 }
 
 // trustedProxyNets holds the parsed trusted CIDR networks
 var trustedProxyNets []*net.IPNet
 
 // InitTrustedProxies initializes the trusted proxy CIDRs.
-// If trustedProxiesEnv is empty, default private network ranges are used.
+// If trustedProxiesEnv is empty, only loopback is trusted.
 // The format is comma-separated CIDRs: "10.0.0.0/8,192.168.1.0/24"
 func InitTrustedProxies(trustedProxiesEnv string) {
 	var cidrs []string
@@ -83,19 +81,12 @@ func getClientIPSafe(r *http.Request) string {
 		remoteIP = remoteAddr
 	}
 
-	// Only trust forwarded headers if request comes from a trusted proxy
+	// Only trust forwarded headers if request comes from a trusted proxy.
 	if isTrustedProxy(remoteIP) {
-		// Check X-Forwarded-For first (most common)
 		xff := r.Header.Get("X-Forwarded-For")
 		if xff != "" {
-			// X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
-			// The leftmost IP is the original client
-			parts := strings.Split(xff, ",")
-			if len(parts) > 0 {
-				clientIP := parseValidIP(strings.TrimSpace(parts[0]))
-				if clientIP != "" {
-					return clientIP
-				}
+			if clientIP := extractClientIPFromXFF(xff, remoteIP); clientIP != "" {
+				return clientIP
 			}
 		}
 
@@ -111,6 +102,47 @@ func getClientIPSafe(r *http.Request) string {
 
 	// Return the direct connection IP if not from trusted proxy
 	return remoteIP
+}
+
+// extractClientIPFromXFF parses an X-Forwarded-For chain and returns the first
+// untrusted hop scanning from right to left.
+//
+// Example chain:
+// client, proxy1, proxy2
+//
+// We append remoteIP as the right-most hop and then walk right-to-left,
+// skipping trusted proxies. The first untrusted IP is treated as the client.
+func extractClientIPFromXFF(xff, remoteIP string) string {
+	parts := strings.Split(xff, ",")
+	hops := make([]string, 0, len(parts)+1)
+	validXFFHops := 0
+
+	for _, raw := range parts {
+		if ip := parseValidIP(strings.TrimSpace(raw)); ip != "" {
+			hops = append(hops, ip)
+			validXFFHops++
+		}
+	}
+
+	// If XFF exists but has no valid IP entries, let caller try X-Real-IP fallback.
+	if validXFFHops == 0 {
+		return ""
+	}
+
+	normalizedRemote := parseValidIP(strings.TrimSpace(remoteIP))
+	if normalizedRemote == "" {
+		return ""
+	}
+	hops = append(hops, normalizedRemote)
+
+	for i := len(hops) - 1; i >= 0; i-- {
+		if !isTrustedProxy(hops[i]) {
+			return hops[i]
+		}
+	}
+
+	// If all hops are trusted, fall back to remote IP.
+	return normalizedRemote
 }
 
 // parseValidIP normalizes and validates a candidate IP string.

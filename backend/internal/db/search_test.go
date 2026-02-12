@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -99,6 +100,32 @@ func TestBuildFTSQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateSearchQueryLimits(t *testing.T) {
+	t.Run("rejects excessive total length", func(t *testing.T) {
+		tooLong := strings.Repeat("a", MaxTotalQueryLength+1)
+		if err := validateSearchQuery(tooLong); err == nil {
+			t.Fatalf("expected validation error for total query length")
+		}
+	})
+
+	t.Run("rejects too many terms", func(t *testing.T) {
+		terms := make([]string, MaxSearchTerms+1)
+		for i := range terms {
+			terms[i] = "x"
+		}
+		if err := validateSearchQuery(strings.Join(terms, " ")); err == nil {
+			t.Fatalf("expected validation error for term count")
+		}
+	})
+
+	t.Run("rejects oversized term", func(t *testing.T) {
+		q := strings.Repeat("z", MaxSearchTermLength+1)
+		if err := validateSearchQuery(q); err == nil {
+			t.Fatalf("expected validation error for term length")
+		}
+	})
 }
 
 func TestMergeSearchResults(t *testing.T) {

@@ -205,7 +205,7 @@ func (s *Server) finishFIDO2Auth(w http.ResponseWriter, r *http.Request) {
 		s.logger().Warn("fido2 auth failed",
 			slog.Int("user_id", pending.UserID),
 			slog.Any("error", err),
-			slog.String("remote_ip", getClientIPSafe(r)))
+			securityIPAttr(r))
 		s.accountLockout.RecordFailure(pending.Username, getClientIPSafe(r))
 		respondError(w, http.StatusUnauthorized, "authentication failed")
 		return
@@ -250,7 +250,7 @@ func (s *Server) finishFIDO2Auth(w http.ResponseWriter, r *http.Request) {
 	s.logger().Info("user_logged_in_fido2",
 		slog.Int("user_id", user.ID),
 		slog.String("event", "login_success_fido2"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	respondJSON(w, http.StatusOK, AuthResponse{
 		AccessToken:    accessToken,

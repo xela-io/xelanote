@@ -3,6 +3,7 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -108,7 +109,7 @@ func (s *Server) verifyTwoFactor(w http.ResponseWriter, r *http.Request) {
 		slog.Int("user_id", userID),
 		slog.String("event", "2fa_activation"),
 		slog.String("method", "totp"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"message": "2FA enabled successfully",
@@ -165,7 +166,11 @@ func (s *Server) disableTwoFactor(w http.ResponseWriter, r *http.Request) {
 		// Apply backup code rate limiter if backup code is provided
 		if req.BackupCode != "" {
 			clientIP := getClientIPSafe(r)
-			if !s.backupCodeLimiter.Allow(clientIP) {
+			key := "ip:" + clientIP
+			if userID, ok := getUserID(r); ok {
+				key = "user:" + strconv.Itoa(userID) + "|ip:" + clientIP
+			}
+			if !s.backupCodeLimiter.Allow(key) {
 				respondError(w, http.StatusTooManyRequests, "Too many backup code attempts, please try again later")
 				return
 			}
@@ -196,7 +201,7 @@ func (s *Server) disableTwoFactor(w http.ResponseWriter, r *http.Request) {
 	s.logger().Warn("2fa_disabled",
 		slog.Int("user_id", userID),
 		slog.String("event", "2fa_deactivation"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"message": "2FA disabled successfully",
@@ -282,7 +287,7 @@ func (s *Server) regenerateBackupCodes(w http.ResponseWriter, r *http.Request) {
 	s.logger().Info("backup_codes_regenerated",
 		slog.Int("user_id", userID),
 		slog.String("event", "backup_codes_regeneration"),
-		slog.String("remote_ip", getClientIPSafe(r)))
+		securityIPAttr(r))
 
 	respondJSON(w, http.StatusOK, RegenerateBackupCodesResponse{
 		BackupCodes: codes,

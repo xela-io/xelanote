@@ -13,9 +13,11 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 		// XSS mitigation: DOMPurify sanitizes all user HTML.
 		// 'wasm-unsafe-eval' needed for libsodium WebAssembly (E2E encryption)
 		// Cloudflare Turnstile requires: script-src, frame-src, connect-src for challenges.cloudflare.com
+		// style-src 'unsafe-inline': CodeMirror 6 injects theme styles as dynamic <style> elements
+		// (gutter colors, line number separator, syntax highlighting). No nonce/hash alternative exists.
 		csp := "default-src 'self'; " +
 			"script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com; " +
-			"style-src 'self'; " +
+			"style-src 'self' 'unsafe-inline'; " +
 			"img-src 'self' data: blob:; " +
 			"connect-src 'self' ws: wss: https://challenges.cloudflare.com; " +
 			"frame-src https://challenges.cloudflare.com; " +

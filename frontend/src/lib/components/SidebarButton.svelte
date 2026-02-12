@@ -71,8 +71,10 @@
     transition-duration: 75ms;
   }
 
-  button:hover:not(:disabled) {
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
   }
 
   button:focus-visible {

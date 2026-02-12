@@ -808,11 +808,14 @@
     color: var(--color-muted-foreground);
     border-radius: 3px;
     flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .expand-button:hover {
-    background: var(--color-sidebar-accent);
-    color: var(--color-sidebar-foreground);
+  @media (hover: hover) {
+    .expand-button:hover {
+      background: var(--color-sidebar-accent);
+      color: var(--color-sidebar-foreground);
+    }
   }
 
   .expand-spacer {
@@ -835,10 +838,14 @@
     text-align: left;
     transition: background 0.1s;
     min-width: 0;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .tree-button:hover {
-    background: var(--color-sidebar-accent);
+  /* Only show hover on devices with a real pointer (mouse/trackpad) */
+  @media (hover: hover) {
+    .tree-button:hover {
+      background: var(--color-sidebar-accent);
+    }
   }
 
   .tree-button.selected {
@@ -873,9 +880,14 @@
     transition: opacity 0.15s;
   }
 
-  .folder-row-container:hover .note-count,
   .folder-row-container:focus-within .note-count {
     opacity: 1;
+  }
+
+  @media (hover: hover) {
+    .folder-row-container:hover .note-count {
+      opacity: 1;
+    }
   }
 
   .ai-badge {
@@ -886,16 +898,20 @@
     align-items: center;
   }
 
-  .tree-button:hover .ai-badge {
-    opacity: 1;
+  @media (hover: hover) {
+    .tree-button:hover .ai-badge {
+      opacity: 1;
+    }
   }
 
   .note-button {
     color: var(--color-muted-foreground);
   }
 
-  .note-button:hover {
-    color: var(--color-sidebar-foreground);
+  @media (hover: hover) {
+    .note-button:hover {
+      color: var(--color-sidebar-foreground);
+    }
   }
 
   .folder-row-container {
@@ -939,19 +955,26 @@
     border-radius: 3px;
     flex-shrink: 0;
     transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .folder-row-container:hover .kebab-button,
   .folder-row-container:focus-within .kebab-button,
-  .note-row-container:hover .kebab-button,
   .note-row-container:focus-within .kebab-button {
     opacity: 1;
     pointer-events: auto;
   }
 
-  .kebab-button:hover {
-    background: var(--color-sidebar-accent);
-    color: var(--color-sidebar-foreground);
+  @media (hover: hover) {
+    .folder-row-container:hover .kebab-button,
+    .note-row-container:hover .kebab-button {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .kebab-button:hover {
+      background: var(--color-sidebar-accent);
+      color: var(--color-sidebar-foreground);
+    }
   }
 
   .kebab-button:focus-visible {

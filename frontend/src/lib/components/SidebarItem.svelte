@@ -106,9 +106,11 @@
     transition-duration: 150ms;
   }
 
-  div:hover:not([aria-disabled='true']) {
-    background-color: var(--color-sidebar-accent);
-    opacity: 0.7;
+  @media (hover: hover) {
+    div:hover:not([aria-disabled='true']) {
+      background-color: var(--color-sidebar-accent);
+      opacity: 0.7;
+    }
   }
 
   /* Active state styling */

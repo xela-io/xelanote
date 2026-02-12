@@ -10,7 +10,7 @@ import (
 func TestJobManager_SubmitAndExecute(t *testing.T) {
 	jm := NewJobManager(1)
 	jm.RegisterHandler(JobTypeRenameNote, func(ctx context.Context, job *Job) error {
-		job.Progress = 0.5
+		job.UpdateProgress(0.5)
 		return nil
 	})
 	jm.Start()

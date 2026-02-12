@@ -26,6 +26,7 @@ const (
 
 // Job represents a background job
 type Job struct {
+	mu        sync.RWMutex
 	ID        string
 	Type      JobType
 	UserID    int
@@ -36,6 +37,13 @@ type Job struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Metadata  map[string]interface{}
+}
+
+// UpdateProgress safely updates the job's progress value.
+func (j *Job) UpdateProgress(p float64) {
+	j.mu.Lock()
+	j.Progress = p
+	j.mu.Unlock()
 }
 
 // JobHandler is a function that executes a job
@@ -108,10 +116,26 @@ func (jm *JobManager) Submit(job *Job) error {
 	}
 }
 
-// GetJob retrieves a job by ID
+// GetJob retrieves a snapshot of a job by ID.
+// The returned Job is a copy; mutations do not affect the original.
 func (jm *JobManager) GetJob(jobID string) (*Job, error) {
-	if job, ok := jm.jobs.Load(jobID); ok {
-		return job.(*Job), nil
+	if val, ok := jm.jobs.Load(jobID); ok {
+		original := val.(*Job)
+		original.mu.RLock()
+		snapshot := &Job{
+			ID:        original.ID,
+			Type:      original.Type,
+			UserID:    original.UserID,
+			Status:    original.Status,
+			Progress:  original.Progress,
+			Result:    original.Result,
+			Error:     original.Error,
+			CreatedAt: original.CreatedAt,
+			UpdatedAt: original.UpdatedAt,
+			Metadata:  original.Metadata,
+		}
+		original.mu.RUnlock()
+		return snapshot, nil
 	}
 	return nil, fmt.Errorf("job not found")
 }
@@ -145,7 +169,10 @@ func (jm *JobManager) cleanupLoop() {
 					jm.jobs.Delete(key)
 					return true
 				}
-				if (job.Status == JobStatusCompleted || job.Status == JobStatusFailed) && job.UpdatedAt.Before(cutoff) {
+				job.mu.RLock()
+				shouldDelete := (job.Status == JobStatusCompleted || job.Status == JobStatusFailed) && job.UpdatedAt.Before(cutoff)
+				job.mu.RUnlock()
+				if shouldDelete {
 					jm.jobs.Delete(key)
 				}
 				return true
@@ -156,21 +183,26 @@ func (jm *JobManager) cleanupLoop() {
 
 // executeJob executes a single job
 func (jm *JobManager) executeJob(job *Job) {
+	job.mu.Lock()
 	job.Status = JobStatusRunning
 	job.UpdatedAt = time.Now()
 	job.Progress = 0.0
+	job.mu.Unlock()
 	jm.jobs.Store(job.ID, job)
 
 	handler, ok := jm.handlers[job.Type]
 	if !ok {
+		job.mu.Lock()
 		job.Error = fmt.Sprintf("no handler registered for job type: %s", job.Type)
 		job.Status = JobStatusFailed
 		job.UpdatedAt = time.Now()
+		job.mu.Unlock()
 		jm.jobs.Store(job.ID, job)
 		return
 	}
 
 	err := handler(jm.ctx, job)
+	job.mu.Lock()
 	if err != nil {
 		job.Error = err.Error()
 		job.Status = JobStatusFailed
@@ -179,5 +211,6 @@ func (jm *JobManager) executeJob(job *Job) {
 		job.Progress = 1.0
 	}
 	job.UpdatedAt = time.Now()
+	job.mu.Unlock()
 	jm.jobs.Store(job.ID, job)
 }

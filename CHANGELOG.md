@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Go Runtime von 1.24 auf 1.25 aktualisiert (Green Tea GC experimentell, `http.CrossOriginProtection`, `testing/synctest`, Container-Awareness)
+- go-chi von v5.1.0 auf v5.2.5 aktualisiert
+- CodeMirror-Pakete aktualisiert: view 6.39.14, state 6.5.4, autocomplete 6.20.0, commands 6.10.2
+- CI Quality-Gate (`deploy-staging.yml`) auf `golang:1.25-alpine` aktualisiert
+- Dockerfile Backend-Builder auf `golang:1.25-alpine` aktualisiert
+
+### Fixed
+
+- Air Hot-Reload Build-Tags von `fts5` auf `fts5 sqlite_crypt` synchronisiert (war inkonsistent mit Makefile)
+- Race Condition im Job-Manager behoben: `Job`-Struct mit `sync.RWMutex` abgesichert, `GetJob()` gibt Snapshot-Kopie zurueck, Handler nutzen `UpdateProgress()` fuer thread-safe Zugriff
+
+### Changed
+
 - Editor-Toolbar: Breadcrumb-Navigation (Home > Ordner > Notiz) entfernt, da Sidebar-Navigation ausreicht
 - Editor-Toolbar: "Edited X Min"-Timestamp direkt neben den Notiztitel verschoben (dynamische Breite, passt sich an Titellaenge an)
 - Editor-Toolbar: 3-Spalten CSS Grid Layout fuer echte Zentrierung der Toolbar-Buttons

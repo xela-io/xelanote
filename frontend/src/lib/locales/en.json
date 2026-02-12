@@ -993,6 +993,7 @@
       "ai_enabled_success": "AI features enabled for this note",
       "ai_disabled_success": "AI features disabled for this note",
       "ai_toggle_error": "Failed to toggle AI features",
+      "last_updated": "Edited {date}",
       "completed_count": "{count} completed",
       "completed_toggle": "Toggle {count} completed tasks",
       "find": {

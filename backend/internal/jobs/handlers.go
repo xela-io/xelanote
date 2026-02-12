@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -21,8 +20,7 @@ func HandleRenameNoteJob(noteService *service.NoteService) JobHandler {
 			return fmt.Errorf("invalid newTitle in job metadata")
 		}
 
-		job.Progress = 0.1
-		job.UpdatedAt = time.Now() // Update timestamp
+		job.UpdateProgress(0.1)
 
 		// Execute the rename operation
 		result, err := noteService.RenameNote(ctx, job.UserID, noteID, newTitle)
@@ -30,8 +28,10 @@ func HandleRenameNoteJob(noteService *service.NoteService) JobHandler {
 			return fmt.Errorf("failed to rename note: %w", err)
 		}
 
+		job.mu.Lock()
 		job.Progress = 1.0
 		job.Result = result
+		job.mu.Unlock()
 		return nil
 	}
 }

@@ -8,7 +8,7 @@ tmp_dir = "tmp"
 # Load .env file for development
 dotenv = ".env"
 # Build command with FTS5 support
-cmd = "CGO_ENABLED=1 go build -tags 'fts5' -o ./tmp/main ./cmd/server"
+cmd = "CGO_ENABLED=1 go build -tags 'fts5 sqlite_crypt' -o ./tmp/main ./cmd/server"
 # Binary to run
 bin = "./tmp/main"
 # Arguments to pass to binary

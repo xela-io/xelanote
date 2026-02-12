@@ -6,6 +6,7 @@
 
   import type { RecipeCollection, RecipeIngredient } from '$lib/api';
   import * as notes from '$lib/stores/notes.svelte';
+  import { formatRelativeTime } from '$lib/utils/time';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
@@ -242,16 +243,26 @@
         </button>
       {/if}
 
-      <!-- Saving indicator -->
-      {#if saving}
-        <div class="flex items-center gap-1 text-xs text-muted-foreground">
-          <Loader2 size={12} class="animate-spin" />
-          {$_('page.recipes.saving')}
-        </div>
-      {/if}
-      {#if ingredientsDirty}
-        <span class="text-xs text-amber-500 ml-2">{$_('page.recipes.unsaved')}</span>
-      {/if}
+      <!-- Last updated + Saving indicator -->
+      <div class="flex items-center gap-2">
+        {#if saving}
+          <div class="flex items-center gap-1 text-xs text-muted-foreground">
+            <Loader2 size={12} class="animate-spin" />
+            {$_('page.recipes.saving')}
+          </div>
+        {:else if ingredientsDirty}
+          <span class="text-xs text-amber-500">{$_('page.recipes.unsaved')}</span>
+        {:else if currentRecipe?.note?.updated_at}
+          <span
+            class="text-xs text-muted-foreground hidden sm:inline"
+            title={new Date(currentRecipe.note.updated_at).toLocaleString()}
+          >
+            {$_('component.editor.last_updated', {
+              values: { date: formatRelativeTime(currentRecipe.note.updated_at, $_) },
+            })}
+          </span>
+        {/if}
+      </div>
     </div>
 
     <!-- Tab Content -->

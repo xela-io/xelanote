@@ -993,6 +993,7 @@
       "ai_enabled_success": "KI-Funktionen für diese Notiz aktiviert",
       "ai_disabled_success": "KI-Funktionen für diese Notiz deaktiviert",
       "ai_toggle_error": "Fehler beim Umschalten der KI-Funktionen",
+      "last_updated": "Bearbeitet {date}",
       "completed_count": "{count} erledigt",
       "completed_toggle": "{count} erledigte Aufgaben ein-/ausklappen",
       "find": {

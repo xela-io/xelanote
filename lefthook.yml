@@ -37,3 +37,6 @@ pre-commit:
     security-check:
       glob: "frontend/src/**/*.{ts,svelte,js}"
       run: bash scripts/check-security-patterns.sh
+
+    changelog-check:
+      run: bash scripts/check-changelog.sh

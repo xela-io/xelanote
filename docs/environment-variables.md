@@ -18,7 +18,8 @@ Complete reference for all environment variables used by xelanote.
 | `XELANOTE_DB_KEY` | — | SQLCipher encryption key for database-at-rest encryption. |
 | `XELANOTE_DB_KEY_FILE` | — | Path to file containing the SQLCipher key (alternative to `XELANOTE_DB_KEY`). |
 | `XELANOTE_API_KEY_SECRET` | value of `JWT_SECRET` | Secret for encrypting stored API keys. Falls back to `JWT_SECRET` if not set. |
-| `TRUSTED_PROXIES` | — | Comma-separated list of trusted proxy IPs for `X-Forwarded-For` header parsing. |
+| `TRUSTED_PROXIES` | `127.0.0.1/32,::1/128` | Comma-separated list of trusted proxy CIDRs for `X-Forwarded-For` parsing. **Required when `XELANOTE_ENV=production`**. |
+| `XELANOTE_BOOTSTRAP_TOKEN` | — | One-time bootstrap token for first admin creation when registration is disabled. Send as `bootstrap_token` in `POST /api/auth/register`. |
 
 ## Optional - WebAuthn/FIDO2
 
@@ -90,7 +91,10 @@ CORS_ALLOWED_ORIGINS=https://notes.example.com
 # TURNSTILE_SITE_KEY=0x...
 
 # Optional: Reverse proxy
-# TRUSTED_PROXIES=172.17.0.1,10.0.0.1
+# TRUSTED_PROXIES=172.17.0.1/32,10.0.0.1/32
+
+# Optional: First admin bootstrap when registration is disabled
+# XELANOTE_BOOTSTRAP_TOKEN=long-random-secret
 
 # Optional: Error reporting to Forgejo (see docs/error-reporting.md)
 # FORGEJO_URL=https://git.example.com

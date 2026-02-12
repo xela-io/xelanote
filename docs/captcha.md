@@ -17,18 +17,17 @@ xelanote unterstützt optionalen CAPTCHA-Schutz für Login und Registrierung mit
 |----------|--------------|--------------|
 | `TURNSTILE_SECRET_KEY` | Cloudflare Secret Key (nur Backend) | Ja* |
 | `TURNSTILE_SITE_KEY` | Cloudflare Site Key (wird ans Frontend gesendet) | Ja* |
-| `TRUSTED_PROXIES` | Komma-getrennte CIDRs für Proxy-Validierung | Nein |
+| `TRUSTED_PROXIES` | Komma-getrennte CIDRs für Proxy-Validierung | Ja (in Production) |
 
 *Beide Keys müssen gesetzt sein, damit CAPTCHA aktiv ist.
 
 ### Trusted Proxies
 
-Standardmäßig werden folgende Netzwerke als vertrauenswürdig behandelt:
+Standardmäßig werden nur Loopback-Adressen als vertrauenswürdig behandelt:
 - `127.0.0.1/32` (localhost IPv4)
 - `::1/128` (localhost IPv6)
-- `10.0.0.0/8` (Private Klasse A)
-- `172.16.0.0/12` (Private Klasse B)
-- `192.168.0.0/16` (Private Klasse C)
+
+In Production (`XELANOTE_ENV=production`) muss `TRUSTED_PROXIES` explizit gesetzt sein.
 
 Für Cloudflare-Proxy zusätzlich setzen:
 ```bash

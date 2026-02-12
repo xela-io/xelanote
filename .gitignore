@@ -66,6 +66,7 @@ temp/
 # Backend compiled binaries
 backend/xelanote
 backend/server
+backend/cmd/server/server
 
 # Test artifacts
 frontend/test-results/

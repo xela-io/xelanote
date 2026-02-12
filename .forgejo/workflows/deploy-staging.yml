@@ -40,7 +40,9 @@ jobs:
           set -euo pipefail
           echo "--- Running frontend lint in Docker ---"
           docker run --rm -v "$PWD:/repo:ro" -w /tmp/frontend node:22-alpine sh -c \
-            "cp -r /repo/frontend/. . && cp /repo/package.json /tmp/ && \
+            "cp -r /repo/frontend/. . && \
+             cp /repo/README.md /repo/CHANGELOG.md /repo/ROADMAP.md /tmp/ 2>/dev/null || true && \
+             cp -r /repo/docs /tmp/ 2>/dev/null || true && \
              npm ci --ignore-scripts >/dev/null 2>&1 && \
              echo '--- eslint (errors only) ---' && npx eslint --no-warn-ignored --max-warnings 0 . && \
              echo '--- prettier ---' && npm run format:check && \

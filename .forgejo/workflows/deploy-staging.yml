@@ -39,8 +39,9 @@ jobs:
         run: |
           set -euo pipefail
           echo "--- Running frontend lint in Docker ---"
-          docker run --rm -v "$PWD:/repo" -w /repo/frontend node:22-alpine sh -c \
-            "npm ci --ignore-scripts >/dev/null 2>&1 && \
+          docker run --rm -v "$PWD:/repo:ro" -w /tmp/frontend node:22-alpine sh -c \
+            "cp -r /repo/frontend/. . && cp /repo/package.json /tmp/ && \
+             npm ci --ignore-scripts >/dev/null 2>&1 && \
              echo '--- eslint (errors only) ---' && npx eslint --no-warn-ignored --max-warnings 0 . && \
              echo '--- prettier ---' && npm run format:check && \
              echo '--- markdownlint ---' && npm run lint:md"
@@ -105,6 +106,9 @@ jobs:
           echo "Building image with tag: $SHA (version: $VERSION)"
 
           docker build --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$SHA" -t "$IMAGE_NAME:latest" .
+
+          # Free build cache immediately to avoid filling disk for subsequent steps
+          docker builder prune -af >/dev/null 2>&1 || true
 
           echo "IMAGE_TAG=$SHA" >> "$GITHUB_ENV"
 

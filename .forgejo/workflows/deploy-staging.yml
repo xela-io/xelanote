@@ -42,6 +42,7 @@ jobs:
           docker run --rm -v "$PWD:/repo:ro" -w /tmp/frontend node:22-alpine sh -c \
             "cp -r /repo/frontend/. . && \
              cp /repo/README.md /repo/CHANGELOG.md /repo/ROADMAP.md /tmp/ 2>/dev/null || true && \
+             cp /repo/.markdownlint.yaml /repo/.markdownlintignore /tmp/ 2>/dev/null || true && \
              cp -r /repo/docs /tmp/ 2>/dev/null || true && \
              npm ci --ignore-scripts >/dev/null 2>&1 && \
              echo '--- eslint (errors only) ---' && npx eslint --no-warn-ignored --max-warnings 0 . && \

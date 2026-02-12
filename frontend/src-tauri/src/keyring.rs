@@ -5,8 +5,11 @@ use aes_gcm::{
 use keyring::Entry;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::fs;
+use std::fs::OpenOptions;
+use std::io::Write;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
 /// Auth tokens for a server connection.
@@ -35,19 +38,47 @@ fn fallback_path(server_url: &str) -> PathBuf {
         .join(format!("{}.tokens.enc", key))
 }
 
-/// Derive encryption key from machine-specific data.
-/// This ensures tokens cannot be decrypted on a different machine.
-fn derive_fallback_key() -> [u8; 32] {
-    // Use machine-id + username as key derivation source
-    let machine_id = fs::read_to_string("/etc/machine-id")
-        .unwrap_or_else(|_| "fallback-id".to_string());
-    let username = std::env::var("USER").unwrap_or_else(|_| "user".to_string());
+/// Get persistent fallback key path.
+fn fallback_key_path() -> PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("xelanote")
+        .join(".fallback_key")
+}
 
-    let mut hasher = Sha256::new();
-    hasher.update(machine_id.trim().as_bytes());
-    hasher.update(username.as_bytes());
-    hasher.update(b"xelanote-token-encryption");
-    hasher.finalize().into()
+/// Load or create the fallback encryption key.
+/// The key is random, persistent, and stored with restrictive file permissions.
+fn derive_fallback_key() -> [u8; 32] {
+    let path = fallback_key_path();
+    if let Ok(existing) = fs::read(&path) {
+        if existing.len() == 32 {
+            let mut key = [0u8; 32];
+            key.copy_from_slice(&existing);
+            return key;
+        }
+    }
+
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let mut key = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut key);
+
+    if let Ok(mut file) = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(&path)
+    {
+        #[cfg(unix)]
+        {
+            let _ = file.set_permissions(fs::Permissions::from_mode(0o600));
+        }
+        let _ = file.write_all(&key);
+    }
+
+    key
 }
 
 /// Store auth tokens for a server.
@@ -87,6 +118,10 @@ pub fn store_tokens(server_url: &str, tokens: &AuthTokens) -> Result<(), String>
     encrypted.extend(ciphertext);
 
     fs::write(&path, &encrypted).map_err(|e| e.to_string())?;
+    #[cfg(unix)]
+    {
+        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
+    }
     Ok(())
 }
 

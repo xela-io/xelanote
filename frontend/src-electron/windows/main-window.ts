@@ -31,7 +31,7 @@ export function createMainWindow(): BrowserWindow {
       preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false, // Must be false when using --no-sandbox flag
+      sandbox: true,
       // Disable web security in development to allow cross-origin requests
       // This allows the app loaded from localhost:5173 to access xelanote.com API
       webSecurity: !isDev,

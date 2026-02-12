@@ -18,10 +18,6 @@ if (process.platform === 'linux') {
   // Completely disable GPU acceleration
   app.disableHardwareAcceleration();
 
-  // Disable all sandboxing to avoid /tmp shared memory issues
-  app.commandLine.appendSwitch('no-sandbox');
-  app.commandLine.appendSwitch('disable-setuid-sandbox');
-
   // Disable GPU-related features
   app.commandLine.appendSwitch('disable-gpu');
   app.commandLine.appendSwitch('disable-gpu-compositing');
@@ -123,35 +119,6 @@ app.whenReady().then(async () => {
       },
     });
   });
-
-  // In production, bypass CORS for API requests to xelanote.com
-  // The app:// origin is not a valid HTTP origin, so the backend would reject preflight requests
-  if (!isDev) {
-    // Modify outgoing requests to remove Origin header for API calls
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-      { urls: ['https://xelanote.com/*'] },
-      (details, callback) => {
-        // Remove Origin header so the request appears to come from same origin
-        delete details.requestHeaders['Origin'];
-        callback({ requestHeaders: details.requestHeaders });
-      }
-    );
-
-    // Add CORS headers to responses from xelanote.com
-    session.defaultSession.webRequest.onHeadersReceived(
-      { urls: ['https://xelanote.com/*'] },
-      (details, callback) => {
-        const responseHeaders = {
-          ...details.responseHeaders,
-          'Access-Control-Allow-Origin': ['*'],
-          'Access-Control-Allow-Methods': ['GET, POST, PUT, DELETE, PATCH, OPTIONS'],
-          'Access-Control-Allow-Headers': ['Content-Type, Authorization, X-Client-Type'],
-          'Access-Control-Allow-Credentials': ['true'],
-        };
-        callback({ responseHeaders });
-      }
-    );
-  }
 
   // Register IPC handlers
   registerIpcHandlers();

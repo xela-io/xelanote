@@ -74,7 +74,8 @@ dev:
 	@command -v air >/dev/null 2>&1 || { echo "Installing Air..."; go install github.com/air-verse/air@latest; }
 	@cd backend && export $$(grep -v '^#' .env | xargs) && $(shell go env GOPATH)/bin/air
 
-# Development: run both frontend and backend with hot-reload
+# Development: prints instructions for running frontend + backend in parallel.
+# This target does NOT start any processes — open two terminals manually.
 dev-full:
 	@echo "Terminal 1: make dev       (Backend mit Hot-Reload)"
 	@echo "Terminal 2: make run-frontend (Frontend mit Vite HMR)"

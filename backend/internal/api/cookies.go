@@ -2,20 +2,12 @@ package api
 
 import (
 	"net/http"
-	"os"
 )
 
 const (
 	AccessTokenCookie  = "access_token"
 	RefreshTokenCookie = "refresh_token"
 )
-
-// isDevelopment checks if the application is running in development or test mode
-// (both use HTTP without TLS, so Secure cookies must be disabled)
-func isDevelopment() bool {
-	env := os.Getenv("XELANOTE_ENV")
-	return env == "development" || env == "test" || env == "testing"
-}
 
 // setAccessTokenCookie sets the access token as an HttpOnly cookie
 func setAccessTokenCookie(w http.ResponseWriter, token string) {

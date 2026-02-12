@@ -2,9 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // ============================================================================
@@ -20,10 +17,8 @@ func (s *Server) updateFolderEncryptionDefault(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder id")
+	id, ok := parseIntParam(w, r, "id", "invalid folder id")
+	if !ok {
 		return
 	}
 
@@ -52,10 +47,8 @@ func (s *Server) getFolderEncryptionDefault(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder id")
+	id, ok := parseIntParam(w, r, "id", "invalid folder id")
+	if !ok {
 		return
 	}
 

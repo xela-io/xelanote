@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -125,10 +124,8 @@ func (s *Server) deleteTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tagIDStr := chi.URLParam(r, "tagId")
-	tagID, err := strconv.Atoi(tagIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid tag id")
+	tagID, ok := parseIntParam(w, r, "tagId", "invalid tag id")
+	if !ok {
 		return
 	}
 

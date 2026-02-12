@@ -3,9 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -20,9 +18,8 @@ func (s *Server) shareCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
@@ -74,9 +71,8 @@ func (s *Server) getCollectionShares(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
@@ -107,15 +103,13 @@ func (s *Server) updateCollectionShareRole(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
-	targetUserID, err := strconv.Atoi(chi.URLParam(r, "userId"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user id")
+	targetUserID, ok := parseIntParam(w, r, "userId", "invalid user id")
+	if !ok {
 		return
 	}
 
@@ -154,15 +148,13 @@ func (s *Server) removeCollectionShare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
-	targetUserID, err := strconv.Atoi(chi.URLParam(r, "userId"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user id")
+	targetUserID, ok := parseIntParam(w, r, "userId", "invalid user id")
+	if !ok {
 		return
 	}
 

@@ -15,10 +15,9 @@ type GraphService struct {
 	cache  *cache.Cache
 }
 
-// NewGraphService creates a new GraphService with its own cache (2 min TTL).
+// NewGraphService creates a new GraphService using a shared cache instance.
+// The cache TTL is determined by the passed-in cache (typically 5 min from NoteService).
 func NewGraphService(database *db.DB, cacheInstance *cache.Cache) *GraphService {
-	// Note: Using shared cache from NoteService
-	// The shared cache has 5 min TTL, but that's fine for graph data
 	return &GraphService{
 		db:     database,
 		logger: slog.Default(),
@@ -30,7 +29,7 @@ func globalGraphCacheKey(userID int) string {
 	return fmt.Sprintf("cache:graph:global:%d", userID)
 }
 
-// GetGlobalGraph returns the global graph for a user with caching (2 min TTL).
+// GetGlobalGraph returns the global graph for a user with caching.
 func (s *GraphService) GetGlobalGraph(userID int) (*db.GraphData, error) {
 	cacheKey := globalGraphCacheKey(userID)
 

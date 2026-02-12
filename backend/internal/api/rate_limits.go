@@ -1,7 +1,5 @@
 package api
 
-import "os"
-
 type rateLimitConfig struct {
 	registerLimit       int
 	loginLimit          int
@@ -21,12 +19,6 @@ type rateLimitConfig struct {
 	userSearchLimit     int
 	errorReportLimit    int
 	lockoutAttempts     int
-}
-
-// isTestEnv returns true if running in test environment.
-func isTestEnv() bool {
-	env := os.Getenv("XELANOTE_ENV")
-	return env == "test" || env == "testing"
 }
 
 func buildRateLimitConfig() rateLimitConfig {

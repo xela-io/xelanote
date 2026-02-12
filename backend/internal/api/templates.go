@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
 )
 
@@ -48,14 +47,6 @@ func validateTemplateRequest(name, title, content string) error {
 	return nil
 }
 
-type validationError struct {
-	message string
-}
-
-func (e *validationError) Error() string {
-	return e.message
-}
-
 // getAllTemplates returns all templates for the authenticated user.
 func (s *Server) getAllTemplates(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserID(r)
@@ -83,10 +74,8 @@ func (s *Server) getTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templateIDStr := chi.URLParam(r, "id")
-	templateID, err := strconv.Atoi(templateIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid template id")
+	templateID, ok := parseIntParam(w, r, "id", "invalid template id")
+	if !ok {
 		return
 	}
 
@@ -140,10 +129,8 @@ func (s *Server) updateTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templateIDStr := chi.URLParam(r, "id")
-	templateID, err := strconv.Atoi(templateIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid template id")
+	templateID, ok := parseIntParam(w, r, "id", "invalid template id")
+	if !ok {
 		return
 	}
 
@@ -159,7 +146,7 @@ func (s *Server) updateTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.templateService.UpdateTemplate(userID, templateID, req.Name, req.Description, req.Title, req.Content)
+	err := s.templateService.UpdateTemplate(userID, templateID, req.Name, req.Description, req.Title, req.Content)
 	if err == db.ErrNotFound {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
@@ -187,14 +174,12 @@ func (s *Server) deleteTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templateIDStr := chi.URLParam(r, "id")
-	templateID, err := strconv.Atoi(templateIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid template id")
+	templateID, ok := parseIntParam(w, r, "id", "invalid template id")
+	if !ok {
 		return
 	}
 
-	err = s.templateService.DeleteTemplate(userID, templateID)
+	err := s.templateService.DeleteTemplate(userID, templateID)
 	if err == db.ErrNotFound {
 		respondError(w, http.StatusNotFound, "template not found")
 		return

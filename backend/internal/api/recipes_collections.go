@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
@@ -58,9 +57,8 @@ func (s *Server) updateRecipeCollection(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
@@ -89,9 +87,8 @@ func (s *Server) deleteRecipeCollection(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
@@ -114,9 +111,8 @@ func (s *Server) addRecipeToCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
@@ -149,9 +145,8 @@ func (s *Server) removeRecipeFromCollection(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 
@@ -180,9 +175,8 @@ func (s *Server) listCollectionItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid collection id")
+	collID, ok := parseIntParam(w, r, "id", "invalid collection id")
+	if !ok {
 		return
 	}
 

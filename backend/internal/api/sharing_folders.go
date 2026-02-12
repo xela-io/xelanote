@@ -3,9 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -22,10 +20,8 @@ func (s *Server) shareFolderHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	folderIDStr := chi.URLParam(r, "id")
-	folderID, err := strconv.Atoi(folderIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder ID")
+	folderID, ok := parseIntParam(w, r, "id", "invalid folder ID")
+	if !ok {
 		return
 	}
 
@@ -77,10 +73,8 @@ func (s *Server) getFolderSharesHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	folderIDStr := chi.URLParam(r, "id")
-	folderID, err := strconv.Atoi(folderIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder ID")
+	folderID, ok := parseIntParam(w, r, "id", "invalid folder ID")
+	if !ok {
 		return
 	}
 
@@ -113,17 +107,13 @@ func (s *Server) updateFolderShareRoleHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	folderIDStr := chi.URLParam(r, "id")
-	folderID, err := strconv.Atoi(folderIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder ID")
+	folderID, ok := parseIntParam(w, r, "id", "invalid folder ID")
+	if !ok {
 		return
 	}
 
-	targetUserIDStr := chi.URLParam(r, "userId")
-	targetUserID, err := strconv.Atoi(targetUserIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	targetUserID, ok := parseIntParam(w, r, "userId", "invalid user ID")
+	if !ok {
 		return
 	}
 
@@ -138,7 +128,7 @@ func (s *Server) updateFolderShareRoleHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = s.sharingService.UpdateFolderShareRole(userID, folderID, targetUserID, req.Role)
+	err := s.sharingService.UpdateFolderShareRole(userID, folderID, targetUserID, req.Role)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
@@ -163,21 +153,17 @@ func (s *Server) removeFolderShareHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	folderIDStr := chi.URLParam(r, "id")
-	folderID, err := strconv.Atoi(folderIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder ID")
+	folderID, ok := parseIntParam(w, r, "id", "invalid folder ID")
+	if !ok {
 		return
 	}
 
-	targetUserIDStr := chi.URLParam(r, "userId")
-	targetUserID, err := strconv.Atoi(targetUserIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	targetUserID, ok := parseIntParam(w, r, "userId", "invalid user ID")
+	if !ok {
 		return
 	}
 
-	err = s.sharingService.UnshareFolder(userID, folderID, targetUserID)
+	err := s.sharingService.UnshareFolder(userID, folderID, targetUserID)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
@@ -223,10 +209,8 @@ func (s *Server) getSharedFolderNotesHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	folderIDStr := chi.URLParam(r, "id")
-	folderID, err := strconv.Atoi(folderIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder ID")
+	folderID, ok := parseIntParam(w, r, "id", "invalid folder ID")
+	if !ok {
 		return
 	}
 

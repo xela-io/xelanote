@@ -79,11 +79,9 @@ func (s *Server) getVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	noteID := chi.URLParam(r, "id")
-	versionStr := chi.URLParam(r, "version")
 
-	version, err := strconv.Atoi(versionStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid version number")
+	version, ok := parseIntParam(w, r, "version", "invalid version number")
+	if !ok {
 		return
 	}
 
@@ -189,11 +187,8 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	noteID := chi.URLParam(r, "id")
-	versionStr := chi.URLParam(r, "version")
-
-	targetVersion, err := strconv.Atoi(versionStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid version number")
+	targetVersion, ok := parseIntParam(w, r, "version", "invalid version number")
+	if !ok {
 		return
 	}
 

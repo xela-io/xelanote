@@ -2,9 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // updateFolderColor updates the color of a folder.
@@ -15,10 +12,8 @@ func (s *Server) updateFolderColor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder id")
+	id, ok := parseIntParam(w, r, "id", "invalid folder id")
+	if !ok {
 		return
 	}
 
@@ -28,7 +23,7 @@ func (s *Server) updateFolderColor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.noteService.UpdateFolderColor(userID, id, req.Color)
+	err := s.noteService.UpdateFolderColor(userID, id, req.Color)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return

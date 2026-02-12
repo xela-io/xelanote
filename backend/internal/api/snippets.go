@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
 )
 
@@ -70,10 +69,8 @@ func (s *Server) getSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snippetIDStr := chi.URLParam(r, "id")
-	snippetID, err := strconv.Atoi(snippetIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid snippet id")
+	snippetID, ok := parseIntParam(w, r, "id", "invalid snippet id")
+	if !ok {
 		return
 	}
 
@@ -127,10 +124,8 @@ func (s *Server) updateSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snippetIDStr := chi.URLParam(r, "id")
-	snippetID, err := strconv.Atoi(snippetIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid snippet id")
+	snippetID, ok := parseIntParam(w, r, "id", "invalid snippet id")
+	if !ok {
 		return
 	}
 
@@ -146,7 +141,7 @@ func (s *Server) updateSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.snippetService.UpdateSnippet(userID, snippetID, req.Name, req.Description, req.Content, req.Shortcut)
+	err := s.snippetService.UpdateSnippet(userID, snippetID, req.Name, req.Description, req.Content, req.Shortcut)
 	if err == db.ErrNotFound {
 		respondError(w, http.StatusNotFound, "snippet not found")
 		return
@@ -174,14 +169,12 @@ func (s *Server) deleteSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snippetIDStr := chi.URLParam(r, "id")
-	snippetID, err := strconv.Atoi(snippetIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid snippet id")
+	snippetID, ok := parseIntParam(w, r, "id", "invalid snippet id")
+	if !ok {
 		return
 	}
 
-	err = s.snippetService.DeleteSnippet(userID, snippetID)
+	err := s.snippetService.DeleteSnippet(userID, snippetID)
 	if err == db.ErrNotFound {
 		respondError(w, http.StatusNotFound, "snippet not found")
 		return

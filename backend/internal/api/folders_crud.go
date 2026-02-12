@@ -2,9 +2,7 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/utils"
 )
 
@@ -85,10 +83,8 @@ func (s *Server) moveFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder id")
+	id, ok := parseIntParam(w, r, "id", "invalid folder id")
+	if !ok {
 		return
 	}
 
@@ -107,7 +103,7 @@ func (s *Server) moveFolder(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = s.noteService.MoveFolder(userID, id, req.NewParentPath)
+	err := s.noteService.MoveFolder(userID, id, req.NewParentPath)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -125,14 +121,12 @@ func (s *Server) deleteFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder id")
+	id, ok := parseIntParam(w, r, "id", "invalid folder id")
+	if !ok {
 		return
 	}
 
-	err = s.noteService.DeleteFolder(userID, id)
+	err := s.noteService.DeleteFolder(userID, id)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -150,10 +144,8 @@ func (s *Server) renameFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid folder id")
+	id, ok := parseIntParam(w, r, "id", "invalid folder id")
+	if !ok {
 		return
 	}
 
@@ -168,7 +160,7 @@ func (s *Server) renameFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.noteService.RenameFolder(userID, id, req.NewName)
+	err := s.noteService.RenameFolder(userID, id, req.NewName)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return

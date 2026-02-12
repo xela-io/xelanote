@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
@@ -112,10 +111,8 @@ func (s *Server) updateShareRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetUserIDStr := chi.URLParam(r, "userId")
-	targetUserID, err := strconv.Atoi(targetUserIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	targetUserID, ok := parseIntParam(w, r, "userId", "invalid user ID")
+	if !ok {
 		return
 	}
 
@@ -130,7 +127,7 @@ func (s *Server) updateShareRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.sharingService.UpdateShareRole(userID, noteID, targetUserID, req.Role)
+	err := s.sharingService.UpdateShareRole(userID, noteID, targetUserID, req.Role)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
@@ -161,14 +158,12 @@ func (s *Server) removeShare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetUserIDStr := chi.URLParam(r, "userId")
-	targetUserID, err := strconv.Atoi(targetUserIDStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	targetUserID, ok := parseIntParam(w, r, "userId", "invalid user ID")
+	if !ok {
 		return
 	}
 
-	err = s.sharingService.UnshareNote(userID, noteID, targetUserID)
+	err := s.sharingService.UnshareNote(userID, noteID, targetUserID)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")

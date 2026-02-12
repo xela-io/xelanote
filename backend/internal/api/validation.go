@@ -7,6 +7,16 @@ import (
 	"fmt"
 )
 
+// validationError is a general-purpose validation error returned to clients.
+// Used by snippets and templates validation.
+type validationError struct {
+	message string
+}
+
+func (e *validationError) Error() string {
+	return e.message
+}
+
 // Encryption validation constants
 const (
 	// MinAESGCMCiphertext is the minimum size for AES-GCM encrypted content.

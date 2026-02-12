@@ -6,7 +6,6 @@ import (
 
 	"errors"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -130,10 +129,8 @@ func (s *Server) listAllUsers(w http.ResponseWriter, r *http.Request) {
 
 // getUserDetails returns details for a single user
 func (s *Server) getUserDetails(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	id, ok := parseIntParam(w, r, "id", "invalid user ID")
+	if !ok {
 		return
 	}
 
@@ -170,10 +167,8 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	targetID, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	targetID, ok := parseIntParam(w, r, "id", "invalid user ID")
+	if !ok {
 		return
 	}
 
@@ -223,10 +218,8 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	targetID, err := strconv.Atoi(idStr)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid user ID")
+	targetID, ok := parseIntParam(w, r, "id", "invalid user ID")
+	if !ok {
 		return
 	}
 

@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/db"
@@ -61,9 +60,8 @@ func (s *Server) updateRecipeImageCaption(w http.ResponseWriter, r *http.Request
 	}
 
 	noteID := chi.URLParam(r, "id")
-	imageID, err := strconv.Atoi(chi.URLParam(r, "imageId"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid image id")
+	imageID, ok := parseIntParam(w, r, "imageId", "invalid image id")
+	if !ok {
 		return
 	}
 
@@ -99,9 +97,8 @@ func (s *Server) deleteRecipeImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	noteID := chi.URLParam(r, "id")
-	imageID, err := strconv.Atoi(chi.URLParam(r, "imageId"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid image id")
+	imageID, ok := parseIntParam(w, r, "imageId", "invalid image id")
+	if !ok {
 		return
 	}
 

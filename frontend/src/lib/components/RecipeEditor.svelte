@@ -72,12 +72,21 @@
   // Current collection IDs for the recipe
   const currentCollectionIds = $derived(currentRecipe?.collections?.map((c) => c.id) ?? []);
 
-  onMount(async () => {
-    // Load recipe detail
-    await recipes.loadRecipeDetail(noteId);
-    await recipes.loadCollections();
+  // Load recipe data reactively when noteId changes (not in onMount,
+  // because the component can stay mounted when noteId changes via routing).
+  // Cleanup clears stale recipe state on noteId change or unmount.
+  $effect(() => {
+    const id = noteId;
+    recipes.loadRecipeDetail(id);
+    recipes.loadCollections();
 
-    // Load markdown editor for instructions tab
+    return () => {
+      recipes.clearCurrentRecipe();
+    };
+  });
+
+  // Load markdown editor component (only once)
+  onMount(async () => {
     try {
       const module = await import('$lib/components/Editor.svelte');
       EditorComponent = loadSvelteComponentFromModule(module, 'RecipeEditorInstructions');

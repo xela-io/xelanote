@@ -189,9 +189,18 @@ export async function loadRecipes() {
 }
 
 /**
+ * Clear current recipe state (e.g. on navigation away from a recipe).
+ */
+export function clearCurrentRecipe() {
+  currentRecipe = null;
+  lastError = null;
+}
+
+/**
  * Load recipe detail for a specific note.
  */
 export async function loadRecipeDetail(noteId: string) {
+  currentRecipe = null;
   recipeDetailLoading = true;
   lastError = null;
   try {

@@ -6,10 +6,10 @@
 
   import type { RecipeCollection, RecipeIngredient } from '$lib/api';
   import * as notes from '$lib/stores/notes.svelte';
-  import { formatRelativeTime } from '$lib/utils/time';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
+  import { formatRelativeTime } from '$lib/utils/time';
 
   import AddToCollectionDialog from './AddToCollectionDialog.svelte';
   import RecipeCollectionDialog from './RecipeCollectionDialog.svelte';

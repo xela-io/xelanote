@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Import-Sortierung in RecipeEditor.svelte korrigiert (ESLint simple-import-sort)
+
 ### Changed
 
 - Layer-Violations-Baseline von 37 auf 0 reduziert: Alle 37 API-Dateien importieren jetzt `service` statt `db` direkt. Type-Aliases (`Note`, `NoteVersion`, `Backlink`, `GraphData`, `SearchFilters`, etc.) und Error-Re-Exports (`ErrNotFound`, `ErrVersionMismatch`, etc.) im Service-Layer eingefuehrt. 11 GetDB()-Bypass-Aufrufe in journal.go, features.go, task_events.go, notes_crud_create.go, notes_crud_update.go durch 9 neue Service-Methoden ersetzt (`GetUserFeature`, `ListUserFeatures`, `SetUserFeature`, `JournalExistsForDate`, `ListJournalEntries`, `ListJournalDates`, `ListJournalDatesForYear`, `SetNoteDueDates`, `RecordTaskEvent`). `NoteService.GetDB()` entfernt. CI-Ratchet (`check-layer-violations.sh`) um GetDB()-Check erweitert.

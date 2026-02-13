@@ -223,7 +223,7 @@ func registerEncryptedDriver(key string) {
 	registerEncryptedDriverOnce.Do(func() {
 		sql.Register(encryptedDriverName, &sqlite3.SQLiteDriver{
 			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-				pragma := fmt.Sprintf("PRAGMA key = '%s'", escapeSQLCipherKey(key))
+				pragma := "PRAGMA key = '" + escapeSQLCipherKey(key) + "'"
 				_, err := conn.Exec(pragma, nil)
 				return err
 			},

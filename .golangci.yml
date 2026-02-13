@@ -60,29 +60,7 @@ issues:
     - path: internal/llm/prompts\.go
       linters:
         - misspell
-    # Existing patterns - to be cleaned up incrementally
-    - linters:
-        - gocritic
-      text: "sprintfQuotedString"
-    - linters:
-        - gocritic
-      text: "sloppyReassign"
-    - linters:
-        - gocritic
-      text: "assignOp"
-    - linters:
-        - staticcheck
-      text: "SA9003"
-    - linters:
-        - gosimple
-      text: "S1017"
     # Activity logging is fire-and-forget by design
     - linters:
         - errcheck
       text: "activityService\\.Log"
-    - linters:
-        - errcheck
-      text: "s\\.updateLinks"
-    - linters:
-        - ineffassign
-      path: internal/db/folders_rename\.go

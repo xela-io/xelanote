@@ -97,7 +97,9 @@ func (s *NoteService) CreateJournalNote(userID int, title, content, folderPath, 
 	}
 
 	// Parse and save links
-	s.updateLinks(userID, note.ID, content)
+	if err := s.updateLinks(userID, note.ID, content); err != nil {
+		s.logger.Warn("failed to update links for journal note", "error", err, "note_id", note.ID)
+	}
 	s.updateDueDates(userID, note.ID, content)
 
 	// Invalidate caches (including folder cache since Journal folder may have been created)

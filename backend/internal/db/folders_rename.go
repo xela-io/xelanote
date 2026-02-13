@@ -35,7 +35,7 @@ func (d *DB) RenameFolder(userID int, folderID int, newName string) error {
 		parentPath = parent.Path
 	}
 
-	newPath := parentPath
+	var newPath string
 	if parentPath == "/" {
 		newPath = "/" + newName
 	} else {

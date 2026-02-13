@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Base64-Encoding-Bug bei verschlüsselten Notizen >8KB behoben: `toBase64Standard()` nutzte Chunk-Größe 8192 (nicht durch 3 teilbar), wodurch `btoa()` Padding-Zeichen (`=`) in Zwischen-Chunks erzeugte, die beim Konkatenieren ungültiges Base64 ergaben. Fix: Chunk-Größe auf 8190 (teilbar durch 3) geändert.
+- golangci-lint suppressed Findings bereinigt: 7 von 8 exclude-rules entfernt (sprintfQuotedString, sloppyReassign, assignOp, SA9003, S1017, s.updateLinks, ineffassign). Konkrete Code-Fixes: `fmt.Sprintf` mit Quoted-Strings durch Concatenation/`%q` ersetzt (db.go, notes_helpers_validate.go, notes_helpers_types.go), 2 unchecked `s.updateLinks` Aufrufe mit Error-Handling versehen (notes_rename.go, notes_encryption_create.go), ineffektive Zuweisung in folders_rename.go eliminiert. Nur `activityService.Log` bleibt als fire-and-forget by design supprimiert.
+
 ### Changed
 
 - Go Runtime von 1.24 auf 1.25 aktualisiert (Green Tea GC experimentell, `http.CrossOriginProtection`, `testing/synctest`, Container-Awareness)

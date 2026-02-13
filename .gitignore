@@ -88,3 +88,7 @@ moonlit-discovering-gray.md
 # Archive
 archive/
 frontend/dev-dist/
+
+# Claude Code Docker (lokale Config, Keys)
+.claude-docker/.env
+.claude-docker/docker-compose.override.yml

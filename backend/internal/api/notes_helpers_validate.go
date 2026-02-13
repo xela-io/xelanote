@@ -57,7 +57,7 @@ func handleCreateNoteError(w http.ResponseWriter, err error, title string, isJou
 		}
 		// Fallback: title conflict
 		respondError(w, http.StatusConflict,
-			fmt.Sprintf("Eine Notiz mit dem Titel '%s' existiert bereits in diesem Ordner", title))
+			fmt.Sprintf("Eine Notiz mit dem Titel %q existiert bereits in diesem Ordner", title))
 		return
 	}
 	// Feature not enabled

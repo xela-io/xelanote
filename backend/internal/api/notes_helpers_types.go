@@ -86,7 +86,7 @@ func convertClientDueDates(dueDates []ClientDueDate) []parser.DueDate {
 func generateETag(noteID string, version int) string {
 	hash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", noteID, version)))
 	etag := hex.EncodeToString(hash[:8]) // First 8 bytes = 16 hex chars
-	return fmt.Sprintf(`"%s"`, etag)
+	return `"` + etag + `"`
 }
 
 // parseETag parses an ETag value and attempts to extract the version

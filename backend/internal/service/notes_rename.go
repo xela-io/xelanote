@@ -65,7 +65,9 @@ func (s *NoteService) RenameNote(ctx context.Context, userID int, noteID, newTit
 			}
 
 			// Reprocess links for this note
-			s.updateLinks(userID, sourceNote.ID, newContent)
+			if err := s.updateLinks(userID, sourceNote.ID, newContent); err != nil {
+				s.logger.Error("failed to update links after rename", "err", err, "note_id", sourceNote.ID)
+			}
 			updatedNotes = append(updatedNotes, sourceNote.Title)
 
 			if updatedSourceNote != nil {

@@ -374,7 +374,7 @@ export function fromBase64(str: string): Uint8Array {
  * Use for compatibility with backend APIs that use standard base64.
  */
 export function toBase64Standard(bytes: Uint8Array): string {
-  const CHUNK_SIZE = 8192; // Process 8KB at a time to avoid stack overflow
+  const CHUNK_SIZE = 8190; // Must be divisible by 3 to avoid btoa padding in intermediate chunks
   let result = '';
 
   for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {

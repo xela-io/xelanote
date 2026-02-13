@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/jobs"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) renameNote(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +63,7 @@ func (s *Server) renameNote(w http.ResponseWriter, r *http.Request) {
 	// Sync mode - execute immediately (existing behavior)
 	result, err := s.noteService.RenameNote(r.Context(), userID, id, req.NewTitle)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}

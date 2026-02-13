@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // updateSecurityPreferences updates security-related preferences (security_level and auto_lock_timeout)
@@ -50,7 +50,7 @@ func (s *Server) updateSecurityPreferences(w http.ResponseWriter, r *http.Reques
 	credentials, err := s.userService.GetWebAuthnCredentials(int64(userID))
 	if err != nil {
 		s.logger().Warn("failed to load webauthn credentials", "user_id", userID, "error", err)
-		credentials = []db.WebAuthnCredential{}
+		credentials = []service.WebAuthnCredential{}
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{

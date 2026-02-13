@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // --- Collection handlers ---
@@ -69,7 +69,7 @@ func (s *Server) updateRecipeCollection(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := s.recipeService.UpdateCollection(userID, collID, req.Name, req.Description, req.Color); err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
@@ -93,7 +93,7 @@ func (s *Server) deleteRecipeCollection(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := s.recipeService.DeleteCollection(userID, collID); err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
@@ -127,7 +127,7 @@ func (s *Server) addRecipeToCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.recipeService.AddToCollection(userID, collID, req.NoteID); err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
@@ -157,7 +157,7 @@ func (s *Server) removeRecipeFromCollection(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := s.recipeService.RemoveFromCollection(userID, collID, noteID); err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "not found")
 			return
 		}
@@ -182,7 +182,7 @@ func (s *Server) listCollectionItems(w http.ResponseWriter, r *http.Request) {
 
 	recipes, err := s.recipeService.ListCollectionItems(userID, collID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}

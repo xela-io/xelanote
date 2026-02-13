@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -41,7 +40,7 @@ func (s *Server) shareCollection(w http.ResponseWriter, r *http.Request) {
 	share, err := s.recipeService.ShareCollection(userID, collID, req.Identifier, req.Role)
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrNotFound):
+		case errors.Is(err, service.ErrNotFound):
 			respondError(w, http.StatusNotFound, "collection not found")
 		case errors.Is(err, service.ErrNotCollectionOwner):
 			respondError(w, http.StatusForbidden, "only the collection owner can share")
@@ -78,7 +77,7 @@ func (s *Server) getCollectionShares(w http.ResponseWriter, r *http.Request) {
 
 	shares, err := s.recipeService.GetCollectionShares(userID, collID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
@@ -125,7 +124,7 @@ func (s *Server) updateCollectionShareRole(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := s.recipeService.UpdateCollectionShareRole(userID, collID, targetUserID, req.Role); err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
 			return
 		}
@@ -159,7 +158,7 @@ func (s *Server) removeCollectionShare(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.recipeService.UnshareCollection(userID, collID, targetUserID); err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
 			return
 		}

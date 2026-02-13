@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/llm"
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -236,7 +235,7 @@ func (s *Server) getNoteAIEnabled(w http.ResponseWriter, r *http.Request) {
 
 	aiEnabled, err := s.noteService.GetNoteAIEnabled(userID, noteID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -41,7 +40,7 @@ func (s *Server) shareNote(w http.ResponseWriter, r *http.Request) {
 	share, err := s.sharingService.ShareNote(userID, noteID, req.Identifier, req.Role)
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrNotFound):
+		case errors.Is(err, service.ErrNotFound):
 			respondError(w, http.StatusNotFound, "note not found")
 		case errors.Is(err, service.ErrCannotShareEncrypted):
 			respondError(w, http.StatusBadRequest, err.Error())
@@ -77,7 +76,7 @@ func (s *Server) getNoteShares(w http.ResponseWriter, r *http.Request) {
 
 	shares, err := s.sharingService.GetNoteShares(userID, noteID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
@@ -91,7 +90,7 @@ func (s *Server) getNoteShares(w http.ResponseWriter, r *http.Request) {
 
 	// Ensure JSON array, not null
 	if shares == nil {
-		shares = []db.NoteShare{}
+		shares = []service.NoteShare{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{"shares": shares})
@@ -129,7 +128,7 @@ func (s *Server) updateShareRole(w http.ResponseWriter, r *http.Request) {
 
 	err := s.sharingService.UpdateShareRole(userID, noteID, targetUserID, req.Role)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
 			return
 		}
@@ -165,7 +164,7 @@ func (s *Server) removeShare(w http.ResponseWriter, r *http.Request) {
 
 	err := s.sharingService.UnshareNote(userID, noteID, targetUserID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
 			return
 		}
@@ -196,7 +195,7 @@ func (s *Server) getSharedNotes(w http.ResponseWriter, r *http.Request) {
 
 	// Ensure JSON array, not null
 	if notes == nil {
-		notes = []db.SharedNote{}
+		notes = []service.SharedNote{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{"notes": notes})
@@ -218,7 +217,7 @@ func (s *Server) getSharedNote(w http.ResponseWriter, r *http.Request) {
 
 	note, err := s.sharingService.GetSharedNote(userID, noteID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "shared note not found")
 			return
 		}
@@ -256,11 +255,11 @@ func (s *Server) updateSharedNote(w http.ResponseWriter, r *http.Request) {
 
 	note, err := s.sharingService.UpdateSharedNote(userID, noteID, req.Title, req.Content, req.Version)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "shared note not found")
 			return
 		}
-		if errors.Is(err, db.ErrVersionMismatch) {
+		if errors.Is(err, service.ErrVersionMismatch) {
 			respondError(w, http.StatusConflict, "version conflict - note was modified")
 			return
 		}

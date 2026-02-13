@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 type recordTaskEventRequest struct {
@@ -85,7 +85,7 @@ func (s *Server) recordTaskEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build event
-	event := db.TaskEvent{
+	event := service.TaskEvent{
 		NoteID:      noteID,
 		ActorUserID: userID,
 		TaskText:    req.TaskText,
@@ -100,7 +100,7 @@ func (s *Server) recordTaskEvent(w http.ResponseWriter, r *http.Request) {
 		event.EncryptionMetadata = req.EncryptionMetadata
 	}
 
-	if err := s.noteService.GetDB().RecordTaskEvent(event); err != nil {
+	if err := s.noteService.RecordTaskEvent(event); err != nil {
 		s.logger().Error("failed to record task event", "error", err, "note_id", noteID)
 		respondError(w, http.StatusInternalServerError, "failed to record task event")
 		return

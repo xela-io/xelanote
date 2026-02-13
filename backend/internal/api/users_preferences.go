@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -27,7 +26,7 @@ func (s *Server) getPreferences(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.logger().Error("failed to get webauthn credentials", "error", err)
 		// Non-fatal, continue with empty list
-		credentials = []db.WebAuthnCredential{}
+		credentials = []service.WebAuthnCredential{}
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{
@@ -74,7 +73,7 @@ func (s *Server) updatePreferences(w http.ResponseWriter, r *http.Request) {
 	credentials, err := s.userService.GetWebAuthnCredentials(int64(userID))
 	if err != nil {
 		s.logger().Warn("failed to load webauthn credentials", "user_id", userID, "error", err)
-		credentials = []db.WebAuthnCredential{}
+		credentials = []service.WebAuthnCredential{}
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{

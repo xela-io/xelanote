@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // Username validation for NEW registrations only
@@ -46,7 +46,7 @@ func (s *Server) getOrGenerateUserSalt(userID int) ([]byte, error) {
 	salt, err := s.authService.GetUserEncryptionSalt(userID)
 
 	// If salt doesn't exist, check if user has encrypted notes
-	if err == db.ErrNotFound {
+	if err == service.ErrNotFound {
 		// CRITICAL: Check if user has encrypted notes before generating new salt
 		// If they do, generating a new salt would make all encrypted notes permanently unreadable
 		// Skip check if noteService is nil (happens in tests)

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Layer-Violations-Baseline von 37 auf 0 reduziert: Alle 37 API-Dateien importieren jetzt `service` statt `db` direkt. Type-Aliases (`Note`, `NoteVersion`, `Backlink`, `GraphData`, `SearchFilters`, etc.) und Error-Re-Exports (`ErrNotFound`, `ErrVersionMismatch`, etc.) im Service-Layer eingefuehrt. 11 GetDB()-Bypass-Aufrufe in journal.go, features.go, task_events.go, notes_crud_create.go, notes_crud_update.go durch 9 neue Service-Methoden ersetzt (`GetUserFeature`, `ListUserFeatures`, `SetUserFeature`, `JournalExistsForDate`, `ListJournalEntries`, `ListJournalDates`, `ListJournalDatesForYear`, `SetNoteDueDates`, `RecordTaskEvent`). `NoteService.GetDB()` entfernt. CI-Ratchet (`check-layer-violations.sh`) um GetDB()-Check erweitert.
+
 ### Fixed
 
 - Base64-Encoding-Bug bei verschlüsselten Notizen >8KB behoben: `toBase64Standard()` nutzte Chunk-Größe 8192 (nicht durch 3 teilbar), wodurch `btoa()` Padding-Zeichen (`=`) in Zwischen-Chunks erzeugte, die beim Konkatenieren ungültiges Base64 ergaben. Fix: Chunk-Größe auf 8190 (teilbar durch 3) geändert.

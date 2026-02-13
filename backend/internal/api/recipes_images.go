@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -77,7 +76,7 @@ func (s *Server) updateRecipeImageCaption(w http.ResponseWriter, r *http.Request
 			respondError(w, http.StatusBadRequest, "cannot update caption on encrypted recipe")
 		case errors.Is(err, service.ErrForbidden):
 			respondError(w, http.StatusForbidden, "forbidden")
-		case errors.Is(err, db.ErrNotFound):
+		case errors.Is(err, service.ErrNotFound):
 			respondError(w, http.StatusNotFound, "image not found")
 		default:
 			s.respondInternalErr(w, "failed to update recipe image caption", err)
@@ -108,7 +107,7 @@ func (s *Server) deleteRecipeImage(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusBadRequest, "cannot delete image from encrypted recipe")
 		case errors.Is(err, service.ErrForbidden):
 			respondError(w, http.StatusForbidden, "forbidden")
-		case errors.Is(err, db.ErrNotFound):
+		case errors.Is(err, service.ErrNotFound):
 			respondError(w, http.StatusNotFound, "image not found")
 		default:
 			s.respondInternalErr(w, "failed to delete recipe image", err)

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/websocket"
 )
@@ -64,7 +63,7 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var note *db.Note
+	var note *service.Note
 	var err error
 
 	// Check if this is an encrypted note
@@ -153,7 +152,7 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 
 	// Process client-provided due dates for encrypted notes
 	if len(req.DueDates) > 0 {
-		if err := s.noteService.GetDB().SetNoteDueDates(note.ID, userID, convertClientDueDates(req.DueDates)); err != nil {
+		if err := s.noteService.SetNoteDueDates(note.ID, userID, convertClientDueDates(req.DueDates)); err != nil {
 			s.logger().Error("failed to set due dates from client", "err", err, "note_id", note.ID)
 		}
 	}

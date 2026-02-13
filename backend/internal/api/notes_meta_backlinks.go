@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) getBacklinks(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +24,7 @@ func (s *Server) getBacklinks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if backlinks == nil {
-		backlinks = []db.Backlink{}
+		backlinks = []service.Backlink{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{

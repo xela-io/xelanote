@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -43,7 +42,7 @@ func (s *Server) shareFolderHandler(w http.ResponseWriter, r *http.Request) {
 	share, err := s.sharingService.ShareFolder(userID, folderID, req.Identifier, req.Role)
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrNotFound):
+		case errors.Is(err, service.ErrNotFound):
 			respondError(w, http.StatusNotFound, "folder not found")
 		case errors.Is(err, service.ErrCannotShareEncryptedFolder):
 			respondError(w, http.StatusBadRequest, err.Error())
@@ -80,7 +79,7 @@ func (s *Server) getFolderSharesHandler(w http.ResponseWriter, r *http.Request) 
 
 	shares, err := s.sharingService.GetFolderShares(userID, folderID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "folder not found")
 			return
 		}
@@ -93,7 +92,7 @@ func (s *Server) getFolderSharesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if shares == nil {
-		shares = []db.FolderShare{}
+		shares = []service.FolderShare{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{"shares": shares})
@@ -130,7 +129,7 @@ func (s *Server) updateFolderShareRoleHandler(w http.ResponseWriter, r *http.Req
 
 	err := s.sharingService.UpdateFolderShareRole(userID, folderID, targetUserID, req.Role)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
 			return
 		}
@@ -165,7 +164,7 @@ func (s *Server) removeFolderShareHandler(w http.ResponseWriter, r *http.Request
 
 	err := s.sharingService.UnshareFolder(userID, folderID, targetUserID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "share not found")
 			return
 		}
@@ -195,7 +194,7 @@ func (s *Server) getSharedFoldersHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if folders == nil {
-		folders = []db.SharedFolder{}
+		folders = []service.SharedFolder{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{"folders": folders})
@@ -221,7 +220,7 @@ func (s *Server) getSharedFolderNotesHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if notes == nil {
-		notes = []db.SharedNote{}
+		notes = []service.SharedNote{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{"notes": notes})

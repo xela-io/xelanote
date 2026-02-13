@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // me returns current authenticated user information
@@ -21,7 +21,7 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	// Get user from database
 	user, err := s.authService.GetUserByID(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if err == service.ErrNotFound {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}

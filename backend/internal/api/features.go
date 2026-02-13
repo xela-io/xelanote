@@ -15,7 +15,7 @@ func (s *Server) listFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	features, err := s.noteService.GetDB().ListUserFeatures(userID)
+	features, err := s.noteService.ListUserFeatures(userID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to list features")
 		return
@@ -33,7 +33,7 @@ func (s *Server) getFeature(w http.ResponseWriter, r *http.Request) {
 	}
 	feature := chi.URLParam(r, "feature")
 
-	f, err := s.noteService.GetDB().GetUserFeature(userID, feature)
+	f, err := s.noteService.GetUserFeature(userID, feature)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to get feature")
 		return
@@ -60,7 +60,7 @@ func (s *Server) setFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.noteService.GetDB().SetUserFeature(userID, feature, req.Enabled, req.Settings); err != nil {
+	if err := s.noteService.SetUserFeature(userID, feature, req.Enabled, req.Settings); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to set feature")
 		return
 	}

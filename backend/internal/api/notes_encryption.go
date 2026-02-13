@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/websocket"
 )
 
@@ -16,8 +16,8 @@ type DecryptNoteRequest struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 	// Recipe fields (optional, only for recipe notes)
-	RecipeMetadata    *db.RecipeMetadata    `json:"recipe_metadata,omitempty"`
-	RecipeIngredients []db.RecipeIngredient `json:"recipe_ingredients,omitempty"`
+	RecipeMetadata    *service.RecipeMetadata    `json:"recipe_metadata,omitempty"`
+	RecipeIngredients []service.RecipeIngredient `json:"recipe_ingredients,omitempty"`
 }
 
 func (s *Server) decryptNote(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +52,7 @@ func (s *Server) decryptNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var note *db.Note
+	var note *service.Note
 	var err error
 	if req.RecipeMetadata != nil || len(req.RecipeIngredients) > 0 {
 		note, err = s.noteService.DecryptRecipeNote(userID, id, req.Title, req.Content, version,
@@ -61,11 +61,11 @@ func (s *Server) decryptNote(w http.ResponseWriter, r *http.Request) {
 		note, err = s.noteService.DecryptNote(userID, id, req.Title, req.Content, version)
 	}
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
-		if errors.Is(err, db.ErrVersionMismatch) {
+		if errors.Is(err, service.ErrVersionMismatch) {
 			respondError(w, http.StatusConflict, "version mismatch - note was modified")
 			return
 		}
@@ -135,7 +135,7 @@ func (s *Server) batchReencryptDEKs(w http.ResponseWriter, r *http.Request) {
 	updatedCount, err := s.noteService.BatchUpdateWrappedDEKs(userID, req.Updates)
 	if err != nil {
 		s.logger().Error("failed to batch reencrypt DEKs", "error", err, "user_id", userID)
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "one or more notes not found")
 			return
 		}

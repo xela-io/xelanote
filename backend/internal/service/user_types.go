@@ -7,6 +7,9 @@ import (
 	"github.com/xela-io/xelanote/internal/db"
 )
 
+// Type alias for WebAuthn credential.
+type WebAuthnCredential = db.WebAuthnCredential
+
 // Validation errors
 var (
 	ErrInvalidTheme      = errors.New("invalid theme")

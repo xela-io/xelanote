@@ -6,7 +6,6 @@ import (
 
 	"errors"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -22,9 +21,9 @@ type AdminStatsResponse struct {
 // DetailedStatsResponse represents the response for detailed stats
 type DetailedStatsResponse struct {
 	Stats        AdminStatsResponse `json:"stats"`
-	UserGrowth   []db.DailyCount    `json:"user_growth"`
-	NoteGrowth   []db.DailyCount    `json:"note_growth"`
-	StorageTrend []db.DailyFloat    `json:"storage_trend"`
+	UserGrowth   []service.DailyCount    `json:"user_growth"`
+	NoteGrowth   []service.DailyCount    `json:"note_growth"`
+	StorageTrend []service.DailyFloat    `json:"storage_trend"`
 }
 
 // AdminUserResponse represents a user in admin panel
@@ -49,7 +48,7 @@ type SetAdminRequest struct {
 
 // ActivityLogsResponse represents the response for activity logs
 type ActivityLogsResponse struct {
-	Logs  []db.ActivityLog `json:"logs"`
+	Logs  []service.ActivityLog `json:"logs"`
 	Total int              `json:"total"`
 }
 
@@ -136,7 +135,7 @@ func (s *Server) getUserDetails(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.adminService.GetUserDetails(id)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if err == service.ErrNotFound {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -174,7 +173,7 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 
 	targetUser, err := s.adminService.GetUserDetails(targetID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -193,7 +192,7 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "cannot demote yourself")
 			return
 		}
-		if err == db.ErrNotFound {
+		if err == service.ErrNotFound {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -226,7 +225,7 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 	// Get username before deletion for logging
 	targetUser, err := s.adminService.GetUserDetails(targetID)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -240,7 +239,7 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "cannot delete yourself")
 			return
 		}
-		if err == db.ErrNotFound {
+		if err == service.ErrNotFound {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -277,7 +276,7 @@ func (s *Server) getActivityLogs(w http.ResponseWriter, r *http.Request) {
 	offset := (page - 1) * limit
 
 	// Build filter
-	var filter *db.ActivityFilter
+	var filter *service.ActivityFilter
 	action := r.URL.Query().Get("action")
 	userIDStr := r.URL.Query().Get("user_id")
 	targetType := r.URL.Query().Get("target_type")
@@ -285,7 +284,7 @@ func (s *Server) getActivityLogs(w http.ResponseWriter, r *http.Request) {
 	dateTo := r.URL.Query().Get("date_to")
 
 	if action != "" || userIDStr != "" || targetType != "" || dateFrom != "" || dateTo != "" {
-		filter = &db.ActivityFilter{}
+		filter = &service.ActivityFilter{}
 		if action != "" {
 			filter.Action = &action
 		}

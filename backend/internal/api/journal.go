@@ -12,7 +12,7 @@ import (
 // requireJournalFeature checks that the journal feature is enabled for userID.
 // Returns true if the handler should return (feature disabled or error).
 func (s *Server) requireJournalFeature(w http.ResponseWriter, userID int) bool {
-	feature, err := s.noteService.GetDB().GetUserFeature(userID, "journal")
+	feature, err := s.noteService.GetUserFeature(userID, "journal")
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to check feature")
 		return true
@@ -51,7 +51,7 @@ func (s *Server) getJournalLookup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lookup journal
-	exists, noteID, err := s.noteService.GetDB().JournalExistsForDate(userID, dateStr)
+	exists, noteID, err := s.noteService.JournalExistsForDate(userID, dateStr)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to lookup journal")
 		return
@@ -78,7 +78,7 @@ func (s *Server) listJournalEntries(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entries, err := s.noteService.GetDB().ListJournalEntries(userID)
+	entries, err := s.noteService.ListJournalEntries(userID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to list journal entries")
 		return
@@ -140,7 +140,7 @@ func (s *Server) getJournalCalendar(w http.ResponseWriter, r *http.Request) {
 		month = int(now.Month())
 	}
 
-	dates, err := s.noteService.GetDB().ListJournalDates(userID, year, month)
+	dates, err := s.noteService.ListJournalDates(userID, year, month)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to get calendar data")
 		return
@@ -189,7 +189,7 @@ func (s *Server) getJournalCalendarYear(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dates, err := s.noteService.GetDB().ListJournalDatesForYear(userID, year)
+	dates, err := s.noteService.ListJournalDatesForYear(userID, year)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to get year calendar data")
 		return

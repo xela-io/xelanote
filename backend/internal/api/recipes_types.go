@@ -1,6 +1,6 @@
 package api
 
-import "github.com/xela-io/xelanote/internal/db"
+import "github.com/xela-io/xelanote/internal/service"
 
 // --- Request/Response types ---
 
@@ -14,7 +14,7 @@ type UpdateRecipeMetadataRequest struct {
 }
 
 type SetRecipeIngredientsRequest struct {
-	Ingredients       []db.RecipeIngredient `json:"ingredients"`
+	Ingredients       []service.RecipeIngredient `json:"ingredients"`
 	ExpectedUpdatedAt string                `json:"expected_updated_at"`
 }
 

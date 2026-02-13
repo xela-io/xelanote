@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // getGlobalGraph handles GET /api/graph
@@ -20,7 +20,7 @@ func (s *Server) getGlobalGraph(w http.ResponseWriter, r *http.Request) {
 	// Parse query params
 	folderPath := r.URL.Query().Get("folder")
 
-	var graphData *db.GraphData
+	var graphData *service.GraphData
 	var err error
 
 	// Get filtered or global graph

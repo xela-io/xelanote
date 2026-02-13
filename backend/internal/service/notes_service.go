@@ -37,11 +37,6 @@ func (s *NoteService) GetCache() *cache.Cache {
 	return s.cache
 }
 
-// GetDB returns the database instance used by this service.
-func (s *NoteService) GetDB() *db.DB {
-	return s.db
-}
-
 // Close releases background resources held by the service.
 func (s *NoteService) Close() {
 	if s.cache != nil {

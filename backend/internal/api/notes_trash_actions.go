@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) restoreNote(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,7 @@ func (s *Server) restoreNote(w http.ResponseWriter, r *http.Request) {
 
 	note, err := s.noteService.RestoreNote(userID, id)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
@@ -44,7 +44,7 @@ func (s *Server) permanentlyDeleteNote(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.PermanentlyDeleteNote(userID, id)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found or not deleted")
 			return
 		}

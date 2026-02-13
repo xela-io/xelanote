@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -49,7 +48,7 @@ func (s *Server) getRecipeDetail(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "forbidden")
 			return
 		}
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "recipe not found")
 			return
 		}
@@ -78,7 +77,7 @@ func (s *Server) updateRecipeMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	meta := &db.RecipeMetadata{
+	meta := &service.RecipeMetadata{
 		Servings:        req.Servings,
 		PrepTimeMinutes: req.PrepTimeMinutes,
 		CookTimeMinutes: req.CookTimeMinutes,
@@ -88,7 +87,7 @@ func (s *Server) updateRecipeMetadata(w http.ResponseWriter, r *http.Request) {
 
 	err := s.recipeService.UpdateRecipeMetadata(userID, noteID, meta, req.ExpectedUpdatedAt)
 	if err != nil {
-		if errors.Is(err, db.ErrVersionMismatch) {
+		if errors.Is(err, service.ErrVersionMismatch) {
 			respondError(w, http.StatusConflict, "version mismatch - recipe was modified")
 			return
 		}
@@ -130,7 +129,7 @@ func (s *Server) setRecipeIngredients(w http.ResponseWriter, r *http.Request) {
 
 	err := s.recipeService.SetRecipeIngredients(userID, noteID, req.Ingredients, req.ExpectedUpdatedAt)
 	if err != nil {
-		if errors.Is(err, db.ErrVersionMismatch) {
+		if errors.Is(err, service.ErrVersionMismatch) {
 			respondError(w, http.StatusConflict, "version mismatch - recipe was modified")
 			return
 		}
@@ -179,7 +178,7 @@ func (s *Server) getScaledIngredients(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "forbidden")
 			return
 		}
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "recipe not found")
 			return
 		}

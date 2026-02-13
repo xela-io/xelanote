@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -80,8 +79,8 @@ type apiKeyStatusResponse struct {
 	MaskedKey *string `json:"masked_key,omitempty"`
 }
 
-// convertWebAuthnCredentials converts db.WebAuthnCredential slice to webAuthnCredentialInfo slice
-func convertWebAuthnCredentials(creds []db.WebAuthnCredential) []webAuthnCredentialInfo {
+// convertWebAuthnCredentials converts service.WebAuthnCredential slice to webAuthnCredentialInfo slice
+func convertWebAuthnCredentials(creds []service.WebAuthnCredential) []webAuthnCredentialInfo {
 	result := make([]webAuthnCredentialInfo, 0, len(creds))
 	for _, c := range creds {
 		result = append(result, webAuthnCredentialInfo{

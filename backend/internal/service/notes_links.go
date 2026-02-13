@@ -68,6 +68,17 @@ func (s *NoteService) UpdateLinksFromClient(userID int, noteID string, linkTitle
 	return s.db.SetLinks(noteID, resolvedIDs, unresolvedRefs)
 }
 
+// SetNoteDueDates sets due dates for a note from client-provided data.
+// Used by the API layer for encrypted notes where the server cannot parse content.
+func (s *NoteService) SetNoteDueDates(noteID string, userID int, dueDates []parser.DueDate) error {
+	return s.db.SetNoteDueDates(noteID, userID, dueDates)
+}
+
+// RecordTaskEvent records a task completion/reopen event.
+func (s *NoteService) RecordTaskEvent(event db.TaskEvent) error {
+	return s.db.RecordTaskEvent(event)
+}
+
 // updateDueDates parses content and updates the note_due_dates table.
 func (s *NoteService) updateDueDates(userID int, noteID, content string) {
 	dueDates := parser.ParseDueDates(content)

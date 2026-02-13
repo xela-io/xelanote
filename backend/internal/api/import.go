@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/utils"
 	"github.com/xela-io/xelanote/internal/websocket"
 	"gopkg.in/yaml.v3"
@@ -112,7 +112,7 @@ func (s *Server) importMarkdown(w http.ResponseWriter, r *http.Request) {
 
 		// Check for duplicate title in the same folder (folder-scoped uniqueness)
 		existing, err := s.noteService.GetNoteByTitleInFolder(userID, title, folderPath)
-		if err != nil && !errors.Is(err, db.ErrNotFound) {
+		if err != nil && !errors.Is(err, service.ErrNotFound) {
 			result.Failed++
 			addImportError(&result, "Database error for "+title+": "+err.Error())
 			continue
@@ -240,7 +240,7 @@ func (s *Server) ensureFolderPath(userID int, path string, cache map[string]bool
 		_, err := s.noteService.GetFolderByPath(userID, currentPath)
 		if err != nil {
 			// Only proceed if folder not found; propagate other errors
-			if !errors.Is(err, db.ErrNotFound) {
+			if !errors.Is(err, service.ErrNotFound) {
 				return err
 			}
 
@@ -252,7 +252,7 @@ func (s *Server) ensureFolderPath(userID int, path string, cache map[string]bool
 			} else {
 				// Nested folder - get parent folder ID
 				parent, parentErr := s.noteService.GetFolderByPath(userID, parentPath)
-				if parentErr != nil && !errors.Is(parentErr, db.ErrNotFound) {
+				if parentErr != nil && !errors.Is(parentErr, service.ErrNotFound) {
 					return parentErr
 				}
 				if parent != nil {

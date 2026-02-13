@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // searchUsers handles GET /api/users/search
@@ -28,7 +28,7 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 
 	// Ensure JSON array, not null
 	if users == nil {
-		users = []db.UserSearchResult{}
+		users = []service.UserSearchResult{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{"users": users})

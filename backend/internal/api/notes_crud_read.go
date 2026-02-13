@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) listNotes(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func (s *Server) listNotes(w http.ResponseWriter, r *http.Request) {
 	cursor := r.URL.Query().Get("cursor")
 	folderPath := r.URL.Query().Get("folder")
 
-	var notes []db.Note
+	var notes []service.Note
 	var nextCursor string
 	var err error
 

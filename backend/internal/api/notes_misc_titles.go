@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) listNoteTitles(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +14,7 @@ func (s *Server) listNoteTitles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch notes with pagination, limited to prevent memory exhaustion
-	var allNotes []db.Note
+	var allNotes []service.Note
 	cursor := ""
 	for {
 		notes, nextCursor, err := s.noteService.ListNotes(userID, 500, cursor)

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // Template API Request/Response types
@@ -80,7 +80,7 @@ func (s *Server) getTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	template, err := s.templateService.GetTemplate(userID, templateID)
-	if err == db.ErrNotFound {
+	if err == service.ErrNotFound {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
 	}
@@ -147,7 +147,7 @@ func (s *Server) updateTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.templateService.UpdateTemplate(userID, templateID, req.Name, req.Description, req.Title, req.Content)
-	if err == db.ErrNotFound {
+	if err == service.ErrNotFound {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
 	}
@@ -180,7 +180,7 @@ func (s *Server) deleteTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.templateService.DeleteTemplate(userID, templateID)
-	if err == db.ErrNotFound {
+	if err == service.ErrNotFound {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
 	}

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/websocket"
 )
 
@@ -22,7 +22,7 @@ func (s *Server) deleteNote(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.DeleteNote(userID, id)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}

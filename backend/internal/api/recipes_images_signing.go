@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/xela-io/xelanote/internal/auth"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // signRecipeImageURLs signs all image URLs in a RecipeDetail with fresh signatures.
-func (s *Server) signRecipeImageURLs(detail *db.RecipeDetail) {
+func (s *Server) signRecipeImageURLs(detail *service.RecipeDetail) {
 	for i, img := range detail.Images {
 		signed, err := s.signImageURL(img.ImageURL)
 		if err != nil {

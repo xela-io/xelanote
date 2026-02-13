@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // updateEncryptionPreferences updates encryption-related preferences
@@ -83,7 +83,7 @@ func (s *Server) getRecoveryKeySalt(w http.ResponseWriter, r *http.Request) {
 
 	salt, err := s.userService.GetRecoveryKeySalt(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if err == service.ErrNotFound {
 			respondError(w, http.StatusNotFound, "no recovery key set")
 			return
 		}

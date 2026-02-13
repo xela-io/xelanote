@@ -6,20 +6,20 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // VersionListResponse represents a paginated list of versions.
 type VersionListResponse struct {
-	Versions   []db.NoteVersion `json:"versions"`
+	Versions   []service.NoteVersion `json:"versions"`
 	NextCursor string           `json:"next_cursor,omitempty"`
 	Total      int              `json:"total"`
 }
 
 // CompareResponse represents two versions for comparison.
 type CompareResponse struct {
-	Version1 *db.NoteVersion `json:"version1"`
-	Version2 *db.NoteVersion `json:"version2"`
+	Version1 *service.NoteVersion `json:"version1"`
+	Version2 *service.NoteVersion `json:"version2"`
 }
 
 // listVersions returns a paginated list of versions for a note.
@@ -59,7 +59,7 @@ func (s *Server) listVersions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if versions == nil {
-		versions = []db.NoteVersion{}
+		versions = []service.NoteVersion{}
 	}
 
 	respondJSON(w, http.StatusOK, VersionListResponse{
@@ -206,11 +206,11 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request) {
 
 	note, err := s.noteService.RestoreVersion(userID, noteID, targetVersion, currentVersion)
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "note or version not found")
 			return
 		}
-		if errors.Is(err, db.ErrVersionMismatch) {
+		if errors.Is(err, service.ErrVersionMismatch) {
 			respondError(w, http.StatusConflict, "version mismatch - note was modified")
 			return
 		}

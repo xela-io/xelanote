@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	results, err := s.noteService.Search(r.Context(), userID, query, limit)
 	if err != nil {
 		// Return 400 for invalid queries (validation errors), 500 for server errors
-		if errors.Is(err, db.ErrInvalidQuery) {
+		if errors.Is(err, service.ErrInvalidQuery) {
 			respondError(w, http.StatusBadRequest, err.Error())
 		} else {
 			s.respondInternalErr(w, "failed to search notes", err)
@@ -79,12 +79,12 @@ func (s *Server) quickSearch(w http.ResponseWriter, r *http.Request) {
 		createdAfterParam != "" || createdBeforeParam != "" ||
 		updatedAfterParam != "" || updatedBeforeParam != ""
 
-	var notes []db.Note
+	var notes []service.Note
 	var err error
 
 	if hasFilters {
 		// Use FilteredSearch when filters are present
-		filters := db.SearchFilters{
+		filters := service.SearchFilters{
 			Query: query,
 		}
 
@@ -135,7 +135,7 @@ func (s *Server) quickSearch(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// Return 400 for invalid queries (validation errors), 500 for server errors
-		if errors.Is(err, db.ErrInvalidQuery) {
+		if errors.Is(err, service.ErrInvalidQuery) {
 			respondError(w, http.StatusBadRequest, err.Error())
 		} else {
 			s.respondInternalErr(w, "failed to quick search notes", err)
@@ -165,7 +165,7 @@ func (s *Server) getFolders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if folders == nil {
-		folders = []db.FolderInfo{{Path: "/", NoteCount: 0}}
+		folders = []service.FolderInfo{{Path: "/", NoteCount: 0}}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{

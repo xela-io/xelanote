@@ -7,6 +7,11 @@ import (
 	"github.com/xela-io/xelanote/internal/db"
 )
 
+// Type aliases for recipe-related DB types.
+type RecipeMetadata = db.RecipeMetadata
+type RecipeIngredient = db.RecipeIngredient
+type RecipeDetail = db.RecipeDetail
+
 var (
 	ErrRecipeFeatureNotEnabled       = errors.New("recipe feature not enabled")
 	ErrRecipeEncrypted               = errors.New("recipe is encrypted")

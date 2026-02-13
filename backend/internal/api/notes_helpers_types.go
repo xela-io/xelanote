@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/parser"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // Validation constants for notes
@@ -55,7 +55,7 @@ type NoteRequest struct {
 
 // NoteListResponse represents a paginated list of notes.
 type NoteListResponse struct {
-	Notes      []db.Note `json:"notes"`
+	Notes      []service.Note `json:"notes"`
 	NextCursor string    `json:"next_cursor,omitempty"`
 }
 

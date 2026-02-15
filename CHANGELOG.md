@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Journal and Due Dates manifest shortcuts for quick PWA access (4 shortcuts total)
 - Back button in standalone PWA mode mobile header (in-app nav depth tracking via `pushNav()` with home fallback)
 
+### Fixed
+
+- Lefthook pre-commit hooks: `root: "frontend/"` fuer korrekte relative Pfade, `.html` zu Prettier-Glob hinzugefuegt, ESLint `--max-warnings 0` fuer Paritaet mit CI
+
 ### Changed
 
 - PWA install coach triggers after first successful user action (auto-save completed) instead of fixed 5s timer (60s fallback)

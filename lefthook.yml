@@ -14,12 +14,14 @@ pre-commit:
       run: cd backend && CGO_ENABLED=1 go vet -tags "fts5 sqlite_crypt" ./...
 
     eslint:
+      root: "frontend/"
       glob: "frontend/src/**/*.{ts,svelte,js}"
-      run: cd frontend && npx eslint {staged_files}
+      run: npx eslint --no-warn-ignored --max-warnings 0 {staged_files}
 
     prettier:
-      glob: "frontend/src/**/*.{ts,svelte,js,css}"
-      run: cd frontend && npx prettier --check {staged_files}
+      root: "frontend/"
+      glob: "frontend/src/**/*.{ts,svelte,js,css,html}"
+      run: npx prettier --check {staged_files}
 
     markdownlint:
       glob: "**/*.md"

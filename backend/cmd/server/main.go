@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/xela-io/xelanote/internal/api"
@@ -37,12 +38,16 @@ func main() {
 		log.Fatalf("Failed to create uploads directory: %v", err)
 	}
 
-	// Open database
-	log.Printf("Opening database at %s", databasePath)
+	// Open database with configurable journal mode (WAL default, DELETE fallback)
+	journalMode := strings.TrimSpace(os.Getenv("XELANOTE_JOURNAL_MODE"))
+	if journalMode == "" {
+		journalMode = "wal"
+	}
+	log.Printf("Opening database at %s (journal_mode=%s)", databasePath, journalMode)
 	if dbKey != "" {
 		log.Println("Database encryption enabled (SQLCipher)")
 	}
-	database, err := db.Open(databasePath, dbKey)
+	database, err := db.Open(databasePath, dbKey, db.OpenOptions{JournalMode: journalMode})
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
@@ -53,6 +58,12 @@ func main() {
 	if err := database.Migrate(); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+
+	// Run PRAGMA optimize at startup to update query planner statistics
+	database.Optimize()
+
+	// Schedule periodic PRAGMA optimize (daily)
+	optimizeCancel := database.StartOptimizeScheduler(24 * time.Hour)
 
 	logger := newLogger()
 	core := initCoreServices(database, []byte(jwtSecret), dataDir, logger)
@@ -150,6 +161,8 @@ func main() {
 	}
 
 	cleanup := func() {
+		optimizeCancel()
+		database.Optimize() // Final optimize before shutdown
 		wsManager.Stop()
 		jobManager.Stop()
 		core.note.Close()

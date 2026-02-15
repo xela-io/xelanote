@@ -226,11 +226,13 @@
         setShowUnlockModal: (value) => {
           showUnlockModal = value;
         },
+        setCleanupErrorHandler: (cleanup) => {
+          cleanupErrorHandler = cleanup;
+        },
         registerActivityListeners: () => activityListeners.register(),
         unregisterActivityListeners: () => activityListeners.unregister(),
       });
       unsubscribeTokenUpdate = result.unsubscribeTokenUpdate;
-      cleanupErrorHandler = result.cleanupErrorHandler;
 
       // Global keyboard shortcuts (only when authenticated)
       document.addEventListener('keydown', handleKeydown);

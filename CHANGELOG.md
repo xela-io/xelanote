@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Phased startup initialization** — `initializeApp()` split into 3 phases for faster time-to-interactive: Phase 1 (Critical) runs IndexedDB/Sodium/Auth in parallel and restores UI from localStorage; Phase 2 (After First Paint via rAF+setTimeout) loads notes, encryption, WebSocket, and web-vitals; Phase 3 (Idle via requestIdleCallback) handles error reporting, feature detection, and background sync. Activity listeners now register immediately after auth confirmation (security). Web-vitals moved to after-first-paint to capture early FCP/LCP metrics.
+- **SQLite WAL mode + performance pragmas** — Default journal mode switched from DELETE to WAL with `synchronous=NORMAL` for lower write latency and better concurrent read performance. Added `busy_timeout=5000` to prevent SQLITE_BUSY under load. `PRAGMA optimize` runs at startup, daily (background scheduler), and on shutdown. Journal mode is configurable via `XELANOTE_JOURNAL_MODE` env var (`wal` default, `delete` fallback for problematic volumes).
+
 ### Fixed
 
 - **Settings page 500 error** — Lazy-load `qrcode` module in `TwoFactorSetup.svelte` via dynamic `import()` instead of static top-level import. A corrupted Vite dependency cache for `qrcode.js` previously crashed the entire settings page because the module was in the critical import graph.

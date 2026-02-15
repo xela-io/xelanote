@@ -1,11 +1,14 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
+	"time"
 
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
@@ -41,11 +44,29 @@ const encryptedDriverName = "sqlite3_xelanote_encrypted"
 
 var registerEncryptedDriverOnce sync.Once
 
-// Open creates a new database connection with DELETE journal mode for Docker compatibility.
+// OpenOptions configures the SQLite connection.
+type OpenOptions struct {
+	// JournalMode sets the SQLite journal mode.
+	// "wal" (default) enables WAL mode with synchronous=NORMAL for better
+	// concurrent read performance and lower write latency.
+	// "delete" uses DELETE mode with synchronous=FULL for maximum compatibility
+	// (e.g. network-mounted or problematic Docker volumes).
+	// Configurable via XELANOTE_JOURNAL_MODE environment variable.
+	JournalMode string
+}
+
+// Open creates a new database connection with configurable journal mode.
+// WAL mode is the default for better performance; DELETE mode is available
+// as a fallback for environments where WAL is not supported.
 // path can be ":memory:" for in-memory database or a file path.
-func Open(path, key string) (*DB, error) {
-	// Enable foreign keys and DELETE mode via connection string
-	// DELETE mode is more stable in Docker environments vs WAL mode
+func Open(path, key string, opts ...OpenOptions) (*DB, error) {
+	journalMode := "WAL"
+	syncMode := "NORMAL"
+	if len(opts) > 0 && strings.EqualFold(opts[0].JournalMode, "delete") {
+		journalMode = "DELETE"
+		syncMode = "FULL"
+	}
+
 	driverName := "sqlite3"
 	if key != "" {
 		registerEncryptedDriver(key)
@@ -60,12 +81,13 @@ func Open(path, key string) (*DB, error) {
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 
-	// Explicitly enable foreign keys and set pragmas
-	// Connection string params are not always reliable, so set them explicitly
+	// Set pragmas explicitly (connection string params are not always reliable).
+	// busy_timeout must be set before journal_mode to avoid SQLITE_BUSY during WAL switch.
 	pragmas := []string{
 		"PRAGMA foreign_keys = ON",
-		"PRAGMA journal_mode = DELETE",
-		"PRAGMA synchronous = FULL",
+		"PRAGMA busy_timeout = 5000",
+		fmt.Sprintf("PRAGMA journal_mode = %s", journalMode),
+		fmt.Sprintf("PRAGMA synchronous = %s", syncMode),
 	}
 
 	for _, pragma := range pragmas {
@@ -75,6 +97,16 @@ func Open(path, key string) (*DB, error) {
 		}
 	}
 
+	// Verify journal mode was set correctly (some filesystems don't support WAL)
+	var actualMode string
+	if err := db.QueryRow("PRAGMA journal_mode").Scan(&actualMode); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to verify journal_mode: %w", err)
+	}
+	if !strings.EqualFold(actualMode, journalMode) {
+		log.Printf("WARNING: requested journal_mode=%s but got %s (filesystem may not support WAL)", journalMode, actualMode)
+	}
+
 	// Verify connection
 	if err := db.Ping(); err != nil {
 		db.Close()
@@ -82,6 +114,33 @@ func Open(path, key string) (*DB, error) {
 	}
 
 	return &DB{DB: db}, nil
+}
+
+// Optimize runs PRAGMA optimize to update SQLite query planner statistics.
+// Should be called at startup (after migrations), periodically, and before shutdown.
+func (db *DB) Optimize() {
+	if _, err := db.Exec("PRAGMA optimize"); err != nil {
+		log.Printf("PRAGMA optimize failed: %v", err)
+	}
+}
+
+// StartOptimizeScheduler runs PRAGMA optimize at the given interval (e.g. 24h).
+// Returns a cancel function to stop the scheduler.
+func (db *DB) StartOptimizeScheduler(interval time.Duration) context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				db.Optimize()
+			}
+		}
+	}()
+	return cancel
 }
 
 // Migrate applies the database schema and runs migrations.

@@ -7,9 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Dark mode splash screens for iOS PWA launch (22 dark variants with `prefers-color-scheme` media queries, generated via `scripts/generate-splash.mjs`)
+- Web Share Target (Chromium): share text/URLs from other apps to create notes (GET method, with auth persistence via sessionStorage + input hardening)
+- Journal and Due Dates manifest shortcuts for quick PWA access (4 shortcuts total)
+- Back button in standalone PWA mode mobile header (in-app nav depth tracking via `pushNav()` with home fallback)
+
+### Changed
+
+- PWA install coach triggers after first successful user action (auto-save completed) instead of fixed 5s timer (60s fallback)
+- iOS browser detection supports Chrome, Firefox, Edge, Opera on iOS 16.4+ (`detectIOSPwaCapable` replaces `detectIOSSafari`; defensive: show coach when version unparseable)
+- Manifest `background_color` changed from `#ffffff` to `#282828` to reduce dark mode launch flash
+
+- iOS PWA Install Coach: 3-Schritt Onboarding-Dialog fuer iOS Safari-User (Share > Zum Home-Bildschirm > App oeffnen) mit Snooze/Dismiss-Optionen, State-Machine (`pwa.svelte.ts`), Dialog-A11y (`role="dialog"`, `aria-modal`, Fokus-Trap, ESC-Handler), 7-Tage-Snooze-Logik, verzoegerter Anzeige nach Login, Standalone-Erkennung, Safari-positive-Detection (schliesst CriOS/FxiOS/FBAN/Instagram/LinkedIn/Twitter aus), localStorage-Migration vom alten Key, defensivem localStorage-Zugriff (Private Browsing, QuotaExceeded), Unit-Tests fuer State-Machine und Detection
+- iOS PWA Optimierung: Apple Meta-Tags (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-mobile-web-app-title`) fuer Standalone-Modus auf iOS
+- Dual `theme-color` Meta-Tags mit `prefers-color-scheme` Media-Queries fuer korrekten Browser-Chrome vor JS-Ausfuehrung
+- Apple Splash Screens fuer alle aktuellen iPhone- und iPad-Modelle (22 PNGs, ~1.9MB)
+- Manifest: `id`-Feld fuer stabile PWA-Identitaet, `shortcuts` fuer "New Note" und "Search" (Android/Chrome)
+- `overscroll-behavior-y: none` auf `html` verhindert Pull-to-Refresh und Rubber-Banding im Standalone-Modus
+- Standalone-Erkennung (`navigator.standalone` + `display-mode: standalone` Media-Query) im UI-Store
+- iOS-Installationsanleitung als Bottom-Sheet mit Share-Icon und 2-Schritt-Anleitung (DE/EN i18n)
+- Shortcut-Action-Handling: `?action=new-note` Query-Parameter erstellt neue Notiz nach App-Start
+
 ### Changed
 
 - `.gitignore`: Codex-Docker-Verzeichnis und `codex.sh` komplett ignoriert (statt nur einzelner Dateien)
+- FOUC-Script aktualisiert: Nutzt vorhandene `theme-color` Meta-Tags statt neue zu erstellen
+- Manifest: `lang`-Feld entfernt (App unterstuetzt DE und EN, statischer Wert war irrefuehrend)
+- Manifest: `theme_color` von `#3b82f6` auf `#458588` korrigiert (konsistent mit Gruvbox-Light Meta-Tag)
+
+### Fixed
+
+- **Cache-Leak zwischen Accounts**: Runtime-Caching fuer `/api/notes`, `/api/notes/:id`, `/api/folders` entfernt. Feste SW-Cache-Namen fuer userbezogene Daten konnten bei Session-Timeout, Crash oder Account-Wechsel ohne Logout stale Responses ausliefern. Uploads-Cache bleibt (wird bei Logout geloescht).
+- **theme-color-Initialisierung**: Meta-Tags vor FOUC-Script verschoben, damit `querySelectorAll` sie beim Parsen bereits findet
+- **Precache-Groesse**: Splash-Screen-PNGs (~1.9MB) aus Workbox-Precache ausgeschlossen via `globIgnores` (werden nur von iOS via `<link media>` abgerufen)
+- **InstallPrompt Lifecycle**: `beforeinstallprompt`-Listener von Modul-Ebene in `onMount` verschoben mit Cleanup in der Destroy-Funktion
 
 ### Fixed
 

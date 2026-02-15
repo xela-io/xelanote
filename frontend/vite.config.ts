@@ -21,14 +21,14 @@ plugins.push(
       short_name: 'xelanote',
       description:
         'Secure personal note-taking with end-to-end encryption, wikilinks, and graph view',
-      theme_color: '#3b82f6', // Match icon blue
-      background_color: '#ffffff',
+      id: '/',
+      theme_color: '#458588', // Gruvbox teal — matches meta theme-color for light mode
+      background_color: '#282828',
       display: 'standalone',
       orientation: 'any',
       start_url: '/',
       scope: '/',
       categories: ['productivity', 'utilities'],
-      lang: 'de',
       icons: [
         {
           src: '/icon-192.png',
@@ -55,58 +55,56 @@ plugins.push(
           purpose: 'maskable',
         },
       ],
+      shortcuts: [
+        {
+          name: 'New Note',
+          short_name: 'New',
+          url: '/?action=new-note',
+          icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        },
+        {
+          name: 'Search',
+          short_name: 'Search',
+          url: '/search',
+          icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        },
+        {
+          name: 'Journal',
+          short_name: 'Journal',
+          url: '/journal',
+          icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        },
+        {
+          name: 'Due Dates',
+          short_name: 'Due',
+          url: '/due-dates',
+          icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        },
+      ],
+      share_target: {
+        action: '/',
+        method: 'GET',
+        params: { title: 'title', text: 'text', url: 'url' },
+      },
     },
 
     workbox: {
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+      globIgnores: ['**/splash/**'], // Splash screens are only fetched by iOS via <link> media queries
       navigateFallback: '/', // ← Enable SPA routing for offline deep links
       navigateFallbackDenylist: [/^\/api/],
       maximumFileSizeToCacheInBytes: 2 * 1024 * 1024, // 2MB - largest chunk is ~931KB
 
+      // NOTE: No runtime caching for /api/notes, /api/notes/:id, /api/folders.
+      // These are user-specific endpoints — caching them in a shared SW cache
+      // risks stale data leaking across sessions (timeout, crash, account switch).
+      // The app's offline queue handles offline writes; reads use in-memory state.
       runtimeCaching: [
-        {
-          urlPattern: ({ url }) => url.pathname === '/api/notes',
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-notes',
-            networkTimeoutSeconds: 5,
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 3600, // 1 hour
-            },
-            cacheableResponse: {
-              statuses: [0, 200],
-            },
-          },
-        },
-        {
-          urlPattern: ({ url }) => url.pathname.match(/^\/api\/notes\/[^/]+$/),
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-single-note',
-            networkTimeoutSeconds: 5,
-            expiration: {
-              maxEntries: 50,
-              maxAgeSeconds: 600, // 10 minutes
-            },
-          },
-        },
-        {
-          urlPattern: ({ url }) => url.pathname === '/api/folders',
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-folders',
-            expiration: {
-              maxEntries: 20,
-              maxAgeSeconds: 600,
-            },
-          },
-        },
         {
           urlPattern: ({ url }) => url.pathname.startsWith('/api/uploads/'),
           handler: 'CacheFirst',
           options: {
-            cacheName: 'uploads', // NOTE: Cleared on logout via filter in Phase 1
+            cacheName: 'uploads', // Cleared on logout in auth.svelte.ts
             expiration: {
               maxEntries: 100,
               maxAgeSeconds: 86400 * 30, // 30 days

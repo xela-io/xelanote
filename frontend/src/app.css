@@ -28,6 +28,17 @@
   padding-right: env(safe-area-inset-right, 0);
 }
 
+/* Prevent pull-to-refresh and page-level rubber-banding in standalone PWA */
+html {
+  overscroll-behavior-y: none;
+}
+
+/* Allow contained elastic scrolling in scroll containers */
+.thin-scrollbar,
+.cm-scroller {
+  overscroll-behavior-y: contain;
+}
+
 /* Touch-friendly button sizing - only on touch devices */
 @media (pointer: coarse) {
   .toolbar-btn {
@@ -1183,6 +1194,20 @@ details.completed-tasks-group[open] .chevron-icon {
 
 .animate-bottom-sheet {
   animation: slide-up 0.3s ease-out;
+}
+
+/* ===== iOS Install Coach ===== */
+
+/* Step indicator dots - large tap targets with small visual dots */
+.ios-coach-dot {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.ios-coach-dot-active span {
+  transform: scale(1.25);
 }
 
 /* ===== Tauri Custom Titlebar ===== */

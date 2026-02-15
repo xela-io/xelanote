@@ -36,6 +36,12 @@ let previewThemeId = $state<PreviewThemeId>('match-editor');
 // Editor mode
 let editorMode = $state<'edit' | 'preview' | 'split'>('split');
 
+// Standalone PWA state
+let isStandalone = $state(false);
+
+// In-app navigation stack for standalone PWA back button
+let navStack = $state<string[]>([]);
+
 // Markdown guide state
 let markdownGuideOpen = $state(false);
 let markdownGuideTab = $state<'syntax' | 'wikilinks' | 'code'>('syntax');
@@ -120,6 +126,17 @@ export function closeSidebarOnMobile() {
   if (isMobile) {
     sidebarOpen = false;
   }
+}
+
+export function getIsStandalone(): boolean {
+  return isStandalone;
+}
+
+export function initStandaloneDetection(): void {
+  if (typeof window === 'undefined') return;
+  isStandalone =
+    (window.navigator as { standalone?: boolean }).standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
 }
 
 export function getIsKeyboardOpen() {
@@ -242,6 +259,25 @@ export function setEditorMode(mode: 'edit' | 'preview' | 'split') {
   editorMode = mode;
 }
 
+// --- Navigation stack for standalone back button ---
+export function pushNav(pathname: string): void {
+  // Check if this is a back-navigation (pathname matches a previous entry)
+  const prevIndex = navStack.lastIndexOf(pathname);
+  if (prevIndex !== -1) {
+    // Trim stack to that point (auto-sync on back navigation)
+    navStack = navStack.slice(0, prevIndex + 1);
+    return;
+  }
+  // Only push if different from current top
+  if (navStack.length === 0 || navStack[navStack.length - 1] !== pathname) {
+    navStack = [...navStack, pathname];
+  }
+}
+
+export function canGoBack(): boolean {
+  return navStack.length > 1;
+}
+
 /**
  * Reset UI state to defaults (called on logout to prevent user data leak).
  */
@@ -256,6 +292,9 @@ export function resetToDefaults() {
     }
   }
   setTheme(prefersDark ? 'gruvbox-dark' : 'gruvbox-light');
+
+  // Reset navigation stack
+  navStack = [];
 
   // Reset editor mode to default
   editorMode = 'split';

@@ -8,7 +8,7 @@
   import { _, locale } from 'svelte-i18n';
 
   import { browser } from '$app/environment';
-  import { beforeNavigate, goto } from '$app/navigation';
+  import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
@@ -44,6 +44,7 @@
   import * as history from '$lib/stores/history.svelte';
   import * as network from '$lib/stores/network.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as pwa from '$lib/stores/pwa.svelte';
   import * as settings from '$lib/stores/settings.svelte';
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
   import * as ui from '$lib/stores/ui.svelte';
@@ -67,6 +68,8 @@
         ui.setEditorMode('edit');
       }
     }
+    ui.initStandaloneDetection();
+    pwa.initPwaDetection();
   }
 
   if (browser) {
@@ -223,7 +226,120 @@
 
       // Global keyboard shortcuts (only when authenticated)
       document.addEventListener('keydown', handleKeydown);
+
+      // Handle PWA shortcut actions (e.g. ?action=new-note from manifest shortcuts)
+      const actionParam = new URL(window.location.href).searchParams.get('action');
+      if (actionParam === 'new-note' && auth.isAuthenticated()) {
+        window.history.replaceState(null, '', window.location.pathname);
+        const note = await notes.createNote('');
+        if (note?.id) {
+          goto(`/note/${note.id}`);
+        }
+      }
+
+      // Handle Web Share Target (Chromium: share text/URLs to create notes)
+      if (auth.isAuthenticated()) {
+        await processShareTarget();
+      } else {
+        // If not authenticated, stash share params for after login
+        stashPendingShare();
+      }
+
+      // Check for pending share from pre-auth stash
+      if (auth.isAuthenticated()) {
+        await processPendingShare();
+      }
     };
+
+    function stashPendingShare(): void {
+      try {
+        const params = new URL(window.location.href).searchParams;
+        const title = safeGetParam(params, 'title');
+        const text = safeGetParam(params, 'text');
+        const url = safeGetParam(params, 'url');
+        if (!title && !text && !url) return;
+
+        sessionStorage.setItem(
+          'xelanote-pending-share',
+          JSON.stringify({
+            title: (title ?? '').slice(0, 200),
+            text: (text ?? '').slice(0, 50_000),
+            url: (url ?? '').slice(0, 2048),
+          })
+        );
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch {
+        // silent — sessionStorage unavailable
+      }
+    }
+
+    async function processPendingShare(): Promise<void> {
+      try {
+        const raw = sessionStorage.getItem('xelanote-pending-share');
+        if (!raw) return;
+        sessionStorage.removeItem('xelanote-pending-share');
+
+        const parsed = JSON.parse(raw);
+        if (
+          !parsed ||
+          typeof parsed !== 'object' ||
+          typeof parsed.title !== 'string' ||
+          typeof parsed.text !== 'string' ||
+          typeof parsed.url !== 'string'
+        ) {
+          return;
+        }
+
+        await createNoteFromShare(parsed.title, parsed.text, parsed.url);
+      } catch {
+        // Parse error or sessionStorage error — silently ignore
+        try {
+          sessionStorage.removeItem('xelanote-pending-share');
+        } catch {
+          /* silent */
+        }
+      }
+    }
+
+    function safeGetParam(params: URLSearchParams, key: string): string | null {
+      try {
+        const val = params.get(key);
+        return val ? val.trim() : null;
+      } catch {
+        // decodeURIComponent error on malformed %-encoded params
+        return null;
+      }
+    }
+
+    async function processShareTarget(): Promise<void> {
+      const params = new URL(window.location.href).searchParams;
+      const title = (safeGetParam(params, 'title') ?? '').slice(0, 200);
+      const text = (safeGetParam(params, 'text') ?? '').slice(0, 50_000);
+      const url = (safeGetParam(params, 'url') ?? '').slice(0, 2048);
+
+      if (!title && !text && !url) return;
+
+      window.history.replaceState(null, '', window.location.pathname);
+      await createNoteFromShare(title, text, url);
+    }
+
+    async function createNoteFromShare(
+      title: string,
+      text: string,
+      url: string
+    ): Promise<void> {
+      let content = text;
+      if (url) {
+        content = content ? content + '\n\n' + url : url;
+      }
+      if (!title && !content) return;
+
+      const note = await notes.createNote(title || '', content);
+      if (note?.id) {
+        goto(`/note/${note.id}`);
+        pwa.notifySuccessfulAction();
+      }
+    }
 
     function isInputElement(el: Element | null): boolean {
       if (!el) return false;
@@ -389,6 +505,30 @@
     }
   });
 
+  // PWA iOS Install Coach: trigger after first successful user action
+  $effect(() => {
+    if (authInitialized && auth.isAuthenticated()) {
+      pwa.startFallbackTimer();
+    }
+    return () => {
+      pwa.cleanupTimers();
+    };
+  });
+
+  // Watch autoSaveStatus: when 'saved', notify successful action
+  $effect(() => {
+    if (notes.getAutoSaveStatus() === 'saved') {
+      pwa.notifySuccessfulAction();
+    }
+  });
+
+  // Standalone permanently disables install coach
+  $effect(() => {
+    if (ui.getIsStandalone()) {
+      pwa.markInstalled();
+    }
+  });
+
   // Dynamic HTML lang attribute
   $effect(() => {
     if (browser) {
@@ -407,6 +547,13 @@
       })
     ) {
       cancel();
+    }
+  });
+
+  // Track in-app navigation for standalone PWA back button
+  afterNavigate(({ to }) => {
+    if (to?.url.pathname) {
+      ui.pushNav(to.url.pathname);
     }
   });
 </script>

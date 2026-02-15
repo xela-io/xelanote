@@ -544,17 +544,17 @@ export async function logoutAsync(): Promise<void> {
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
       const cacheNames = await caches.keys();
-      // Clear API caches AND uploads cache, keep workbox-precache for offline login screen
+      // Clear uploads cache, keep workbox-precache for offline login screen
       await Promise.all(
         cacheNames
-          .filter((name) => name.startsWith('api-') || name === 'uploads')
+          .filter((name) => name === 'uploads')
           .map((name) => {
             console.log('[Logout] Clearing cache:', name);
             return caches.delete(name);
           })
       );
 
-      console.log('[Logout] API + uploads caches cleared (login screen still available offline)');
+      console.log('[Logout] Uploads cache cleared (login screen still available offline)');
     } catch (err) {
       console.warn('[Logout] Failed to clear caches:', err);
       // Non-critical, continue with logout

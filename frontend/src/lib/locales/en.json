@@ -1061,7 +1061,19 @@
     "unsaved_warning": "You have unsaved changes. Are you sure you want to leave this page?"
   },
   "pwa": {
-    "update_available": "A new version of xelanote is available. Update now? (The page will reload)"
+    "update_available": "A new version of xelanote is available. Update now? (The page will reload)",
+    "ios_install_title": "Install xelanote",
+    "ios_install_subtitle": "Get the full app experience",
+    "ios_step1_title": "Tap Share",
+    "ios_step1_desc": "Tap the {icon} share button in Safari's toolbar",
+    "ios_step2_title": "Add to Home Screen",
+    "ios_step2_desc": "Select \"Add to Home Screen\" from the share menu",
+    "ios_step3_title": "Open the App",
+    "ios_step3_desc": "Find xelanote on your Home Screen and tap to open",
+    "ios_next": "Next",
+    "ios_got_it": "Got it!",
+    "ios_later": "Later",
+    "ios_never": "Don't show again"
   },
   "summary": {
     "title": "Summary",

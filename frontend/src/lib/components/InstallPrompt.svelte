@@ -1,5 +1,12 @@
 <script lang="ts">
   import { Download, X } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+
+  import { isDesktop } from '$lib/config';
+  import * as pwa from '$lib/stores/pwa.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
+
+  import IOSInstallCoach from './IOSInstallCoach.svelte';
 
   interface BeforeInstallPromptEvent extends Event {
     prompt(): Promise<void>;
@@ -9,17 +16,34 @@
   const { onClose }: { onClose: () => void } = $props();
 
   let deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
-  let showPrompt = $state(false);
+  let showChromePrompt = $state(false);
+  let iosStep = $state(1);
+  let coachShownEmitted = false;
 
-  // Listen for beforeinstallprompt event
-  if (typeof window !== 'undefined') {
-    window.addEventListener('beforeinstallprompt', (e) => {
+  onMount(() => {
+    // Chrome/Android: Listen for beforeinstallprompt event
+    function handleBeforeInstallPrompt(e: Event) {
+      if (ui.getIsStandalone() || isDesktop()) return;
       const event = e as BeforeInstallPromptEvent;
       event.preventDefault();
       deferredPrompt = event;
-      showPrompt = true;
-    });
-  }
+      showChromePrompt = true;
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  });
+
+  // Emit ios_coach_shown once when coach becomes visible
+  $effect(() => {
+    if (pwa.getInstallState() === 'eligible' && !showChromePrompt && !coachShownEmitted) {
+      coachShownEmitted = true;
+      pwa.emitPwaEvent('ios_coach_shown');
+    }
+  });
 
   async function handleInstall() {
     if (!deferredPrompt) return;
@@ -30,17 +54,17 @@
     console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
 
     deferredPrompt = null;
-    showPrompt = false;
+    showChromePrompt = false;
     onClose();
   }
 
   function handleDismiss() {
-    showPrompt = false;
+    showChromePrompt = false;
     onClose();
   }
 </script>
 
-{#if showPrompt}
+{#if showChromePrompt}
   <div
     class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50 bg-background border border-border rounded-lg shadow-lg p-4 max-w-sm"
   >
@@ -73,4 +97,20 @@
       </button>
     </div>
   </div>
+{/if}
+
+{#if pwa.getInstallState() === 'eligible' && !showChromePrompt}
+  <IOSInstallCoach
+    currentStep={iosStep}
+    onSnooze={() => {
+      pwa.snoozeInstall();
+    }}
+    onDismiss={() => {
+      pwa.dismissInstall();
+    }}
+    onStepChange={(step) => {
+      pwa.emitPwaEvent('ios_step_changed', { from: iosStep, to: step });
+      iosStep = step;
+    }}
+  />
 {/if}

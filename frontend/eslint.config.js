@@ -28,6 +28,8 @@ export default [
       '.svelte-kit/**',
       '.vite/**',
       'coverage/**',
+      'build-old/**',
+      'scripts/**',
     ],
   },
   js.configs.recommended,

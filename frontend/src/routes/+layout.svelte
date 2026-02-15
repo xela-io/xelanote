@@ -323,11 +323,7 @@
       await createNoteFromShare(title, text, url);
     }
 
-    async function createNoteFromShare(
-      title: string,
-      text: string,
-      url: string
-    ): Promise<void> {
+    async function createNoteFromShare(title: string, text: string, url: string): Promise<void> {
       let content = text;
       if (url) {
         content = content ? content + '\n\n' + url : url;

@@ -202,11 +202,7 @@ export function initPwaDetection(): void {
 // --- State machine ---
 export function checkEligibility(): void {
   // Already in a terminal or active state? Don't change.
-  if (
-    installState === 'installed' ||
-    installState === 'dismissed' ||
-    installState === 'eligible'
-  ) {
+  if (installState === 'installed' || installState === 'dismissed' || installState === 'eligible') {
     return;
   }
 

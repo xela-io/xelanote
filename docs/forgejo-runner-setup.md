@@ -510,7 +510,7 @@ docker logs xelanote --tail 100                           # App
 
 4. **`WEBAUTHN_RP_ID` in Production Mode**: Im `XELANOTE_ENV=production`-Modus muss `WEBAUTHN_RP_ID` gesetzt sein.
 
-5. **SHA-pinned Checkout**: Die `actions/checkout` Action wird per SHA referenziert, um Supply-Chain-Angriffe zu verhindern. Bei Updates den SHA von https://code.forgejo.org/actions/checkout/releases pruefen.
+5. **SHA-pinned Checkout**: Die `actions/checkout` Action wird per SHA referenziert, um Supply-Chain-Angriffe zu verhindern. Bei Updates den SHA von <https://code.forgejo.org/actions/checkout> pruefen.
 
 6. **Host-Runner statt Docker-Runner**: Die Runner laufen direkt auf dem Host, weil sie Docker-Container bauen und verwalten muessen.
 

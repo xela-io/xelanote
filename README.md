@@ -21,7 +21,7 @@
   <a href="https://github.com/xela-io/xelanote/actions/workflows/quality.yml"><img src="https://github.com/xela-io/xelanote/actions/workflows/quality.yml/badge.svg" alt="Quality Status" /></a>
   <a href="https://github.com/xela-io/xelanote/releases"><img src="https://img.shields.io/github/v/release/xela-io/xelanote?include_prereleases&label=release" alt="Release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
-  <a href="https://hub.docker.com/r/xelaio/xelanote"><img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker" /></a>
+  <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker" />
 </p>
 
 <p align="center">

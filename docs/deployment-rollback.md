@@ -217,4 +217,4 @@ Best practices:
 
 - [Deployment Guide](deployment.md)
 - [Security Checklist](deployment-security.md)
-- [Database Migrations](../backend/internal/db/migrations/README.md)
+- Database Migrations: `backend/internal/db/migrations/`

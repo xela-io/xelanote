@@ -19,6 +19,7 @@ Complete reference for all environment variables used by xelanote.
 | `XELANOTE_DB_KEY_FILE` | — | Path to file containing the SQLCipher key (alternative to `XELANOTE_DB_KEY`). |
 | `XELANOTE_API_KEY_SECRET` | value of `JWT_SECRET` | Secret for encrypting stored API keys. Falls back to `JWT_SECRET` if not set. |
 | `TRUSTED_PROXIES` | `127.0.0.1/32,::1/128` | Comma-separated list of trusted proxy CIDRs for `X-Forwarded-For` parsing. **Required when `XELANOTE_ENV=production`**. |
+| `XELANOTE_JOURNAL_MODE` | `wal` | SQLite journal mode. `wal` for better concurrent read/write performance, `delete` as fallback for problematic Docker volumes. |
 | `XELANOTE_BOOTSTRAP_TOKEN` | — | One-time bootstrap token for first admin creation when registration is disabled. Send as `bootstrap_token` in `POST /api/auth/register`. |
 
 ## Optional - WebAuthn/FIDO2
@@ -85,6 +86,7 @@ CORS_ALLOWED_ORIGINS=https://notes.example.com
 # Optional: Database encryption
 # XELANOTE_DB_KEY=your-database-encryption-key
 # XELANOTE_DB=/custom/path/to/xelanote.db
+# XELANOTE_JOURNAL_MODE=wal
 
 # Optional: CAPTCHA
 # TURNSTILE_SECRET_KEY=0x...

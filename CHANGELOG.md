@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **GitHub CI fixes** — Added missing `cache-dependency-path: backend/go.sum` in `quality.yml` for backend and golangci-lint jobs. Added `XELANOTE_JOURNAL_MODE` to environment variable docs and `.env.example`. Updated layer-violation baseline. Fixed 4 broken links in docs (golangci-lint install URL, Forgejo checkout releases, Docker Hub badge, migrations README).
 - **Settings page 500 error** — Lazy-load `qrcode` module in `TwoFactorSetup.svelte` via dynamic `import()` instead of static top-level import. A corrupted Vite dependency cache for `qrcode.js` previously crashed the entire settings page because the module was in the critical import graph.
 
 ### Added

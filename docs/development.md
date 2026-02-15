@@ -682,7 +682,7 @@ make lint
 
 **Empfohlene Tools**:
 
-- `golangci-lint`: [Install Guide](https://golangci-lint.run/usage/install/)
+- `golangci-lint`: [Install Guide](https://golangci-lint.run/docs/welcome/install/local/)
 
 ```bash
 golangci-lint run ./...

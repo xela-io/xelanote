@@ -854,7 +854,10 @@ export async function updateNoteColor(noteId: string, color: string | null) {
  * Update a note's title in the tree without full reload.
  * Used for granular cache updates when only the title changes.
  */
-export function updateNoteInTree(noteId: string, updates: { title?: string; color?: string | null }): void {
+export function updateNoteInTree(
+  noteId: string,
+  updates: { title?: string; color?: string | null }
+): void {
   if (!treeData) return;
 
   // Find and update the note node in the tree

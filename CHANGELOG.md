@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **100-Note silent cap bug**: Backend DB layer limited notes to 100 (despite API layer allowing 500). Changed DB limit to 500 and implemented cursor-based pagination loop in `tree.svelte.ts` with 100-iteration safety guard (supports up to 50,000 notes)
-- Tree `buildTree()` O(n*m) folder lookup: replaced `Array.from(folderMap.values()).find()` with O(1) `pathMap.get()` lookup
+- Tree `buildTree()` O(n\*m) folder lookup: replaced `Array.from(folderMap.values()).find()` with O(1) `pathMap.get()` lookup
 - Notes store O(n) lookups: added `SvelteMap`-based note index with lazy rebuild pattern, `getNoteById()` returns O(1), `updateNoteInList()` uses Map + findIndex splice instead of full `.map()`
 - Eliminated double array traversal in `remote-updates.ts` (redundant `setNotes(getNotes().map(...))` after `updateNoteInList`)
 - Mobile touch targets: increased `toolbar-btn` minimum size from 44px to 48px (WCAG AAA) on touch devices via `@media (pointer: coarse)`; MobileHeader buttons use `min-h-12 min-w-12` explicitly
@@ -207,6 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend Rate-Limiting (5/Stunde) und 16KB Body-Limit fuer Error Reports
 
 ### Changed
+
 - `make quality` Target um golangci-lint und Policy-Checks erweitert (prueft jetzt Format, Lint, Typecheck, golangci-lint und Architektur-/Security-Policies in einem Lauf)
 - Pre-commit Hooks (lefthook) um 3 neue Checks erweitert: Layer-Violation Ratchet, Svelte 4 Import Guard, Security Pattern Check
 - golangci-lint Konfiguration (`.golangci.yml`) erweitert um build-tags (fts5, sqlite_crypt) und 5 zusaetzliche Linter (revive, misspell, bodyclose, gocritic, unused) mit targeted exclude-rules fuer 63 pre-existierende Findings
@@ -218,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Layout- und Notes-Flows (PWA-Update, Init, Interactions, Viewport, Guards, Auto-Save, Remote-Updates) in eigene Module ausgelagert.
 
 ### Fixed
+
 - FE-Typecheck bereinigt; `npm run typecheck`, `npm run lint`, `npm run format` und `make test-frontend` gruen.
 - Konfiguration ueber FORGEJO_URL, FORGEJO_REPO, FORGEJO_API_TOKEN (Feature deaktiviert wenn leer)
 - /api/config liefert `error_reporting_enabled` fuer Frontend-Feature-Detection

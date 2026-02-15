@@ -713,7 +713,7 @@ export function handleRemoteUpdate(remoteNote: Note) {
         getNotes: () => notes,
         setNotes: (nextNotes) => {
           notes = nextNotes;
-      invalidateNoteMap();
+          invalidateNoteMap();
         },
         isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
         decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),

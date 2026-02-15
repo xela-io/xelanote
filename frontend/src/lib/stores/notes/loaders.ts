@@ -101,10 +101,7 @@ async function loadNotesFull(deps: LoadNotesDeps) {
           allNotes.length = 0;
           allNotes.push(...noteMap.values());
         }
-        if (
-          deltaResult.sync_token &&
-          (!maxSyncToken || deltaResult.sync_token > maxSyncToken)
-        ) {
+        if (deltaResult.sync_token && (!maxSyncToken || deltaResult.sync_token > maxSyncToken)) {
           maxSyncToken = deltaResult.sync_token;
         }
       } catch (err) {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `.gitignore`: Codex-Docker-Verzeichnis und `codex.sh` komplett ignoriert (statt nur einzelner Dateien)
+
 ### Fixed
 
 - Import-Sortierung in RecipeEditor.svelte korrigiert (ESLint simple-import-sort)

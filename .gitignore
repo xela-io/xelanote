@@ -94,6 +94,6 @@ frontend/dev-dist/
 claude.sh
 
 # Codex Docker
-.codex-docker/.env
-.codex-docker/docker-compose.override.yml
+.codex-docker/
+codex.sh
 codex-config-backup-*.tar.gz

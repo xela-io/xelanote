@@ -98,7 +98,7 @@ jobs:
           cache-dependency-path: backend/go.sum
       - name: Install sqlite3 dev headers
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.9.0
           working-directory: backend

@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Mobile header back arrow** — Removed the standalone PWA back arrow button from `MobileHeader.svelte` (was shown next to the burger menu in PWA standalone mode). The sidebar already provides full navigation, making the back button redundant. Cleaned up the associated `navStack`/`pushNav`/`canGoBack` navigation stack in the UI store.
+- **Home page welcome hero** — Removed the PenLine icon, "Welcome to xelanote" heading, and subtitle from the home page for a cleaner look
 
 ### Fixed
 

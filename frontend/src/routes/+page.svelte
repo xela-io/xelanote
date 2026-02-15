@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FilePlus, FileText, PenLine, Search } from 'lucide-svelte';
+  import { FilePlus, FileText, Search } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
@@ -29,14 +29,6 @@
 
 <div class="h-full flex items-center justify-center">
   <div class="text-center max-w-md px-4">
-    <div class="mb-8">
-      <PenLine size={64} class="mx-auto text-muted-foreground mb-4" />
-      <h1 class="text-2xl font-bold mb-2">{$_('page.home.welcome_title')}</h1>
-      <p class="text-muted-foreground">
-        {$_('page.home.welcome_subtitle')}
-      </p>
-    </div>
-
     <div class="space-y-3">
       <button
         onclick={() => (showCreateNoteDialog = true)}

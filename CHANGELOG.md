@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **iOS PWA: safe-area overlap** — App content overlapped with iOS status bar in standalone PWA mode. Added `pt-safe` (safe-area-inset-top padding) and `bg-background` to root layout container.
+- **iOS PWA: blank screen after login** — After logging in within the iOS standalone PWA, the app showed no content until force-closed and reopened. Root cause: SvelteKit's client-side navigation (`goto('/')`) doesn't reliably switch the layout from public to protected branch in iOS WebKit standalone mode. Fix: Use `window.location.replace('/')` in standalone mode to force a full page reload after login, which triggers the normal `initializeApp()` flow via HttpOnly cookie session restore.
 - **CI: frontend quality gate failure** — `web-vitals` missing from `package-lock.json` (added to `package.json` but lockfile never regenerated), causing silent `npm ci` failure. Also fixed 14 eslint errors (unused imports, `Map` → `SvelteMap` in reactive stores, self-assignment pattern, import sorting) and prettier formatting in 7 source files. Removed unused `onUnlockModalChange` prop from `LayoutOverlays` (redundant with `$bindable()`).
 - **100-Note silent cap bug**: Backend DB layer limited notes to 100 (despite API layer allowing 500). Changed DB limit to 500 and implemented cursor-based pagination loop in `tree.svelte.ts` with 100-iteration safety guard (supports up to 50,000 notes)
 - Tree `buildTree()` O(n\*m) folder lookup: replaced `Array.from(folderMap.values()).find()` with O(1) `pathMap.get()` lookup

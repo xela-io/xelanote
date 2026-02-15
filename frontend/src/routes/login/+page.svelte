@@ -331,6 +331,20 @@
    * This loads preferences, notes, and connects to WebSocket.
    */
   async function initializeAndNavigate() {
+    // In standalone PWA mode (iOS/Android), force a full page reload instead
+    // of client-side navigation. iOS WebKit has issues with SvelteKit's
+    // client-side routing after auth state changes — the layout doesn't
+    // properly switch from the public to the protected branch. A reload
+    // triggers initializeApp() which handles everything cleanly via cookies.
+    const isStandalone =
+      (window.navigator as { standalone?: boolean }).standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isStandalone) {
+      window.location.replace('/');
+      return;
+    }
+
     try {
       // Load user preferences (theme + editor mode + security level - all in one call)
       await settings.loadPreferences();

@@ -464,7 +464,7 @@
 </script>
 
 <!-- Root container: full viewport height with flex column -->
-<div class="h-screen-safe flex flex-col overflow-hidden">
+<div class="h-screen-safe pt-safe flex flex-col overflow-hidden bg-background">
   <!-- Skip Link for keyboard navigation -->
   <a
     href="#main-content"

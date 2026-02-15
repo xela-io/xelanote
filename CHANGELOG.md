@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `updateNoteInTree()` for efficient in-place tree updates without full reload
 - `LayoutOverlays.svelte` component extracting Toast, OfflineBanner, ConflictDialog, InstallPrompt, UnlockEncryptionModal, ConfirmDialog, AlertDialog from `+layout.svelte`
 
+### Removed
+
+- **Mobile header back arrow** — Removed the standalone PWA back arrow button from `MobileHeader.svelte` (was shown next to the burger menu in PWA standalone mode). The sidebar already provides full navigation, making the back button redundant. Cleaned up the associated `navStack`/`pushNav`/`canGoBack` navigation stack in the UI store.
+
 ### Fixed
 
 - **iOS PWA: safe-area overlap** — App content overlapped with iOS status bar in standalone PWA mode. Added `pt-safe` (safe-area-inset-top padding) and `bg-background` to root layout container. Additionally added safe-area spacer to mobile sidebar drawer, which uses `fixed inset-y-0` positioning and therefore escapes the root container's padding.

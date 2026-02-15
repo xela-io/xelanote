@@ -8,7 +8,7 @@
   import { _, locale } from 'svelte-i18n';
 
   import { browser } from '$app/environment';
-  import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
@@ -452,13 +452,6 @@
       })
     ) {
       cancel();
-    }
-  });
-
-  // Track in-app navigation for standalone PWA back button
-  afterNavigate(({ to }) => {
-    if (to?.url.pathname) {
-      ui.pushNav(to.url.pathname);
     }
   });
 </script>

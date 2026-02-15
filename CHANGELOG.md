@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Settings page 500 error** — Lazy-load `qrcode` module in `TwoFactorSetup.svelte` via dynamic `import()` instead of static top-level import. A corrupted Vite dependency cache for `qrcode.js` previously crashed the entire settings page because the module was in the critical import graph.
+
 ### Added
 
 - **Delta-Sync + Field Projection**: Backend `fields=slim` query parameter strips `content`, `encrypted_content`, `summary` fields from list responses (~90% payload reduction). `updated_since` parameter enables cursor-based delta-sync. Frontend Notes-Store uses paginated slim loads with `sync_token` high-watermark, delta-merge for offline-sync and incremental updates, and race-protection delta-pass for multi-page full loads. Tree-Store also uses `fields=slim`.

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { CheckCircle, Key, Loader2, Shield, Smartphone } from 'lucide-svelte';
-  import QRCode from 'qrcode';
 
   import * as api from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
@@ -47,7 +46,8 @@
       qrCodeUrl = setupData.qr_code_url;
       backupCodes = setupData.backup_codes;
 
-      // Generate QR code data URL
+      // Generate QR code data URL (lazy import to avoid blocking settings page)
+      const QRCode = await import('qrcode');
       qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
         width: 200,
         margin: 2,

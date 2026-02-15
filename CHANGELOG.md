@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Pre-push hook** — Added `pre-push` section to `lefthook.yml` with `gofmt`, `go vet`, and `svelte-check` to catch type errors and formatting issues before pushing.
+- **CI E2E pre-build** — Pre-build Go backend binary before Playwright E2E tests in CI to avoid cold `go run` timeout. Uses pre-built binary in CI, `go run` locally.
 
 ### Changed
 

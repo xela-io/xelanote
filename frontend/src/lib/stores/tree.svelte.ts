@@ -159,7 +159,7 @@ async function fetchAllNotes(): Promise<Note[]> {
   let iterations = 0;
 
   do {
-    const result = await api.listNotes({ limit: 500, cursor });
+    const result = await api.listNotes({ limit: 500, cursor, fields: 'slim' });
     allNotes.push(...(result.notes ?? []));
     cursor = result.next_cursor;
     iterations++;
@@ -186,7 +186,7 @@ export async function loadTree() {
     const [foldersResult, regularNotes, journalNotesResult] = await Promise.all([
       api.getFolders(),
       fetchAllNotes(),
-      api.listNotes({ folder: '/Journal' }),
+      api.listNotes({ folder: '/Journal', fields: 'slim' }),
     ]);
 
     const folders = foldersResult.folders ?? [];

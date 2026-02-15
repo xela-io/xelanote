@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Delta-Sync + Field Projection**: Backend `fields=slim` query parameter strips `content`, `encrypted_content`, `summary` fields from list responses (~90% payload reduction). `updated_since` parameter enables cursor-based delta-sync. Frontend Notes-Store uses paginated slim loads with `sync_token` high-watermark, delta-merge for offline-sync and incremental updates, and race-protection delta-pass for multi-page full loads. Tree-Store also uses `fields=slim`.
+- `is_deleted` field on Note model for delta-sync soft-delete propagation
+- `sync_token` response field on note list endpoint (datenbasierte High-Watermark: `updated_at|id`)
+- `updated_since` query parameter for delta-sync with cursor-tiebreaker pagination (ASC order)
 - Web Vitals (LCP, INP, CLS, FCP, TTFB) performance metrics reporting with 10% client sampling, DNT respect, URL sanitizing, and 90-day retention (`perf_metrics` table + `/perf-metrics` endpoint)
 - PWA analytics events pipeline: fire-and-forget POST to `/analytics/events` with event-name whitelist, rate limiting (20/hr), 1KB payload limit, and 90-day retention (`analytics_events` table)
 - Data governance rules for telemetry in `docs/conventions.md` (URL sanitizing, no PII, sampling, retention, DNT hierarchy)

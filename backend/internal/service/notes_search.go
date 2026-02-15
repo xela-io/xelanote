@@ -8,8 +8,8 @@ import (
 )
 
 // ListNotes returns a paginated list of notes.
-func (s *NoteService) ListNotes(userID int, limit int, cursor string) ([]db.Note, string, error) {
-	return s.db.ListNotes(userID, limit, cursor)
+func (s *NoteService) ListNotes(userID int, limit int, cursor string, opts db.ListNotesOptions) ([]db.Note, string, error) {
+	return s.db.ListNotes(userID, limit, cursor, opts)
 }
 
 // GetBacklinks returns all notes linking to the given note.

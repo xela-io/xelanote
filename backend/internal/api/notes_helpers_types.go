@@ -56,7 +56,8 @@ type NoteRequest struct {
 // NoteListResponse represents a paginated list of notes.
 type NoteListResponse struct {
 	Notes      []service.Note `json:"notes"`
-	NextCursor string    `json:"next_cursor,omitempty"`
+	NextCursor string         `json:"next_cursor,omitempty"`
+	SyncToken  string         `json:"sync_token,omitempty"`
 }
 
 // NoteTitleInfo represents minimal note info for link suggestions

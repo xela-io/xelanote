@@ -7,12 +7,16 @@ export async function listNotes(
     limit?: number;
     cursor?: string;
     folder?: string;
+    fields?: 'slim';
+    updated_since?: string;
   } = {}
-): Promise<{ notes: Note[]; next_cursor?: string }> {
+): Promise<{ notes: Note[]; next_cursor?: string; sync_token?: string }> {
   const params = new URLSearchParams();
   if (options.limit) params.set('limit', options.limit.toString());
   if (options.cursor) params.set('cursor', options.cursor);
   if (options.folder) params.set('folder', options.folder);
+  if (options.fields) params.set('fields', options.fields);
+  if (options.updated_since) params.set('updated_since', options.updated_since);
 
   const query = params.toString();
   return request(`/notes${query ? '?' + query : ''}`);

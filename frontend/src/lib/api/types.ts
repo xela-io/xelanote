@@ -80,6 +80,8 @@ export interface Note {
   journal_date?: string; // YYYY-MM-DD for journal notes
   // AI-Enabled (Claude API opt-in)
   ai_enabled?: boolean; // true = Cloud-KI (Claude) allowed for this note
+  // Delta-sync field
+  is_deleted?: boolean; // true for soft-deleted notes in delta-sync responses
 }
 
 export interface Backlink {

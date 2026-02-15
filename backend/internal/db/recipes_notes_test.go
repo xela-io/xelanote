@@ -85,7 +85,7 @@ func TestRecipeNotIncludedInListNotes(t *testing.T) {
 	}
 
 	// ListNotes should NOT include recipe notes
-	notes, _, err := db.ListNotes(userID, 50, "")
+	notes, _, err := db.ListNotes(userID, 50, "", ListNotesOptions{})
 	if err != nil {
 		t.Fatalf("ListNotes failed: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestRecipeVisibleInRezepteFolder(t *testing.T) {
 		t.Fatalf("CreateRecipeNote failed: %v", err)
 	}
 
-	notes, err := db.ListNotesByFolder(userID, "/Rezepte")
+	notes, err := db.ListNotesByFolder(userID, "/Rezepte", "")
 	if err != nil {
 		t.Fatalf("ListNotesByFolder failed: %v", err)
 	}

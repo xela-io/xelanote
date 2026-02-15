@@ -72,7 +72,7 @@ func TestNotesByFolderCacheInvalidationOnMove(t *testing.T) {
 		t.Fatalf("failed to create note: %v", err)
 	}
 
-	rootNotes, err := service.GetNotesByFolder(user.ID, "/")
+	rootNotes, err := service.GetNotesByFolder(user.ID, "/", "")
 	if err != nil {
 		t.Fatalf("failed to list root notes: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestNotesByFolderCacheInvalidationOnMove(t *testing.T) {
 		t.Fatalf("failed to move note: %v", err)
 	}
 
-	rootNotes, err = service.GetNotesByFolder(user.ID, "/")
+	rootNotes, err = service.GetNotesByFolder(user.ID, "/", "")
 	if err != nil {
 		t.Fatalf("failed to list root notes after move: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestNotesByFolderCacheInvalidationOnMove(t *testing.T) {
 		t.Fatalf("expected 0 root notes after move, got %d", len(rootNotes))
 	}
 
-	projectNotes, err := service.GetNotesByFolder(user.ID, "/projects")
+	projectNotes, err := service.GetNotesByFolder(user.ID, "/projects", "")
 	if err != nil {
 		t.Fatalf("failed to list project notes: %v", err)
 	}

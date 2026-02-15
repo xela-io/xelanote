@@ -172,8 +172,8 @@ async function _doSync(): Promise<void> {
       }
     }
 
-    // Step 4: Refresh state from server
-    await notes.loadNotes();
+    // Step 4: Refresh state from server (delta-sync to avoid full reload)
+    await notes.loadNotes('delta');
 
     // Step 5: Show result
     const finalCount = await getQueueCount();

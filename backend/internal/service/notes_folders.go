@@ -19,21 +19,26 @@ func (s *NoteService) GetFoldersWithCounts(userID int) ([]db.FolderInfo, error) 
 }
 
 // GetNotesByFolder returns notes in a folder.
-func (s *NoteService) GetNotesByFolder(userID int, path string) ([]db.Note, error) {
+func (s *NoteService) GetNotesByFolder(userID int, path string, fields string) ([]db.Note, error) {
 	path = normalizeFolderPath(path)
-	key := notesByFolderCacheKey(userID, path)
 
-	if cached, ok := s.cache.Get(key); ok {
-		return cached.([]db.Note), nil
+	// Only use cache for full (non-slim) requests to avoid serving slim data to full-data callers
+	if fields == "" {
+		key := notesByFolderCacheKey(userID, path)
+		if cached, ok := s.cache.Get(key); ok {
+			return cached.([]db.Note), nil
+		}
+
+		notes, err := s.db.ListNotesByFolder(userID, path, fields)
+		if err != nil {
+			return nil, err
+		}
+
+		s.cache.Set(key, notes)
+		return notes, nil
 	}
 
-	notes, err := s.db.ListNotesByFolder(userID, path)
-	if err != nil {
-		return nil, err
-	}
-
-	s.cache.Set(key, notes)
-	return notes, nil
+	return s.db.ListNotesByFolder(userID, path, fields)
 }
 
 // Folder operations (new folders table)

@@ -34,6 +34,8 @@ type Note struct {
 	// AI/Claude API fields
 	AIEnabled bool `json:"ai_enabled"` // true = Cloud-KI (Claude) erlaubt
 	UserID    int  `json:"-"`          // Not exported to JSON, used internally
+	// Delta-sync fields
+	IsDeleted bool `json:"is_deleted,omitempty"` // true for soft-deleted notes in delta-sync responses
 	// Sharing fields (populated by ListNotesByFolder UNION)
 	IsShared bool `json:"is_shared,omitempty"` // true if this is a placed shared note
 }

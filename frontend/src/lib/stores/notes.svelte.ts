@@ -78,6 +78,9 @@ let lastSyncedVersion = -1;
 const noteMap = new Map<string, Note>();
 let notesLoading = $state(false);
 
+// Delta-sync token (in-memory only — reset on page reload triggers full load, which is correct)
+let syncToken = $state<string | null>(null);
+
 /** Mark the map as needing a rebuild. Called implicitly when notes array changes. */
 function invalidateNoteMap() {
   noteMapVersion++;
@@ -146,16 +149,25 @@ export const getAutoSaveStatus = accessors.getAutoSaveStatus;
 export const getLastAutoSave = accessors.getLastAutoSave;
 export const getAutoSaveError = accessors.getAutoSaveError;
 
-export async function loadNotes() {
-  await loadNotesHelper({
-    listNotes: (options) => api.listNotes(options),
-    setNotes: (next) => {
-      notes = next;
+export async function loadNotes(mode: 'full' | 'delta' = 'full') {
+  await loadNotesHelper(
+    {
+      listNotes: (options) => api.listNotes(options),
+      setNotes: (next) => {
+        notes = next;
+        invalidateNoteMap();
+      },
+      getNotes: () => notes,
+      setLoading: (value) => {
+        notesLoading = value;
+      },
+      getSyncToken: () => syncToken,
+      setSyncToken: (token) => {
+        syncToken = token;
+      },
     },
-    setLoading: (value) => {
-      notesLoading = value;
-    },
-  });
+    mode
+  );
 }
 
 export async function loadNote(id: string) {

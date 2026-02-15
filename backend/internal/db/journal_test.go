@@ -518,7 +518,7 @@ func TestJournalNotIncludedInListNotes(t *testing.T) {
 	}
 
 	// Test: ListNotes should only return regular notes
-	notes, _, err := db.ListNotes(userID, 100, "")
+	notes, _, err := db.ListNotes(userID, 100, "", ListNotesOptions{})
 	if err != nil {
 		t.Fatalf("ListNotes failed: %v", err)
 	}

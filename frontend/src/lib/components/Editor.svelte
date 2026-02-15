@@ -13,9 +13,11 @@
   import { updateEditorContent, updateFocusMode } from '$lib/editor/codemirror';
   import {
     type DialogLoaderState,
+    loadAIActionsDropdown,
     loadMarkdownGuideDialog,
     loadMarkdownGuideDropdown,
     loadMoveToFolderDialog,
+    loadShareDialog,
     loadVersionHistoryDialog,
     maybeLoadDialog,
   } from '$lib/editor/dialog-loaders';
@@ -95,14 +97,13 @@
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
-  import AIActionsDropdown from './AIActionsDropdown.svelte';
   import AITransformDialog from './AITransformDialog.svelte';
   import ColorPickerPopover from './ColorPickerPopover.svelte';
   import EditorPanels from './editor/EditorPanels.svelte';
   import EditorToolbar from './editor/EditorToolbar.svelte';
   import EditorMoreMenu from './EditorMoreMenu.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
-  import ShareDialog from './ShareDialog.svelte';
+  // ShareDialog is lazy-loaded via dialog-loaders.ts
   import TableOfContents from './TableOfContents.svelte';
 
   interface Props {
@@ -131,6 +132,17 @@
   let findReplaceCaseSensitive = $state(false);
   let pendingHighlightQuery = $state<string | null>(null);
   let editorExtensionsReady = $state(false);
+  // Lazy-loaded dialog state
+  let lazyDialogs = $state<DialogLoaderState>({});
+  const setLazyDialogs = (s: DialogLoaderState) => { lazyDialogs = s; };
+
+  // Trigger lazy loading when dialogs are requested
+  $effect(() => {
+    maybeLoadDialog(showShareDialog, lazyDialogs, loadShareDialog, setLazyDialogs);
+  });
+  $effect(() => {
+    maybeLoadDialog(showAIActionsDropdown, lazyDialogs, loadAIActionsDropdown, setLazyDialogs);
+  });
   let prevNoteId: string | null = $state(null);
 
   let dialogLoaders = $state<DialogLoaderState>({
@@ -988,9 +1000,9 @@
   />
 {/if}
 
-<!-- AI Actions Dropdown (rendered outside toolbar to avoid overflow clipping) -->
-{#if showAIActionsDropdown}
-  <AIActionsDropdown
+<!-- AI Actions Dropdown (lazy-loaded, rendered outside toolbar to avoid overflow clipping) -->
+{#if showAIActionsDropdown && lazyDialogs.aiActionsDropdown}
+  <lazyDialogs.aiActionsDropdown
     onSelectAction={handleAIActionSelect}
     onClose={() => (showAIActionsDropdown = false)}
     triggerRect={aiActionsTriggerRect}
@@ -1017,9 +1029,9 @@
   />
 {/if}
 
-<!-- Share Note Dialog -->
-{#if showShareDialog && notes.getCurrentNote()}
-  <ShareDialog
+<!-- Share Note Dialog (lazy-loaded) -->
+{#if showShareDialog && notes.getCurrentNote() && lazyDialogs.shareDialog}
+  <lazyDialogs.shareDialog
     resourceType="note"
     resourceId={notes.getCurrentNote()!.id}
     isEncrypted={notes.getCurrentNote()!.content_encrypted ?? false}

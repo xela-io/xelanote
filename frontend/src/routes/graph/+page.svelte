@@ -1,8 +1,18 @@
 <script lang="ts">
   import { ArrowLeft } from 'lucide-svelte';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import Graph from '$lib/components/Graph.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
+  import GraphSkeleton from '$lib/components/skeletons/GraphSkeleton.svelte';
+  import type { ComponentType } from 'svelte';
+
+  let GraphComponent = $state<ComponentType | null>(null);
+
+  onMount(async () => {
+    const module = await import('$lib/components/Graph.svelte');
+    GraphComponent = loadSvelteComponentFromModule(module, 'Graph');
+  });
 </script>
 
 <div class="flex flex-col h-screen-safe bg-background">
@@ -17,6 +27,10 @@
   </header>
 
   <main class="flex-1 overflow-hidden">
-    <Graph />
+    {#if GraphComponent}
+      <GraphComponent />
+    {:else}
+      <GraphSkeleton />
+    {/if}
   </main>
 </div>

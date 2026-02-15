@@ -101,6 +101,7 @@ func main() {
 	turnstileService := initTurnstileService(logger)
 	recipeService := service.NewRecipeService(database, core.note)
 	recipeSuggestionService := service.NewRecipeSuggestionService(database, providerRouter, recipeService)
+	telemetryService := service.NewTelemetryService(database, logger)
 
 	// Create API server
 	allowedOrigins := parseAllowedOrigins(os.Getenv("CORS_ALLOWED_ORIGINS"))
@@ -125,6 +126,7 @@ func main() {
 		ErrorReportSvc:   errorReportService,
 		RecipeService:    recipeService,
 		RecipeSuggestSvc: recipeSuggestionService,
+		TelemetrySvc:     telemetryService,
 		JobManager:       jobManager,
 		WSManager:        wsManager,
 		Logger:           logger,

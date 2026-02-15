@@ -81,15 +81,11 @@ export function handleRemoteUpdate(remoteNote: Note, deps: RemoteUpdateDeps) {
       } catch (err) {
         console.error('[WebSocket] Failed to decrypt remote note:', err);
         deps.updateNoteInList(remoteNote);
-        deps.setNotes(
-          deps.getNotes().map((note) => (note.id === remoteNote.id ? remoteNote : note))
-        );
         return;
       }
     } else {
       console.log('[WebSocket] Encryption locked, skipping currentNote update');
       deps.updateNoteInList(remoteNote);
-      deps.setNotes(deps.getNotes().map((note) => (note.id === remoteNote.id ? remoteNote : note)));
       return;
     }
   }
@@ -119,18 +115,12 @@ export function handleRemoteUpdate(remoteNote: Note, deps: RemoteUpdateDeps) {
     if (!deps.getIsDirty() || !versionDiverged) {
       deps.setCurrentNote(processedNote);
       deps.updateNoteInList(processedNote);
-      deps.setNotes(
-        deps.getNotes().map((note) => (note.id === processedNote.id ? processedNote : note))
-      );
       return;
     }
   }
 
   if (!localNote || localNote.id !== processedNote.id) {
     deps.updateNoteInList(processedNote);
-    deps.setNotes(
-      deps.getNotes().map((note) => (note.id === processedNote.id ? processedNote : note))
-    );
   }
 }
 

@@ -55,6 +55,9 @@ export interface InitializeAppDeps {
     initErrorHandler: () => () => void;
     setServiceAvailable: (available: boolean) => void;
   };
+  perfMetrics: {
+    initPerfMetrics: () => void;
+  };
   history: {
     loadHistory: () => void;
   };
@@ -200,6 +203,9 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
   } catch {
     // no-op
   }
+
+  // Initialize Web Vitals performance metrics reporting
+  deps.perfMetrics.initPerfMetrics();
 
   deps.features.detectGraphFeature();
 

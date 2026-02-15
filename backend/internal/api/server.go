@@ -64,6 +64,10 @@ type Server struct {
 	// Recipe service
 	recipeService           *service.RecipeService
 	recipeSuggestionService *service.RecipeSuggestionService
+	// Telemetry service
+	telemetryService   *service.TelemetryService
+	perfMetricsLimiter *RateLimiter
+	analyticsLimiter   *RateLimiter
 }
 
 // ServerConfig bundles dependencies for constructing a Server.
@@ -85,6 +89,7 @@ type ServerConfig struct {
 	ErrorReportSvc   *service.ErrorReportService
 	RecipeService    *service.RecipeService
 	RecipeSuggestSvc *service.RecipeSuggestionService
+	TelemetrySvc     *service.TelemetryService
 	JobManager       *jobs.JobManager
 	WSManager        *websocket.Manager
 	Logger           *slog.Logger

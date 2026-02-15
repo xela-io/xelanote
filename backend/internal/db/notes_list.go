@@ -13,8 +13,8 @@ func (db *DB) ListNotes(userID int, limit int, cursor string) ([]Note, string, e
 	if limit <= 0 {
 		limit = 50
 	}
-	if limit > 100 {
-		limit = 100
+	if limit > 500 {
+		limit = 500
 	}
 
 	var rows *sql.Rows

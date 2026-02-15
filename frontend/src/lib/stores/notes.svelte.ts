@@ -1,5 +1,6 @@
 // Notes store using Svelte 5 runes
 
+import { SvelteMap } from 'svelte/reactivity';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
@@ -70,9 +71,35 @@ let lastAutoSave = $state<Date | null>(null);
 let autoSaveStatus = $state<'idle' | 'pending' | 'saving' | 'saved' | 'error'>('idle');
 let autoSaveError = $state<string | null>(null);
 
-// Notes list
+// Notes list + Map for O(1) lookups by ID
 let notes = $state<Note[]>([]);
+let noteMapVersion = 0;
+let lastSyncedVersion = -1;
+const noteMap = new Map<string, Note>();
 let notesLoading = $state(false);
+
+/** Mark the map as needing a rebuild. Called implicitly when notes array changes. */
+function invalidateNoteMap() {
+  noteMapVersion++;
+}
+
+/** Ensure the map is in sync with the array. */
+function ensureNoteMap() {
+  if (lastSyncedVersion === noteMapVersion) return;
+  noteMap.clear();
+  for (const note of notes) {
+    noteMap.set(note.id, note);
+  }
+  lastSyncedVersion = noteMapVersion;
+}
+
+/**
+ * Get a note by ID in O(1) via the internal map.
+ */
+export function getNoteById(id: string): Note | undefined {
+  ensureNoteMap();
+  return noteMap.get(id);
+}
 
 export function queueTaskEvent(
   noteId: string,
@@ -196,6 +223,7 @@ export async function createNote(
     },
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     getNotes: () => notes,
     setBacklinks: (backlinks) => {
@@ -290,6 +318,7 @@ export async function toggleEncryption(): Promise<void> {
     },
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     getNotes: () => notes,
     setLastSavedVersion: (version) => {
@@ -326,6 +355,7 @@ export async function deleteCurrentNote() {
     deleteNote: (id, soft) => api.deleteNote(id, soft),
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     getNotes: () => notes,
     removeFromSearchIndex: (id) => searchIndex.removeFromIndex(id),
@@ -350,6 +380,7 @@ export async function renameCurrentNote(newTitle: string) {
     },
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     setDirty: (dirty) => {
       isDirty = dirty;
@@ -377,6 +408,7 @@ export function updateCurrentNoteContent(content: string) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     setDirty: (dirty) => {
       isDirty = dirty;
@@ -416,6 +448,7 @@ export function updateCurrentNoteTitle(title: string) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     setDirty: (dirty) => {
       isDirty = dirty;
@@ -455,6 +488,7 @@ export function updateCurrentNoteAIEnabled(aiEnabled: boolean) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     setDirty: (dirty) => {
       isDirty = dirty;
@@ -494,6 +528,7 @@ export function clearCurrentNote() {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     setDirty: (dirty) => {
       isDirty = dirty;
@@ -532,6 +567,7 @@ export async function moveNote(id: string, folderPath: string) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     getCurrentNote: () => currentNote,
     setCurrentNote: (note) => {
@@ -665,6 +701,7 @@ export function handleRemoteUpdate(remoteNote: Note) {
         getNotes: () => notes,
         setNotes: (nextNotes) => {
           notes = nextNotes;
+      invalidateNoteMap();
         },
         isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
         decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
@@ -684,6 +721,7 @@ export function handleRemoteCreate(note: Note) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     info: (message) => toast.info(message),
   });
@@ -697,6 +735,7 @@ export function handleRemoteDelete(id: string) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     getCurrentNote: () => currentNote,
     setCurrentNote: (note) => {
@@ -707,10 +746,20 @@ export function handleRemoteDelete(id: string) {
 }
 
 /**
- * Update a note in the notes list
+ * Update a note in the notes list and map — O(1) map update + array splice.
  */
 function updateNoteInList(updated: Note) {
-  notes = notes.map((n) => (n.id === updated.id ? updated : n));
+  // Update map directly (skip full rebuild)
+  ensureNoteMap();
+  noteMap.set(updated.id, updated);
+  const idx = notes.findIndex((n) => n.id === updated.id);
+  if (idx !== -1) {
+    notes[idx] = updated;
+    notes = notes; // Trigger Svelte reactivity
+    // Keep versions in sync so ensureNoteMap doesn't rebuild
+    noteMapVersion++;
+    lastSyncedVersion = noteMapVersion;
+  }
 }
 
 /**
@@ -726,6 +775,7 @@ export function replaceTempId(tempId: string, realNote: Note) {
     getNotes: () => notes,
     setNotes: (nextNotes) => {
       notes = nextNotes;
+      invalidateNoteMap();
     },
     setDirty: (dirty) => {
       isDirty = dirty;

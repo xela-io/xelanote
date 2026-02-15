@@ -7,6 +7,9 @@ export interface DialogLoaderState {
   markdownGuideDialog?: ComponentType | null;
   markdownGuideDropdown?: ComponentType | null;
   versionHistoryDialog?: ComponentType | null;
+  shareDialog?: ComponentType | null;
+  aiActionsDropdown?: ComponentType | null;
+  conflictDialog?: ComponentType | null;
 }
 
 export function maybeLoadDialog(
@@ -54,5 +57,32 @@ export async function loadVersionHistoryDialog(state: DialogLoaderState) {
   return {
     ...state,
     versionHistoryDialog: loadSvelteComponentFromModule(module, 'VersionHistoryDialog'),
+  };
+}
+
+export async function loadShareDialog(state: DialogLoaderState) {
+  if (state.shareDialog) return state;
+  const module = await import('$lib/components/ShareDialog.svelte');
+  return {
+    ...state,
+    shareDialog: loadSvelteComponentFromModule(module, 'ShareDialog'),
+  };
+}
+
+export async function loadAIActionsDropdown(state: DialogLoaderState) {
+  if (state.aiActionsDropdown) return state;
+  const module = await import('$lib/components/AIActionsDropdown.svelte');
+  return {
+    ...state,
+    aiActionsDropdown: loadSvelteComponentFromModule(module, 'AIActionsDropdown'),
+  };
+}
+
+export async function loadConflictDialog(state: DialogLoaderState) {
+  if (state.conflictDialog) return state;
+  const module = await import('$lib/components/ConflictDialog.svelte');
+  return {
+    ...state,
+    conflictDialog: loadSvelteComponentFromModule(module, 'ConflictDialog'),
   };
 }

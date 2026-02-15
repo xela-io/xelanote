@@ -84,6 +84,20 @@ API Handler (internal/api/)  -->  Service (internal/service/)  -->  DB (internal
 - Verschluesselte Notizen: `encrypted_content` (BLOB) + `wrapped_dek`, nie Klartext in Logs/Errors
 - Klartext-Titel nur wenn `encryptTitles: false` in User-Settings
 
+## Telemetrie & Datenschutz
+
+Verbindliche Regeln fuer alle Telemetrie-Features (Web Vitals, Analytics Events, etc.):
+
+1. **URL-Sanitizing:** Nur Route-Pfade loggen (z.B. `/note/:id`), keine Query-Parameter. UUIDs und numerische IDs durch Platzhalter ersetzen (`:id`). Regex: `/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g` → `:id`, `/\/\d+/g` → `/:id`.
+2. **Kein PII:** Keine User-Agent-Strings, keine IP-Adressen in Telemetrie-Tabellen speichern. Fuer Session-Zuordnung nur anonymisierte Hashes verwenden.
+3. **Sampling:** Max 10% der Seitenaufrufe senden Metriken (`Math.random() < 0.1` beim Init). Einmal pro Session entschieden, nicht pro Event.
+4. **Retention:** Automatisches Loeschen nach 90 Tagen. Umsetzung via Backend-Cronjob oder bei Schreibzugriff (Cleanup-Query vor Insert).
+5. **Payload-Limit:** Max 1 KB pro Event. Backend verwirft groessere Payloads mit 413 Status.
+6. **DNT-Respektierung:** Do-Not-Track ist harte Untergrenze. Hierarchie:
+   - `DNT=1` → Telemetrie immer deaktiviert, unabhaengig vom User-Setting
+   - Kein DNT → User-Setting entscheidet (Default: an)
+   - User-Setting kann Telemetrie nur zusaetzlich abschalten, nie gegen DNT einschalten
+
 ## Security (nicht verhandelbar)
 
 - **Kein `localStorage` fuer Auth-Tokens** - nur HttpOnly Cookies

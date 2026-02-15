@@ -116,7 +116,8 @@
     "minisearch": "^7.2.0",
     "qrcode": "^1.5.4",
     "sortablejs": "^1.15.6",
-    "tailwind-merge": "^2.5.5"
+    "tailwind-merge": "^2.5.5",
+    "web-vitals": "^5.1.0"
   },
   "type": "module"
 }

@@ -147,6 +147,9 @@ jobs:
     - name: Verify binary exists
       run: test -f bin/xelanote && echo "Binary created successfully"
 
+    - name: Bundle size check
+      run: bash scripts/check-bundle-size.sh
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest

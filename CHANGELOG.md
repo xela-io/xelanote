@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Web Vitals (LCP, INP, CLS, FCP, TTFB) performance metrics reporting with 10% client sampling, DNT respect, URL sanitizing, and 90-day retention (`perf_metrics` table + `/perf-metrics` endpoint)
+- PWA analytics events pipeline: fire-and-forget POST to `/analytics/events` with event-name whitelist, rate limiting (20/hr), 1KB payload limit, and 90-day retention (`analytics_events` table)
+- Data governance rules for telemetry in `docs/conventions.md` (URL sanitizing, no PII, sampling, retention, DNT hierarchy)
+- Bundle size check in primary CI pipeline (`ci.yml` build job)
+- Command Palette: type `>` in QuickSwitcher (Ctrl+K/Ctrl+P) to access commands — New Note, New Folder, Toggle Theme, Open Graph, Settings, Journal, Export Note — with keyboard navigation and i18n (DE/EN)
+- Command registry (`$lib/commands/command-registry.ts`) for extensible palette commands
+- Batch conflict resolution: ConflictDialog shows all sync conflicts with tab navigation, "Alle: Lokal behalten" / "Alle: Server behalten" bulk buttons, and progress indicator
+- Granular tree cache updates with feature flag (`useGranularTreeCache`): targeted splice for expand/collapse, in-place update for note title/color and folder color, dev-mode invariant checks, automatic fallback to full invalidation
+- `updateNoteInTree()` for efficient in-place tree updates without full reload
+- `LayoutOverlays.svelte` component extracting Toast, OfflineBanner, ConflictDialog, InstallPrompt, UnlockEncryptionModal, ConfirmDialog, AlertDialog from `+layout.svelte`
+
+### Fixed
+
+- **100-Note silent cap bug**: Backend DB layer limited notes to 100 (despite API layer allowing 500). Changed DB limit to 500 and implemented cursor-based pagination loop in `tree.svelte.ts` with 100-iteration safety guard (supports up to 50,000 notes)
+- Tree `buildTree()` O(n*m) folder lookup: replaced `Array.from(folderMap.values()).find()` with O(1) `pathMap.get()` lookup
+- Notes store O(n) lookups: added `SvelteMap`-based note index with lazy rebuild pattern, `getNoteById()` returns O(1), `updateNoteInList()` uses Map + findIndex splice instead of full `.map()`
+- Eliminated double array traversal in `remote-updates.ts` (redundant `setNotes(getNotes().map(...))` after `updateNoteInList`)
+- Mobile touch targets: increased `toolbar-btn` minimum size from 44px to 48px (WCAG AAA) on touch devices via `@media (pointer: coarse)`; MobileHeader buttons use `min-h-12 min-w-12` explicitly
+
+### Changed
+
+- Lazy-load ConflictDialog, ShareDialog, AIActionsDropdown via `dialog-loaders.ts` pattern (removed from initial bundle)
+- Lazy-load Graph route: dynamic import with GraphSkeleton loading state
+- Extracted share-target processing from `+layout.svelte` into `$lib/routes/layout/share-target.ts`
+- Extracted activity listeners from `+layout.svelte` into `$lib/routes/layout/activity-listeners.ts`
+- Extracted overlay components from `+layout.svelte` template into `LayoutOverlays.svelte`
+
 - Dark mode splash screens for iOS PWA launch (22 dark variants with `prefers-color-scheme` media queries, generated via `scripts/generate-splash.mjs`)
 - Web Share Target (Chromium): share text/URLs from other apps to create notes (GET method, with auth persistence via sessionStorage + input hardening)
 - Journal and Due Dates manifest shortcuts for quick PWA access (4 shortcuts total)
@@ -16,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Account settings page: added missing i18n keys for email change, password change, and 2FA sections (en + de) — keys like `change_email_description`, `new_email`, `password`, `two_factor_title` etc. were referenced in `AccountTab.svelte` but not present in translation files
 - Lefthook pre-commit hooks: `root: "frontend/"` fuer korrekte relative Pfade, `.html` zu Prettier-Glob hinzugefuegt, ESLint `--max-warnings 0` fuer Paritaet mit CI
 
 ### Changed

@@ -45,6 +45,88 @@ let expandedFolders = $state<Record<string, boolean>>({ '/': true });
 let flatTreeCache: FlatTreeItem[] | null = null;
 let flatTreeCacheTimestamp = 0;
 
+// Granular cache update feature flag (localStorage-backed)
+const GRANULAR_CACHE_KEY = 'xelanote_granular_tree_cache';
+let useGranularTreeCache = false;
+try {
+  useGranularTreeCache = localStorage.getItem(GRANULAR_CACHE_KEY) === 'true';
+} catch {
+  // localStorage unavailable
+}
+
+/** Enable/disable granular tree cache updates (for testing/rollout). */
+export function setGranularTreeCache(enabled: boolean): void {
+  useGranularTreeCache = enabled;
+  try {
+    localStorage.setItem(GRANULAR_CACHE_KEY, String(enabled));
+  } catch {
+    // silent
+  }
+}
+
+/** Index from node key (folder:path or note:id) to position in flatTreeCache. */
+let flatTreeIndex = new Map<string, number>();
+
+function nodeKey(node: TreeNode): string {
+  return node.type === 'folder' ? `folder:${node.path}` : `note:${node.id}`;
+}
+
+/** Rebuild the flat tree index from the current cache. */
+function rebuildFlatTreeIndex(): void {
+  flatTreeIndex.clear();
+  if (!flatTreeCache) return;
+  for (let i = 0; i < flatTreeCache.length; i++) {
+    flatTreeIndex.set(nodeKey(flatTreeCache[i].node), i);
+  }
+}
+
+/**
+ * Dev-mode invariant check: verify flat cache matches a fresh flatten.
+ * Only runs in dev builds to catch granular-update bugs.
+ */
+function assertFlatTreeConsistency(): void {
+  if (!import.meta.env.DEV) return;
+  if (!flatTreeCache || !treeData) return;
+
+  const fresh = buildFreshFlatTree(treeData);
+  if (fresh.length !== flatTreeCache.length) {
+    console.warn(
+      `[Tree] Granular cache inconsistency: length ${flatTreeCache.length} vs expected ${fresh.length}. Falling back.`
+    );
+    invalidateFlatTreeCache();
+    return;
+  }
+
+  for (let i = 0; i < fresh.length; i++) {
+    if (nodeKey(fresh[i].node) !== nodeKey(flatTreeCache[i].node)) {
+      console.warn(
+        `[Tree] Granular cache inconsistency at index ${i}: ` +
+          `got ${nodeKey(flatTreeCache[i].node)}, expected ${nodeKey(fresh[i].node)}. Falling back.`
+      );
+      invalidateFlatTreeCache();
+      return;
+    }
+  }
+}
+
+/** Build a fresh flat tree without mutating the cache. */
+function buildFreshFlatTree(root: FolderTreeNode): FlatTreeItem[] {
+  const items: FlatTreeItem[] = [];
+  let idx = 0;
+  function flatten(node: TreeNode, level: number) {
+    items.push({ node, level, index: idx++ });
+    if (node.type === 'folder' && node.isExpanded) {
+      for (const child of node.children) {
+        flatten(child, level + 1);
+      }
+    }
+  }
+  for (const child of root.children) {
+    flatten(child, 0);
+  }
+  return items;
+}
+
 // Getters
 export function getTreeData() {
   return treeData;
@@ -64,22 +146,50 @@ export function getIsLoading() {
 
 // Actions
 
+/** Max pagination iterations to prevent infinite loops (500 notes/page × 100 = 50,000 notes) */
+const MAX_PAGINATION_ITERATIONS = 100;
+
+/**
+ * Fetch all notes using cursor-based pagination.
+ * Returns all regular notes (not journal/recipe).
+ */
+async function fetchAllNotes(): Promise<Note[]> {
+  const allNotes: Note[] = [];
+  let cursor: string | undefined;
+  let iterations = 0;
+
+  do {
+    const result = await api.listNotes({ limit: 500, cursor });
+    allNotes.push(...(result.notes ?? []));
+    cursor = result.next_cursor;
+    iterations++;
+
+    if (iterations >= MAX_PAGINATION_ITERATIONS) {
+      console.error(
+        `Note pagination stopped after ${iterations} pages (${allNotes.length} notes loaded). ` +
+          `Not all notes may be visible.`
+      );
+      break;
+    }
+  } while (cursor);
+
+  return allNotes;
+}
+
 export async function loadTree() {
   isLoading = true;
   try {
     // Load folders, notes, and journal notes in parallel
     // Journal notes are excluded by the default listNotes query (note_type='note' filter),
-    // so we fetch them separately via the folder parameter
-    const [foldersResult, notesResult, journalNotesResult] = await Promise.all([
+    // so we fetch them separately via the folder parameter.
+    // Journal/folder queries return all matching notes without pagination.
+    const [foldersResult, regularNotes, journalNotesResult] = await Promise.all([
       api.getFolders(),
-      // MVP LIMIT: 1000 Notes - dokumentiert als bewusstes Limit
-      // Für >1000 Notes: Pagination oder Lazy-Loading implementieren
-      api.listNotes({ limit: 1000 }),
+      fetchAllNotes(),
       api.listNotes({ folder: '/Journal' }),
     ]);
 
     const folders = foldersResult.folders ?? [];
-    const regularNotes = notesResult.notes ?? [];
     const journalNotes = journalNotesResult.notes ?? [];
 
     // Merge notes, deduplicating by ID in case of overlap
@@ -151,6 +261,12 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
     }
   }
 
+  // Build path-based lookup for O(1) folder resolution (instead of O(n) find per note)
+  const pathMap = new Map<string, FolderTreeNode>();
+  for (const node of folderMap.values()) {
+    pathMap.set(node.path, node);
+  }
+
   // Collect orphan notes (notes without a matching folder)
   const orphanNotes: NoteTreeNode[] = [];
 
@@ -166,8 +282,8 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
       aiEnabled: note.ai_enabled,
     };
 
-    // Find the folder node for this note
-    const folder = Array.from(folderMap.values()).find((f) => f.path === note.folder_path);
+    // Find the folder node for this note — O(1) via pathMap
+    const folder = pathMap.get(note.folder_path);
     if (folder) {
       folder.children.push(noteNode);
     } else {
@@ -263,6 +379,7 @@ export interface FlatTreeItem {
 function invalidateFlatTreeCache(): void {
   flatTreeCache = null;
   flatTreeCacheTimestamp = 0;
+  flatTreeIndex.clear();
 }
 
 /**
@@ -300,6 +417,7 @@ export function getFlattenedTree(): FlatTreeItem[] {
   // Cache result
   flatTreeCache = items;
   flatTreeCacheTimestamp = Date.now();
+  rebuildFlatTreeIndex();
 
   return items;
 }
@@ -325,14 +443,69 @@ export function clearSelection() {
 
 export function toggleExpanded(path: string) {
   const node = findFolderNode(treeData, path);
-  if (node) {
-    node.isExpanded = !node.isExpanded;
-    saveExpandedState(path, node.isExpanded);
-    // Force reactivity
-    treeData = { ...treeData! };
-    // Invalidate cache (tree structure changed)
+  if (!node) return;
+
+  const wasExpanded = node.isExpanded;
+  node.isExpanded = !wasExpanded;
+  saveExpandedState(path, node.isExpanded);
+
+  // Try granular cache update (splice children in/out)
+  if (useGranularTreeCache && flatTreeCache) {
+    const folderIdx = flatTreeIndex.get(`folder:${path}`);
+    if (folderIdx !== undefined) {
+      try {
+        if (wasExpanded) {
+          // Collapsing: remove all descendants after this folder
+          const folderLevel = flatTreeCache[folderIdx].level;
+          let removeCount = 0;
+          for (let i = folderIdx + 1; i < flatTreeCache.length; i++) {
+            if (flatTreeCache[i].level <= folderLevel) break;
+            removeCount++;
+          }
+          if (removeCount > 0) {
+            flatTreeCache.splice(folderIdx + 1, removeCount);
+          }
+        } else {
+          // Expanding: insert flattened children after this folder
+          const folderLevel = flatTreeCache[folderIdx].level;
+          const childItems: FlatTreeItem[] = [];
+          let idx = 0;
+          function flattenChildren(parent: FolderTreeNode, level: number) {
+            for (const child of parent.children) {
+              childItems.push({ node: child, level, index: idx++ });
+              if (child.type === 'folder' && child.isExpanded) {
+                flattenChildren(child, level + 1);
+              }
+            }
+          }
+          flattenChildren(node, folderLevel + 1);
+          if (childItems.length > 0) {
+            flatTreeCache.splice(folderIdx + 1, 0, ...childItems);
+          }
+        }
+
+        // Re-index after splice
+        for (let i = 0; i < flatTreeCache.length; i++) {
+          flatTreeCache[i].index = i;
+        }
+        rebuildFlatTreeIndex();
+        flatTreeCacheTimestamp = Date.now();
+
+        assertFlatTreeConsistency();
+      } catch {
+        // Fallback to full invalidation on any error
+        invalidateFlatTreeCache();
+      }
+    } else {
+      // Node not in index — fallback
+      invalidateFlatTreeCache();
+    }
+  } else {
     invalidateFlatTreeCache();
   }
+
+  // Force reactivity
+  treeData = { ...treeData! };
 }
 
 function findFolderNode(root: FolderTreeNode | null, path: string): FolderTreeNode | null {
@@ -636,12 +809,86 @@ export async function reorderNotes(folderPath: string, noteIds: string[]) {
 
 export async function updateFolderColor(folderId: number, color: string | null) {
   await api.updateFolderColor(folderId, color);
-  await loadTree(); // Invalidates cache
+
+  // Try granular update for color-only change (no structural change)
+  if (useGranularTreeCache && flatTreeCache) {
+    const folderNode = findFolderNodeById(treeData, folderId);
+    if (folderNode) {
+      folderNode.color = color;
+      // Update the cached item in-place (no splice needed)
+      const idx = flatTreeIndex.get(`folder:${folderNode.path}`);
+      if (idx !== undefined && flatTreeCache[idx]) {
+        flatTreeCache[idx] = { ...flatTreeCache[idx], node: folderNode };
+        flatTreeCacheTimestamp = Date.now();
+        treeData = { ...treeData! };
+        return;
+      }
+    }
+  }
+
+  await loadTree(); // Fallback: full reload invalidates cache
 }
 
 export async function updateNoteColor(noteId: string, color: string | null) {
   await api.updateNoteColor(noteId, color);
-  await loadTree(); // Invalidates cache
+
+  // Try granular update for color-only change (no structural change)
+  if (useGranularTreeCache && flatTreeCache) {
+    const idx = flatTreeIndex.get(`note:${noteId}`);
+    if (idx !== undefined && flatTreeCache[idx]) {
+      const item = flatTreeCache[idx];
+      if (item.node.type === 'note') {
+        item.node.color = color;
+        flatTreeCache[idx] = { ...item, node: { ...item.node } };
+        flatTreeCacheTimestamp = Date.now();
+        treeData = { ...treeData! };
+        return;
+      }
+    }
+  }
+
+  await loadTree(); // Fallback: full reload invalidates cache
+}
+
+/**
+ * Update a note's title in the tree without full reload.
+ * Used for granular cache updates when only the title changes.
+ */
+export function updateNoteInTree(noteId: string, updates: { title?: string; color?: string | null }): void {
+  if (!treeData) return;
+
+  // Find and update the note node in the tree
+  function findAndUpdate(parent: FolderTreeNode): boolean {
+    for (let i = 0; i < parent.children.length; i++) {
+      const child = parent.children[i];
+      if (child.type === 'note' && child.id === noteId) {
+        if (updates.title !== undefined) child.title = updates.title;
+        if (updates.color !== undefined) child.color = updates.color;
+        return true;
+      }
+      if (child.type === 'folder' && findAndUpdate(child)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  if (!findAndUpdate(treeData)) return;
+
+  // Granular cache update: replace item in-place
+  if (useGranularTreeCache && flatTreeCache) {
+    const idx = flatTreeIndex.get(`note:${noteId}`);
+    if (idx !== undefined && flatTreeCache[idx]) {
+      flatTreeCache[idx] = { ...flatTreeCache[idx] };
+      flatTreeCacheTimestamp = Date.now();
+    } else {
+      invalidateFlatTreeCache();
+    }
+  } else {
+    invalidateFlatTreeCache();
+  }
+
+  treeData = { ...treeData };
 }
 
 // Select and expand a folder (for breadcrumb navigation)

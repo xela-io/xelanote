@@ -39,11 +39,14 @@ html {
   overscroll-behavior-y: contain;
 }
 
-/* Touch-friendly button sizing - only on touch devices */
+/* Touch-friendly button sizing - only on touch devices (WCAG AAA: 48px) */
 @media (pointer: coarse) {
   .toolbar-btn {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

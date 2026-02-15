@@ -20,7 +20,7 @@
   {#if ui.getIsStandalone()}
     <button
       onclick={goBack}
-      class="p-2 -ml-2 rounded-md hover:bg-accent toolbar-btn"
+      class="min-h-12 min-w-12 flex items-center justify-center -ml-2 rounded-md hover:bg-accent toolbar-btn"
       aria-label={$_('editor.back')}
     >
       <ArrowLeft size={20} />
@@ -28,7 +28,7 @@
   {/if}
   <button
     onclick={() => ui.setSidebarOpen(true)}
-    class="p-2 rounded-md hover:bg-accent toolbar-btn"
+    class="min-h-12 min-w-12 flex items-center justify-center rounded-md hover:bg-accent toolbar-btn"
     class:-ml-2={!ui.getIsStandalone()}
     aria-label="Menü öffnen"
   >

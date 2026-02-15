@@ -1,13 +1,28 @@
 <script lang="ts">
-  import { Filter, Lock, Plus, Search } from 'lucide-svelte';
-  import { onDestroy } from 'svelte';
+  import {
+    ChevronRight,
+    FileText,
+    Filter,
+    FolderPlus,
+    Lock,
+    Map as MapIcon,
+    Moon,
+    Plus,
+    Search,
+    Settings,
+    BookOpen,
+    Download,
+  } from 'lucide-svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
   import type { Note } from '$lib/api';
   import { quickSearch, type QuickSearchFilters } from '$lib/api';
+  import { getCommands, registerCommands, type CommandItem } from '$lib/commands/command-registry';
   import * as encryption from '$lib/stores/encryption.svelte';
+  import * as features from '$lib/stores/features.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as searchStore from '$lib/stores/search.svelte';
@@ -25,6 +40,102 @@
   let filterMenuOpen = $state(false);
   // svelte-ignore non_reactive_update
   let inputRef: HTMLInputElement;
+
+  // Command mode: activated when query starts with '>'
+  const isCommandMode = $derived(query.startsWith('>'));
+  const commandQuery = $derived(isCommandMode ? query.slice(1).trim() : '');
+  const filteredCommands = $derived(isCommandMode ? getCommands(commandQuery) : []);
+
+  // Icon map for commands
+  const commandIcons: Record<string, typeof FileText> = {
+    'new-note': FileText,
+    'new-folder': FolderPlus,
+    'toggle-theme': Moon,
+    'open-graph': MapIcon,
+    'open-settings': Settings,
+    'open-journal': BookOpen,
+    'export-note': Download,
+  };
+
+  // Register commands on mount
+  onMount(() => {
+    registerCommands([
+      {
+        id: 'new-note',
+        label: $_('component.quick_switcher.cmd_new_note'),
+        shortcut: 'Ctrl+N',
+        action: async () => {
+          ui.setQuickSwitcherOpen(false);
+          const folderPath = folders.getSelectedFolder() || '/';
+          const note = await notes.createNote('', '', folderPath);
+          if (note?.id) goto(`/note/${note.id}`);
+        },
+      },
+      {
+        id: 'new-folder',
+        label: $_('component.quick_switcher.cmd_new_folder'),
+        action: () => {
+          ui.setQuickSwitcherOpen(false);
+          // Navigate to main view where sidebar folder creation is accessible
+          goto('/');
+        },
+      },
+      {
+        id: 'toggle-theme',
+        label: $_('component.quick_switcher.cmd_toggle_theme'),
+        action: () => {
+          ui.setQuickSwitcherOpen(false);
+          ui.toggleTheme();
+        },
+      },
+      ...(features.getGraphFeatureEnabled()
+        ? [
+            {
+              id: 'open-graph',
+              label: $_('component.quick_switcher.cmd_open_graph'),
+              shortcut: 'Ctrl+G',
+              action: () => {
+                ui.setQuickSwitcherOpen(false);
+                goto('/graph');
+              },
+            },
+          ]
+        : []),
+      {
+        id: 'open-settings',
+        label: $_('component.quick_switcher.cmd_open_settings'),
+        action: () => {
+          ui.setQuickSwitcherOpen(false);
+          goto('/settings');
+        },
+      },
+      {
+        id: 'open-journal',
+        label: $_('component.quick_switcher.cmd_open_journal'),
+        action: () => {
+          ui.setQuickSwitcherOpen(false);
+          goto('/journal');
+        },
+      },
+      {
+        id: 'export-note',
+        label: $_('component.quick_switcher.cmd_export_note'),
+        action: () => {
+          const currentNote = notes.getCurrentNote();
+          if (!currentNote) return;
+          ui.setQuickSwitcherOpen(false);
+          // Download as markdown
+          const blob = new Blob([currentNote.content], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${currentNote.title || 'note'}.md`;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+      },
+    ]);
+  });
 
   type SnippetPart = { text: string; highlighted: boolean };
   function parseSnippet(snippet: string): SnippetPart[] {
@@ -60,9 +171,9 @@
     }
   });
 
-  // Re-search when filters change
+  // Re-search when filters change (only in search mode)
   $effect(() => {
-    if (ui.getQuickSwitcherOpen()) {
+    if (ui.getQuickSwitcherOpen() && !isCommandMode) {
       // Trigger search when filters change
       void currentFilters;
       handleSearch();
@@ -70,6 +181,11 @@
   });
 
   function handleInput() {
+    if (isCommandMode) {
+      // Commands are filtered reactively, no debounce needed
+      selectedIndex = 0;
+      return;
+    }
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => handleSearch(), 200);
   }
@@ -77,6 +193,7 @@
   onDestroy(() => clearTimeout(debounceTimer));
 
   async function handleSearch() {
+    if (isCommandMode) return;
     loading = true;
     try {
       // Build filter parameters
@@ -152,17 +269,21 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    // Ctrl+F to open filter menu
-    if (e.ctrlKey && e.key === 'f') {
+    // Ctrl+F to open filter menu (only in search mode)
+    if (!isCommandMode && e.ctrlKey && e.key === 'f') {
       e.preventDefault();
       filterMenuOpen = !filterMenuOpen;
       return;
     }
 
+    const maxIndex = isCommandMode
+      ? filteredCommands.length - 1
+      : results.length; // includes "create" option
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        selectedIndex = Math.min(selectedIndex + 1, results.length);
+        selectedIndex = Math.min(selectedIndex + 1, maxIndex);
         break;
       case 'ArrowUp':
         e.preventDefault();
@@ -170,8 +291,12 @@
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex === results.length && query.trim()) {
-          // Create new note
+        if (isCommandMode) {
+          const cmd = filteredCommands[selectedIndex];
+          if (cmd) {
+            cmd.action();
+          }
+        } else if (selectedIndex === results.length && query.trim()) {
           createNewNote();
         } else if (results[selectedIndex]) {
           selectNote(results[selectedIndex].id);
@@ -237,14 +362,20 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    aria-label={$_('component.quick_switcher.placeholder')}
+    aria-label={isCommandMode
+      ? $_('component.quick_switcher.placeholder_commands')
+      : $_('component.quick_switcher.placeholder')}
   >
     <div
       class="w-full max-w-lg bg-popover border border-border rounded-lg shadow-lg overflow-hidden relative"
     >
       <!-- Search input -->
       <div class="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <Search size={18} class="text-muted-foreground" />
+        {#if isCommandMode}
+          <ChevronRight size={18} class="text-primary" />
+        {:else}
+          <Search size={18} class="text-muted-foreground" />
+        {/if}
         <input
           bind:this={inputRef}
           bind:value={query}
@@ -252,108 +383,159 @@
           onkeydown={handleKeydown}
           type="text"
           role="combobox"
-          aria-expanded={results.length > 0 || query.trim() !== ''}
+          aria-expanded={isCommandMode
+            ? filteredCommands.length > 0
+            : results.length > 0 || query.trim() !== ''}
           aria-controls="qs-results"
-          aria-activedescendant={selectedIndex >= 0 && (results.length > 0 || query.trim())
-            ? selectedIndex === results.length
-              ? 'qs-opt-create'
-              : `qs-opt-${selectedIndex}`
+          aria-activedescendant={selectedIndex >= 0
+            ? isCommandMode
+              ? `qs-cmd-${selectedIndex}`
+              : selectedIndex === results.length
+                ? 'qs-opt-create'
+                : `qs-opt-${selectedIndex}`
             : undefined}
           autocomplete="off"
-          placeholder={$_('component.quick_switcher.placeholder')}
+          placeholder={isCommandMode
+            ? $_('component.quick_switcher.placeholder_commands')
+            : $_('component.quick_switcher.placeholder')}
           class="flex-1 bg-transparent border-0 outline-none text-base text-foreground placeholder:text-muted-foreground"
         />
-        {#if loading}
+        {#if loading && !isCommandMode}
           <div
             class="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
           ></div>
         {/if}
-        <button
-          type="button"
-          onclick={() => (filterMenuOpen = !filterMenuOpen)}
-          class="p-1.5 hover:bg-accent rounded-md transition-colors relative"
-          title="Filter (Ctrl+F)"
-        >
-          <Filter size={16} class="text-muted-foreground" />
-          {#if activeFilterCount > 0}
-            <span
-              class="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center"
-            >
-              {activeFilterCount}
-            </span>
-          {/if}
-        </button>
+        {#if !isCommandMode}
+          <button
+            type="button"
+            onclick={() => (filterMenuOpen = !filterMenuOpen)}
+            class="p-1.5 hover:bg-accent rounded-md transition-colors relative"
+            title="Filter (Ctrl+F)"
+          >
+            <Filter size={16} class="text-muted-foreground" />
+            {#if activeFilterCount > 0}
+              <span
+                class="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center"
+              >
+                {activeFilterCount}
+              </span>
+            {/if}
+          </button>
+        {/if}
       </div>
 
-      <!-- Filter Bar -->
-      <FilterBar />
+      {#if !isCommandMode}
+        <!-- Filter Bar -->
+        <FilterBar />
 
-      <!-- Filter Menu -->
-      <FilterMenu isOpen={filterMenuOpen} onClose={() => (filterMenuOpen = false)} />
+        <!-- Filter Menu -->
+        <FilterMenu isOpen={filterMenuOpen} onClose={() => (filterMenuOpen = false)} />
+      {/if}
 
       <!-- Results -->
       <div id="qs-results" role="listbox" class="max-h-[50vh] sm:max-h-80 overflow-y-auto">
-        {#if results.length === 0 && query.trim() === '' && !searchStore.hasActiveFilters()}
-          <div class="px-4 py-8 text-center text-muted-foreground text-sm">
-            {$_('component.quick_switcher.hint')}
-          </div>
-        {:else if results.length === 0}
-          <div class="px-4 py-8 text-center text-muted-foreground text-sm">
-            {#if searchStore.hasActiveFilters()}
-              {$_('component.quick_switcher.no_results')}
-            {:else}
-              {$_('component.quick_switcher.no_results_simple')}
-            {/if}
-          </div>
-        {:else}
-          {#each results as note, i (note.id)}
-            <div
-              id="qs-opt-{i}"
-              role="option"
-              aria-selected={selectedIndex === i}
-              tabindex="-1"
-              onclick={() => selectNote(note.id)}
-              onkeydown={(e) => {
-                if (e.key === 'Enter') selectNote(note.id);
-              }}
-              class="w-full text-left px-4 py-2 hover:bg-accent cursor-pointer"
-              class:bg-accent={selectedIndex === i}
-            >
-              <div class="flex items-center gap-2">
-                {#if note.content_encrypted}
-                  <Lock size={14} class="text-muted-foreground shrink-0" />
+        {#if isCommandMode}
+          <!-- Command mode results -->
+          {#if filteredCommands.length === 0}
+            <div class="px-4 py-8 text-center text-muted-foreground text-sm">
+              {$_('component.quick_switcher.no_commands')}
+            </div>
+          {:else}
+            {#each filteredCommands as cmd, i (cmd.id)}
+              {@const IconComponent = commandIcons[cmd.id]}
+              <div
+                id="qs-cmd-{i}"
+                role="option"
+                aria-selected={selectedIndex === i}
+                tabindex="-1"
+                onclick={() => cmd.action()}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter') cmd.action();
+                }}
+                class="w-full text-left px-4 py-2.5 hover:bg-accent cursor-pointer flex items-center gap-3"
+                class:bg-accent={selectedIndex === i}
+              >
+                {#if IconComponent}
+                  <IconComponent size={16} class="text-muted-foreground shrink-0" />
                 {/if}
-                <span class="truncate">{note.title || note.id.substring(0, 8) + '...'}</span>
-                <span class="ml-auto text-xs text-muted-foreground truncate max-w-32 shrink-0">
-                  {note.folder_path}
-                </span>
+                <span class="flex-1 truncate">{cmd.label}</span>
+                {#if cmd.shortcut}
+                  <kbd
+                    class="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border font-mono shrink-0"
+                  >
+                    {cmd.shortcut}
+                  </kbd>
+                {/if}
               </div>
-              {#if snippetMap.has(note.id)}
-                <p class="text-xs text-muted-foreground mt-0.5 truncate pl-5">
-                  {#each parseSnippet(snippetMap.get(note.id) ?? '') as part, pi (pi)}{#if part.highlighted}<mark
-                        class="bg-primary/30 text-foreground rounded-sm">{part.text}</mark
-                      >{:else}{part.text}{/if}{/each}
-                </p>
+            {/each}
+          {/if}
+        {:else}
+          <!-- Search mode results -->
+          {#if results.length === 0 && query.trim() === '' && !searchStore.hasActiveFilters()}
+            <div class="px-4 py-8 text-center text-muted-foreground text-sm">
+              {$_('component.quick_switcher.hint')}
+              <div class="mt-2 text-xs opacity-60">
+                {$_('component.quick_switcher.hint_commands')}
+              </div>
+            </div>
+          {:else if results.length === 0}
+            <div class="px-4 py-8 text-center text-muted-foreground text-sm">
+              {#if searchStore.hasActiveFilters()}
+                {$_('component.quick_switcher.no_results')}
+              {:else}
+                {$_('component.quick_switcher.no_results_simple')}
               {/if}
             </div>
-          {/each}
+          {:else}
+            {#each results as note, i (note.id)}
+              <div
+                id="qs-opt-{i}"
+                role="option"
+                aria-selected={selectedIndex === i}
+                tabindex="-1"
+                onclick={() => selectNote(note.id)}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter') selectNote(note.id);
+                }}
+                class="w-full text-left px-4 py-2 hover:bg-accent cursor-pointer"
+                class:bg-accent={selectedIndex === i}
+              >
+                <div class="flex items-center gap-2">
+                  {#if note.content_encrypted}
+                    <Lock size={14} class="text-muted-foreground shrink-0" />
+                  {/if}
+                  <span class="truncate">{note.title || note.id.substring(0, 8) + '...'}</span>
+                  <span class="ml-auto text-xs text-muted-foreground truncate max-w-32 shrink-0">
+                    {note.folder_path}
+                  </span>
+                </div>
+                {#if snippetMap.has(note.id)}
+                  <p class="text-xs text-muted-foreground mt-0.5 truncate pl-5">
+                    {#each parseSnippet(snippetMap.get(note.id) ?? '') as part, pi (pi)}{#if part.highlighted}<mark
+                          class="bg-primary/30 text-foreground rounded-sm">{part.text}</mark
+                        >{:else}{part.text}{/if}{/each}
+                  </p>
+                {/if}
+              </div>
+            {/each}
 
-          {#if query.trim()}
-            <div
-              id="qs-opt-create"
-              role="option"
-              aria-selected={selectedIndex === results.length}
-              tabindex="-1"
-              onclick={createNewNote}
-              onkeydown={(e) => {
-                if (e.key === 'Enter') createNewNote();
-              }}
-              class="w-full text-left px-4 py-2 hover:bg-accent flex items-center gap-2 text-primary cursor-pointer"
-              class:bg-accent={selectedIndex === results.length}
-            >
-              <Plus size={16} />
-              <span>{$_('component.quick_switcher.create', { values: { query } })}</span>
-            </div>
+            {#if query.trim()}
+              <div
+                id="qs-opt-create"
+                role="option"
+                aria-selected={selectedIndex === results.length}
+                tabindex="-1"
+                onclick={createNewNote}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter') createNewNote();
+                }}
+                class="w-full text-left px-4 py-2 hover:bg-accent flex items-center gap-2 text-primary cursor-pointer"
+                class:bg-accent={selectedIndex === results.length}
+              >
+                <Plus size={16} />
+                <span>{$_('component.quick_switcher.create', { values: { query } })}</span>
+              </div>
+            {/if}
           {/if}
         {/if}
       </div>
@@ -362,7 +544,9 @@
       <div class="px-4 py-2 border-t border-border text-xs text-muted-foreground flex gap-4">
         <span>↑↓ {$_('component.quick_switcher.navigate')}</span>
         <span>↵ {$_('component.quick_switcher.select')}</span>
-        <span>Ctrl+F {$_('component.quick_switcher.filter')}</span>
+        {#if !isCommandMode}
+          <span>Ctrl+F {$_('component.quick_switcher.filter')}</span>
+        {/if}
         <span>esc {$_('common.close')}</span>
       </div>
     </div>

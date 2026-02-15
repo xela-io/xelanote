@@ -49,8 +49,45 @@ function safeRemoveItem(key: string): void {
 }
 
 // --- Event logging ---
+// Session event counter for client-side rate limiting (max 10 events/session)
+const MAX_EVENTS_PER_SESSION = 10;
+let sessionEventCount = 0;
+
 export function emitPwaEvent(name: PwaEventName, data?: Record<string, unknown>): void {
   console.log('[PWA]', name, data ?? '');
+
+  // Client-side guardrail: max 10 events per session
+  if (sessionEventCount >= MAX_EVENTS_PER_SESSION) return;
+  sessionEventCount++;
+
+  // Fire-and-forget POST to backend analytics endpoint
+  sendAnalyticsEvent(name, data).catch(() => {
+    // Silently ignore — analytics must never break the app
+  });
+}
+
+async function sendAnalyticsEvent(
+  name: string,
+  data?: Record<string, unknown>,
+): Promise<void> {
+  // Lazy import to avoid circular dependency at module load time
+  const { getApiBaseUrl } = await import('$lib/config');
+  const baseUrl = getApiBaseUrl();
+
+  const payload = JSON.stringify({
+    event_name: name,
+    data: data ?? {},
+  });
+
+  // Enforce 1KB payload limit from data governance rules
+  if (new Blob([payload]).size > 1024) return;
+
+  await fetch(`${baseUrl}/analytics/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: payload,
+  });
 }
 
 // --- iOS version parsing ---

@@ -181,6 +181,8 @@ func (db *DB) runMigrations() error {
 		"043_enable_journal_recipe_default.sql",
 		"044_refresh_token_reuse_detection.sql",
 		"045_registration_secure_default.sql",
+		"046_perf_metrics.sql",
+		"047_analytics_events.sql",
 	}
 
 	for _, migrationFile := range migrations {

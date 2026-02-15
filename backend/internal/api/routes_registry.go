@@ -25,4 +25,5 @@ func (s *Server) registerProtectedUtilityRoutes(r chi.Router) {
 	s.registerGraphRoutes(r)
 	s.registerWebsocketRoutes(r)
 	s.registerAdminRoutes(r)
+	s.registerTelemetryRoutes(r)
 }

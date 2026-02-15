@@ -13,33 +13,32 @@
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
   import * as api from '$lib/api';
-  import ConflictDialog from '$lib/components/ConflictDialog.svelte';
+  import type { DialogLoaderState } from '$lib/editor/dialog-loaders';
+  import { loadConflictDialog, maybeLoadDialog } from '$lib/editor/dialog-loaders';
   import DesktopTitleBar from '$lib/components/DesktopTitleBar.svelte';
-  import InstallPrompt from '$lib/components/InstallPrompt.svelte';
+  import LayoutOverlays from '$lib/components/LayoutOverlays.svelte';
   import Logo from '$lib/components/Logo.svelte';
   import MobileHeader from '$lib/components/MobileHeader.svelte';
-  import OfflineBanner from '$lib/components/OfflineBanner.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
-  import Toast from '$lib/components/Toast.svelte';
-  import AlertDialog from '$lib/components/ui/AlertDialog.svelte';
-  import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
-  import UnlockEncryptionModal from '$lib/components/UnlockEncryptionModal.svelte';
   import { clearPersistedKEK, initKEKDatabase } from '$lib/crypto/kek-persistence';
   import { initSodium } from '$lib/crypto/sodium';
   import { initOfflineDatabase } from '$lib/offline/offline-queue';
   import * as syncManager from '$lib/offline/sync-manager.svelte';
+  import { createActivityListeners } from '$lib/routes/layout/activity-listeners';
   import { shouldRedirectToLogin } from '$lib/routes/layout/auth-guards';
   import { handleBeforeUnload as handleBeforeUnloadHelper } from '$lib/routes/layout/beforeunload';
   import { initializeApp } from '$lib/routes/layout/initialize';
   import { createLayoutInteractions } from '$lib/routes/layout/interactions';
   import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
   import { registerPwaUpdates } from '$lib/routes/layout/pwa';
+  import { stashPendingShare, processPendingShare, processShareTarget } from '$lib/routes/layout/share-target';
   import { createViewportHandlers } from '$lib/routes/layout/viewport';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as errorReporter from '$lib/stores/error-reporter.svelte';
+  import * as perfMetrics from '$lib/stores/perf-metrics.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as history from '$lib/stores/history.svelte';
   import * as network from '$lib/stores/network.svelte';
@@ -92,6 +91,15 @@
   let QuickSwitcherComponent = $state<ComponentType | null>(null);
   let showInstallPrompt = $state(true);
   let showUnlockModal = $state(false);
+  // Lazy-loaded conflict dialog
+  let lazyLayoutDialogs = $state<DialogLoaderState>({});
+  const setLazyLayoutDialogs = (s: DialogLoaderState) => { lazyLayoutDialogs = s; };
+
+  // Lazy-load ConflictDialog when conflicts exist
+  $effect(() => {
+    const hasConflicts = syncManager.getConflicts().length > 0;
+    maybeLoadDialog(hasConflicts, lazyLayoutDialogs, loadConflictDialog, setLazyLayoutDialogs);
+  });
 
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/register', '/about'];
@@ -127,7 +135,6 @@
   });
 
   let authInitialized = $state(false);
-  let activityListenersRegistered = false;
   let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   onMount(() => {
@@ -190,6 +197,9 @@
           initErrorHandler: errorReporter.initErrorHandler,
           setServiceAvailable: errorReporter.setServiceAvailable,
         },
+        perfMetrics: {
+          initPerfMetrics: perfMetrics.initPerfMetrics,
+        },
         history: {
           loadHistory: history.loadHistory,
         },
@@ -210,16 +220,8 @@
         setShowUnlockModal: (value) => {
           showUnlockModal = value;
         },
-        registerActivityListeners: () => {
-          if (!activityListenersRegistered) {
-            registerActivityListeners();
-          }
-        },
-        unregisterActivityListeners: () => {
-          if (activityListenersRegistered) {
-            unregisterActivityListeners();
-          }
-        },
+        registerActivityListeners: () => activityListeners.register(),
+        unregisterActivityListeners: () => activityListeners.unregister(),
       });
       unsubscribeTokenUpdate = result.unsubscribeTokenUpdate;
       cleanupErrorHandler = result.cleanupErrorHandler;
@@ -238,104 +240,23 @@
       }
 
       // Handle Web Share Target (Chromium: share text/URLs to create notes)
+      const shareDeps = {
+        isAuthenticated: auth.isAuthenticated,
+        createNote: notes.createNote,
+        goto,
+        notifySuccessfulAction: pwa.notifySuccessfulAction,
+      };
       if (auth.isAuthenticated()) {
-        await processShareTarget();
+        await processShareTarget(shareDeps);
       } else {
-        // If not authenticated, stash share params for after login
         stashPendingShare();
       }
 
       // Check for pending share from pre-auth stash
       if (auth.isAuthenticated()) {
-        await processPendingShare();
+        await processPendingShare(shareDeps);
       }
     };
-
-    function stashPendingShare(): void {
-      try {
-        const params = new URL(window.location.href).searchParams;
-        const title = safeGetParam(params, 'title');
-        const text = safeGetParam(params, 'text');
-        const url = safeGetParam(params, 'url');
-        if (!title && !text && !url) return;
-
-        sessionStorage.setItem(
-          'xelanote-pending-share',
-          JSON.stringify({
-            title: (title ?? '').slice(0, 200),
-            text: (text ?? '').slice(0, 50_000),
-            url: (url ?? '').slice(0, 2048),
-          })
-        );
-        window.history.replaceState(null, '', window.location.pathname);
-      } catch {
-        // silent — sessionStorage unavailable
-      }
-    }
-
-    async function processPendingShare(): Promise<void> {
-      try {
-        const raw = sessionStorage.getItem('xelanote-pending-share');
-        if (!raw) return;
-        sessionStorage.removeItem('xelanote-pending-share');
-
-        const parsed = JSON.parse(raw);
-        if (
-          !parsed ||
-          typeof parsed !== 'object' ||
-          typeof parsed.title !== 'string' ||
-          typeof parsed.text !== 'string' ||
-          typeof parsed.url !== 'string'
-        ) {
-          return;
-        }
-
-        await createNoteFromShare(parsed.title, parsed.text, parsed.url);
-      } catch {
-        // Parse error or sessionStorage error — silently ignore
-        try {
-          sessionStorage.removeItem('xelanote-pending-share');
-        } catch {
-          /* silent */
-        }
-      }
-    }
-
-    function safeGetParam(params: URLSearchParams, key: string): string | null {
-      try {
-        const val = params.get(key);
-        return val ? val.trim() : null;
-      } catch {
-        // decodeURIComponent error on malformed %-encoded params
-        return null;
-      }
-    }
-
-    async function processShareTarget(): Promise<void> {
-      const params = new URL(window.location.href).searchParams;
-      const title = (safeGetParam(params, 'title') ?? '').slice(0, 200);
-      const text = (safeGetParam(params, 'text') ?? '').slice(0, 50_000);
-      const url = (safeGetParam(params, 'url') ?? '').slice(0, 2048);
-
-      if (!title && !text && !url) return;
-
-      window.history.replaceState(null, '', window.location.pathname);
-      await createNoteFromShare(title, text, url);
-    }
-
-    async function createNoteFromShare(title: string, text: string, url: string): Promise<void> {
-      let content = text;
-      if (url) {
-        content = content ? content + '\n\n' + url : url;
-      }
-      if (!title && !content) return;
-
-      const note = await notes.createNote(title || '', content);
-      if (note?.id) {
-        goto(`/note/${note.id}`);
-        pwa.notifySuccessfulAction();
-      }
-    }
 
     function isInputElement(el: Element | null): boolean {
       if (!el) return false;
@@ -398,25 +319,7 @@
       isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     });
 
-    function registerActivityListeners() {
-      if (activityListenersRegistered) return;
-      document.addEventListener('mousemove', handleActivity);
-      document.addEventListener('keydown', handleActivity);
-      document.addEventListener('click', handleActivity);
-      document.addEventListener('touchstart', handleActivity);
-      activityListenersRegistered = true;
-      console.log('[Layout] Activity listeners registered');
-    }
-
-    function unregisterActivityListeners() {
-      if (!activityListenersRegistered) return;
-      document.removeEventListener('mousemove', handleActivity);
-      document.removeEventListener('keydown', handleActivity);
-      document.removeEventListener('click', handleActivity);
-      document.removeEventListener('touchstart', handleActivity);
-      activityListenersRegistered = false;
-      console.log('[Layout] Activity listeners unregistered');
-    }
+    const activityListeners = createActivityListeners({ handleActivity });
 
     // ✅ NEW: beforeunload handler for unsaved changes warning
     const handleBeforeUnload = (e: BeforeUnloadEvent) =>
@@ -443,7 +346,7 @@
       websocket.disconnect();
 
       // Cleanup activity listeners
-      unregisterActivityListeners();
+      activityListeners.unregister();
 
       // Error reporter cleanup
       cleanupErrorHandler?.();
@@ -638,37 +541,15 @@
   {/if}
 </div>
 
-<!-- Global Toast Notifications -->
-<Toast />
-
-<!-- Offline Banner (handles its own visibility based on offline state + sync state) -->
-{#if network.getShowOfflineBanner() || syncManager.getIsSyncing()}
-  <OfflineBanner />
-{/if}
-
-<!-- Conflict Dialog (shown when sync conflicts need resolution) -->
-{#if syncManager.getConflicts().length > 0}
-  <ConflictDialog />{/if}
-
-<!-- Install Prompt -->
-{#if showInstallPrompt && !isPublic}
-  <InstallPrompt onClose={() => (showInstallPrompt = false)} />
-{/if}
-
-<!-- Global encryption unlock modal -->
-<UnlockEncryptionModal
-  bind:isOpen={showUnlockModal}
-  onSuccess={() => {
-    // Just clear the error, user can retry their action
-    notes.clearError();
-  }}
-  onCancel={() => {
-    // Clear error and navigate home if user cancels
-    notes.clearError();
-    goto('/');
-  }}
+<!-- Global overlays: Toast, OfflineBanner, ConflictDialog, InstallPrompt, Encryption, Dialogs -->
+<LayoutOverlays
+  showOfflineBanner={network.getShowOfflineBanner()}
+  isSyncing={syncManager.getIsSyncing()}
+  hasConflicts={syncManager.getConflicts().length > 0}
+  conflictDialog={lazyLayoutDialogs.conflictDialog}
+  {showInstallPrompt}
+  {isPublic}
+  bind:showUnlockModal
+  onCloseInstallPrompt={() => (showInstallPrompt = false)}
+  onUnlockModalChange={(open) => (showUnlockModal = open)}
 />
-
-<!-- Global accessible dialogs -->
-<ConfirmDialog />
-<AlertDialog />

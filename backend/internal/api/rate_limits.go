@@ -18,6 +18,8 @@ type rateLimitConfig struct {
 	shareLimit          int
 	userSearchLimit     int
 	errorReportLimit    int
+	perfMetricsLimit    int
+	analyticsLimit      int
 	lockoutAttempts     int
 }
 
@@ -41,6 +43,8 @@ func buildRateLimitConfig() rateLimitConfig {
 		shareLimit:          20,
 		userSearchLimit:     30,
 		errorReportLimit:    5,
+		perfMetricsLimit:    30,
+		analyticsLimit:      20,
 		lockoutAttempts:     10,
 	}
 
@@ -63,6 +67,8 @@ func buildRateLimitConfig() rateLimitConfig {
 		config.shareLimit = 10000
 		config.userSearchLimit = 10000
 		config.errorReportLimit = 10000
+		config.perfMetricsLimit = 10000
+		config.analyticsLimit = 10000
 		config.lockoutAttempts = 1000
 	}
 

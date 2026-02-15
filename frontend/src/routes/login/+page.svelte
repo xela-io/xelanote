@@ -329,33 +329,24 @@
   /**
    * Initialize user data and navigate to home after successful login.
    * This loads preferences, notes, and connects to WebSocket.
+   *
+   * Uses client-side initialization + goto('/') for all modes (including
+   * standalone PWA). The layout's $derived `isPublic` reactively switches
+   * from public to protected branch when auth.isAuthenticated() becomes true.
+   * The Sidebar's $effect triggers tree.loadTree() on auth change.
    */
   async function initializeAndNavigate() {
-    // In standalone PWA mode (iOS/Android), force a full page reload instead
-    // of client-side navigation. iOS WebKit has issues with SvelteKit's
-    // client-side routing after auth state changes — the layout doesn't
-    // properly switch from the public to the protected branch. A reload
-    // triggers initializeApp() which handles everything cleanly via cookies.
-    const isStandalone =
-      (window.navigator as { standalone?: boolean }).standalone === true ||
-      window.matchMedia('(display-mode: standalone)').matches;
-
-    if (isStandalone) {
-      window.location.replace('/');
-      return;
-    }
-
     try {
       // Load user preferences (theme + editor mode + security level - all in one call)
       await settings.loadPreferences();
 
-      // Load notes
+      // Load notes (fire-and-forget, UI updates reactively when data arrives)
       notes.loadNotes();
 
-      // Connect to WebSocket
+      // Connect to WebSocket for real-time updates
       websocket.connect();
 
-      // Navigate to home
+      // Navigate to home — layout reactively switches to protected branch
       goto('/');
     } catch (err) {
       console.error('[LOGIN] Failed to initialize after login:', err);

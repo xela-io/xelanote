@@ -42,3 +42,16 @@ pre-commit:
 
     changelog-check:
       run: bash scripts/check-changelog.sh
+
+pre-push:
+  parallel: true
+  commands:
+    gofmt:
+      run: cd backend && test -z "$(gofmt -l .)" || (echo "gofmt needed"; gofmt -l .; exit 1)
+
+    go-vet:
+      run: cd backend && CGO_ENABLED=1 go vet -tags "fts5 sqlite_crypt" ./...
+
+    svelte-check:
+      root: "frontend/"
+      run: npm run check

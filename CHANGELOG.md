@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Pre-push hook** — Added `pre-push` section to `lefthook.yml` with `gofmt`, `go vet`, and `svelte-check` to catch type errors and formatting issues before pushing.
+
 ### Changed
 
 - **Phased startup initialization** — `initializeApp()` split into 3 phases for faster time-to-interactive: Phase 1 (Critical) runs IndexedDB/Sodium/Auth in parallel and restores UI from localStorage; Phase 2 (After First Paint via rAF+setTimeout) loads notes, encryption, WebSocket, and web-vitals; Phase 3 (Idle via requestIdleCallback) handles error reporting, feature detection, and background sync. Activity listeners now register immediately after auth confirmation (security). Web-vitals moved to after-first-paint to capture early FCP/LCP metrics.

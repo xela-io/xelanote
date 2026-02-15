@@ -111,14 +111,6 @@
     }
   }
 
-  /* Active state styling */
-  div:is(.active) {
-    background-color: var(--color-sidebar-accent);
-    color: var(--color-sidebar-primary);
-    border-left: 3px solid var(--color-sidebar-primary);
-    font-weight: 500;
-  }
-
   /* Focus visible styling */
   div:focus-visible {
     outline: 2px solid var(--color-sidebar-ring);

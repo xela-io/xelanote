@@ -328,6 +328,8 @@
   {#if ui.getIsMobile()}
     <!-- Mobile: Only render content when drawer is open -->
     {#if ui.getSidebarOpen()}
+      <!-- Safe area spacer for iOS PWA standalone mode -->
+      <div class="pt-safe shrink-0"></div>
       <!-- Header with creation buttons -->
       <div
         class="flex items-center justify-between px-4 py-2.5 border-b border-sidebar-border shrink-0"

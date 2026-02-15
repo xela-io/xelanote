@@ -30,7 +30,9 @@
           document.documentElement.style.backgroundColor = t.bg;
           // Update existing theme-color meta tags
           var metas = document.querySelectorAll('meta[name="theme-color"]');
-          metas.forEach(function(m) { m.content = t.tc; });
+          metas.forEach(function (m) {
+            m.content = t.tc;
+          });
         } catch (e) {}
       })();
     </script>
@@ -48,71 +50,247 @@
 
     <!-- Apple Splash Screens (only loaded during PWA launch, light + dark variants) -->
     <!-- iPhone SE (1st gen) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-640-1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-640-1136-dark.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-640-1136.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-640-1136-dark.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 6/7/8/SE2/SE3 -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-750-1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-750-1334-dark.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-750-1334.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-750-1334-dark.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 6+/7+/8+ -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1242-2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1242-2208-dark.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1242-2208.png"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1242-2208-dark.png"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone X/XS/11 Pro -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1125-2436-dark.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1125-2436.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1125-2436-dark.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone XR/11 -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-828-1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-828-1792-dark.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-828-1792.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-828-1792-dark.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone XS Max/11 Pro Max -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1242-2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1242-2688-dark.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1242-2688.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1242-2688-dark.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 12 mini -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1080-2340.png" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1080-2340-dark.png" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1080-2340.png"
+      media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1080-2340-dark.png"
+      media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 12/13/14 -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1170-2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1170-2532-dark.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1170-2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1170-2532-dark.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 12/13/14 Pro Max -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1284-2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1284-2778-dark.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1284-2778.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1284-2778-dark.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 14 Pro -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1179-2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1179-2556-dark.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1179-2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1179-2556-dark.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 14 Pro Max -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1290-2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1290-2796-dark.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1290-2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1290-2796-dark.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 15 Pro -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1206-2622.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1206-2622-dark.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1206-2622.png"
+      media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1206-2622-dark.png"
+      media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 15 Pro Max -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1320-2868.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1320-2868-dark.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1320-2868.png"
+      media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1320-2868-dark.png"
+      media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPhone 16 Pro Max -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1440-3120.png" media="(device-width: 480px) and (device-height: 1040px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1440-3120-dark.png" media="(device-width: 480px) and (device-height: 1040px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1440-3120.png"
+      media="(device-width: 480px) and (device-height: 1040px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1440-3120-dark.png"
+      media="(device-width: 480px) and (device-height: 1040px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad (portrait) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1536-2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1536-2048-dark.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1536-2048.png"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1536-2048-dark.png"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad (landscape) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2048-1536.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2048-1536-dark.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2048-1536.png"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2048-1536-dark.png"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad Air (portrait) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1668-2224.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1668-2224-dark.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1668-2224.png"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1668-2224-dark.png"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad Air (landscape) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2224-1668.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2224-1668-dark.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2224-1668.png"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2224-1668-dark.png"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad Pro 11" (portrait) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1668-2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-1668-2388-dark.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1668-2388.png"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-1668-2388-dark.png"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad Pro 11" (landscape) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2388-1668.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2388-1668-dark.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2388-1668.png"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2388-1668-dark.png"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad Pro 12.9" (portrait) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2048-2732-dark.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2048-2732.png"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2048-2732-dark.png"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)"
+    />
     <!-- iPad Pro 12.9" (landscape) -->
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2732-2048.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" />
-    <link rel="apple-touch-startup-image" href="%sveltekit.assets%/splash/apple-splash-2732-2048-dark.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2732-2048.png"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="%sveltekit.assets%/splash/apple-splash-2732-2048-dark.png"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)"
+    />
 
     <!-- Note: CSP disabled in development mode (Vite HMR requires 'unsafe-inline')
 		     In production, set CSP via HTTP headers in backend/Caddy instead of meta tag -->

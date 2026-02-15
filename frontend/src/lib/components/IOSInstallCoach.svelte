@@ -121,8 +121,8 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="M12 3v12M8 7l4-4 4 4" />
-                <rect x="4" y="14" width="16" height="7" rx="2" />
+                <path d="M12 3v12M8 7l4-4 4 4"></path>
+                <rect x="4" y="14" width="16" height="7" rx="2"></rect>
               </svg>
             </div>
           </div>
@@ -138,8 +138,8 @@
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <path d="M12 3v12M8 7l4-4 4 4" />
-              <rect x="4" y="14" width="16" height="7" rx="2" />
+              <path d="M12 3v12M8 7l4-4 4 4"></path>
+              <rect x="4" y="14" width="16" height="7" rx="2"></rect>
             </svg>
           </p>
         </div>
@@ -157,8 +157,8 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <rect x="3" y="3" width="18" height="18" rx="3" />
-                <path d="M12 8v8M8 12h8" />
+                <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                <path d="M12 8v8M8 12h8"></path>
               </svg>
             </div>
           </div>
@@ -179,8 +179,8 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <rect x="3" y="3" width="18" height="18" rx="4" />
-                <path d="M8 12l3 3 5-6" />
+                <rect x="3" y="3" width="18" height="18" rx="4"></rect>
+                <path d="M8 12l3 3 5-6"></path>
               </svg>
             </div>
           </div>

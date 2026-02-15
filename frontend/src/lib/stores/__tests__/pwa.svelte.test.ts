@@ -449,9 +449,7 @@ describe('pwa.svelte.ts', () => {
   describe('parseIOSVersion', () => {
     it('parses standard iPhone UA', async () => {
       const pwa = await importPwa();
-      const result = pwa.parseIOSVersion(
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X)'
-      );
+      const result = pwa.parseIOSVersion('Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X)');
       expect(result).toEqual({ major: 16, minor: 4 });
     });
 

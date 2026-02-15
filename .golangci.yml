@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 5m
   tests: true
@@ -6,61 +8,59 @@ run:
     - sqlite_crypt
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - govet
     - errcheck
     - staticcheck
     - ineffassign
-    - gosimple
     - typecheck
     - revive
     - misspell
     - bodyclose
     - gocritic
     - unused
-
-linters-settings:
-  revive:
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+        - ifElseChain
+        - exitAfterDefer
+    errcheck:
+      exclude-functions:
+        - (*database/sql.Tx).Rollback
+        - (*database/sql.Row).Scan
+        - (*database/sql.DB).Exec
+        - (net/http.ResponseWriter).Write
+        - (*github.com/gorilla/websocket.Conn).SetReadDeadline
+        - (*github.com/gorilla/websocket.Conn).SetWriteDeadline
+        - (*github.com/gorilla/websocket.Conn).WriteMessage
+        - golang.org/x/crypto/bcrypt.CompareHashAndPassword
+        - path/filepath.WalkDir
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - testdata
     rules:
-      - name: exported
-        disabled: true
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - performance
-    disabled-checks:
-      - hugeParam
-      - rangeValCopy
-      - ifElseChain
-      - exitAfterDefer
-  errcheck:
-    exclude-functions:
-      - (*database/sql.Tx).Rollback
-      - (*database/sql.Row).Scan
-      - (*database/sql.DB).Exec
-      - (net/http.ResponseWriter).Write
-      - (*github.com/gorilla/websocket.Conn).SetReadDeadline
-      - (*github.com/gorilla/websocket.Conn).SetWriteDeadline
-      - (*github.com/gorilla/websocket.Conn).WriteMessage
-      - golang.org/x/crypto/bcrypt.CompareHashAndPassword
-      - path/filepath.WalkDir
-
-issues:
-  exclude-dirs:
-    - vendor
-    - testdata
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gocritic
-        - bodyclose
-    # Intentional misspellings in spell-check prompt examples
-    - path: internal/llm/prompts\.go
-      linters:
-        - misspell
-    # Activity logging is fire-and-forget by design
-    - linters:
-        - errcheck
-      text: "activityService\\.Log"
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gocritic
+          - bodyclose
+      # Intentional misspellings in spell-check prompt examples
+      - path: internal/llm/prompts\.go
+        linters:
+          - misspell
+      # Activity logging is fire-and-forget by design
+      - linters:
+          - errcheck
+        text: "activityService\\.Log"

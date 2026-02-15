@@ -20,10 +20,10 @@ type AdminStatsResponse struct {
 
 // DetailedStatsResponse represents the response for detailed stats
 type DetailedStatsResponse struct {
-	Stats        AdminStatsResponse `json:"stats"`
-	UserGrowth   []service.DailyCount    `json:"user_growth"`
-	NoteGrowth   []service.DailyCount    `json:"note_growth"`
-	StorageTrend []service.DailyFloat    `json:"storage_trend"`
+	Stats        AdminStatsResponse   `json:"stats"`
+	UserGrowth   []service.DailyCount `json:"user_growth"`
+	NoteGrowth   []service.DailyCount `json:"note_growth"`
+	StorageTrend []service.DailyFloat `json:"storage_trend"`
 }
 
 // AdminUserResponse represents a user in admin panel
@@ -49,7 +49,7 @@ type SetAdminRequest struct {
 // ActivityLogsResponse represents the response for activity logs
 type ActivityLogsResponse struct {
 	Logs  []service.ActivityLog `json:"logs"`
-	Total int              `json:"total"`
+	Total int                   `json:"total"`
 }
 
 // SettingsResponse represents system settings

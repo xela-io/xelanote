@@ -77,7 +77,7 @@ func NewServer(cfg ServerConfig) *Server {
 		errorReportService:    cfg.ErrorReportSvc,
 		errorReportLimiter:    NewRateLimiter(limits.errorReportLimit, time.Hour, 3), // 5/hour, burst 3
 		telemetryService:      cfg.TelemetrySvc,
-		perfMetricsLimiter:    NewRateLimiter(limits.perfMetricsLimit, time.Hour, 10),    // 30/hour, burst 10
+		perfMetricsLimiter:    NewRateLimiter(limits.perfMetricsLimit, time.Hour, 10),                  // 30/hour, burst 10
 		analyticsLimiter:      NewRateLimiter(limits.analyticsLimit, time.Hour, limits.analyticsLimit), // 20/hour
 		streamContent:         newStreamContentStore(),
 		// Account lockout: 10 global attempts (5 per-IP), 30s initial lockout (doubles each time), 30min max

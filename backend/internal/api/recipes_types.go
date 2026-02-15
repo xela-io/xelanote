@@ -15,7 +15,7 @@ type UpdateRecipeMetadataRequest struct {
 
 type SetRecipeIngredientsRequest struct {
 	Ingredients       []service.RecipeIngredient `json:"ingredients"`
-	ExpectedUpdatedAt string                `json:"expected_updated_at"`
+	ExpectedUpdatedAt string                     `json:"expected_updated_at"`
 }
 
 type CreateCollectionRequest struct {

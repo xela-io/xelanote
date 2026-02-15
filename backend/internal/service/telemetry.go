@@ -36,10 +36,10 @@ var ValidPerfMetricRatings = map[string]bool{
 
 // ValidAnalyticsEventNames is the whitelist of accepted analytics event names.
 var ValidAnalyticsEventNames = map[string]bool{
-	"ios_coach_shown":       true,
-	"ios_step_changed":      true,
-	"ios_snoozed":           true,
-	"ios_dismissed":         true,
+	"ios_coach_shown":        true,
+	"ios_step_changed":       true,
+	"ios_snoozed":            true,
+	"ios_dismissed":          true,
 	"ios_installed_detected": true,
 }
 

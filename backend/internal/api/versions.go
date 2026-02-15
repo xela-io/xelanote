@@ -12,8 +12,8 @@ import (
 // VersionListResponse represents a paginated list of versions.
 type VersionListResponse struct {
 	Versions   []service.NoteVersion `json:"versions"`
-	NextCursor string           `json:"next_cursor,omitempty"`
-	Total      int              `json:"total"`
+	NextCursor string                `json:"next_cursor,omitempty"`
+	Total      int                   `json:"total"`
 }
 
 // CompareResponse represents two versions for comparison.

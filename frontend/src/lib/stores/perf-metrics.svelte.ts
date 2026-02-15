@@ -5,8 +5,8 @@
 // - DNT respected as hard floor
 // - Max 1KB payloads
 
-import { onLCP, onINP, onCLS, onFCP, onTTFB } from 'web-vitals';
 import type { Metric } from 'web-vitals';
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
 import { getApiBaseUrl } from '$lib/config';
 
@@ -27,7 +27,7 @@ export function sanitizeUrl(url: string): string {
   // Replace UUIDs
   sanitized = sanitized.replace(
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
-    ':id',
+    ':id'
   );
   // Replace numeric path segments
   sanitized = sanitized.replace(/\/\d+/g, '/:id');

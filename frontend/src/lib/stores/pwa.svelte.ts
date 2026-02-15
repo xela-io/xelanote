@@ -66,10 +66,7 @@ export function emitPwaEvent(name: PwaEventName, data?: Record<string, unknown>)
   });
 }
 
-async function sendAnalyticsEvent(
-  name: string,
-  data?: Record<string, unknown>,
-): Promise<void> {
+async function sendAnalyticsEvent(name: string, data?: Record<string, unknown>): Promise<void> {
   // Lazy import to avoid circular dependency at module load time
   const { getApiBaseUrl } = await import('$lib/config');
   const baseUrl = getApiBaseUrl();

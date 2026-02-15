@@ -75,7 +75,7 @@ let autoSaveError = $state<string | null>(null);
 let notes = $state<Note[]>([]);
 let noteMapVersion = 0;
 let lastSyncedVersion = -1;
-const noteMap = new Map<string, Note>();
+const noteMap = new SvelteMap<string, Note>();
 let notesLoading = $state(false);
 
 // Delta-sync token (in-memory only — reset on page reload triggers full load, which is correct)
@@ -767,7 +767,6 @@ function updateNoteInList(updated: Note) {
   const idx = notes.findIndex((n) => n.id === updated.id);
   if (idx !== -1) {
     notes[idx] = updated;
-    notes = notes; // Trigger Svelte reactivity
     // Keep versions in sync so ensureNoteMap doesn't rebuild
     noteMapVersion++;
     lastSyncedVersion = noteMapVersion;

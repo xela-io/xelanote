@@ -1,11 +1,11 @@
 <script lang="ts">
   import { ArrowLeft } from 'lucide-svelte';
+  import type { ComponentType } from 'svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
   import GraphSkeleton from '$lib/components/skeletons/GraphSkeleton.svelte';
-  import type { ComponentType } from 'svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   let GraphComponent = $state<ComponentType | null>(null);
 

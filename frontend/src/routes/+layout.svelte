@@ -13,8 +13,6 @@
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
   import * as api from '$lib/api';
-  import type { DialogLoaderState } from '$lib/editor/dialog-loaders';
-  import { loadConflictDialog, maybeLoadDialog } from '$lib/editor/dialog-loaders';
   import DesktopTitleBar from '$lib/components/DesktopTitleBar.svelte';
   import LayoutOverlays from '$lib/components/LayoutOverlays.svelte';
   import Logo from '$lib/components/Logo.svelte';
@@ -22,6 +20,8 @@
   import Sidebar from '$lib/components/Sidebar.svelte';
   import { clearPersistedKEK, initKEKDatabase } from '$lib/crypto/kek-persistence';
   import { initSodium } from '$lib/crypto/sodium';
+  import type { DialogLoaderState } from '$lib/editor/dialog-loaders';
+  import { loadConflictDialog, maybeLoadDialog } from '$lib/editor/dialog-loaders';
   import { initOfflineDatabase } from '$lib/offline/offline-queue';
   import * as syncManager from '$lib/offline/sync-manager.svelte';
   import { createActivityListeners } from '$lib/routes/layout/activity-listeners';
@@ -31,18 +31,22 @@
   import { createLayoutInteractions } from '$lib/routes/layout/interactions';
   import { shouldBlockNavigation } from '$lib/routes/layout/navigation-guards';
   import { registerPwaUpdates } from '$lib/routes/layout/pwa';
-  import { stashPendingShare, processPendingShare, processShareTarget } from '$lib/routes/layout/share-target';
+  import {
+    processPendingShare,
+    processShareTarget,
+    stashPendingShare,
+  } from '$lib/routes/layout/share-target';
   import { createViewportHandlers } from '$lib/routes/layout/viewport';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as errorReporter from '$lib/stores/error-reporter.svelte';
-  import * as perfMetrics from '$lib/stores/perf-metrics.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as history from '$lib/stores/history.svelte';
   import * as network from '$lib/stores/network.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as perfMetrics from '$lib/stores/perf-metrics.svelte';
   import * as pwa from '$lib/stores/pwa.svelte';
   import * as settings from '$lib/stores/settings.svelte';
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
@@ -93,7 +97,9 @@
   let showUnlockModal = $state(false);
   // Lazy-loaded conflict dialog
   let lazyLayoutDialogs = $state<DialogLoaderState>({});
-  const setLazyLayoutDialogs = (s: DialogLoaderState) => { lazyLayoutDialogs = s; };
+  const setLazyLayoutDialogs = (s: DialogLoaderState) => {
+    lazyLayoutDialogs = s;
+  };
 
   // Lazy-load ConflictDialog when conflicts exist
   $effect(() => {
@@ -551,5 +557,4 @@
   {isPublic}
   bind:showUnlockModal
   onCloseInstallPrompt={() => (showInstallPrompt = false)}
-  onUnlockModalChange={(open) => (showUnlockModal = open)}
 />

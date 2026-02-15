@@ -1,5 +1,3 @@
-import type { ComponentType } from 'svelte';
-
 export interface CommandItem {
   id: string;
   label: string;

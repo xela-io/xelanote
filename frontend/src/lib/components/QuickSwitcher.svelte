@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
+    BookOpen,
     ChevronRight,
+    Download,
     FileText,
     Filter,
     FolderPlus,
@@ -10,8 +12,6 @@
     Plus,
     Search,
     Settings,
-    BookOpen,
-    Download,
   } from 'lucide-svelte';
   import { onDestroy, onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
@@ -20,7 +20,7 @@
   import { goto } from '$app/navigation';
   import type { Note } from '$lib/api';
   import { quickSearch, type QuickSearchFilters } from '$lib/api';
-  import { getCommands, registerCommands, type CommandItem } from '$lib/commands/command-registry';
+  import { getCommands, registerCommands } from '$lib/commands/command-registry';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as folders from '$lib/stores/folders.svelte';
@@ -276,9 +276,7 @@
       return;
     }
 
-    const maxIndex = isCommandMode
-      ? filteredCommands.length - 1
-      : results.length; // includes "create" option
+    const maxIndex = isCommandMode ? filteredCommands.length - 1 : results.length; // includes "create" option
 
     switch (e.key) {
       case 'ArrowDown':

@@ -100,7 +100,10 @@
             <div
               class="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
             ></div>
-            <span>Konflikte werden aufgeloest... ({resolvedCount}/{conflicts.length + resolvedCount})</span>
+            <span
+              >Konflikte werden aufgeloest... ({resolvedCount}/{conflicts.length +
+                resolvedCount})</span
+            >
           </div>
         {/if}
 
@@ -130,7 +133,8 @@
           <div class="flex gap-1 overflow-x-auto pb-1">
             {#each conflicts as conflict, i (conflict.operationId)}
               <button
-                class="px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors {expandedIndex === i
+                class="px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors {expandedIndex ===
+                i
                   ? 'bg-accent text-foreground'
                   : 'text-muted-foreground hover:bg-accent/50'}"
                 onclick={() => (expandedIndex = i)}
@@ -166,7 +170,9 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <h4 class="text-sm font-medium text-green-400 mb-1">Lokale Version</h4>
-                <div class="rounded-md border border-border bg-muted/50 p-2 max-h-64 overflow-y-auto">
+                <div
+                  class="rounded-md border border-border bg-muted/50 p-2 max-h-64 overflow-y-auto"
+                >
                   <pre class="text-xs whitespace-pre-wrap font-mono">{current.localContent.slice(
                       0,
                       1000
@@ -175,7 +181,9 @@
               </div>
               <div>
                 <h4 class="text-sm font-medium text-blue-400 mb-1">Server-Version</h4>
-                <div class="rounded-md border border-border bg-muted/50 p-2 max-h-64 overflow-y-auto">
+                <div
+                  class="rounded-md border border-border bg-muted/50 p-2 max-h-64 overflow-y-auto"
+                >
                   <pre class="text-xs whitespace-pre-wrap font-mono">{current.remoteContent.slice(
                       0,
                       1000

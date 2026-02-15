@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ComponentType } from 'svelte';
-  import { goto } from '$app/navigation';
 
+  import { goto } from '$app/navigation';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import OfflineBanner from '$lib/components/OfflineBanner.svelte';
   import Toast from '$lib/components/Toast.svelte';
@@ -19,7 +19,6 @@
     isPublic: boolean;
     showUnlockModal: boolean;
     onCloseInstallPrompt: () => void;
-    onUnlockModalChange: (open: boolean) => void;
   }
 
   let {
@@ -31,7 +30,6 @@
     isPublic,
     showUnlockModal = $bindable(),
     onCloseInstallPrompt,
-    onUnlockModalChange,
   }: Props = $props();
 </script>
 

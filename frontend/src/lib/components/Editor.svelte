@@ -134,7 +134,9 @@
   let editorExtensionsReady = $state(false);
   // Lazy-loaded dialog state
   let lazyDialogs = $state<DialogLoaderState>({});
-  const setLazyDialogs = (s: DialogLoaderState) => { lazyDialogs = s; };
+  const setLazyDialogs = (s: DialogLoaderState) => {
+    lazyDialogs = s;
+  };
 
   // Trigger lazy loading when dialogs are requested
   $effect(() => {

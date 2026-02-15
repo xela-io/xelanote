@@ -65,7 +65,7 @@ export function setGranularTreeCache(enabled: boolean): void {
 }
 
 /** Index from node key (folder:path or note:id) to position in flatTreeCache. */
-let flatTreeIndex = new Map<string, number>();
+const flatTreeIndex = new SvelteMap<string, number>();
 
 function nodeKey(node: TreeNode): string {
   return node.type === 'folder' ? `folder:${node.path}` : `note:${node.id}`;
@@ -262,6 +262,7 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
   }
 
   // Build path-based lookup for O(1) folder resolution (instead of O(n) find per note)
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local variable, not reactive state
   const pathMap = new Map<string, FolderTreeNode>();
   for (const node of folderMap.values()) {
     pathMap.set(node.path, node);

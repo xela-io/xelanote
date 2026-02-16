@@ -7,7 +7,9 @@ test.describe('Code Splitting', () => {
 
     // Use baseURL explicitly (required by fixture)
     await page.goto(`${baseURL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
+    // Allow SvelteKit to hydrate and trigger initial requests
+    await page.waitForTimeout(2000);
 
     const codemirrorRequests = requests.filter((url) => url.includes('codemirror'));
     expect(codemirrorRequests).toHaveLength(0);

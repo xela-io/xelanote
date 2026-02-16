@@ -47,7 +47,7 @@ func setCSRFTokenCookie(w http.ResponseWriter, token string) {
 		Name:     csrfCookieName,
 		Value:    token,
 		Path:     csrfCurrentPath, // Must be "/" so JavaScript can read it from any page
-		MaxAge:   900,             // 15 minutes (sync with access token)
+		MaxAge:   2592000,         // 30 days - SEC-006: match refresh token cookie lifetime
 		HttpOnly: false,           // MUST be readable by JavaScript!
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode, // SEC-L04: Match auth cookies for consistency
@@ -135,13 +135,15 @@ func (s *Server) csrfMiddleware(next http.Handler) http.Handler {
 		// Skip CSRF validation if request uses ONLY Bearer token (CLI clients, API-only clients)
 		// CSRF is only a risk when browser automatically sends cookies
 		authHeader := r.Header.Get("Authorization")
-		_, cookieErr := r.Cookie(AccessTokenCookie)
-		hasCookie := cookieErr == nil
+		_, accessCookieErr := r.Cookie(AccessTokenCookie)
+		_, refreshCookieErr := r.Cookie(RefreshTokenCookie)
+		hasAnyCookie := accessCookieErr == nil || refreshCookieErr == nil
 
 		// Skip CSRF check if:
 		// 1. Authorization header present (Bearer token)
-		// 2. AND no access_token cookie (pure API client, not browser)
-		if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " && !hasCookie {
+		// 2. AND no auth cookies (pure API client, not browser)
+		// SEC-006: Also check refresh_token cookie for /auth/refresh and /auth/logout
+		if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " && !hasAnyCookie {
 			// Pure Bearer token auth without cookies → no CSRF risk
 			next.ServeHTTP(w, r)
 			return

@@ -22,7 +22,7 @@ var (
 	ErrCollectionHasEncryptedRecipes = errors.New("collection contains encrypted recipes and cannot be shared")
 	ErrNotRecipeNote                 = errors.New("only recipe notes can be added to collections")
 	ErrMaxImagesReached              = errors.New("maximum number of images reached (50)")
-	ErrInvalidImageURL               = errors.New("image URL must start with /api/uploads/")
+	ErrInvalidImageURL               = errors.New("invalid image URL: must be an upload owned by the current user")
 	ErrInvalidInput                  = errors.New("invalid input")
 )
 

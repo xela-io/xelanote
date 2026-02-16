@@ -15,7 +15,7 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command: 'npm run dev -- --host localhost --port 4173',
+      command: 'VITE_API_BASE_URL=/api npm run dev -- --host localhost --port 4173',
       port: 4173,
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',

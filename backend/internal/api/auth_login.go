@@ -27,19 +27,12 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 
 	// Verify CAPTCHA token only on first login step (without 2FA code)
 	// When 2FA code is provided, user already passed CAPTCHA in the first step
-	// If a token is provided (from web or desktop iframe), always verify it.
-	// Desktop clients without a token get a fallback bypass (offline/iframe failure).
+	// SEC-002: All clients must provide valid CAPTCHA tokens (no desktop bypass)
+	// Verify() returns nil when CAPTCHA is disabled, so a single call suffices.
 	if req.TOTPCode == "" && req.BackupCode == "" {
-		if req.CaptchaToken != "" {
-			if err := s.turnstileService.Verify(r.Context(), req.CaptchaToken, clientIP); err != nil {
-				respondError(w, http.StatusBadRequest, err.Error())
-				return
-			}
-		} else if !isDesktopClient(r) {
-			if err := s.turnstileService.Verify(r.Context(), "", clientIP); err != nil {
-				respondError(w, http.StatusBadRequest, err.Error())
-				return
-			}
+		if err := s.turnstileService.Verify(r.Context(), req.CaptchaToken, clientIP); err != nil {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
 		}
 	}
 
@@ -98,10 +91,9 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		}
 		setCSRFTokenCookie(w, csrfToken)
 
-		// Return tokens, user info, and encryption salt
-		respondJSON(w, http.StatusOK, AuthResponse{
-			AccessToken:    accessToken,
-			RefreshToken:   refreshToken,
+		// Return user info and encryption salt
+		// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
+		resp := AuthResponse{
 			EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
 			User: UserResponse{
 				ID:       user.ID,
@@ -109,7 +101,12 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 				Email:    user.Email,
 				IsAdmin:  user.IsAdmin,
 			},
-		})
+		}
+		if isDesktopClient(r) {
+			resp.AccessToken = accessToken
+			resp.RefreshToken = refreshToken
+		}
+		respondJSON(w, http.StatusOK, resp)
 		return
 	}
 
@@ -190,10 +187,9 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	}
 	setCSRFTokenCookie(w, csrfToken)
 
-	// Return tokens, user info, and encryption salt
-	respondJSON(w, http.StatusOK, AuthResponse{
-		AccessToken:    accessToken,
-		RefreshToken:   refreshToken,
+	// Return user info and encryption salt
+	// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
+	resp := AuthResponse{
 		EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
 		User: UserResponse{
 			ID:       user.ID,
@@ -201,5 +197,10 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 			Email:    user.Email,
 			IsAdmin:  user.IsAdmin,
 		},
-	})
+	}
+	if isDesktopClient(r) {
+		resp.AccessToken = accessToken
+		resp.RefreshToken = refreshToken
+	}
+	respondJSON(w, http.StatusOK, resp)
 }

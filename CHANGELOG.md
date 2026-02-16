@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Remove silent CAPTCHA bypass for desktop clients (SEC-002) — all clients must provide valid CAPTCHA tokens when CAPTCHA is enabled
+- Add owner validation to recipe image URLs (SEC-003) — prevents cross-user upload URL signing oracle
+- Add CSRF protection to /auth/refresh and /auth/logout (SEC-006) — prevents same-site CSRF attacks on session-mutating endpoints; CSRF cookie lifetime extended to 30 days to match refresh token
+- Remove tokens from auth response body for web clients (SEC-001) — web authentication relies exclusively on HttpOnly cookies; desktop clients still receive tokens for OS keyring storage
+- Pin third-party GitHub Actions to commit SHAs (SEC-004) — hardens CI/CD supply chain
+
 ### Added
 
 - **Pre-push hook** — Added `pre-push` section to `lefthook.yml` with `gofmt`, `go vet`, and `svelte-check` to catch type errors and formatting issues before pushing.

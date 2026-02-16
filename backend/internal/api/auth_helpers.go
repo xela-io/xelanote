@@ -24,7 +24,8 @@ func validateUsername(username string) error {
 
 // isDesktopClient checks if the request is from a desktop client (Electron/Tauri)
 // Desktop clients are identified by the X-Client-Type header AND must come from localhost.
-// This prevents attackers from simply adding the header to bypass CAPTCHA.
+// SEC-001: Used to decide whether to include tokens in the response body (for OS keyring storage).
+// Even if spoofed, it only exposes tokens that are equivalent to the already-set cookies.
 func isDesktopClient(r *http.Request) bool {
 	if r.Header.Get("X-Client-Type") != "desktop" {
 		return false

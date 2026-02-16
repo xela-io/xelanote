@@ -1,4 +1,10 @@
 import { expect, type Page, test as base } from '@playwright/test';
+import {
+  createCredentials,
+  registerViaApi,
+  loginViaApi,
+  spoofedClientIP,
+} from '../e2e/helpers/auth';
 
 interface AuthContext {
   page: Page;
@@ -17,51 +23,45 @@ export const test = base.extend<AuthFixture>({
       throw new Error('baseURL must be set in playwright.config.ts');
     }
 
-    // 1. Register test user via API (through frontend proxy)
-    const testUsername = `e2e-test-${Date.now()}`;
-    const testPassword = 'Test123!@#';
+    // 1. Register + Login via API (sets HttpOnly auth cookies in the browser context)
+    //    Uses retry logic with exponential backoff for rate limiting (429)
+    const credentials = createCredentials();
+    await registerViaApi(page, credentials);
+    await loginViaApi(page, credentials);
 
-    try {
-      await page.request.post(`${baseURL}/api/auth/register`, {
-        data: {
-          username: testUsername,
-          email: `${testUsername}@test.local`,
-          password: testPassword,
-        },
-      });
-    } catch (_error) {
-      // User might already exist or registration failed - ignore, login will handle it
+    // 2. Navigate to home (cookies already set, initAuth picks them up)
+    await page.goto(`${baseURL}/`);
+    await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
+    await page.waitForLoadState('load');
+    // Wait for SvelteKit client-side auth initialization
+    await page.waitForTimeout(1000);
+
+    // 3. Create test note via Playwright API (avoids cross-origin browser fetch issues)
+    const csrfCookies = await page.context().cookies(baseURL);
+    const csrfToken = csrfCookies.find((c) => c.name === 'csrf_token')?.value;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Forwarded-For': spoofedClientIP(),
+    };
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
     }
 
-    // 2. Login via UI (establishes browser session)
-    // Use baseURL explicitly to avoid failures if baseURL not set
-    await page.goto(`${baseURL}/login`);
-    await page.fill('input[name="username_or_email"]', testUsername);
-    await page.fill('input[name="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/^(?!.*\/login)/, { timeout: 10000 });
-
-    // Wait for home page to fully load (ensures cookies are set)
-    await page.waitForLoadState('networkidle');
-
-    // 3. Create test note via page.evaluate (uses browser's fetch with cookies)
-    const testNoteId = await page.evaluate(async () => {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          title: 'E2E Test Note',
-          content: '# Test Content\n\n[[Test Wikilink]]',
-          folder_path: '/',
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to create note: ${response.status}`);
-      }
-      const note = await response.json();
-      return note.id;
+    const noteResponse = await page.request.post(`${baseURL}/api/notes`, {
+      headers,
+      data: {
+        title: 'E2E Test Note',
+        content: '# Test Content\n\n[[Test Wikilink]]',
+        folder_path: '/',
+      },
     });
+
+    if (!noteResponse.ok()) {
+      throw new Error(`Failed to create note: ${noteResponse.status()}`);
+    }
+    const note = await noteResponse.json();
+    const testNoteId = note.id;
 
     // 4. Navigate to note page via anchor click (SvelteKit intercepts for client-side routing)
     await page.evaluate((noteId) => {
@@ -87,9 +87,6 @@ export const test = base.extend<AuthFixture>({
 
     // Cleanup: Notes in :memory: DB are automatically cleaned up
     // No explicit cleanup needed for in-memory test database
-
-    // Note: User deletion requires admin privileges (/admin/users/{id})
-    // Test users will accumulate. See cleanup strategy below.
   },
 });
 

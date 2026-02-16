@@ -47,9 +47,10 @@ type AuthResponse struct {
 }
 
 // TokenResponse represents the response for token refresh
+// SEC-001: omitempty ensures web clients receive empty JSON (tokens only in cookies)
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access_token,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 // UserResponse represents user information (without sensitive data)

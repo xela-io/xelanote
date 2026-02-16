@@ -37,9 +37,13 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
     const result = await refreshWithMutex();
 
     if (result.success) {
-      // Retry upload with new token
+      // Retry upload with new token (or cookie-based auth for web)
       const retryHeaders = new Headers();
-      retryHeaders.set('Authorization', `Bearer ${result.tokens.access_token}`);
+      // SEC-001: Token may not be in body for web clients — use in-memory token or cookie
+      const newAccessToken = result.tokens?.access_token || getAccessTokenValue();
+      if (newAccessToken) {
+        retryHeaders.set('Authorization', `Bearer ${newAccessToken}`);
+      }
 
       // CSRF token is refreshed along with access token, get the new one
       const newCsrfToken = getCSRFToken();

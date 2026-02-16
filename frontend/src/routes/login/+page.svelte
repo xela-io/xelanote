@@ -297,8 +297,13 @@
 
     try {
       const result = await authenticateWithSecurityKey(pendingLoginToken);
-      if (result.access_token && result.refresh_token && result.user) {
-        await auth.setAuth(result.access_token, result.refresh_token, result.user);
+      if (result.user) {
+        // SEC-001: Desktop clients get tokens in body, web clients rely on cookies
+        if (result.access_token && result.refresh_token) {
+          await auth.setAuth(result.access_token, result.refresh_token, result.user);
+        } else {
+          auth.setAuthCookieOnly(result.user);
+        }
         await initializeAndNavigate();
       } else {
         errorMessage = $_('page.login.login_failed');

@@ -252,9 +252,8 @@ func (s *Server) finishFIDO2Auth(w http.ResponseWriter, r *http.Request) {
 		slog.String("event", "login_success_fido2"),
 		securityIPAttr(r))
 
-	respondJSON(w, http.StatusOK, AuthResponse{
-		AccessToken:    accessToken,
-		RefreshToken:   refreshToken,
+	// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
+	resp := AuthResponse{
 		EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
 		User: UserResponse{
 			ID:       user.ID,
@@ -262,7 +261,12 @@ func (s *Server) finishFIDO2Auth(w http.ResponseWriter, r *http.Request) {
 			Email:    user.Email,
 			IsAdmin:  user.IsAdmin,
 		},
-	})
+	}
+	if isDesktopClient(r) {
+		resp.AccessToken = accessToken
+		resp.RefreshToken = refreshToken
+	}
+	respondJSON(w, http.StatusOK, resp)
 }
 
 // getPendingLogin retrieves and removes a pending login from the session store.

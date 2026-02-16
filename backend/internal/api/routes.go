@@ -43,8 +43,14 @@ func (s *Server) registerPublicRoutes(r chi.Router) {
 	// Rate-limited auth endpoints
 	r.With(rateLimitMiddleware(s.registerLimiter)).Post("/auth/register", s.register)
 	r.With(rateLimitMiddleware(s.loginLimiter)).Post("/auth/login", s.login)
-	r.With(rateLimitMiddleware(s.refreshLimiter)).Post("/auth/refresh", s.refresh)
-	r.Post("/auth/logout", s.logout)
+
+	// SEC-006: Cookie-authenticated endpoints with CSRF protection
+	// Bearer-only requests (desktop/CLI) skip CSRF automatically (csrfMiddleware logic)
+	r.Group(func(r chi.Router) {
+		r.Use(s.csrfMiddleware)
+		r.With(rateLimitMiddleware(s.refreshLimiter)).Post("/auth/refresh", s.refresh)
+		r.Post("/auth/logout", s.logout)
+	})
 
 	// FIDO2 public auth endpoints (with pending login token)
 	r.With(rateLimitMiddleware(s.fido2BeginLimiter)).Post("/auth/fido2/begin", s.beginFIDO2Auth)

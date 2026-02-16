@@ -18,9 +18,10 @@ export interface AuthResponse {
   encryption_salt?: string; // Base64-encoded salt for E2E encryption
 }
 
+// SEC-001: Fields are optional — web clients receive empty JSON (tokens only in cookies)
 export interface RefreshResponse {
-  access_token: string;
-  refresh_token: string;
+  access_token?: string;
+  refresh_token?: string;
 }
 
 export type RefreshResult =

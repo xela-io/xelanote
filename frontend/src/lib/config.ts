@@ -73,8 +73,12 @@ export function setServerUrl(url: string): void {
  * In Desktop (Tauri/Electron): returns "{serverUrl}/api"
  * In web (dev): returns "http://localhost:8080/api"
  * In web (prod): returns "/api" (relative path)
+ * Override via VITE_API_BASE_URL (e.g. E2E tests use "/api" to route through Vite proxy)
  */
 export function getApiBaseUrl(): string {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
   const server = getServerUrl();
   if (!server) {
     // Web version: relative path (or localhost in dev)
@@ -88,8 +92,14 @@ export function getApiBaseUrl(): string {
  *
  * In Desktop (Tauri/Electron): returns "{serverUrl}/api/ws" with ws:// or wss:// protocol
  * In web: returns relative WebSocket URL
+ * When VITE_API_BASE_URL is set, derive WS URL from current host (same-origin proxy)
  */
 export function getWsBaseUrl(): string {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    if (typeof window === 'undefined') return '';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/api/ws`;
+  }
   const server = getServerUrl();
   if (!server) {
     // Web version: derive from current location
@@ -110,6 +120,9 @@ export function getWsBaseUrl(): string {
  * In web: returns "/api/uploads" (relative)
  */
 export function getUploadsBaseUrl(): string {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return '/api/uploads';
+  }
   const server = getServerUrl();
   if (!server) {
     return import.meta.env.DEV ? 'http://localhost:8080/api/uploads' : '/api/uploads';

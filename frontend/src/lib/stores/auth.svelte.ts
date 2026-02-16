@@ -279,26 +279,30 @@ export async function initAuth() {
       const result = await api.refreshTokenViaCookie();
 
       if (result.success) {
-        authState.accessToken = result.tokens.access_token;
-        authState.refreshToken = result.tokens.refresh_token;
+        // SEC-001: Desktop clients get tokens in body, web clients only get cookies
+        if (result.tokens?.access_token && result.tokens?.refresh_token) {
+          authState.accessToken = result.tokens.access_token;
+          authState.refreshToken = result.tokens.refresh_token;
 
-        // Parse JWT Claims for token-refresh store
-        const claims = parseJWTClaims(result.tokens.access_token);
-        if (claims.exp > 0) {
-          tokenExpiresAt = claims.exp;
-          tokenIssuedAt = claims.iat;
+          // Parse JWT Claims for token-refresh store
+          const claims = parseJWTClaims(result.tokens.access_token);
+          if (claims.exp > 0) {
+            tokenExpiresAt = claims.exp;
+            tokenIssuedAt = claims.iat;
 
-          // Persist expiry timestamps to sessionStorage
-          sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(claims.exp));
-          if (claims.iat > 0) {
-            sessionStorage.setItem(TOKEN_ISSUED_KEY, String(claims.iat));
+            // Persist expiry timestamps to sessionStorage
+            sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(claims.exp));
+            if (claims.iat > 0) {
+              sessionStorage.setItem(TOKEN_ISSUED_KEY, String(claims.iat));
+            }
+
+            // Notify listeners for initial state
+            notifyTokenUpdate(claims.exp, claims.iat);
           }
-
-          // Notify listeners for initial state
-          notifyTokenUpdate(claims.exp, claims.iat);
         }
+        // Web: no tokens in memory, cookies handle auth
 
-        // Now load user info with the fresh tokens
+        // Now load user info with the fresh tokens/cookies
         await loadCurrentUser();
         authState.isAuthenticated = true;
         console.log('[AUTH] Session restored via token refresh');
@@ -379,9 +383,20 @@ export async function setAuth(accessToken: string, refreshToken: string, user: U
   // Authentication relies on HttpOnly cookies set by the backend
 }
 
+// SEC-001: Set auth state for web clients where tokens are only in HttpOnly cookies
+export function setAuthCookieOnly(user: User) {
+  authState.user = user;
+  authState.isAuthenticated = true;
+}
+
 // Update access and refresh tokens (called after token refresh)
 // SEC-006: Only updates in-memory state, not sessionStorage
 export function updateTokens(accessToken: string, refreshToken: string) {
+  // SEC-001: Web refresh returns no tokens in body — skip update
+  if (!accessToken || !refreshToken) {
+    return;
+  }
+
   // SECURITY: Don't update tokens if user explicitly logged out.
   // Check both !isAuthenticated AND no existing tokens to distinguish
   // "logged out" from "initializing" (during initAuth, isAuthenticated
@@ -514,11 +529,18 @@ export async function login(
     };
   }
 
-  if (!response.access_token || !response.refresh_token || !response.user) {
+  if (!response.user) {
     throw new Error('Login fehlgeschlagen: Keine gültige Antwort vom Server');
   }
 
-  await setAuth(response.access_token, response.refresh_token, response.user);
+  // SEC-001: Desktop clients receive tokens in body, web clients rely on cookies
+  if (response.access_token && response.refresh_token) {
+    await setAuth(response.access_token, response.refresh_token, response.user);
+  } else {
+    // Web path: tokens only in HttpOnly cookies, not in body
+    authState.user = response.user;
+    authState.isAuthenticated = true;
+  }
 
   // Setup E2E encryption with password + salt
   if (response.encryption_salt) {

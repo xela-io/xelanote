@@ -118,10 +118,22 @@ async function doRefresh(): Promise<RefreshResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
 
+  // SEC-006: Build headers with CSRF token for cookie-based refresh
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const csrfToken = getCSRFToken();
+  if (csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken;
+  }
+  if (isDesktop()) {
+    headers['X-Client-Type'] = 'desktop';
+  }
+
   try {
     const response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       credentials: 'include',
       body: refreshToken ? JSON.stringify({ refresh_token: refreshToken }) : undefined,
       signal: controller.signal,
@@ -135,10 +147,13 @@ async function doRefresh(): Promise<RefreshResult> {
       return { success: false, reason };
     }
 
-    const tokens: RefreshResponse = await response.json();
-    updateTokens?.(tokens.access_token, tokens.refresh_token);
+    const data: RefreshResponse = await response.json();
+    // SEC-001: Only update in-memory tokens if present (desktop clients)
+    if (data.access_token && data.refresh_token) {
+      updateTokens?.(data.access_token, data.refresh_token);
+    }
     console.log('[API] Token refreshed successfully');
-    return { success: true, tokens };
+    return { success: true, tokens: data };
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
@@ -423,7 +438,7 @@ export async function request<T>(
     }
   }
 
-  // Add desktop client identifier (allows CAPTCHA bypass on backend)
+  // Add desktop client identifier (used for token-in-body decision, not CAPTCHA bypass)
   if (isDesktop()) {
     headers.set('X-Client-Type', 'desktop');
   }

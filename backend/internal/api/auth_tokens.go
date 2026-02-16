@@ -53,11 +53,13 @@ func (s *Server) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 	setCSRFTokenCookie(w, csrfToken)
 
-	// Return new tokens
-	respondJSON(w, http.StatusOK, TokenResponse{
-		AccessToken:  newAccessToken,
-		RefreshToken: newRefreshToken,
-	})
+	// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
+	resp := TokenResponse{}
+	if isDesktopClient(r) {
+		resp.AccessToken = newAccessToken
+		resp.RefreshToken = newRefreshToken
+	}
+	respondJSON(w, http.StatusOK, resp)
 }
 
 // logout revokes refresh token

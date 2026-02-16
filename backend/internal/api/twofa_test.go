@@ -164,6 +164,9 @@ func TestTwoFactorAuth_E2E(t *testing.T) {
 		})
 		req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
+		// SEC-001: Mark as desktop client so tokens appear in response body
+		req.Header.Set("X-Client-Type", "desktop")
+		req.RemoteAddr = "127.0.0.1:12345"
 		rec := httptest.NewRecorder()
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)

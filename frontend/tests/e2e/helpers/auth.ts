@@ -8,12 +8,12 @@ export interface TestCredentials {
 
 let cachedCredentials: TestCredentials | null = null;
 
-function spoofedClientIP(): string {
+export function spoofedClientIP(): string {
   const octet = Math.floor(Math.random() * 200) + 20;
   return `203.0.113.${octet}`;
 }
 
-function createCredentials(): TestCredentials {
+export function createCredentials(): TestCredentials {
   const nonce = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return {
     username: `testuser-${nonce}`,
@@ -22,7 +22,7 @@ function createCredentials(): TestCredentials {
   };
 }
 
-async function registerViaApi(page: Page, credentials: TestCredentials): Promise<void> {
+export async function registerViaApi(page: Page, credentials: TestCredentials): Promise<void> {
   let delayMs = 1000;
   let lastStatus = 0;
   let lastBody = '';
@@ -55,7 +55,7 @@ async function registerViaApi(page: Page, credentials: TestCredentials): Promise
   throw new Error(`register failed: ${lastStatus} ${lastBody}`);
 }
 
-async function loginViaApi(page: Page, credentials: TestCredentials): Promise<void> {
+export async function loginViaApi(page: Page, credentials: TestCredentials): Promise<void> {
   let delayMs = 1000;
   let lastStatus = 0;
   let lastBody = '';

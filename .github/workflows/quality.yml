@@ -59,7 +59,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Link check
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2
         with:
           args: --config .lychee.toml "README.md" "docs/**/*.md" "CHANGELOG.md"
           fail: true
@@ -98,7 +98,7 @@ jobs:
           cache-dependency-path: backend/go.sum
       - name: Install sqlite3 dev headers
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
-      - uses: golangci/golangci-lint-action@v7
+      - uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7
         with:
           version: v2.9.0
           working-directory: backend

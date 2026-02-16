@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/xela-io/xelanote/internal/db"
@@ -117,5 +118,45 @@ func TestRecipeService_AddRecipeImage_InvalidURL(t *testing.T) {
 
 	if _, err := service.AddRecipeImage(user.ID, note.ID, "http://example.com/img.png", nil); err != ErrInvalidImageURL {
 		t.Fatalf("expected ErrInvalidImageURL, got %v", err)
+	}
+}
+
+// SEC-003: Cross-user upload URL must be rejected
+func TestRecipeService_AddRecipeImage_CrossUserRejected(t *testing.T) {
+	database := setupTestDB(t)
+	owner := createTestUser(t, database, "owner")
+	attacker := createTestUser(t, database, "attacker")
+	svc := NewRecipeService(database, NewNoteService(database))
+
+	note, err := svc.CreateRecipeNote(owner.ID, "My Recipe", "Instructions", "/")
+	if err != nil {
+		t.Fatalf("create recipe note: %v", err)
+	}
+
+	// Owner tries to reference attacker's upload — must fail
+	crossUserURL := fmt.Sprintf("/api/uploads/%d/secret.jpg", attacker.ID)
+	if _, err := svc.AddRecipeImage(owner.ID, note.ID, crossUserURL, nil); err != ErrForbidden {
+		t.Fatalf("expected ErrForbidden for cross-user URL, got %v", err)
+	}
+}
+
+// SEC-003: Own upload URL must succeed
+func TestRecipeService_AddRecipeImage_OwnURLAllowed(t *testing.T) {
+	database := setupTestDB(t)
+	owner := createTestUser(t, database, "owner")
+	svc := NewRecipeService(database, NewNoteService(database))
+
+	note, err := svc.CreateRecipeNote(owner.ID, "My Recipe", "Instructions", "/")
+	if err != nil {
+		t.Fatalf("create recipe note: %v", err)
+	}
+
+	ownURL := fmt.Sprintf("/api/uploads/%d/photo.jpg", owner.ID)
+	img, err := svc.AddRecipeImage(owner.ID, note.ID, ownURL, nil)
+	if err != nil {
+		t.Fatalf("expected success for own URL, got %v", err)
+	}
+	if img == nil {
+		t.Fatal("expected non-nil image")
 	}
 }

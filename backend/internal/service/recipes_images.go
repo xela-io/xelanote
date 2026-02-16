@@ -1,8 +1,6 @@
 package service
 
 import (
-	"strings"
-
 	"github.com/xela-io/xelanote/internal/db"
 )
 
@@ -15,9 +13,13 @@ func (s *RecipeService) AddRecipeImage(callerUserID int, noteID string, imageURL
 		return nil, err
 	}
 
-	// URL validation
-	if !strings.HasPrefix(imageURL, "/api/uploads/") {
+	// SEC-003: Validate URL format and owner — prevents cross-user upload URL signing oracle
+	ownerID, _, err := ParseUploadURL(imageURL)
+	if err != nil {
 		return nil, ErrInvalidImageURL
+	}
+	if ownerID != callerUserID {
+		return nil, ErrForbidden
 	}
 
 	// Max recipe images

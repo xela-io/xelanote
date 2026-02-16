@@ -100,4 +100,4 @@ linters:
       # defer .Close() — fire-and-forget on readers/writers/files
       - linters:
           - errcheck
-        text: "\.Close\\("
+        text: '\.Close\('

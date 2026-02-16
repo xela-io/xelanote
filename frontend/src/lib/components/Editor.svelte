@@ -178,20 +178,38 @@
     return map;
   });
 
-  // Extract headings for TOC
-  const headings = $derived.by(() => {
-    const note = notes.getCurrentNote();
-    if (note) {
-      return extractHeadings(note.content);
-    }
-    return [];
-  });
-
-  // Reactive: update rendered content when note changes
+  // Extract headings for TOC — debounced so it doesn't re-parse on every keystroke
+  let headings = $state<ReturnType<typeof extractHeadings>>([]);
   $effect(() => {
     const note = notes.getCurrentNote();
-    if (note) {
-      renderedContent = renderMarkdown(note.content, { titleToIdMap });
+    if (!note) {
+      headings = [];
+      return;
+    }
+    const content = note.content;
+    const timer = setTimeout(() => {
+      headings = extractHeadings(content);
+    }, 300);
+    return () => clearTimeout(timer);
+  });
+
+  // Reactive: update rendered content when note changes.
+  // In split mode, debounce to avoid expensive DOM recreation on every keystroke.
+  $effect(() => {
+    const note = notes.getCurrentNote();
+    if (!note) return;
+    // Capture reactive deps synchronously for Svelte tracking
+    const content = note.content;
+    const map = titleToIdMap;
+    const mode = ui.getEditorMode();
+
+    if (mode === 'split') {
+      const timer = setTimeout(() => {
+        renderedContent = renderMarkdown(content, { titleToIdMap: map });
+      }, 150);
+      return () => clearTimeout(timer);
+    } else {
+      renderedContent = renderMarkdown(content, { titleToIdMap: map });
     }
   });
 
@@ -210,7 +228,8 @@
     getDoc: () => notes.getCurrentNote()?.content ?? '',
     onChange: (content) => {
       notes.updateCurrentNoteContent(content);
-      renderedContent = renderMarkdown(content, { titleToIdMap });
+      // Don't render markdown here — the $effect on getCurrentNote() handles it,
+      // avoiding duplicate rendering on every keystroke.
       notes.scheduleAutoSave();
     },
     onSave: handleSave,
@@ -237,11 +256,12 @@
     },
   });
 
-  // Update editor when note content is loaded
-  // But don't update during save operations to prevent focus loss
+  // Update editor when note content changes externally (note switch, load).
+  // Skip when dirty to avoid overwriting unsaved user edits during auto-save.
+  // No isLoading guard — updateEditorContent already no-ops when content is identical.
   $effect(() => {
     const note = notes.getCurrentNote();
-    if (editorView && note && !notes.getIsDirty() && !notes.getIsLoading()) {
+    if (editorView && note && !notes.getIsDirty()) {
       updateEditorContent(editorView, note.content);
     }
   });

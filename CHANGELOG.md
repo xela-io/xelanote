@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Editor shows stale content when switching notes** — Preview updated immediately while CodeMirror kept showing the old note; caused by `isLoading` guard blocking the editor update effect after `currentNote` was already set; also debounce headings extraction and split-mode preview rendering to reduce per-keystroke work
 - **Unlock modal flashes on every page refresh** — Race condition: `loadNotes()` fires before async KEK restore completes, `encryption.getUserID()` returns null so silent restore is skipped; now falls back to `auth.getCurrentUser()?.id` which is available immediately
 - **Editor panels always visible on mobile** — Summary, Tags and Backlinks panels no longer take up fixed space at the bottom on mobile; they now sit below the editor/preview content and appear when scrolling down (restoring the pre-PWA-fix behavior for touch devices)
 - **Encryption unlock modal shown unnecessarily after auto-lock** — For balanced/convenient security levels, silently restore KEK from IndexedDB instead of showing the password modal; paranoid mode still requires manual unlock

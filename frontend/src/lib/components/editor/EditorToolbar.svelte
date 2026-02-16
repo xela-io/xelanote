@@ -97,7 +97,9 @@
 <!-- Toolbar (fixed header, not in scroll container) -->
 <div class="flex-shrink-0 z-10 border-b border-border bg-background">
   <!-- Mobile: flex-col stacked | Desktop: 3-column grid for true centering -->
-  <div class="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center px-4 py-2 gap-2">
+  <div
+    class="flex flex-col sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-4 py-2 gap-2"
+  >
     <!-- Left: Title + Last Updated + Sync status -->
     <div class="flex items-center gap-2 min-w-0">
       <input

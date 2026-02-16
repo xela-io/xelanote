@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Note title hidden on narrow screens** — Guarantee minimum 120px for the title column in the editor toolbar grid and allow the toolbar buttons to shrink and scroll horizontally instead of squeezing the title off-screen
 - **Journal note title not editable** — Make title input readonly for journal notes in editor toolbar, matching backend enforcement; visual cues (reduced opacity, no focus ring) indicate non-editable state
 - **Mouse wheel scrolling in Chrome PWA** — Restructure Editor layout from single `overflow-auto` container to flex column with constrained heights so CodeMirror and preview scroll internally via their own scroll containers; also change `overscroll-behavior-y` from `none` to `contain` and scope `touch-action: manipulation` to touch devices only
 - **E2E tests in CI** — Auto-enable registration when `XELANOTE_ENV=test` so E2E tests can create users on fresh `:memory:` databases (migration 045 disables registration by default)

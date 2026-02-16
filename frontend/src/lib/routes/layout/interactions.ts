@@ -10,9 +10,6 @@ export interface LayoutInteractionDeps {
   goto: (path: string) => void;
   graphEnabled: () => boolean;
   recordActivity: () => void;
-  setShowUnlockModal: (value: boolean) => void;
-  getCurrentNote: () => { content_encrypted?: boolean } | null;
-  isEncryptionUnlocked: () => boolean;
 }
 
 export function createLayoutInteractions(deps: LayoutInteractionDeps) {
@@ -60,10 +57,10 @@ export function createLayoutInteractions(deps: LayoutInteractionDeps) {
   const handleActivity = () => {
     deps.recordActivity();
 
-    const currentNote = deps.getCurrentNote();
-    if (currentNote?.content_encrypted && !deps.isEncryptionUnlocked()) {
-      deps.setShowUnlockModal(true);
-    }
+    // Note: encryption lock detection and silent KEK restore are handled
+    // by the layout $effect (attemptSilentRestoreOrShowModal). The effect
+    // reacts to isEncryptionUnlocked() changes and tries to restore KEK
+    // from IndexedDB before showing the modal for balanced/convenient modes.
   };
 
   return { handleKeydown, handleActivity };

@@ -96,7 +96,7 @@
       await setupEncryption(password, user.id, salt, securityLevel);
 
       // Restart auto-lock timer after successful unlock
-      const autoLockTimeout = prefs.auto_lock_timeout || 15;
+      const autoLockTimeout = prefs.auto_lock_timeout ?? 15;
       autoLock.initAutoLock(autoLockTimeout);
 
       // Clear password from memory
@@ -145,7 +145,7 @@
 
       // Load preferences for auto-lock timeout
       const prefs = await api.getPreferences();
-      const autoLockTimeout = prefs.auto_lock_timeout || 15;
+      const autoLockTimeout = prefs.auto_lock_timeout ?? 15;
       autoLock.initAutoLock(autoLockTimeout);
 
       // Close modal and notify success

@@ -95,6 +95,7 @@
   let QuickSwitcherComponent = $state<ComponentType | null>(null);
   let showInstallPrompt = $state(true);
   let showUnlockModal = $state(false);
+  let isAttemptingSilentRestore = $state(false);
   // Lazy-loaded conflict dialog
   let lazyLayoutDialogs = $state<DialogLoaderState>({});
   const setLazyLayoutDialogs = (s: DialogLoaderState) => {
@@ -320,11 +321,6 @@
         autoLock.recordActivity();
         tokenRefresh.recordActivity();
       },
-      setShowUnlockModal: (value) => {
-        showUnlockModal = value;
-      },
-      getCurrentNote: () => notes.getCurrentNote(),
-      isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     });
 
     const activityListeners = createActivityListeners({ handleActivity });
@@ -394,23 +390,52 @@
     }
   });
 
-  // Watch for encryption locked error
+  // Watch for encryption locked state and try silent KEK restore before showing modal.
+  // For balanced/convenient security levels, KEK is persisted in IndexedDB and can be
+  // restored without user interaction. Only show the modal if restore fails or paranoid mode.
   $effect(() => {
-    if (notes.getError() === 'ENCRYPTION_LOCKED') {
-      showUnlockModal = true;
-    }
-  });
-
-  // Proactively show unlock modal when encryption gets locked while encrypted note is open
-  // This catches the case where auto-lock triggers while user is actively editing
-  $effect(() => {
+    const encryptionError = notes.getError() === 'ENCRYPTION_LOCKED';
     const currentNote = notes.getCurrentNote();
     const isLocked = !encryption.isEncryptionUnlocked();
+    const needsUnlock = encryptionError || (currentNote?.content_encrypted && isLocked);
 
-    if (currentNote?.content_encrypted && isLocked && !showUnlockModal) {
-      showUnlockModal = true;
+    if (needsUnlock && !showUnlockModal && !isAttemptingSilentRestore) {
+      void attemptSilentRestoreOrShowModal();
     }
   });
+
+  async function attemptSilentRestoreOrShowModal() {
+    const secLevel = encryption.getSecurityLevel();
+    const userId = encryption.getUserID();
+
+    // For balanced/convenient: try silent KEK restore from IndexedDB
+    if (secLevel !== 'paranoid' && userId !== null) {
+      isAttemptingSilentRestore = true;
+      try {
+        const restored = await encryption.tryRestoreKEK(userId);
+        if (restored) {
+          notes.clearError();
+          showUnlockModal = false;
+          // Re-init auto-lock timer
+          try {
+            const prefs = await api.getPreferences();
+            const timeout = prefs.auto_lock_timeout ?? 15;
+            autoLock.initAutoLock(timeout);
+          } catch {
+            autoLock.initAutoLock(15);
+          }
+          return;
+        }
+      } catch {
+        // Fall through to show modal
+      } finally {
+        isAttemptingSilentRestore = false;
+      }
+    }
+
+    // Paranoid mode or restore failed: show modal
+    showUnlockModal = true;
+  }
 
   // PWA iOS Install Coach: trigger after first successful user action
   $effect(() => {

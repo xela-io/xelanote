@@ -215,7 +215,7 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
           if (restored) {
             try {
               const prefs = await deps.api.getPreferences();
-              const autoLockTimeout = prefs.auto_lock_timeout || 15;
+              const autoLockTimeout = prefs.auto_lock_timeout ?? 15;
               deps.autoLock.initAutoLock(autoLockTimeout);
             } catch {
               deps.autoLock.initAutoLock(15);

@@ -155,6 +155,111 @@ describe('KEK Persistence Security', () => {
     });
   });
 
+  describe('Silent Auto-Restore After Auto-Lock', () => {
+    /**
+     * Simulates the attemptSilentRestoreOrShowModal logic from +layout.svelte.
+     * For balanced/convenient: try IndexedDB restore before showing modal.
+     * For paranoid: show modal immediately.
+     */
+    async function attemptSilentRestoreOrShowModal(
+      securityLevel: SecurityLevel,
+      userId: number | null,
+      tryRestoreKEK: (id: number) => Promise<boolean>
+    ): Promise<{ showModal: boolean; restored: boolean }> {
+      if (securityLevel !== 'paranoid' && userId !== null) {
+        try {
+          const restored = await tryRestoreKEK(userId);
+          if (restored) {
+            return { showModal: false, restored: true };
+          }
+        } catch {
+          // Fall through
+        }
+      }
+      return { showModal: true, restored: false };
+    }
+
+    it('balanced mode: should silently restore KEK without showing modal', async () => {
+      const tryRestore = vi.fn().mockResolvedValue(true);
+
+      const result = await attemptSilentRestoreOrShowModal('balanced', 1, tryRestore);
+
+      expect(tryRestore).toHaveBeenCalledWith(1);
+      expect(result.showModal).toBe(false);
+      expect(result.restored).toBe(true);
+    });
+
+    it('convenient mode: should silently restore KEK without showing modal', async () => {
+      const tryRestore = vi.fn().mockResolvedValue(true);
+
+      const result = await attemptSilentRestoreOrShowModal('convenient', 1, tryRestore);
+
+      expect(tryRestore).toHaveBeenCalledWith(1);
+      expect(result.showModal).toBe(false);
+      expect(result.restored).toBe(true);
+    });
+
+    it('paranoid mode: should show modal without attempting restore', async () => {
+      const tryRestore = vi.fn().mockResolvedValue(true);
+
+      const result = await attemptSilentRestoreOrShowModal('paranoid', 1, tryRestore);
+
+      expect(tryRestore).not.toHaveBeenCalled();
+      expect(result.showModal).toBe(true);
+      expect(result.restored).toBe(false);
+    });
+
+    it('should show modal when IndexedDB restore fails', async () => {
+      const tryRestore = vi.fn().mockResolvedValue(false);
+
+      const result = await attemptSilentRestoreOrShowModal('balanced', 1, tryRestore);
+
+      expect(tryRestore).toHaveBeenCalledWith(1);
+      expect(result.showModal).toBe(true);
+      expect(result.restored).toBe(false);
+    });
+
+    it('should show modal when IndexedDB throws an error', async () => {
+      const tryRestore = vi.fn().mockRejectedValue(new Error('IndexedDB corrupted'));
+
+      const result = await attemptSilentRestoreOrShowModal('balanced', 1, tryRestore);
+
+      expect(tryRestore).toHaveBeenCalledWith(1);
+      expect(result.showModal).toBe(true);
+      expect(result.restored).toBe(false);
+    });
+
+    it('should show modal when userId is null', async () => {
+      const tryRestore = vi.fn().mockResolvedValue(true);
+
+      const result = await attemptSilentRestoreOrShowModal('balanced', null, tryRestore);
+
+      expect(tryRestore).not.toHaveBeenCalled();
+      expect(result.showModal).toBe(true);
+    });
+  });
+
+  describe('Auto-Lock Timeout Bug Fix', () => {
+    it('should preserve timeout value of 0 (never) with nullish coalescing', () => {
+      // Bug: `prefs.auto_lock_timeout || 15` treats 0 as falsy → becomes 15
+      // Fix: `prefs.auto_lock_timeout ?? 15` preserves 0
+
+      const prefsWithZero = { auto_lock_timeout: 0 };
+      const prefsWithNull = { auto_lock_timeout: null as number | null };
+      const prefsWithUndefined = { auto_lock_timeout: undefined as number | undefined };
+      const prefsWithValue = { auto_lock_timeout: 30 };
+
+      // Fixed behavior (nullish coalescing)
+      expect(prefsWithZero.auto_lock_timeout ?? 15).toBe(0);
+      expect(prefsWithNull.auto_lock_timeout ?? 15).toBe(15);
+      expect(prefsWithUndefined.auto_lock_timeout ?? 15).toBe(15);
+      expect(prefsWithValue.auto_lock_timeout ?? 15).toBe(30);
+
+      // Previous buggy behavior (logical OR)
+      expect(prefsWithZero.auto_lock_timeout || 15).toBe(15); // Bug!
+    });
+  });
+
   describe('Layout Security Check Order', () => {
     it('should check security level BEFORE attempting KEK restore', () => {
       const executionOrder: string[] = [];

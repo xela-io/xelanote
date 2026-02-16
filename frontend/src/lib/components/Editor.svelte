@@ -813,8 +813,11 @@
     />
   {/if}
 
-  <!-- Content area (scrollable container for editor, backlinks, and tags) -->
-  <div class="flex-1 overflow-auto">
+  <!-- Content area: flex column so editor/preview get constrained heights.
+       CodeMirror and preview each scroll internally — required for Chrome PWA
+       standalone mode where wheel events don't chain from .cm-scroller to
+       an outer overflow-auto container. -->
+  <div class="flex-1 flex flex-col min-h-0">
     {#if notes.getIsLoading() && !notes.getCurrentNote()}
       <div
         class="flex-1 flex items-center justify-center text-muted-foreground h-full"
@@ -829,7 +832,7 @@
       </div>
     {:else if notes.getCurrentNote()}
       <!-- Editor / Preview area (relative for FindReplaceBar positioning) -->
-      <div class="relative">
+      <div class="relative shrink-0">
         <!-- Find & Replace Bar -->
         {#if showFindReplace}
           <FindReplaceBar
@@ -846,8 +849,8 @@
         {/if}
       </div>
 
-      <!-- Editor / Preview area -->
-      <div class="flex min-h-0" bind:this={splitContainerRef}>
+      <!-- Editor / Preview area — flex-1 so it fills remaining height -->
+      <div class="flex flex-1 min-h-0" bind:this={splitContainerRef}>
         <!-- Editor -->
         {#if ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split'}
           <div
@@ -880,13 +883,11 @@
 
         <!-- Preview -->
         {#if ui.getEditorMode() === 'preview' || ui.getEditorMode() === 'split'}
-          <!-- Theme wrapper for preview -->
+          <!-- Theme wrapper for preview (overflow-auto for internal scrolling) -->
           <div
-            class="relative {ui.getEffectivePreviewThemeClass()}"
+            class="relative overflow-auto {ui.getEffectivePreviewThemeClass()}"
             class:flex-1={ui.getEditorMode() !== 'split'}
-            style={ui.getEditorMode() === 'split'
-              ? `width: ${100 - ui.getSplitPosition()}%; min-height: 400px;`
-              : 'min-height: 400px;'}
+            style={ui.getEditorMode() === 'split' ? `width: ${100 - ui.getSplitPosition()}%;` : ''}
           >
             <!-- Floating Table of Contents -->
             {#if headings.length > 0}
@@ -897,7 +898,7 @@
             <!-- Intentional: Click handler delegates to interactive elements (wikilinks, checkboxes) in rendered markdown. These elements are natively interactive in the HTML output. -->
             {#key renderedContent}
               <div
-                class="markdown-preview h-full"
+                class="markdown-preview"
                 onclick={handlePreviewClickLocal}
                 use:taskCollapse={{
                   completedLabel: (n) =>
@@ -920,15 +921,17 @@
         {/if}
       </div>
 
-      <EditorPanels
-        note={notes.getCurrentNote()!}
-        backlinks={notes.getBacklinks()}
-        showTagSuggestions={FEATURE_FLAGS.tagSuggestions}
-        showLinkSuggestions={FEATURE_FLAGS.linkSuggestions}
-        {editorView}
-        onInsertLink={handleInsertLink}
-        onSummaryUpdated={handleSummaryUpdated}
-      />
+      <div class="shrink-0 overflow-auto max-h-[40vh]">
+        <EditorPanels
+          note={notes.getCurrentNote()!}
+          backlinks={notes.getBacklinks()}
+          showTagSuggestions={FEATURE_FLAGS.tagSuggestions}
+          showLinkSuggestions={FEATURE_FLAGS.linkSuggestions}
+          {editorView}
+          onInsertLink={handleInsertLink}
+          onSummaryUpdated={handleSummaryUpdated}
+        />
+      </div>
     {:else}
       <div class="flex-1 flex items-center justify-center text-muted-foreground h-full">
         {$_('component.editor.empty_state')}

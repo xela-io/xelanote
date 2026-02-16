@@ -817,7 +817,7 @@
        CodeMirror and preview each scroll internally — required for Chrome PWA
        standalone mode where wheel events don't chain from .cm-scroller to
        an outer overflow-auto container. -->
-  <div class="flex-1 flex flex-col min-h-0">
+  <div class="flex-1 {ui.getIsMobile() ? 'overflow-auto' : 'flex flex-col min-h-0'}">
     {#if notes.getIsLoading() && !notes.getCurrentNote()}
       <div
         class="flex-1 flex items-center justify-center text-muted-foreground h-full"
@@ -850,7 +850,7 @@
       </div>
 
       <!-- Editor / Preview area — flex-1 so it fills remaining height -->
-      <div class="flex flex-1 min-h-0" bind:this={splitContainerRef}>
+      <div class="flex min-h-0 {ui.getIsMobile() ? '' : 'flex-1'}" bind:this={splitContainerRef}>
         <!-- Editor -->
         {#if ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split'}
           <div
@@ -863,7 +863,9 @@
             onpaste={(e) => handleEditorPaste(e, uploadImagesFromEditor)}
             style={ui.getEditorMode() === 'split'
               ? `width: ${ui.getSplitPosition()}%; min-height: 400px;`
-              : 'min-height: 400px;'}
+              : ui.getIsMobile()
+                ? 'min-height: 80vh;'
+                : 'min-height: 400px;'}
           ></div>
         {/if}
 
@@ -885,7 +887,9 @@
         {#if ui.getEditorMode() === 'preview' || ui.getEditorMode() === 'split'}
           <!-- Theme wrapper for preview (overflow-auto for internal scrolling) -->
           <div
-            class="relative overflow-auto {ui.getEffectivePreviewThemeClass()}"
+            class="relative {ui.getIsMobile()
+              ? ''
+              : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
             class:flex-1={ui.getEditorMode() !== 'split'}
             style={ui.getEditorMode() === 'split' ? `width: ${100 - ui.getSplitPosition()}%;` : ''}
           >
@@ -921,7 +925,7 @@
         {/if}
       </div>
 
-      <div class="shrink-0 overflow-auto max-h-[40vh]">
+      <div class={ui.getIsMobile() ? '' : 'shrink-0 overflow-auto max-h-[40vh]'}>
         <EditorPanels
           note={notes.getCurrentNote()!}
           backlinks={notes.getBacklinks()}

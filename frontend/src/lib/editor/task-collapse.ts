@@ -34,13 +34,15 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
 
       // Scan from bottom: find trailing consecutive checked items.
       // markdown-it-task-lists does NOT set a "task-list-item-checked" class,
-      // so we check the actual checkbox input's checked attribute instead.
+      // so we check the HTML checked attribute (not the DOM .checked property).
+      // The attribute reflects the markdown-rendered state and is immune to
+      // browser-side toggling from label clicks or form restoration.
       let checkedCount = 0;
       for (let i = items.length - 1; i >= 0; i--) {
         const checkbox = items[i].querySelector(
           'input.task-list-item-checkbox'
         ) as HTMLInputElement | null;
-        if (checkbox?.checked) {
+        if (checkbox?.hasAttribute('checked')) {
           checkedCount++;
         } else {
           break;

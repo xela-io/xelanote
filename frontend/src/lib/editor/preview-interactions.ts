@@ -22,18 +22,6 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
 
   // Task list checkboxes - handle clicks on checkbox or its label
   if (options.featureTaskLists) {
-    // Timestamp-based debounce: ignore clicks within 300ms of last click
-    const now = Date.now();
-    if (now - options.getLastTaskClickTime() < 300) {
-      options.log?.(
-        '[TaskSort] Ignoring click - debounce active (',
-        now - options.getLastTaskClickTime(),
-        'ms since last)'
-      );
-      e.preventDefault();
-      return;
-    }
-
     options.log?.('[TaskSort] Preview click detected, target:', target.tagName, target.className);
 
     const checkbox = target.matches('input.task-list-item-checkbox')
@@ -45,6 +33,35 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
     options.log?.('[TaskSort] Checkbox found:', checkbox ? 'yes' : 'no');
 
     if (checkbox) {
+      // Timestamp-based debounce: ignore clicks within 300ms of last checkbox click.
+      // Moved after checkbox detection so non-checkbox clicks (e.g. wikilinks)
+      // are never blocked by the debounce.
+      const now = Date.now();
+      if (now - options.getLastTaskClickTime() < 300) {
+        options.log?.(
+          '[TaskSort] Ignoring click - debounce active (',
+          now - options.getLastTaskClickTime(),
+          'ms since last)'
+        );
+        e.preventDefault();
+        return;
+      }
+
+      // Prevent browser from toggling the checkbox or firing a synthetic click
+      // from the <label>. We manage checkbox state entirely through the markdown
+      // source → re-render cycle. Without this, clicking the label text (not the
+      // checkbox square directly) reads the OLD checked state because the browser
+      // hasn't toggled it yet at this point, while the debounce blocks the
+      // subsequent synthetic click that would have the correct state.
+      e.preventDefault();
+
+      // Read the rendered (markdown-authoritative) checked state from the HTML
+      // attribute, not the DOM property. The HTML attribute reflects what
+      // markdown-it rendered and is unaffected by browser click toggling.
+      // We invert it to get the user's intended new state.
+      const isCurrentlyChecked = checkbox.hasAttribute('checked');
+      const newChecked = !isCurrentlyChecked;
+
       const previewContainer = checkbox.closest('.markdown-preview');
       options.log?.('[TaskSort] Preview container found:', previewContainer ? 'yes' : 'no');
 
@@ -53,12 +70,12 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
         const checkboxIndex = taskItem
           ? parseInt(taskItem.getAttribute('data-task-index') || '-1', 10)
           : -1;
-        options.log?.('[TaskSort] Checkbox index:', checkboxIndex, 'checked:', checkbox.checked);
+        options.log?.('[TaskSort] Checkbox index:', checkboxIndex, 'newChecked:', newChecked);
 
         if (checkboxIndex !== -1) {
           // Update timestamp before processing
           options.setLastTaskClickTime(now);
-          options.onToggleTask(checkboxIndex, checkbox.checked);
+          options.onToggleTask(checkboxIndex, newChecked);
         }
       }
     }

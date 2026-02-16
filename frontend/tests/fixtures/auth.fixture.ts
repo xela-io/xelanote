@@ -1,8 +1,9 @@
 import { expect, type Page, test as base } from '@playwright/test';
+
 import {
   createCredentials,
-  registerViaApi,
   loginViaApi,
+  registerViaApi,
   spoofedClientIP,
 } from '../e2e/helpers/auth';
 

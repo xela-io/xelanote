@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import * as OTPAuth from 'otpauth';
-import { createCredentials, registerViaApi, loginViaApi } from './helpers/auth';
+
+import { createCredentials, loginViaApi,registerViaApi } from './helpers/auth';
 
 test('allows a user to set up and log in with 2FA', async ({ page }) => {
   // 1. Create a new user via API and login via API (sets HttpOnly auth cookies)

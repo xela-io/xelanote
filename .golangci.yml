@@ -65,7 +65,7 @@ linters:
       checks:
         - "all"
         - "-QF*" # Quickfix suggestions — not errors, just style preferences
-        - "-ST1005" # Error string conventions — too noisy for mixed-language project
+        - "-ST*" # Style conventions — too noisy, enforced by code review instead
   exclusions:
     generated: lax
     paths:
@@ -97,3 +97,7 @@ linters:
       - linters:
           - staticcheck
         text: "S1017"
+      # defer .Close() — fire-and-forget on readers/writers/files
+      - linters:
+          - errcheck
+        text: "\.Close\\("

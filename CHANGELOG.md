@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove tokens from auth response body for web clients (SEC-001) — web authentication relies exclusively on HttpOnly cookies; desktop clients still receive tokens for OS keyring storage
 - Pin third-party GitHub Actions to commit SHAs (SEC-004) — hardens CI/CD supply chain
 
+### Fixed
+
+- **E2E tests in CI** — Auto-enable registration when `XELANOTE_ENV=test` so E2E tests can create users on fresh `:memory:` databases (migration 045 disables registration by default)
+
 ### Added
 
 - **Pre-push hook** — Added `pre-push` section to `lefthook.yml` with `gofmt`, `go vet`, and `svelte-check` to catch type errors and formatting issues before pushing.

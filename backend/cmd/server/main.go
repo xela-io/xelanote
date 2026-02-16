@@ -59,6 +59,13 @@ func main() {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	// In test mode, enable registration so E2E tests can create users
+	if os.Getenv("XELANOTE_ENV") == "test" {
+		if err := database.SetSetting("registration_enabled", "true"); err != nil {
+			log.Printf("WARNING: Failed to enable registration for test mode: %v", err)
+		}
+	}
+
 	// Run PRAGMA optimize at startup to update query planner statistics
 	database.Optimize()
 

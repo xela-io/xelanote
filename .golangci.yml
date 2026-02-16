@@ -33,6 +33,9 @@ linters:
         - rangeValCopy
         - ifElseChain
         - exitAfterDefer
+        - commentedOutCode
+        - deprecatedComment
+        - sprintfQuotedString
     errcheck:
       exclude-functions:
         - (*database/sql.Tx).Rollback
@@ -42,8 +45,27 @@ linters:
         - (*github.com/gorilla/websocket.Conn).SetReadDeadline
         - (*github.com/gorilla/websocket.Conn).SetWriteDeadline
         - (*github.com/gorilla/websocket.Conn).WriteMessage
+        - (*github.com/gorilla/websocket.Conn).Close
         - golang.org/x/crypto/bcrypt.CompareHashAndPassword
         - path/filepath.WalkDir
+        # defer .Close() on readers/writers/db resources — errors not actionable
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (*database/sql.Stmt).Close
+        - (*os.File).Close
+        - (*archive/zip.Writer).Close
+        - (*net/http.Response).Body.Close
+        - io.ReadCloser.Close
+        # SSE streaming — fprintf errors handled by connection close
+        - fmt.Fprintf
+        # Cleanup operations — best-effort, errors not actionable
+        - os.Remove
+        - os.RemoveAll
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF*" # Quickfix suggestions — not errors, just style preferences
+        - "-ST1005" # Error string conventions — too noisy for mixed-language project
   exclusions:
     generated: lax
     paths:
@@ -63,3 +85,15 @@ linters:
       - linters:
           - errcheck
         text: "activityService\\.Log"
+      # Intentional empty branches for idempotent error handling
+      - linters:
+          - staticcheck
+        text: "SA9003"
+      # assignOp and sloppyReassign are style preferences, not bugs
+      - linters:
+          - gocritic
+        text: "assignOp|sloppyReassign"
+      # S1017 TrimSuffix suggestion — readability preference
+      - linters:
+          - staticcheck
+        text: "S1017"

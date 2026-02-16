@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **E2E tests in CI** — Auto-enable registration when `XELANOTE_ENV=test` so E2E tests can create users on fresh `:memory:` databases (migration 045 disables registration by default)
+- **golangci-lint v2 config** — Suppress pre-existing lint noise: exclude `defer .Close()` errcheck, `QF*` quickfix suggestions, `SA9003` empty branches, `ST1005` error string style, and `commentedOutCode`/`deprecatedComment` gocritic checks
 
 ### Added
 

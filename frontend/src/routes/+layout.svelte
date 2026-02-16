@@ -406,7 +406,9 @@
 
   async function attemptSilentRestoreOrShowModal() {
     const secLevel = encryption.getSecurityLevel();
-    const userId = encryption.getUserID();
+    // Use auth user ID as fallback: encryption.getUserID() is null until
+    // tryRestoreKEK/setupEncryption completes, but auth user is available immediately.
+    const userId = encryption.getUserID() ?? auth.getCurrentUser()?.id ?? null;
 
     // For balanced/convenient: try silent KEK restore from IndexedDB
     if (secLevel !== 'paranoid' && userId !== null) {

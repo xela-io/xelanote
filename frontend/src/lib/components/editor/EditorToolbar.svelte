@@ -104,12 +104,16 @@
         type="text"
         value={note?.title ?? ''}
         oninput={onTitleInput}
+        readonly={note?.note_type === 'journal'}
         autocorrect="on"
         autocapitalize="words"
         spellcheck="true"
         inputmode="text"
         aria-label={$_('component.editor.title_input')}
-        class="text-lg font-semibold bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring rounded px-1 min-w-0"
+        class="text-lg font-semibold bg-transparent border-0 outline-none rounded px-1 min-w-0
+          {note?.note_type === 'journal'
+          ? 'cursor-default opacity-70'
+          : 'focus:ring-1 focus:ring-ring'}"
         style="width: {Math.max((note?.title ?? '').length, 2) + 1}ch; max-width: 100%"
       />
       {#if isMobile}

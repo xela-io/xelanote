@@ -28,9 +28,11 @@
   padding-right: env(safe-area-inset-right, 0);
 }
 
-/* Prevent pull-to-refresh and page-level rubber-banding in standalone PWA */
+/* Prevent pull-to-refresh (scroll chaining) in standalone PWA.
+   Use 'contain' instead of 'none' — 'none' can suppress wheel events
+   in Chrome PWA standalone mode, breaking mouse-wheel scrolling. */
 html {
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: contain;
 }
 
 /* Allow contained elastic scrolling in scroll containers */
@@ -85,9 +87,11 @@ html {
   display: none;
 }
 
-/* Prevent double-tap zoom globally on mobile */
-html {
-  touch-action: manipulation;
+/* Prevent double-tap zoom on touch devices only (not desktop PWA) */
+@media (pointer: coarse) {
+  html {
+    touch-action: manipulation;
+  }
 }
 
 /* Explicitly allow all touch gestures for drag handles */

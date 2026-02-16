@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import * as OTPAuth from 'otpauth';
 
-import { createCredentials, loginViaApi,registerViaApi } from './helpers/auth';
+import { createCredentials, loginViaApi, registerViaApi } from './helpers/auth';
 
 test('allows a user to set up and log in with 2FA', async ({ page }) => {
   // 1. Create a new user via API and login via API (sets HttpOnly auth cookies)
@@ -52,7 +52,9 @@ test('allows a user to set up and log in with 2FA', async ({ page }) => {
   // Wait for the dialog intro step and click the setup button to start the process
   await page.waitForTimeout(500); // Wait for dialog to appear
   const dialogSetupButton = page
-    .locator('button:has-text("2FA einrichten"), button:has-text("Enable 2FA"), button:has-text("Set up 2FA")')
+    .locator(
+      'button:has-text("2FA einrichten"), button:has-text("Enable 2FA"), button:has-text("Set up 2FA")'
+    )
     .last();
   await dialogSetupButton.click();
 

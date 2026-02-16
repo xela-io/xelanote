@@ -33,6 +33,9 @@ interface ToggleTaskOptions {
   log?: (...args: unknown[]) => void;
 }
 
+// Matches any list item marker (unordered: -, *, + or ordered: 1. / 1))
+const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])/;
+
 function findTaskListBoundary(doc: Text, taskLineNum: number): ListBoundary {
   let startLine = taskLineNum;
   let endLine = taskLineNum;
@@ -46,7 +49,7 @@ function findTaskListBoundary(doc: Text, taskLineNum: number): ListBoundary {
     if (text.trim() === '' || /^#{1,6}\s/.test(text)) break;
 
     // Any list item continues the list
-    if (/^\s*[-*+]/.test(text)) {
+    if (LIST_ITEM_RE.test(text)) {
       startLine = i;
     } else {
       // Non-list, non-empty line = boundary
@@ -63,7 +66,7 @@ function findTaskListBoundary(doc: Text, taskLineNum: number): ListBoundary {
     if (text.trim() === '' || /^#{1,6}\s/.test(text)) break;
 
     // Any list item continues the list
-    if (/^\s*[-*+]/.test(text)) {
+    if (LIST_ITEM_RE.test(text)) {
       endLine = i;
     } else {
       // Non-list, non-empty line = boundary
@@ -82,7 +85,7 @@ function findTaskListBoundaryFromString(lines: string[], taskLineIndex: number):
   for (let i = taskLineIndex - 1; i >= 0; i--) {
     const text = lines[i];
     if (text.trim() === '' || /^#{1,6}\s/.test(text)) break;
-    if (/^\s*[-*+]/.test(text)) {
+    if (LIST_ITEM_RE.test(text)) {
       startLine = i;
     } else {
       break;
@@ -93,7 +96,7 @@ function findTaskListBoundaryFromString(lines: string[], taskLineIndex: number):
   for (let i = taskLineIndex + 1; i < lines.length; i++) {
     const text = lines[i];
     if (text.trim() === '' || /^#{1,6}\s/.test(text)) break;
-    if (/^\s*[-*+]/.test(text)) {
+    if (LIST_ITEM_RE.test(text)) {
       endLine = i;
     } else {
       break;
@@ -167,14 +170,14 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
   }
 
   // Find all task items in the markdown source
-  // Match: -, *, + followed by [ ] or [x] or [X]
+  // Match: -, *, +, or ordered (1. / 1)) followed by [ ] or [x] or [X]
   const lines = content.split('\n');
   const tasks: TaskInfo[] = [];
 
   let charOffset = 0;
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex];
-    const lineMatch = /^(\s*[-*+]\s*)\[([xX ])\]/.exec(line);
+    const lineMatch = /^(\s*(?:[-*+]|\d+[.)]) )\[([xX ])\]/.exec(line);
     if (lineMatch) {
       const indentMatch = line.match(/^(\s*)/);
       tasks.push({
@@ -318,7 +321,7 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
 
   // Queue task event for sending after next successful save
   const taskLine = lines[task.lineNum - 1];
-  const taskText = taskLine.replace(/^\s*[-*+]\s*\[[xX ]\]\s*/, '').trim();
+  const taskText = taskLine.replace(/^\s*(?:[-*+]|\d+[.)]) \[[xX ]\]\s*/, '').trim();
   if (taskText && noteId) {
     queueTaskEvent(
       noteId,

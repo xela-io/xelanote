@@ -803,8 +803,8 @@ export interface DueDateInfo {
 }
 
 const dueDateCleanupRegex = /@due\([^)]*\)/g;
-const checkboxRegex = /^\s*[-*+]\s*\[([xX ])\]\s*/;
-const listPrefixRegex = /^\s*[-*+]\s*(?:\[[xX ]\]\s*)?/;
+const checkboxRegex = /^\s*(?:[-*+]|\d+[.)]) \[([xX ])\]\s*/;
+const listPrefixRegex = /^\s*(?:[-*+]|\d+[.)]) (?:\[[xX ]\]\s*)?/;
 
 // Extract due dates with full metadata for server sync (used by encrypted notes)
 export function extractDueDatesDetailed(content: string): DueDateInfo[] {

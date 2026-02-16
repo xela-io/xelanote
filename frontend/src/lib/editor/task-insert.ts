@@ -6,6 +6,9 @@ interface ListBoundary {
   endLine: number;
 }
 
+// Matches any list item marker (unordered: -, *, + or ordered: 1. / 1))
+const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])/;
+
 function findTaskListBoundary(doc: Text, taskLineNum: number): ListBoundary {
   let startLine = taskLineNum;
   let endLine = taskLineNum;
@@ -19,7 +22,7 @@ function findTaskListBoundary(doc: Text, taskLineNum: number): ListBoundary {
     if (text.trim() === '' || /^#{1,6}\s/.test(text)) break;
 
     // Any list item continues the list
-    if (/^\s*[-*+]/.test(text)) {
+    if (LIST_ITEM_RE.test(text)) {
       startLine = i;
     } else {
       // Non-list, non-empty line = boundary
@@ -36,7 +39,7 @@ function findTaskListBoundary(doc: Text, taskLineNum: number): ListBoundary {
     if (text.trim() === '' || /^#{1,6}\s/.test(text)) break;
 
     // Any list item continues the list
-    if (/^\s*[-*+]/.test(text)) {
+    if (LIST_ITEM_RE.test(text)) {
       endLine = i;
     } else {
       // Non-list, non-empty line = boundary
@@ -57,7 +60,7 @@ export function insertTask(editorView: EditorView) {
   let nearestTaskListEnd = -1;
   for (let i = cursorLine.number; i >= 1; i--) {
     const line = doc.line(i);
-    if (/^\s*[-*+]\s*\[[xX ]\]/.test(line.text)) {
+    if (/^\s*(?:[-*+]|\d+[.)]) \[[xX ]\]/.test(line.text)) {
       nearestTaskListEnd = i;
       break;
     }
@@ -72,7 +75,7 @@ export function insertTask(editorView: EditorView) {
     // Find all tasks in this list boundary
     for (let i = boundary.startLine; i <= boundary.endLine; i++) {
       const line = doc.line(i);
-      const match = /^(\s*[-*+]\s*)\[([xX ])\]/.exec(line.text);
+      const match = /^(\s*(?:[-*+]|\d+[.)]) )\[([xX ])\]/.exec(line.text);
       if (match) {
         tasksInList.push({
           lineNum: i,

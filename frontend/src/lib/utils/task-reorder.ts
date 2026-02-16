@@ -15,11 +15,11 @@ export interface TaskInfo {
 
 /**
  * Find all tasks in the document with their positions.
- * Tasks are lines matching: ^\s*[-*+]\s*\[[xX ]\]
+ * Tasks are lines matching: ^\s*(?:[-*+]|\d+[.)]) \[[xX ]\]
  */
 export function getTasksInDocument(doc: Text): TaskInfo[] {
   const tasks: TaskInfo[] = [];
-  const taskPattern = /^(\s*[-*+]\s*)\[([xX ])\]/;
+  const taskPattern = /^(\s*(?:[-*+]|\d+[.)]) )\[([xX ])\]/;
 
   for (let i = 1; i <= doc.lines; i++) {
     const line = doc.line(i);

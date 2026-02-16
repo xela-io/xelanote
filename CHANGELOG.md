@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Encryption unlock modal shown unnecessarily after auto-lock** — For balanced/convenient security levels, silently restore KEK from IndexedDB instead of showing the password modal; paranoid mode still requires manual unlock
 - **Auto-lock timeout "never" (0) reset to 15 minutes** — Fix `||` to `??` (nullish coalescing) so a timeout value of 0 is preserved instead of being treated as falsy and replaced with the default 15 minutes
+- **Task checkbox toggles wrong item with ordered lists** — `markdown-it-task-lists` generates `task-list-item` for both ordered (`1. [ ]`) and unordered (`- [ ]`) lists, but the toggle regex only matched unordered markers, causing an index offset that toggled the wrong checkbox
 - **Task checkbox toggle broken when clicking label text** — Clicking the text of a task item (not the checkbox square) failed silently due to `<label>` click timing; read HTML `checked` attribute instead of DOM property and prevent browser-side toggling; also harden `taskCollapse` to use the same attribute-based check
 - **Note title hidden on narrow screens** — Guarantee minimum 120px for the title column in the editor toolbar grid and allow the toolbar buttons to shrink and scroll horizontally instead of squeezing the title off-screen
 - **Journal note title not editable** — Make title input readonly for journal notes in editor toolbar, matching backend enforcement; visual cues (reduced opacity, no focus ring) indicate non-editable state

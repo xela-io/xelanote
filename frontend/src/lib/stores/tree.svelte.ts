@@ -30,13 +30,34 @@ export interface NoteTreeNode {
   color?: string | null;
   aiEnabled?: boolean;
   noteType?: string;
+  updatedAt?: string;
+  createdAt?: string;
 }
+
+// Sort mode for notes in the sidebar
+export type SortMode = 'manual' | 'updated' | 'title' | 'created';
 
 // State
 let treeData = $state<FolderTreeNode | null>(null);
 let selectedFolderPath = $state<string | null>(null);
 let selectedNoteId = $state<string | null>(null);
 let isLoading = $state(false);
+
+// Cached data for sort-mode rebuild (avoid re-fetching from API)
+let lastFolders: Folder[] | null = null;
+let lastNotes: Note[] | null = null;
+
+// Sort mode (persisted to localStorage)
+const SORT_MODE_KEY = 'xelanote_sort_mode';
+let sortMode = $state<SortMode>('manual');
+try {
+  const stored = localStorage.getItem(SORT_MODE_KEY);
+  if (stored && ['manual', 'updated', 'title', 'created'].includes(stored)) {
+    sortMode = stored as SortMode;
+  }
+} catch {
+  // localStorage unavailable
+}
 
 // Expanded state (persisted to localStorage)
 const EXPANDED_KEY = 'xelanote_tree_expanded';
@@ -145,6 +166,24 @@ export function getIsLoading() {
   return isLoading;
 }
 
+export function getSortMode(): SortMode {
+  return sortMode;
+}
+
+export function setSortMode(mode: SortMode): void {
+  sortMode = mode;
+  try {
+    localStorage.setItem(SORT_MODE_KEY, mode);
+  } catch {
+    // localStorage unavailable
+  }
+  // Rebuild tree with new sort order
+  if (treeData && lastFolders && lastNotes) {
+    treeData = buildTree(lastFolders, lastNotes);
+    invalidateFlatTreeCache();
+  }
+}
+
 // Actions
 
 /** Max pagination iterations to prevent infinite loops (500 notes/page × 100 = 50,000 notes) */
@@ -197,6 +236,11 @@ export async function loadTree() {
     const seenIds = new SvelteSet(regularNotes.map((n) => n.id));
     const uniqueJournalNotes = journalNotes.filter((n) => !seenIds.has(n.id));
     const notes = [...regularNotes, ...uniqueJournalNotes];
+
+    // Cache for sort-mode rebuild
+    lastFolders = folders;
+    lastNotes = notes;
+
     treeData = buildTree(folders, notes);
 
     // Invalidate cache after full tree reload
@@ -283,6 +327,8 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
       color: note.color,
       aiEnabled: note.ai_enabled,
       noteType: note.note_type,
+      updatedAt: note.updated_at,
+      createdAt: note.created_at,
     };
 
     // Find the folder node for this note — O(1) via pathMap
@@ -295,22 +341,50 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
     }
   }
 
-  // Sort children: by display_order, then folders before notes
+  // Sort children: folders always by display_order, notes by current sortMode
   function sortChildren(node: FolderTreeNode) {
     node.children.sort((a, b) => {
-      // Primary sort: by display_order
-      const orderDiff = a.displayOrder - b.displayOrder;
-      if (orderDiff !== 0) return orderDiff;
-
-      // Secondary sort: folders before notes
+      // Folders always come before notes
       if (a.type === 'folder' && b.type === 'note') return -1;
       if (a.type === 'note' && b.type === 'folder') return 1;
 
-      // Tertiary sort: alphabetically by name/title
+      // Folder-to-folder: always by displayOrder, then name
       if (a.type === 'folder' && b.type === 'folder') {
+        const orderDiff = a.displayOrder - b.displayOrder;
+        if (orderDiff !== 0) return orderDiff;
         return a.name.localeCompare(b.name);
-      } else {
-        return (a as NoteTreeNode).title.localeCompare((b as NoteTreeNode).title);
+      }
+
+      // Note-to-note: sort by current mode
+      const noteA = a as NoteTreeNode;
+      const noteB = b as NoteTreeNode;
+
+      switch (sortMode) {
+        case 'updated': {
+          // Newest first (DESC)
+          const timeA = noteA.updatedAt || '';
+          const timeB = noteB.updatedAt || '';
+          const cmp = timeB.localeCompare(timeA);
+          if (cmp !== 0) return cmp;
+          return noteA.title.localeCompare(noteB.title);
+        }
+        case 'title':
+          return noteA.title.localeCompare(noteB.title);
+        case 'created': {
+          // Newest first (DESC)
+          const timeA = noteA.createdAt || '';
+          const timeB = noteB.createdAt || '';
+          const cmp = timeB.localeCompare(timeA);
+          if (cmp !== 0) return cmp;
+          return noteA.title.localeCompare(noteB.title);
+        }
+        case 'manual':
+        default: {
+          // Original behavior: displayOrder, then alphabetical
+          const orderDiff = noteA.displayOrder - noteB.displayOrder;
+          if (orderDiff !== 0) return orderDiff;
+          return noteA.title.localeCompare(noteB.title);
+        }
       }
     });
 
@@ -354,11 +428,28 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
     virtualRoot.children.unshift(...rootNotes);
   }
 
-  // Sort orphan notes by display_order before adding to top level
+  // Sort orphan notes using the same sort mode as folder children
   orphanNotes.sort((a, b) => {
-    const orderDiff = a.displayOrder - b.displayOrder;
-    if (orderDiff !== 0) return orderDiff;
-    return a.title.localeCompare(b.title);
+    switch (sortMode) {
+      case 'updated': {
+        const cmp = (b.updatedAt || '').localeCompare(a.updatedAt || '');
+        if (cmp !== 0) return cmp;
+        return a.title.localeCompare(b.title);
+      }
+      case 'title':
+        return a.title.localeCompare(b.title);
+      case 'created': {
+        const cmp = (b.createdAt || '').localeCompare(a.createdAt || '');
+        if (cmp !== 0) return cmp;
+        return a.title.localeCompare(b.title);
+      }
+      case 'manual':
+      default: {
+        const orderDiff = a.displayOrder - b.displayOrder;
+        if (orderDiff !== 0) return orderDiff;
+        return a.title.localeCompare(b.title);
+      }
+    }
   });
 
   if (orphanNotes.length > 0) {

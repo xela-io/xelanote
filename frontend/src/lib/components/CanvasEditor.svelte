@@ -21,6 +21,7 @@
   import CanvasNotePicker from '$lib/components/canvas/CanvasNotePicker.svelte';
   import CanvasTextNode from '$lib/components/canvas/CanvasTextNode.svelte';
   import CanvasToolbar from '$lib/components/canvas/CanvasToolbar.svelte';
+  import * as auth from '$lib/stores/auth.svelte';
   import {
     canvasToFlow,
     createFileNode,
@@ -35,6 +36,16 @@
   import * as notes from '$lib/stores/notes.svelte';
 
   const { noteId }: { noteId: string } = $props();
+
+  // Load note when ID changes (mirrors Editor.svelte logic).
+  // Without this, navigating between canvas notes or arriving via direct URL
+  // would leave currentNote stale because CanvasEditor never triggered loadNote.
+  $effect(() => {
+    if (!noteId || !auth.isAuthenticated()) return;
+    const currentNote = notes.getCurrentNote();
+    if (currentNote?.id === noteId) return;
+    notes.loadNote(noteId);
+  });
 
   // Flow state
   let flowNodes = $state<FlowNode[]>([]);

@@ -24,9 +24,14 @@
   let retryCount = $state(0);
   const MAX_RETRIES = 3;
 
-  // Check if the current note is a recipe or canvas
-  const isRecipe = $derived(notes.getCurrentNote()?.note_type === 'recipe');
-  const isCanvas = $derived(notes.getCurrentNote()?.note_type === 'canvas');
+  // Check if the current note is a recipe or canvas.
+  // Only trust currentNote's note_type when it matches the URL noteId.
+  // Without this guard, navigating away from a canvas would keep isCanvas=true
+  // because currentNote is updated asynchronously by loadNote.
+  const currentNote = $derived(notes.getCurrentNote());
+  const noteLoaded = $derived(currentNote?.id === noteId);
+  const isRecipe = $derived(noteLoaded && currentNote?.note_type === 'recipe');
+  const isCanvas = $derived(noteLoaded && currentNote?.note_type === 'canvas');
 
   // Auto-cleanup: delete empty journal notes when navigating away
   let didAutoDelete = false;

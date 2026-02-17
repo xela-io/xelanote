@@ -463,7 +463,12 @@
       "skipped_notes": "{count} notes skipped",
       "failed_notes": "{count} notes failed",
       "errors": "Errors",
-      "import_failed": "Import failed: {error}"
+      "import_failed": "Import failed: {error}",
+      "sort_notes": "Sort notes",
+      "sort_manual": "Manual",
+      "sort_updated": "Last modified",
+      "sort_title": "Title A-Z",
+      "sort_created": "Date created"
     },
     "home": {
       "welcome_title": "Welcome to xelanote",

@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
+    ArrowUpDown,
     CalendarClock,
+    Check,
     ChevronLeft,
     ChevronRight,
     FilePlus,
@@ -49,6 +51,7 @@
   import * as settings from '$lib/stores/settings.svelte';
   import * as sharing from '$lib/stores/sharing.svelte';
   import * as trash from '$lib/stores/trash.svelte';
+  import type { SortMode } from '$lib/stores/tree.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
@@ -67,6 +70,26 @@
   let showCreateNoteDialog = $state(false);
   let showCreateFolderDialog = $state(false);
   let showFeedbackDialog = $state(false);
+  let showSortDropdown = $state(false);
+  let sortDropdownRef = $state<HTMLDivElement | null>(null);
+
+  const sortOptions: { mode: SortMode; labelKey: string }[] = [
+    { mode: 'manual', labelKey: 'page.sidebar.sort_manual' },
+    { mode: 'updated', labelKey: 'page.sidebar.sort_updated' },
+    { mode: 'title', labelKey: 'page.sidebar.sort_title' },
+    { mode: 'created', labelKey: 'page.sidebar.sort_created' },
+  ];
+
+  function handleSortSelect(mode: SortMode) {
+    tree.setSortMode(mode);
+    showSortDropdown = false;
+  }
+
+  function handleClickOutsideSort(e: MouseEvent) {
+    if (sortDropdownRef && !sortDropdownRef.contains(e.target as Node)) {
+      showSortDropdown = false;
+    }
+  }
 
   // Resize state
   let isResizing = $state(false);
@@ -301,6 +324,9 @@
       close: () => ui.setSidebarOpen(false),
     });
   }}
+  onclick={(e) => {
+    if (showSortDropdown) handleClickOutsideSort(e);
+  }}
 />
 
 <aside
@@ -353,6 +379,36 @@
           >
             <FolderPlus size={mainIconSize} />
           </button>
+          <div class="relative" bind:this={sortDropdownRef}>
+            <button
+              onclick={() => (showSortDropdown = !showSortDropdown)}
+              class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors toolbar-btn"
+              class:bg-sidebar-accent={showSortDropdown}
+              title={$_('page.sidebar.sort_notes')}
+              aria-label={$_('page.sidebar.sort_notes')}
+            >
+              <ArrowUpDown size={mainIconSize} />
+            </button>
+            {#if showSortDropdown}
+              <div
+                class="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg z-50 py-1"
+              >
+                {#each sortOptions as opt (opt.mode)}
+                  <button
+                    onclick={() => handleSortSelect(opt.mode)}
+                    class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent transition-colors"
+                  >
+                    <span class="w-4 flex-shrink-0">
+                      {#if tree.getSortMode() === opt.mode}
+                        <Check size={14} />
+                      {/if}
+                    </span>
+                    <span>{$_(opt.labelKey)}</span>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
           <button
             onclick={() => ui.setSidebarOpen(false)}
             class="p-1.5 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
@@ -582,6 +638,36 @@
           >
             <FolderPlus size={mainIconSize} />
           </button>
+          <div class="relative" bind:this={sortDropdownRef}>
+            <button
+              onclick={() => (showSortDropdown = !showSortDropdown)}
+              class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
+              class:bg-sidebar-accent={showSortDropdown}
+              title={$_('page.sidebar.sort_notes')}
+              aria-label={$_('page.sidebar.sort_notes')}
+            >
+              <ArrowUpDown size={mainIconSize} />
+            </button>
+            {#if showSortDropdown}
+              <div
+                class="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg z-50 py-1"
+              >
+                {#each sortOptions as opt (opt.mode)}
+                  <button
+                    onclick={() => handleSortSelect(opt.mode)}
+                    class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent transition-colors"
+                  >
+                    <span class="w-4 flex-shrink-0">
+                      {#if tree.getSortMode() === opt.mode}
+                        <Check size={14} />
+                      {/if}
+                    </span>
+                    <span>{$_(opt.labelKey)}</span>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
           <button
             onclick={() => ui.toggleSidebar()}
             class="p-1.5 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"

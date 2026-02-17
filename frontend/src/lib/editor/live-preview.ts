@@ -567,6 +567,9 @@ function buildDecorations(
           if (primitives.blockquote) {
             lineClasses.push('cm-live-blockquote');
           }
+          if (taskInfo) {
+            lineClasses.push('cm-live-task-line');
+          }
           if (listMarkerInfo) {
             lineClasses.push('cm-live-list-item');
           }

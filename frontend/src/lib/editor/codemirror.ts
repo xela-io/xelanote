@@ -239,19 +239,49 @@ const dueDatePlugin = ViewPlugin.fromClass(
   }
 );
 
-// List hanging indent - makes wrapped text in list items align with text after the marker
-const listIndentPattern = /^(\s*)([-*+]|\d+[.)])\s(\[[ xX]\]\s)?/;
+// List hanging indent for non-task lists.
+const listIndentPattern = /^(\s*)([-*+]|\d+[.)])\s/;
+const taskListPattern = /^(\s*)([-*+]|\d+[.)])\s\[[ xX]\]\s/;
+const blankLinePattern = /^\s*$/;
+const taskContinuationIndentEm = 1.25;
 
 function buildListIndentDecorations(view: EditorView): DecorationSet {
-  const items: { pos: number; indent: number }[] = [];
+  const items: Array<{ pos: number; style: string }> = [];
 
   for (const { from, to } of view.visibleRanges) {
     let pos = from;
+    let inTaskItem = false;
     while (pos <= to) {
       const line = view.state.doc.lineAt(pos);
-      const match = listIndentPattern.exec(line.text);
+      const text = line.text;
+
+      if (blankLinePattern.test(text)) {
+        inTaskItem = false;
+        pos = line.to + 1;
+        continue;
+      }
+
+      if (taskListPattern.test(text)) {
+        // First line of task item uses dedicated CSS (.cm-live-task-line).
+        // Continuation lines are handled below.
+        inTaskItem = true;
+        pos = line.to + 1;
+        continue;
+      }
+
+      if (inTaskItem && !listIndentPattern.test(text)) {
+        items.push({ pos: line.from, style: `padding-left: ${taskContinuationIndentEm}em;` });
+        pos = line.to + 1;
+        continue;
+      }
+
+      inTaskItem = false;
+      const match = listIndentPattern.exec(text);
       if (match) {
-        items.push({ pos: line.from, indent: match[0].length });
+        items.push({
+          pos: line.from,
+          style: `padding-left: ${match[0].length}ch; text-indent: -${match[0].length}ch;`,
+        });
       }
       pos = line.to + 1;
     }
@@ -261,7 +291,7 @@ function buildListIndentDecorations(view: EditorView): DecorationSet {
     items.map((item) =>
       Decoration.line({
         attributes: {
-          style: `padding-left: ${item.indent}ch; text-indent: -${item.indent}ch;`,
+          style: item.style,
         },
       }).range(item.pos)
     ),

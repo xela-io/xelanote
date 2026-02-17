@@ -747,6 +747,13 @@ html {
   font-style: italic;
 }
 
+/* Hanging indent for task lines.
+   Keep continuation lines visually aligned with text after the inline checkbox. */
+.cm-editor .cm-line.cm-live-task-line {
+  padding-left: 1.25em;
+  text-indent: -1.85em;
+}
+
 .cm-editor .cm-live-task-checkbox {
   cursor: pointer;
   user-select: none;
@@ -803,7 +810,7 @@ html {
 /* Completed task group toggle button [+]/[-] — positioned left of bracket */
 .cm-editor .cm-live-task-group-toggle {
   position: absolute;
-  left: -1.4rem;
+  left: -1.8rem;
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
@@ -825,7 +832,7 @@ html {
 .cm-editor .cm-line.cm-live-task-group-middle,
 .cm-editor .cm-line.cm-live-task-group-last {
   position: relative;
-  margin-left: 1.4rem;
+  margin-left: 1.2rem;
 }
 
 .cm-editor .cm-line.cm-live-task-group-first::before,
@@ -833,7 +840,7 @@ html {
 .cm-editor .cm-line.cm-live-task-group-last::before {
   content: '';
   position: absolute;
-  left: -0.7rem;
+  left: -0.9rem;
   top: 0;
   bottom: 0;
   width: 0.35rem;

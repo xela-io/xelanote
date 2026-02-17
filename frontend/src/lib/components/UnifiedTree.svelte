@@ -914,6 +914,16 @@
     }
   }
 
+  /* Mobile: allow wrapped note titles instead of single-line truncation. */
+  @media (max-width: 639px) {
+    .note-button .node-name {
+      white-space: normal;
+      text-overflow: clip;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+  }
+
   .folder-row-container {
     display: flex;
     align-items: center;

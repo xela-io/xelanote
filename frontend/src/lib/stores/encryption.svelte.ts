@@ -36,6 +36,24 @@ let settings = $state<EncryptionSettings>({
   extractKeywords: false,
 });
 
+function buildSearchIndexSafely(): void {
+  void import('$lib/stores/search-index.svelte')
+    .then((m) => m.buildIndex())
+    .catch((err) => {
+      // Ignore module-runner shutdown noise in tests; keep runtime resilient.
+      console.warn('[ENCRYPTION] Skipping search index build:', err);
+    });
+}
+
+function destroySearchIndexSafely(): void {
+  void import('$lib/stores/search-index.svelte')
+    .then((m) => m.destroyIndex())
+    .catch((err) => {
+      // Ignore teardown races (e.g. test worker shutdown).
+      console.warn('[ENCRYPTION] Skipping search index destroy:', err);
+    });
+}
+
 /**
  * Setup encryption on login.
  * Fetches salt from server and derives KEK using libsodium (in Web Worker).
@@ -92,7 +110,7 @@ export async function setupEncryption(
   }
 
   // Build client-side search index for encrypted notes (fire-and-forget, dynamic import to avoid circular dep)
-  import('$lib/stores/search-index.svelte').then((m) => m.buildIndex());
+  buildSearchIndexSafely();
 }
 
 /**
@@ -105,7 +123,7 @@ export async function setupEncryption(
 export function lockEncryption(): void {
   // Destroy search index synchronously via cached module (dynamic import to avoid circular dep)
   // Module is already loaded at this point since buildIndex was called earlier
-  import('$lib/stores/search-index.svelte').then((m) => m.destroyIndex());
+  destroySearchIndexSafely();
   e2eEncryption.clearKEK();
   isUnlocked = false;
 
@@ -271,7 +289,7 @@ export async function tryRestoreKEK(userId: number): Promise<boolean> {
     userID = userId;
 
     // Build client-side search index for encrypted notes (fire-and-forget, dynamic import to avoid circular dep)
-    import('$lib/stores/search-index.svelte').then((m) => m.buildIndex());
+    buildSearchIndexSafely();
 
     return true;
   } catch (err) {

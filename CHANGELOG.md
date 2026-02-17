@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Wikilinks und Markdown-Links in Live-Preview nicht anklickbar** — Der `mousedown`-Event verschob den Cursor auf die Zeile, wodurch die Live-Preview-Dekoration entfernt wurde bevor der `click`-Handler feuerte; `preventDefault` im `mousedown` für Link-Widgets behebt das Problem.
 - **Task-Gruppen Toggle reagiert nicht nach Klick auf erledigten Eintrag** — Die Auto-Expand-Logik lief bei jedem Update-Zyklus, nicht nur bei Cursor-Bewegung; nach Klick auf eine erledigte Aufgabe (Cursor in Gruppe) wurde ein Collapse per Toggle sofort durch Auto-Expand rückgängig gemacht; jetzt wird Auto-Expand nur ausgelöst, wenn sich die aktiven Zeilen tatsächlich ändern.
 - **Task-Gruppen Toggle-Button nicht mittig an Klammer** — Der [−]-Button nutzte `em`-Einheiten für die Positionierung, aber da der Button `font-size: 0.8em` hat, wurde der Wert auf 80% skaliert und der Button ~20% zu hoch angezeigt; Korrektur auf `rem`-Einheiten.
 - **Live-Preview zeigt Markdown auf erster Zeile beim Laden** — Beim Öffnen einer Notiz oder Neuladen stand der Cursor auf Zeile 1, wodurch die Live-Preview den rohen Markdown-Code anzeigte; jetzt werden bei unfokussiertem Editor keine Zeilen als aktiv markiert, und beim Fokussieren werden die Dekorationen korrekt neu berechnet.

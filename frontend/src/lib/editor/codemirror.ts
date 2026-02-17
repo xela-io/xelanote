@@ -540,6 +540,16 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
           event.preventDefault();
           return true;
         }
+        const liveWikilink = target.closest('.cm-live-preview-wikilink') as HTMLElement | null;
+        if (liveWikilink) {
+          event.preventDefault();
+          return true;
+        }
+        const liveLink = target.closest('.cm-live-preview-link') as HTMLElement | null;
+        if (liveLink) {
+          event.preventDefault();
+          return true;
+        }
         return false;
       },
       click: (event, view) => {

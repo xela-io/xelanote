@@ -245,7 +245,7 @@ function parseLinePrimitives(text: string): LinePrimitives {
     taskRegex: taskRegexMatch
       ? {
           markerLength: taskRegexMatch[1].length,
-          markerTokenLength: taskRegexMatch[2].length,
+          markerTokenLength: taskRegexMatch[2].length + taskRegexMatch[3].length,
           checked: taskRegexMatch[2].toLowerCase() === '[x]',
         }
       : null,
@@ -538,12 +538,19 @@ function buildDecorations(
 
         const primitives = getLinePrimitives(line.number, text);
         const treeTask = treeFeatures.tasksByLine.get(line.number);
+        // Compute taskInfo — the replacement must cover the marker token AND
+        // trailing space so no gap character remains between checkbox and text.
+        // markerTokenLength already includes spacing (see getLinePrimitives).
         const taskInfo =
           treeTask && primitives.markerPrefixLength != null
             ? {
                 markerLength: primitives.markerPrefixLength,
                 from: treeTask.from,
-                to: treeTask.to,
+                to: primitives.taskRegex
+                  ? base +
+                    primitives.taskRegex.markerLength +
+                    primitives.taskRegex.markerTokenLength
+                  : treeTask.to,
                 checked: treeTask.checked,
               }
             : primitives.taskRegex

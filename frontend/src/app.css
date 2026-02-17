@@ -631,9 +631,10 @@ html {
   font-family: var(--font-mono);
   font-size: 1rem; /* 16px on mobile to prevent iOS auto-zoom */
   --live-preview-line-height: 1.7;
-  --live-preview-marker-column-width: 2.5ch;
+  --live-preview-marker-column-width: 1.6rem;
   --live-preview-marker-gap: 0.35rem;
   --live-preview-checkbox-size: 0.95rem;
+  --live-preview-task-group-indent: 1.2rem;
 }
 
 /* Desktop: smaller font for more compact view */
@@ -751,7 +752,10 @@ html {
   font-style: italic;
 }
 
-/* Keep wrapped continuation lines aligned across task and list lines. */
+/* Hanging indent for wrapped lines: padding-left pushes all visual lines right,
+   negative text-indent pulls only the first visual line back.
+   Inline styles from listIndentPlugin override these for active lines;
+   CSS serves as fallback for edge cases. */
 .cm-editor .cm-line.cm-live-task-line,
 .cm-editor .cm-line.cm-live-list-item {
   padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap));
@@ -808,7 +812,7 @@ html {
   color: var(--color-muted-foreground);
   cursor: pointer;
   margin-right: 0.4rem;
-  margin-left: -0.1rem;
+  margin-left: -1.1rem;
   font-size: 0.8em;
   line-height: 1;
   width: auto;
@@ -824,7 +828,7 @@ html {
 /* Completed task group toggle button [+]/[-] — positioned left of bracket */
 .cm-editor .cm-live-task-group-toggle {
   position: absolute;
-  left: -1.8rem;
+  left: calc(var(--live-preview-task-group-indent) - 1.8rem);
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
@@ -846,7 +850,7 @@ html {
 .cm-editor .cm-line.cm-live-task-group-middle,
 .cm-editor .cm-line.cm-live-task-group-last {
   position: relative;
-  margin-left: 1.2rem;
+  margin-left: var(--live-preview-task-group-indent);
 }
 
 .cm-editor .cm-line.cm-live-task-group-first::before,
@@ -854,7 +858,7 @@ html {
 .cm-editor .cm-line.cm-live-task-group-last::before {
   content: '';
   position: absolute;
-  left: -0.9rem;
+  left: calc(var(--live-preview-task-group-indent) - 0.9rem);
   top: 0;
   bottom: 0;
   width: 0.35rem;

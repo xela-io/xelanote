@@ -239,11 +239,15 @@ const dueDatePlugin = ViewPlugin.fromClass(
   }
 );
 
-// List hanging indent for non-task lists.
+// List hanging indent via inline styles.
 const listIndentPattern = /^(\s*)([-*+]|\d+[.)])\s/;
 const taskListPattern = /^(\s*)([-*+]|\d+[.)])\s\[[ xX]\]\s/;
 const blankLinePattern = /^\s*$/;
-const taskContinuationIndentEm = 1.25;
+
+// Task continuation lines must match the task line's text start position.
+// Uses the same CSS variables as .cm-live-task-line in app.css.
+const taskContinuationStyle =
+  'padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap));';
 
 function buildListIndentDecorations(view: EditorView): DecorationSet {
   const items: Array<{ pos: number; style: string }> = [];
@@ -262,15 +266,20 @@ function buildListIndentDecorations(view: EditorView): DecorationSet {
       }
 
       if (taskListPattern.test(text)) {
-        // First line of task item uses dedicated CSS (.cm-live-task-line).
-        // Continuation lines are handled below.
+        // Task lines need inline style for hanging indent (same as regular lists).
+        // CSS class alone doesn't reliably control wrapped-line indent in CodeMirror.
+        items.push({
+          pos: line.from,
+          style:
+            'padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)); text-indent: calc(-1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)));',
+        });
         inTaskItem = true;
         pos = line.to + 1;
         continue;
       }
 
       if (inTaskItem && !listIndentPattern.test(text)) {
-        items.push({ pos: line.from, style: `padding-left: ${taskContinuationIndentEm}em;` });
+        items.push({ pos: line.from, style: taskContinuationStyle });
         pos = line.to + 1;
         continue;
       }

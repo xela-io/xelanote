@@ -83,6 +83,7 @@
   import { taskSortable, type TaskSortableOptions } from '$lib/editor/task-sortable';
   import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
+  import * as auth from '$lib/stores/auth.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
@@ -238,12 +239,14 @@
 
   // Reactive: load note when ID changes
   $effect(() => {
-    if (noteId) {
-      const currentNote = notes.getCurrentNote();
-      // Only load if this is a different note or no note is loaded
-      if (!currentNote || currentNote.id !== noteId) {
-        notes.loadNote(noteId);
-      }
+    // On hard refresh, auth restore is async. Wait until authenticated before
+    // loading note to avoid one-time failed loads that leave currentNote null.
+    if (!noteId || !auth.isAuthenticated()) return;
+
+    const currentNote = notes.getCurrentNote();
+    // Only load if this is a different note or no note is loaded
+    if (!currentNote || currentNote.id !== noteId) {
+      notes.loadNote(noteId);
     }
   });
 

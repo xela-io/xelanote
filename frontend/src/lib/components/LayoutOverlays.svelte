@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import OfflineBanner from '$lib/components/OfflineBanner.svelte';
+  import SessionRestoreBanner from '$lib/components/SessionRestoreBanner.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import AlertDialog from '$lib/components/ui/AlertDialog.svelte';
   import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
@@ -17,6 +18,7 @@
     conflictDialog: ComponentType | null | undefined;
     showInstallPrompt: boolean;
     isPublic: boolean;
+    showSessionRestoreBanner: boolean;
     showUnlockModal: boolean;
     onCloseInstallPrompt: () => void;
   }
@@ -28,6 +30,7 @@
     conflictDialog: ConflictDialogComponent,
     showInstallPrompt,
     isPublic,
+    showSessionRestoreBanner,
     showUnlockModal = $bindable(),
     onCloseInstallPrompt,
   }: Props = $props();
@@ -39,6 +42,10 @@
 <!-- Offline Banner (handles its own visibility based on offline state + sync state) -->
 {#if showOfflineBanner || isSyncing}
   <OfflineBanner />
+{/if}
+
+{#if showSessionRestoreBanner}
+  <SessionRestoreBanner />
 {/if}
 
 <!-- Conflict Dialog (lazy-loaded, shown when sync conflicts need resolution) -->

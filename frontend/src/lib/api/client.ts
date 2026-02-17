@@ -2,6 +2,10 @@
 
 import { getApiBaseUrl, isDesktop } from '../config';
 import {
+  startSessionRestore,
+  stopSessionRestore,
+} from '../stores/session-restore.svelte';
+import {
   enqueueOperation as enqueueOfflineOp,
   getQueueCount as getOfflineQueueCount,
 } from '../offline/offline-queue';
@@ -76,16 +80,31 @@ let lastRefreshResult: RefreshResult | null = null;
 let lastRefreshTime = 0;
 const REFRESH_GRACE_MS = 3000; // 3-second grace window after successful refresh
 
+interface RefreshOptions {
+  showUIHint?: boolean;
+}
+
 /**
  * Central refresh function with mutex.
  * Prevents parallel refresh requests (Token Rotation Race Condition).
  * @returns RefreshResult with success/failure and reason
  */
-export async function refreshWithMutex(): Promise<RefreshResult> {
+export async function refreshWithMutex(options: RefreshOptions = {}): Promise<RefreshResult> {
+  const showUIHint = options.showUIHint ?? false;
+
   // If a refresh is already in progress, wait for its result
   if (refreshResultPromise) {
     console.log('[API] Waiting for ongoing refresh...');
-    return refreshResultPromise;
+    if (!showUIHint) {
+      return refreshResultPromise;
+    }
+
+    startSessionRestore();
+    try {
+      return await refreshResultPromise;
+    } finally {
+      stopSessionRestore();
+    }
   }
 
   // Grace period: if a refresh just succeeded, reuse the result
@@ -96,7 +115,7 @@ export async function refreshWithMutex(): Promise<RefreshResult> {
   }
 
   // Start new refresh
-  refreshResultPromise = doRefresh();
+  refreshResultPromise = doRefresh(showUIHint);
   try {
     const result = await refreshResultPromise;
     if (result.success) {
@@ -111,7 +130,11 @@ export async function refreshWithMutex(): Promise<RefreshResult> {
 
 const REFRESH_TIMEOUT_MS = 10000; // 10s timeout for refresh request
 
-async function doRefresh(): Promise<RefreshResult> {
+async function doRefresh(showUIHint: boolean): Promise<RefreshResult> {
+  if (showUIHint) {
+    startSessionRestore();
+  }
+
   const refreshToken = getRefreshToken?.();
   // Cookie is sent automatically via credentials: 'include'
 
@@ -162,6 +185,10 @@ async function doRefresh(): Promise<RefreshResult> {
     }
     console.error('[API] Refresh error:', error);
     return { success: false, reason: 'network_error' };
+  } finally {
+    if (showUIHint) {
+      stopSessionRestore();
+    }
   }
 }
 
@@ -464,8 +491,9 @@ export async function request<T>(
     throw fetchError;
   }
 
-  // If 401 Unauthorized and we have a refresh token, try to refresh using central mutex
-  if (response.status === 401 && accessToken && retryWithRefresh) {
+  // If 401 Unauthorized, try refresh once via central mutex.
+  // Important for web cookie auth where no access token exists in memory.
+  if (response.status === 401 && retryWithRefresh) {
     // Check if access token was already rotated by a concurrent request's refresh.
     // If the current in-memory token differs from the one we used, just retry
     // with the new token instead of triggering another refresh cycle.
@@ -475,7 +503,7 @@ export async function request<T>(
       return request<T>(path, options, false);
     }
 
-    const result = await refreshWithMutex();
+    const result = await refreshWithMutex({ showUIHint: true });
 
     if (result.success) {
       // Retry the original request with new token (prevent infinite loop)

@@ -162,6 +162,43 @@ describe('api client', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('refreshes on 401 even without in-memory access token (cookie auth)', async () => {
+    const { initApiAuth, request } = await import('$lib/api/client');
+    initApiAuth(
+      () => null,
+      () => null,
+      () => undefined,
+      () => undefined
+    );
+
+    let notesCalls = 0;
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockImplementation(async (url) => {
+      if (typeof url === 'string' && url.endsWith('/auth/refresh')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        } as Response;
+      }
+
+      notesCalls += 1;
+      if (notesCalls === 1) {
+        return { ok: false, status: 401, json: async () => ({ error: 'missing authorization' }) } as Response;
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      } as Response;
+    });
+
+    const result = await request<{ ok: boolean }>('/notes', { method: 'GET' });
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it('throws when offline and offline mutations are not allowed', async () => {
     const navigatorBackup = globalThis.navigator;
     Object.defineProperty(globalThis, 'navigator', {

@@ -32,9 +32,10 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
     credentials: 'include',
   });
 
-  // Handle 401 with token refresh using central mutex
-  if (response.status === 401 && accessToken) {
-    const result = await refreshWithMutex();
+  // Handle 401 with token refresh using central mutex.
+  // Also needed for cookie auth where no access token exists in memory.
+  if (response.status === 401) {
+    const result = await refreshWithMutex({ showUIHint: true });
 
     if (result.success) {
       // Retry upload with new token (or cookie-based auth for web)

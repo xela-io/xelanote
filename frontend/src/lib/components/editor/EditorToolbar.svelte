@@ -30,37 +30,71 @@
 
   type EditorMode = 'edit' | 'split' | 'preview';
 
-  export let note: Note | null = null;
-  export let editorView: EditorView | undefined;
-  export let isMobile = false;
-  export let editorMode: EditorMode = 'edit';
-  export let autoSaveStatus: 'saving' | 'saved' | 'error' | 'idle' | 'pending' = 'idle';
-  export let autoSaveEnabled = false;
-  export let isDirty = false;
-  export let isSaving = false;
-  export let uploading = false;
-  export let showAIActionsDropdown = false;
-  export let showMoreMenu = false;
-  export let aiEnabled = false;
-  export let syncing = false;
-  export let syncProgress = { current: 0, total: 0 };
-  export let pendingCount = 0;
-  export let isOnline = true;
-  export let isEncryptionUnlocked = true;
-  export let focusModeActive = false;
-  export let showSpellCheck = false;
+  interface Props {
+    note?: Note | null;
+    editorView?: EditorView | undefined;
+    isMobile?: boolean;
+    editorMode?: EditorMode;
+    autoSaveStatus?: 'saving' | 'saved' | 'error' | 'idle' | 'pending';
+    autoSaveEnabled?: boolean;
+    isDirty?: boolean;
+    isSaving?: boolean;
+    uploading?: boolean;
+    showAIActionsDropdown?: boolean;
+    showMoreMenu?: boolean;
+    aiEnabled?: boolean;
+    syncing?: boolean;
+    syncProgress?: { current: number; total: number };
+    pendingCount?: number;
+    isOnline?: boolean;
+    isEncryptionUnlocked?: boolean;
+    focusModeActive?: boolean;
+    showSpellCheck?: boolean;
+    onTitleInput: (event: Event) => void;
+    onOpenSidebar: () => void;
+    onSetEditorMode: (mode: EditorMode) => void;
+    onInsertTask: () => void;
+    onSave: () => void;
+    onUpload: () => void;
+    onShowHistory: () => void;
+    onToggleFocus: () => void;
+    onToggleAutosave: () => void;
+    onAIActions: (rect: DOMRect) => void;
+    onOpenMoreMenu: (rect: DOMRect) => void;
+  }
 
-  export let onTitleInput: (event: Event) => void;
-  export let onOpenSidebar: () => void;
-  export let onSetEditorMode: (mode: EditorMode) => void;
-  export let onInsertTask: () => void;
-  export let onSave: () => void;
-  export let onUpload: () => void;
-  export let onShowHistory: () => void;
-  export let onToggleFocus: () => void;
-  export let onToggleAutosave: () => void;
-  export let onAIActions: (rect: DOMRect) => void;
-  export let onOpenMoreMenu: (rect: DOMRect) => void;
+  const {
+    note = null,
+    editorView,
+    isMobile = false,
+    editorMode = 'edit',
+    autoSaveStatus = 'idle',
+    autoSaveEnabled = false,
+    isDirty = false,
+    isSaving = false,
+    uploading = false,
+    showAIActionsDropdown = false,
+    showMoreMenu = false,
+    aiEnabled = false,
+    syncing = false,
+    syncProgress = { current: 0, total: 0 },
+    pendingCount = 0,
+    isOnline = true,
+    isEncryptionUnlocked = true,
+    focusModeActive = false,
+    showSpellCheck = false,
+    onTitleInput,
+    onOpenSidebar,
+    onSetEditorMode,
+    onInsertTask,
+    onSave,
+    onUpload,
+    onShowHistory,
+    onToggleFocus,
+    onToggleAutosave,
+    onAIActions,
+    onOpenMoreMenu,
+  }: Props = $props();
 
   // Svelte Action: Scroll-Fade for toolbar overflow indicator
   function scrollFade(node: HTMLElement) {

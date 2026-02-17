@@ -18,25 +18,14 @@ let pendingPromise: Promise<void> | null = null;
 export async function wikilinkCompletionSource(
   context: CompletionContext
 ): Promise<CompletionResult | null> {
-  console.log(
-    '[Wikilink Autocomplete] Function called at pos:',
-    context.pos,
-    'explicit:',
-    context.explicit
-  );
-
   const line = context.state.doc.lineAt(context.pos);
   const textBefore = line.text.slice(0, context.pos - line.from);
   const match = textBefore.match(WIKILINK_TRIGGER);
-
-  console.log('[Wikilink Autocomplete] textBefore:', textBefore, 'match:', match);
 
   if (!match) return null;
 
   const query = match[1];
   const from = context.pos - query.length;
-
-  console.log('[Wikilink Autocomplete] query:', query, 'from:', from, 'pos:', context.pos);
 
   // Use cache if query is the same
   if (query !== lastQuery || !lastResults.length) {
@@ -50,12 +39,9 @@ export async function wikilinkCompletionSource(
     // Make new request
     pendingPromise = (async () => {
       try {
-        console.log('[Wikilink Autocomplete] Searching for:', query || '(empty)');
         const response = await quickSearch(query || '', 10);
         lastResults = response.notes || [];
-        console.log('[Wikilink Autocomplete] Results:', lastResults.length);
-      } catch (error) {
-        console.error('Wikilink autocomplete failed:', error);
+      } catch {
         lastResults = [];
       }
     })();
@@ -65,11 +51,8 @@ export async function wikilinkCompletionSource(
   }
 
   if (lastResults.length === 0) {
-    console.log('[Wikilink Autocomplete] No results to show');
     return null;
   }
-
-  console.log('[Wikilink Autocomplete] Showing', lastResults.length, 'results');
 
   return {
     from,
@@ -84,7 +67,6 @@ export async function wikilinkCompletionSource(
 }
 
 export function createWikilinkAutocomplete() {
-  console.log('[Wikilink Autocomplete] Extension created');
   return autocompletion({
     override: [wikilinkCompletionSource],
     activateOnTyping: true,

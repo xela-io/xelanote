@@ -2,6 +2,8 @@
   import { X } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import { bottomsheet } from '$lib/actions/bottomsheet';
+
   const {
     currentStep,
     onSnooze,
@@ -63,6 +65,7 @@
     tabindex="-1"
     class="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border rounded-t-2xl shadow-lg pb-safe animate-bottom-sheet focus:outline-none"
     onkeydown={handleKeydown}
+    use:bottomsheet={{ onClose: onSnooze }}
   >
     <!-- Handle bar -->
     <div class="flex justify-center pt-3 pb-1">

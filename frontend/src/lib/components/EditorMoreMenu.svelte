@@ -15,6 +15,7 @@
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import { bottomsheet } from '$lib/actions/bottomsheet';
   import { FEATURE_FLAGS } from '$lib/config';
   import * as autosave from '$lib/stores/autosave.svelte';
 
@@ -104,6 +105,7 @@
   tabindex="-1"
   onkeydown={handleKeydown}
   onclick={handleMenuClick}
+  use:bottomsheet={{ onClose }}
 >
   <!-- Mobile handle -->
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>

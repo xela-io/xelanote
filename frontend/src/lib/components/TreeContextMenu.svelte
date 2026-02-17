@@ -2,6 +2,8 @@
   import { Edit3, Palette, Share2, Trash2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import { bottomsheet } from '$lib/actions/bottomsheet';
+
   import type { TreeNode } from '$lib/stores/tree.svelte';
 
   interface Props {
@@ -81,6 +83,7 @@
   tabindex="-1"
   onkeydown={handleKeydown}
   onclick={handleMenuClick}
+  use:bottomsheet={{ onClose }}
 >
   <!-- Mobile handle -->
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>

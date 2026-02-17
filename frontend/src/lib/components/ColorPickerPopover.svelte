@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Hash, Palette, X } from 'lucide-svelte';
 
+  import { bottomsheet } from '$lib/actions/bottomsheet';
   import { sanitizeColor } from '$lib/editor/markdown';
 
   interface Props {
@@ -99,6 +100,7 @@
   role="dialog"
   aria-label="Textfarbe wählen"
   tabindex="-1"
+  use:bottomsheet={{ onClose }}
 >
   <!-- Mobile handle bar -->
   <div class="md:hidden flex justify-center pt-2 pb-1">

@@ -711,7 +711,7 @@ html {
   overflow: hidden;
 }
 
-.cm-editor .cm-live-preview-line {
+.cm-editor .cm-live-line-metrics {
   line-height: 1.7;
 }
 

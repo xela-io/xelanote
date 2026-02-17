@@ -59,6 +59,10 @@ describe('live-preview', () => {
     expect(checkbox).not.toBeNull();
     expect(checkbox?.dataset.line).toBe('2');
     expect(checkbox?.dataset.checked).toBe('false');
+    const taskLineText = view.dom.querySelectorAll('.cm-line')[1]?.textContent ?? '';
+    expect(taskLineText).not.toContain('-');
+    const taskLine = view.dom.querySelectorAll('.cm-line')[1] as HTMLElement | undefined;
+    expect(taskLine?.classList.contains('cm-live-task-line')).toBe(true);
 
     view.destroy();
   });

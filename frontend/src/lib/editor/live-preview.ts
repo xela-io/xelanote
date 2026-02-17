@@ -534,7 +534,7 @@ function buildDecorations(
         const text = line.text;
         const base = line.from;
         const isActiveLine = activeLines.has(line.number);
-        const lineClasses: string[] = [];
+        const lineClasses: string[] = ['cm-live-line-metrics'];
 
         const primitives = getLinePrimitives(line.number, text);
         const treeTask = treeFeatures.tasksByLine.get(line.number);
@@ -558,6 +558,10 @@ function buildDecorations(
                 }
               : null;
         const listMarkerInfo = !taskInfo ? primitives.listMarker : null;
+        if (taskInfo) {
+          // Keep task-line layout stable even when active to avoid checkbox shifting.
+          lineClasses.push('cm-live-task-line');
+        }
 
         if (!isActiveLine) {
           lineClasses.push('cm-live-preview-line');
@@ -566,9 +570,6 @@ function buildDecorations(
           }
           if (primitives.blockquote) {
             lineClasses.push('cm-live-blockquote');
-          }
-          if (taskInfo) {
-            lineClasses.push('cm-live-task-line');
           }
           if (listMarkerInfo) {
             lineClasses.push('cm-live-list-item');
@@ -617,7 +618,7 @@ function buildDecorations(
           );
         }
 
-        if (!isActiveLine && taskInfo) {
+        if (taskInfo) {
           const markerFrom = base;
           const markerTo = base + taskInfo.markerLength;
           builder.add(markerFrom, markerTo, hiddenSyntaxDecoration);

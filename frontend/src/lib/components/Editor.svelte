@@ -243,11 +243,18 @@
     // loading note to avoid one-time failed loads that leave currentNote null.
     if (!noteId || !auth.isAuthenticated()) return;
 
+    const encryptionUnlocked = encryption.isEncryptionUnlocked();
+    const noteError = notes.getError();
     const currentNote = notes.getCurrentNote();
-    // Only load if this is a different note or no note is loaded
-    if (!currentNote || currentNote.id !== noteId) {
-      notes.loadNote(noteId);
-    }
+    const noteLoaded = currentNote?.id === noteId;
+
+    if (noteLoaded) return;
+
+    // Avoid retry loops while vault is locked. After unlock, this effect reruns
+    // and loads the note automatically.
+    if (!encryptionUnlocked && noteError === 'ENCRYPTION_LOCKED') return;
+
+    notes.loadNote(noteId);
   });
 
   const initEditor = initEditorAction({

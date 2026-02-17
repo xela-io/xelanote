@@ -52,7 +52,6 @@
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
-  import ChangelogDialog from './ChangelogDialog.svelte';
   import CreateFolderDialog from './CreateFolderDialog.svelte';
   import CreateNoteDialog from './CreateNoteDialog.svelte';
   import FeedbackDialog from './FeedbackDialog.svelte';
@@ -63,13 +62,11 @@
   import UnifiedTree from './UnifiedTree.svelte';
   import VirtualizedTree from './VirtualizedTree.svelte';
 
-  let appVersion = $state('');
   let isDropZoneActive = $state(false);
   let touchDragActive = $state(false);
   let showCreateNoteDialog = $state(false);
   let showCreateFolderDialog = $state(false);
   let showFeedbackDialog = $state(false);
-  let showChangelogDialog = $state(false);
 
   // Resize state
   let isResizing = $state(false);
@@ -166,9 +163,6 @@
       loadShared: sharing.loadAllShared,
       loadJournalFeature: features.loadJournalFeature,
       loadRecipeFeature: features.loadRecipeFeature,
-      setAppVersion: (version) => {
-        appVersion = version;
-      },
       startInterval: (handler, ms) => window.setInterval(handler, ms),
       clearInterval: (id) => window.clearInterval(id),
     })
@@ -369,33 +363,6 @@
         </div>
       </div>
 
-      <!-- Search row -->
-      <div class="flex items-center gap-1 px-2 py-1.5 border-b border-sidebar-border shrink-0">
-        <button
-          onclick={() => ui.toggleQuickSwitcher()}
-          class="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-          title="{$_('page.sidebar.search')} (Ctrl+P)"
-          aria-label={$_('page.sidebar.search')}
-        >
-          <Search size={16} />
-          <span class="text-muted-foreground">{$_('page.sidebar.search')}...</span>
-          <span class="ml-auto text-xs text-muted-foreground">Ctrl+P</span>
-        </button>
-        {#if features.getGraphFeatureEnabled()}
-          <button
-            onclick={() => {
-              goto('/graph');
-              ui.closeSidebarOnMobile();
-            }}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors toolbar-btn"
-            title="{$_('page.sidebar.graph')} (Ctrl+G)"
-            aria-label={$_('page.sidebar.graph')}
-          >
-            <Network size={16} />
-          </button>
-        {/if}
-      </div>
-
       <!-- Notes Tree (main content - maximized space) -->
       <div
         class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2 thin-scrollbar"
@@ -510,23 +477,34 @@
         </div>
       {/if}
 
-      <!-- Footer: User info + Controls -->
+      <!-- Footer: Controls -->
       <div class="border-t border-sidebar-border shrink-0 pb-safe">
-        <!-- User info - compact -->
-        {#if auth.getCurrentUser()}
-          <div class="px-4 py-1.5 text-xs text-muted-foreground truncate">
-            {auth.getCurrentUser()?.email}{#if appVersion}<button
-                onclick={() => (showChangelogDialog = true)}
-                class="opacity-60 hover:opacity-100 hover:text-primary transition-[opacity,color] cursor-pointer"
-                title="Changelog"
-              >
-                · {appVersion}</button
-              >{/if}
-          </div>
-        {/if}
-
         <!-- Controls - compact row -->
         <div class="px-2 py-2 flex items-center gap-1">
+          <button
+            onclick={() => {
+              ui.toggleQuickSwitcher();
+              ui.closeSidebarOnMobile();
+            }}
+            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+            title="{$_('page.sidebar.search')} (Ctrl+P)"
+            aria-label={$_('page.sidebar.search')}
+          >
+            <Search size={smallIconSize} />
+          </button>
+          {#if features.getGraphFeatureEnabled()}
+            <button
+              onclick={() => {
+                goto('/graph');
+                ui.closeSidebarOnMobile();
+              }}
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+              title="{$_('page.sidebar.graph')} (Ctrl+G)"
+              aria-label={$_('page.sidebar.graph')}
+            >
+              <Network size={smallIconSize} />
+            </button>
+          {/if}
           <ThemeSelector />
           <button
             onclick={() => {
@@ -612,30 +590,6 @@
             <ChevronLeft size={mainIconSize} />
           </button>
         </div>
-      </div>
-
-      <!-- Search row -->
-      <div class="flex items-center gap-1 px-2 py-1.5 border-b border-sidebar-border shrink-0">
-        <button
-          onclick={() => ui.toggleQuickSwitcher()}
-          class="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-          title="{$_('page.sidebar.search')} (Ctrl+P)"
-          aria-label={$_('page.sidebar.search')}
-        >
-          <Search size={16} />
-          <span class="text-muted-foreground">{$_('page.sidebar.search')}...</span>
-          <span class="ml-auto text-xs text-muted-foreground">Ctrl+P</span>
-        </button>
-        {#if features.getGraphFeatureEnabled()}
-          <button
-            onclick={() => goto('/graph')}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
-            title="{$_('page.sidebar.graph')} (Ctrl+G)"
-            aria-label={$_('page.sidebar.graph')}
-          >
-            <Network size={16} />
-          </button>
-        {/if}
       </div>
 
       <!-- Notes Tree (main content - maximized space) -->
@@ -743,23 +697,28 @@
         </div>
       {/if}
 
-      <!-- Footer: User info + Controls -->
+      <!-- Footer: Controls -->
       <div class="border-t border-sidebar-border shrink-0 pb-safe">
-        <!-- User info - compact -->
-        {#if auth.getCurrentUser()}
-          <div class="px-4 py-1.5 text-xs text-muted-foreground truncate">
-            {auth.getCurrentUser()?.email}{#if appVersion}<button
-                onclick={() => (showChangelogDialog = true)}
-                class="opacity-60 hover:opacity-100 hover:text-primary transition-[opacity,color] cursor-pointer"
-                title="Changelog"
-              >
-                · {appVersion}</button
-              >{/if}
-          </div>
-        {/if}
-
         <!-- Controls - compact row -->
         <div class="px-2 py-2 flex items-center gap-0.5">
+          <button
+            onclick={() => ui.toggleQuickSwitcher()}
+            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+            title="{$_('page.sidebar.search')} (Ctrl+P)"
+            aria-label={$_('page.sidebar.search')}
+          >
+            <Search size={smallIconSize} />
+          </button>
+          {#if features.getGraphFeatureEnabled()}
+            <button
+              onclick={() => goto('/graph')}
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+              title="{$_('page.sidebar.graph')} (Ctrl+G)"
+              aria-label={$_('page.sidebar.graph')}
+            >
+              <Network size={smallIconSize} />
+            </button>
+          {/if}
           <ThemeSelector />
           <button
             onclick={() => goto('/settings')}
@@ -970,11 +929,6 @@
 <!-- Feedback Dialog -->
 {#if showFeedbackDialog}
   <FeedbackDialog open={true} onClose={() => (showFeedbackDialog = false)} />
-{/if}
-
-<!-- Changelog Dialog -->
-{#if showChangelogDialog}
-  <ChangelogDialog open={true} version={appVersion} onClose={() => (showChangelogDialog = false)} />
 {/if}
 
 <style>

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sidebar: E-Mail und Changelog-Button entfernt** — Die Benutzer-E-Mail wird nicht mehr in der Seitenleiste angezeigt; der Versions-/Changelog-Button im Footer wurde ebenfalls entfernt (mobile + desktop).
 - **Editor shows stale content when switching notes** — Preview updated immediately while CodeMirror kept showing the old note; caused by `isLoading` guard blocking the editor update effect after `currentNote` was already set; also debounce headings extraction and split-mode preview rendering to reduce per-keystroke work
 - **Unlock modal flashes on every page refresh** — Race condition: `loadNotes()` fires before async KEK restore completes, `encryption.getUserID()` returns null so silent restore is skipped; now falls back to `auth.getCurrentUser()?.id` which is available immediately
 - **Editor panels always visible on mobile** — Summary, Tags and Backlinks panels no longer take up fixed space at the bottom on mobile; they now sit below the editor/preview content and appear when scrolling down (restoring the pre-PWA-fix behavior for touch devices)
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Auto-lock timeout "never" (0) reset to 15 minutes** — Fix `||` to `??` (nullish coalescing) so a timeout value of 0 is preserved instead of being treated as falsy and replaced with the default 15 minutes
 - **Task checkbox toggles wrong item with ordered lists** — `markdown-it-task-lists` generates `task-list-item` for both ordered (`1. [ ]`) and unordered (`- [ ]`) lists, but the toggle regex only matched unordered markers, causing an index offset that toggled the wrong checkbox
 - **Task checkbox toggle broken when clicking label text** — Clicking the text of a task item (not the checkbox square) failed silently due to `<label>` click timing; read HTML `checked` attribute instead of DOM property and prevent browser-side toggling; also harden `taskCollapse` to use the same attribute-based check
+- **Task checkbox toggles seemingly random items in some lists** — Preview toggle mapping now skips empty task markers (`- [ ] `), adds `data-task-line` source mapping, and toggles by source line with index fallback; prevents wrong-item toggles when rendered checkbox count differs from raw markdown marker count
 - **Note title hidden on narrow screens** — Guarantee minimum 120px for the title column in the editor toolbar grid and allow the toolbar buttons to shrink and scroll horizontally instead of squeezing the title off-screen
 - **Journal note title not editable** — Make title input readonly for journal notes in editor toolbar, matching backend enforcement; visual cues (reduced opacity, no focus ring) indicate non-editable state
 - **Mouse wheel scrolling in Chrome PWA** — Restructure Editor layout from single `overflow-auto` container to flex column with constrained heights so CodeMirror and preview scroll internally via their own scroll containers; also change `overscroll-behavior-y` from `none` to `contain` and scope `touch-action: manipulation` to touch devices only
@@ -37,8 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Graph UI modernisiert (theme-adaptiv)** — Graph-Canvas nutzt jetzt Theme-Tokens statt fixer Farben (Nodes, Edges, Hintergrund, Tooltip), reagiert live auf Theme-Wechsel und hat ein visuelles Fokus-Highlighting fuer ausgewählten Knoten + Nachbarn. Controls wurden als moderne Card/Glass-Leiste mit kompakter Legende ueberarbeitet. Neu: Floating Toolbar mit `Fit`, `Reset`, `Center Selected`, Fokus-Toggle (`Nur Nachbarn`) und Zoom-Status sowie zoomabhaengige Detailstufen (LOD) fuer Labels/Link-Visuals.
 - **Phased startup initialization** — `initializeApp()` split into 3 phases for faster time-to-interactive: Phase 1 (Critical) runs IndexedDB/Sodium/Auth in parallel and restores UI from localStorage; Phase 2 (After First Paint via rAF+setTimeout) loads notes, encryption, WebSocket, and web-vitals; Phase 3 (Idle via requestIdleCallback) handles error reporting, feature detection, and background sync. Activity listeners now register immediately after auth confirmation (security). Web-vitals moved to after-first-paint to capture early FCP/LCP metrics.
 - **SQLite WAL mode + performance pragmas** — Default journal mode switched from DELETE to WAL with `synchronous=NORMAL` for lower write latency and better concurrent read performance. Added `busy_timeout=5000` to prevent SQLITE_BUSY under load. `PRAGMA optimize` runs at startup, daily (background scheduler), and on shutdown. Journal mode is configurable via `XELANOTE_JOURNAL_MODE` env var (`wal` default, `delete` fallback for problematic volumes).
+- **Editor preview action lifecycle** — Removed forced preview remount on every render (`#key renderedContent`) and reduced action churn for task collapse/sortable via rAF-scheduled refresh and instance reuse; lowers DOM work and improves responsiveness while typing in split/preview mode
 
 ### Fixed
 

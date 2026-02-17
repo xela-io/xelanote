@@ -566,6 +566,9 @@ function buildDecorations(
         if (primitives.heading) {
           lineClasses.push(`cm-live-heading-h${primitives.heading.level}`);
         }
+        if (showHeadingToggle) {
+          lineClasses.push('cm-live-heading-toggle-line');
+        }
         if (!isActiveLine) {
           lineClasses.push('cm-live-preview-line');
           if (primitives.blockquote) {

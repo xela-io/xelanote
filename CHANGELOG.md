@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Live-Preview Heading-Toggle eingerückt** — Das `+ / −`-Symbol für einklappbare Überschriften wird jetzt links außerhalb des Textflusses positioniert; der Überschriftentext bleibt bündig mit dem restlichen Inhalt.
 - **Live-Preview Heading-Format auf aktiver Zeile** — Beim Klick auf eine Überschrift in der Live-Preview bleibt die Markdown-Syntax (`#`) sichtbar, aber die Zeile behält weiterhin das Überschriften-Styling (z. B. fett/größer).
 - **Live-Editor Listenmarker nicht bündig** — Unordered-Marker werden im Live-Preview nicht mehr als `•`-Glyph (fontabhängig), sondern als CSS-Kreis gerendert; Ordered- und Unordered-Listen teilen sich eine einheitliche Marker-Spalte für konsistente Ausrichtung.
 - Live-Preview tests stabilized for auth init flow by mocking initial `/auth/me` probe fetch in SEC-001 and E2E auth tests; removes nondeterministic network-error path in Vitest

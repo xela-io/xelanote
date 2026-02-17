@@ -800,19 +800,28 @@ html {
   display: none;
 }
 
+.cm-editor .cm-line.cm-live-heading-toggle-line {
+  position: relative;
+}
+
 .cm-editor .cm-live-heading-toggle {
+  position: absolute;
+  left: -1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
   border: 0;
   background: transparent;
   color: var(--color-muted-foreground);
   cursor: pointer;
-  margin-right: 0.4rem;
-  margin-left: -0.1rem;
+  margin: 0;
   font-size: 0.8em;
   line-height: 1;
-  width: auto;
-  height: auto;
+  width: 1rem;
+  height: 1rem;
   padding: 0;
-  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cm-editor .cm-live-heading-toggle:hover {

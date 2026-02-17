@@ -7,6 +7,7 @@ import Sortable from 'sortablejs';
 
 export interface TaskSortableOptions {
   onReorder: (fromIndex: number, toIndex: number) => void;
+  revision?: string | number;
 }
 
 /**
@@ -14,14 +15,24 @@ export interface TaskSortableOptions {
  * Handles cleanup on unmount and re-initialization when content changes.
  */
 export function taskSortable(container: HTMLElement, options: TaskSortableOptions) {
-  let instances: Sortable[] = [];
+  let instancesByList = new Map<HTMLElement, Sortable>();
+  let rafId: number | null = null;
 
-  function init() {
-    destroy(); // Clean up old instances
+  function refresh() {
+    const lists = Array.from(container.querySelectorAll('ul.contains-task-list')) as HTMLElement[];
+    const activeLists = new Set(lists);
 
-    const lists = container.querySelectorAll('ul.contains-task-list');
+    // Remove instances for lists that no longer exist
+    for (const [list, instance] of instancesByList) {
+      if (!activeLists.has(list)) {
+        instance.destroy();
+        instancesByList.delete(list);
+      }
+    }
 
     lists.forEach((list) => {
+      if (instancesByList.has(list)) return;
+
       const sortable = Sortable.create(list as HTMLElement, {
         animation: 150,
         handle: '.drag-handle',
@@ -90,23 +101,35 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
         },
       });
 
-      instances.push(sortable);
+      instancesByList.set(list, sortable);
+    });
+  }
+
+  function scheduleRefresh() {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      refresh();
     });
   }
 
   function destroy() {
-    instances.forEach((s) => s.destroy());
-    instances = [];
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    instancesByList.forEach((s) => s.destroy());
+    instancesByList.clear();
   }
 
   // Initial setup
-  init();
+  scheduleRefresh();
 
   return {
-    // Re-initialize when content changes (Svelte will call this on prop updates)
+    // Refresh when preview HTML changes (controlled via options.revision)
     update: (newOptions: TaskSortableOptions) => {
       options = newOptions;
-      init();
+      scheduleRefresh();
     },
     // Cleanup on unmount
     destroy,

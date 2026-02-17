@@ -10,6 +10,7 @@ export interface TaskCollapseOptions {
   completedLabel: (count: number) => string;
   completedAriaLabel: (count: number) => string;
   noteId: string;
+  revision?: string | number;
 }
 
 // Persist collapse state across re-renders (noteId-listIndex -> open)
@@ -19,6 +20,7 @@ const CHEVRON_SVG = `<svg class="chevron-icon" aria-hidden="true" viewBox="0 0 2
 
 export function taskCollapse(container: HTMLElement, options: TaskCollapseOptions) {
   let cleanups: (() => void)[] = [];
+  let rafId: number | null = null;
 
   function init() {
     const lists = container.querySelectorAll('ul.contains-task-list');
@@ -95,16 +97,28 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
     cleanups = [];
   }
 
+  function scheduleInit() {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      cleanup();
+      init();
+    });
+  }
+
   // Initial setup
-  init();
+  scheduleInit();
 
   return {
     update(newOptions: TaskCollapseOptions) {
       options = newOptions;
-      cleanup();
-      init();
+      scheduleInit();
     },
     destroy() {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
       cleanup();
     },
   };

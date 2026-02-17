@@ -78,9 +78,9 @@
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
   import { createSplitResizeController } from '$lib/editor/split-resize';
-  import { taskCollapse } from '$lib/editor/task-collapse';
+  import { taskCollapse, type TaskCollapseOptions } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
-  import { taskSortable } from '$lib/editor/task-sortable';
+  import { taskSortable, type TaskSortableOptions } from '$lib/editor/task-sortable';
   import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
@@ -114,6 +114,20 @@
 
   let editorView = $state<EditorView | undefined>(undefined);
   let renderedContent = $state('');
+  const completedLabel = (count: number) =>
+    $_('component.editor.completed_count', { values: { count } });
+  const completedAriaLabel = (count: number) =>
+    $_('component.editor.completed_toggle', { values: { count } });
+  let taskCollapseOptions = $state<TaskCollapseOptions>({
+    completedLabel,
+    completedAriaLabel,
+    noteId: '',
+    revision: '',
+  });
+  let taskSortableOptions = $state<TaskSortableOptions>({
+    onReorder: (fromIndex, toIndex) => handleTaskReorder(fromIndex, toIndex),
+    revision: '',
+  });
   let lastTaskClickTime = 0; // Timestamp-based debounce for task checkbox clicks
   let showMoveDialog = $state(false);
   let showVersionHistory = $state(false);
@@ -206,11 +220,19 @@
     if (mode === 'split') {
       const timer = setTimeout(() => {
         renderedContent = renderMarkdown(content, { titleToIdMap: map });
+        taskCollapseOptions.revision = renderedContent;
+        taskSortableOptions.revision = renderedContent;
       }, 150);
       return () => clearTimeout(timer);
     } else {
       renderedContent = renderMarkdown(content, { titleToIdMap: map });
+      taskCollapseOptions.revision = renderedContent;
+      taskSortableOptions.revision = renderedContent;
     }
+  });
+
+  $effect(() => {
+    taskCollapseOptions.noteId = noteId;
   });
 
   // Reactive: load note when ID changes
@@ -932,27 +954,19 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <!-- Intentional: Click handler delegates to interactive elements (wikilinks, checkboxes) in rendered markdown. These elements are natively interactive in the HTML output. -->
-            {#key renderedContent}
-              <div
-                class="markdown-preview"
-                onclick={handlePreviewClickLocal}
-                use:taskCollapse={{
-                  completedLabel: (n) =>
-                    $_('component.editor.completed_count', { values: { count: n } }),
-                  completedAriaLabel: (n) =>
-                    $_('component.editor.completed_toggle', { values: { count: n } }),
-                  noteId,
-                }}
-                use:taskSortable={{ onReorder: handleTaskReorder }}
-                use:imageResize={{ onResize: handleImageResize }}
-                use:highlightSearchTerms={{
-                  query: showFindReplace ? findReplaceQuery : '',
-                  caseSensitive: findReplaceCaseSensitive,
-                }}
-              >
-                {@html renderedContent}
-              </div>
-            {/key}
+            <div
+              class="markdown-preview"
+              onclick={handlePreviewClickLocal}
+              use:taskCollapse={taskCollapseOptions}
+              use:taskSortable={taskSortableOptions}
+              use:imageResize={{ onResize: handleImageResize }}
+              use:highlightSearchTerms={{
+                query: showFindReplace ? findReplaceQuery : '',
+                caseSensitive: findReplaceCaseSensitive,
+              }}
+            >
+              {@html renderedContent}
+            </div>
           </div>
         {/if}
       </div>

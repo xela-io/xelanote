@@ -150,6 +150,17 @@ describe('live-preview', () => {
     view.destroy();
   });
 
+  it('keeps heading styling for active heading lines with visible markdown syntax', () => {
+    const doc = '# Heading\nSecond';
+    const view = createView(doc, 0);
+
+    const activeLine = view.dom.querySelectorAll('.cm-line')[0] as HTMLElement | undefined;
+    expect(activeLine?.classList.contains('cm-live-heading-h1')).toBe(true);
+    expect(activeLine?.textContent).toContain('# Heading');
+
+    view.destroy();
+  });
+
   it('keeps active line in raw markdown mode', () => {
     const doc = '**Bold**\nSecond';
     const view = createView(doc, 0);
@@ -166,7 +177,7 @@ describe('live-preview', () => {
 
     const marker = view.dom.querySelector('.cm-live-list-marker') as HTMLElement | null;
     expect(marker).not.toBeNull();
-    expect(marker?.textContent).toBe('• ');
+    expect(marker?.textContent).toBe('•');
 
     view.destroy();
   });

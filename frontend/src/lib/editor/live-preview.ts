@@ -563,17 +563,19 @@ function buildDecorations(
           lineClasses.push('cm-live-task-line');
         }
 
+        if (primitives.heading) {
+          lineClasses.push(`cm-live-heading-h${primitives.heading.level}`);
+        }
         if (!isActiveLine) {
           lineClasses.push('cm-live-preview-line');
-          if (primitives.heading) {
-            lineClasses.push(`cm-live-heading-h${primitives.heading.level}`);
-          }
           if (primitives.blockquote) {
             lineClasses.push('cm-live-blockquote');
           }
-          if (listMarkerInfo) {
-            lineClasses.push('cm-live-list-item');
-          }
+        }
+        if (listMarkerInfo) {
+          lineClasses.push('cm-live-list-item');
+        }
+        if (!isActiveLine) {
           if (structuredLines.codeFenceLines.has(line.number)) {
             lineClasses.push('cm-live-code-fence');
           } else if (structuredLines.codeContentLines.has(line.number)) {
@@ -666,7 +668,7 @@ function buildDecorations(
             const toPos = fromPos + listMarkerInfo.marker.length + listMarkerInfo.spacingLength;
             const marker = listMarkerInfo.marker;
             const isOrderedMarker = /^\d+[.)]$/.test(marker);
-            const markerWidgetText = isOrderedMarker ? marker : '';
+            const markerWidgetText = isOrderedMarker ? marker : '•';
             const markerClassName = isOrderedMarker
               ? 'cm-live-list-marker cm-live-list-marker-ordered'
               : 'cm-live-list-marker cm-live-list-marker-unordered';

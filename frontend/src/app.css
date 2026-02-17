@@ -630,6 +630,10 @@ html {
   height: 100%;
   font-family: var(--font-mono);
   font-size: 1rem; /* 16px on mobile to prevent iOS auto-zoom */
+  --live-preview-line-height: 1.7;
+  --live-preview-marker-column-width: 2.5ch;
+  --live-preview-marker-gap: 0.35rem;
+  --live-preview-checkbox-size: 0.95rem;
 }
 
 /* Desktop: smaller font for more compact view */
@@ -712,7 +716,7 @@ html {
 }
 
 .cm-editor .cm-live-line-metrics {
-  line-height: 1.7;
+  line-height: var(--live-preview-line-height);
 }
 
 .cm-editor .cm-live-preview-link,
@@ -747,11 +751,11 @@ html {
   font-style: italic;
 }
 
-/* Hanging indent for task lines.
-   Keep continuation lines visually aligned with text after the inline checkbox. */
-.cm-editor .cm-line.cm-live-task-line {
-  padding-left: 1.25em;
-  text-indent: -1.85em;
+/* Keep wrapped continuation lines aligned across task and list lines. */
+.cm-editor .cm-line.cm-live-task-line,
+.cm-editor .cm-line.cm-live-list-item {
+  padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap));
+  text-indent: calc(-1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)));
 }
 
 .cm-editor .cm-live-task-checkbox {
@@ -759,15 +763,15 @@ html {
   user-select: none;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 1.1em;
-  margin-right: 0.15rem;
+  justify-content: flex-end;
+  min-width: var(--live-preview-marker-column-width);
+  margin-right: var(--live-preview-marker-gap);
   vertical-align: baseline;
 }
 
 .cm-editor .cm-live-task-checkbox-input {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: var(--live-preview-checkbox-size);
+  height: var(--live-preview-checkbox-size);
   margin: 0;
   pointer-events: none;
   accent-color: var(--color-primary);
@@ -777,19 +781,15 @@ html {
   color: var(--color-muted-foreground);
   display: inline-flex;
   align-items: center;
-  min-width: 2.5ch;
+  justify-content: flex-end;
+  min-width: var(--live-preview-marker-column-width);
   text-align: right;
   font-variant-numeric: tabular-nums;
-  margin-right: 0.35rem;
+  margin-right: var(--live-preview-marker-gap);
 }
 
-.cm-editor .cm-live-list-marker-unordered::before {
-  content: '';
-  display: inline-block;
-  width: 0.35em;
-  height: 0.35em;
-  border-radius: 9999px;
-  background: currentColor;
+.cm-editor .cm-live-list-marker-unordered {
+  font-size: 0.95em;
 }
 
 .cm-editor .cm-live-collapsed-line {
@@ -880,24 +880,24 @@ html {
   color: var(--color-foreground);
 }
 
-.cm-editor .cm-live-preview-line.cm-live-heading-h1 {
+.cm-editor .cm-line.cm-live-heading-h1 {
   font-size: 2rem;
   font-weight: 700;
 }
 
-.cm-editor .cm-live-preview-line.cm-live-heading-h2 {
+.cm-editor .cm-line.cm-live-heading-h2 {
   font-size: 1.5rem;
   font-weight: 600;
 }
 
-.cm-editor .cm-live-preview-line.cm-live-heading-h3 {
+.cm-editor .cm-line.cm-live-heading-h3 {
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .cm-editor .cm-live-preview-line.cm-live-blockquote {
   border-left: 3px solid var(--color-border);
-  padding-left: 0.75rem;
+  padding-left: 1rem;
   color: var(--color-muted-foreground);
 }
 

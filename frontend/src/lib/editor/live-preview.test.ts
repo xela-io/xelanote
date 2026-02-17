@@ -1,6 +1,6 @@
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createLivePreviewExtension, toggleLivePreviewHeadingSection } from './live-preview';
 
@@ -14,11 +14,25 @@ function createView(doc: string, selectionAnchor = 0): EditorView {
     extensions: [createLivePreviewExtension()],
   });
 
-  return new EditorView({ state, parent });
+  const view = new EditorView({ state, parent });
+  // Simulate focus: JSDOM doesn't fire focus events properly, so manually
+  // focus + re-dispatch the selection to trigger active-line recalculation.
+  view.focus();
+  view.dispatch({ selection: EditorSelection.cursor(selectionAnchor) });
+  return view;
 }
 
 describe('live-preview', () => {
+  const originalHasFocus = document.hasFocus.bind(document);
+
+  beforeEach(() => {
+    // JSDOM doesn't support document.hasFocus(), but CodeMirror's view.hasFocus
+    // relies on it. Stub it so active-line detection works in tests.
+    document.hasFocus = () => true;
+  });
+
   afterEach(() => {
+    document.hasFocus = originalHasFocus;
     document.body.innerHTML = '';
   });
 

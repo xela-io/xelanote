@@ -440,6 +440,10 @@ function collectCompletedTaskGroups(
 function getActiveLines(view: EditorView): Set<number> {
   const lines = new Set<number>();
 
+  // When the editor doesn't have focus, no line should be considered active.
+  // This prevents the first line from showing raw markdown on load/note switch.
+  if (!view.hasFocus) return lines;
+
   for (const range of view.state.selection.ranges) {
     let currentLine = view.state.doc.lineAt(range.from);
     lines.add(currentLine.number);
@@ -1003,8 +1007,9 @@ const livePreviewPlugin = ViewPlugin.fromClass(
 
     update(update: ViewUpdate) {
       const reason = this.describeUpdateReason(update);
-      const nextActiveLines = update.selectionSet ? getActiveLines(update.view) : this.activeLines;
-      const nextActiveLinesSignature = update.selectionSet
+      const shouldRecalcActive = update.selectionSet || update.focusChanged;
+      const nextActiveLines = shouldRecalcActive ? getActiveLines(update.view) : this.activeLines;
+      const nextActiveLinesSignature = shouldRecalcActive
         ? activeLinesKey(nextActiveLines)
         : this.activeLinesSignature;
       const selectionAffectsRendering =

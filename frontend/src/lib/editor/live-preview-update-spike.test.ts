@@ -1,6 +1,6 @@
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createLivePreviewExtension, setLivePreviewProfilerSink } from './live-preview';
 
@@ -51,7 +51,12 @@ function summarize(samples: ProfileSample[]): Record<string, { avg: number; coun
 }
 
 describe('live-preview update spike', () => {
+  beforeEach(() => {
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+  });
+
   afterEach(() => {
+    vi.restoreAllMocks();
     setLivePreviewProfilerSink(null);
     document.body.innerHTML = '';
   });
@@ -66,6 +71,7 @@ describe('live-preview update spike', () => {
       extensions: [createLivePreviewExtension()],
     });
     const view = new EditorView({ state, parent });
+    view.focus();
 
     const allSamples: ProfileSample[] = [];
     const runScenario = (run: () => void) => {

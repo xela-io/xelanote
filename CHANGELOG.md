@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Live-Preview zeigt Markdown auf erster Zeile beim Laden** — Beim Öffnen einer Notiz oder Neuladen stand der Cursor auf Zeile 1, wodurch die Live-Preview den rohen Markdown-Code anzeigte; jetzt werden bei unfokussiertem Editor keine Zeilen als aktiv markiert, und beim Fokussieren werden die Dekorationen korrekt neu berechnet.
 - **Task-Listen Zeilenumbruch bündig** — Umgebrochener Text in Todo-Einträgen ist jetzt bündig mit dem Textanfang nach der Checkbox; Checkbox-Ersetzung schließt den Leerraum nach `[x]` ein, hanging indent wird per Inline-Style statt nur CSS-Klasse gesetzt.
 - **Live-Preview Heading-Toggle eingerückt** — Das `+ / −`-Symbol für einklappbare Überschriften wird jetzt links außerhalb des Textflusses positioniert; der Überschriftentext bleibt bündig mit dem restlichen Inhalt.
 - **Live-Preview Heading-Format auf aktiver Zeile** — Beim Klick auf eine Überschrift in der Live-Preview bleibt die Markdown-Syntax (`#`) sichtbar, aber die Zeile behält weiterhin das Überschriften-Styling (z. B. fett/größer).

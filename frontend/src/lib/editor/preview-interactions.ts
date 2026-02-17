@@ -70,7 +70,9 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
         const checkboxIndex = taskItem
           ? parseInt(taskItem.getAttribute('data-task-index') || '-1', 10)
           : -1;
-        const lineNumber = taskItem ? parseInt(taskItem.getAttribute('data-task-line') || '-1', 10) : -1;
+        const lineNumber = taskItem
+          ? parseInt(taskItem.getAttribute('data-task-line') || '-1', 10)
+          : -1;
         options.log?.(
           '[TaskSort] Checkbox index:',
           checkboxIndex,

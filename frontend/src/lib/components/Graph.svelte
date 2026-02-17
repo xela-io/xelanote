@@ -17,7 +17,9 @@
   <GraphControls />
   <div class="flex-1 relative p-3 pt-0">
     {#if graph.getLoading()}
-      <div class="absolute inset-0 flex items-center justify-center gap-2 bg-background/85 backdrop-blur-sm z-20">
+      <div
+        class="absolute inset-0 flex items-center justify-center gap-2 bg-background/85 backdrop-blur-sm z-20"
+      >
         <Loader class="animate-spin" size={24} />
         <span>{$_('component.graph.loading')}</span>
       </div>

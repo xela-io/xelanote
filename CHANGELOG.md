@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fix ESLint errors: prefer-const for $state vars, use SvelteSet for reactive Sets, sort imports, prefix unused params
+- Fix Prettier formatting in Graph components and preview-interactions
 
 ### Security
 

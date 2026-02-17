@@ -13,7 +13,9 @@
 </script>
 
 <div class="px-4 pt-4 pb-3 border-b border-border/70 bg-background/80 backdrop-blur-sm">
-  <div class="flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-2 shadow-sm">
+  <div
+    class="flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-2 shadow-sm"
+  >
     <Search size={17} class="text-muted-foreground" />
     <input
       bind:value={searchQuery}
@@ -22,7 +24,8 @@
       placeholder={$_('component.graph.search_placeholder')}
       class="flex-1 bg-transparent outline-none text-sm"
     />
-    <kbd class="hidden sm:inline-flex px-2 py-0.5 rounded border border-border text-[11px] text-muted-foreground"
+    <kbd
+      class="hidden sm:inline-flex px-2 py-0.5 rounded border border-border text-[11px] text-muted-foreground"
       >Ctrl+P</kbd
     >
     <button

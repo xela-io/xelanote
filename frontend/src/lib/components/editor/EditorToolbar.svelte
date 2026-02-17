@@ -17,6 +17,7 @@
     MoreVertical,
     RefreshCw,
     Save,
+    ScanEye,
     Wand2,
     WifiOff,
   } from 'lucide-svelte';
@@ -255,7 +256,7 @@
                 title={getModeLabel(editorMode)}
               >
                 {#if editorMode === 'live'}
-                  <span class="text-[10px] font-semibold leading-none tracking-tight">LP</span>
+                  <ScanEye size={16} />
                 {:else if editorMode === 'edit'}
                   <Edit size={16} />
                 {:else if editorMode === 'preview'}

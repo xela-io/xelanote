@@ -12,6 +12,7 @@
     Outdent,
     Palette,
     Save,
+    ScanEye,
     Share2,
     Sparkles,
     Trash2,
@@ -133,7 +134,7 @@
         role="menuitemradio"
         aria-checked={editorMode === 'live'}
       >
-        <span class="text-xs font-semibold w-[18px] text-center">LP</span>
+        <ScanEye size={16} />
         {$_('component.editor.toolbar.mode_live')}
       </button>
       <button

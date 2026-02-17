@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replace "LP" text label with ScanEye icon for live preview mode toggle in toolbar and menu
 - Switch app font from monospace/system to Inter (self-hosted via @fontsource/inter) for consistent rendering across all devices
 - Fix ESLint errors: prefer-const for $state vars, use SvelteSet for reactive Sets, sort imports, prefix unused params
 - Fix Prettier formatting in Graph components, API client, and Editor

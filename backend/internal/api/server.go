@@ -64,6 +64,8 @@ type Server struct {
 	// Recipe service
 	recipeService           *service.RecipeService
 	recipeSuggestionService *service.RecipeSuggestionService
+	// Canvas service
+	canvasService *service.CanvasService
 	// Telemetry service
 	telemetryService   *service.TelemetryService
 	perfMetricsLimiter *RateLimiter
@@ -89,6 +91,7 @@ type ServerConfig struct {
 	ErrorReportSvc   *service.ErrorReportService
 	RecipeService    *service.RecipeService
 	RecipeSuggestSvc *service.RecipeSuggestionService
+	CanvasService    *service.CanvasService
 	TelemetrySvc     *service.TelemetryService
 	JobManager       *jobs.JobManager
 	WSManager        *websocket.Manager

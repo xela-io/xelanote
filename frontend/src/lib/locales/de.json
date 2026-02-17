@@ -19,7 +19,9 @@
       "title": "Neue Notiz",
       "folder": "Ordner",
       "label": "Titel",
-      "placeholder": "Meine neue Notiz"
+      "placeholder": "Meine neue Notiz",
+      "type_note": "Notiz",
+      "type_canvas": "Canvas"
     },
     "create_folder": {
       "title": "Neuer Ordner",
@@ -711,7 +713,9 @@
         "journal_feature_title": "Journal (Tagebuch)",
         "journal_feature_description": "Aktiviert das tägliche Journal mit Kalendernavigation. Jeden Tag kann ein Eintrag erstellt werden.",
         "recipe_feature_title": "Rezepte (Kochbuch)",
-        "recipe_feature_description": "Aktiviert die Rezeptverwaltung mit Zutaten, Portionsskalierung und Kochbüchern."
+        "recipe_feature_description": "Aktiviert die Rezeptverwaltung mit Zutaten, Portionsskalierung und Kochbüchern.",
+        "canvas_feature_title": "Canvas (Endlose Tafel)",
+        "canvas_feature_description": "Aktiviert die unendliche Leinwand zum visuellen Organisieren von Notizen, Textkarten, Links und Gruppen auf einer freien Fläche."
       },
       "security": {
         "encryption_locked_title": "Verschlüsselung gesperrt",

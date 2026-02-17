@@ -29,6 +29,7 @@ export interface NoteTreeNode {
   folderPath: string;
   color?: string | null;
   aiEnabled?: boolean;
+  noteType?: string;
 }
 
 // State
@@ -281,6 +282,7 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
       displayOrder: note.display_order || 0,
       color: note.color,
       aiEnabled: note.ai_enabled,
+      noteType: note.note_type,
     };
 
     // Find the folder node for this note — O(1) via pathMap

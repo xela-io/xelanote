@@ -119,6 +119,7 @@ func main() {
 	turnstileService := initTurnstileService(logger)
 	recipeService := service.NewRecipeService(database, core.note)
 	recipeSuggestionService := service.NewRecipeSuggestionService(database, providerRouter, recipeService)
+	canvasService := service.NewCanvasService(database, core.note)
 	telemetryService := service.NewTelemetryService(database, logger)
 
 	// Create API server
@@ -144,6 +145,7 @@ func main() {
 		ErrorReportSvc:   errorReportService,
 		RecipeService:    recipeService,
 		RecipeSuggestSvc: recipeSuggestionService,
+		CanvasService:    canvasService,
 		TelemetrySvc:     telemetryService,
 		JobManager:       jobManager,
 		WSManager:        wsManager,

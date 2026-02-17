@@ -265,7 +265,7 @@ func (db *DB) QuickSearch(ctx context.Context, userID int, query string, limit i
 			SELECT id, title, content, folder_path, version, created_at, updated_at
 			FROM notes
 			WHERE user_id = ? AND is_deleted = 0
-			  AND COALESCE(note_type, 'note') = 'note'
+			  AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 			ORDER BY updated_at DESC
 			LIMIT ?
 		`, userID, limit)
@@ -299,7 +299,7 @@ func (db *DB) QuickSearch(ctx context.Context, userID int, query string, limit i
 		SELECT id, title, content, folder_path, version, created_at, updated_at
 		FROM notes
 		WHERE title_norm LIKE ? AND user_id = ? AND is_deleted = 0
-		  AND COALESCE(note_type, 'note') = 'note'
+		  AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 		ORDER BY
 			CASE WHEN title_norm LIKE ? THEN 0 ELSE 1 END,
 			updated_at DESC

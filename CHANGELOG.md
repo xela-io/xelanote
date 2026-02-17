@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Infinite canvas feature (JSON Canvas spec v1.0) — visually organize notes, text cards, links, and groups on a free-form spatial board; uses @xyflow/svelte with 4 custom node types, 6 Gruvbox color presets, toolbar, context menu, auto-save, and .canvas export; user-togglable feature flag (disabled by default)
 - Collapsible completed task groups in live preview — groups of 2+ consecutive completed tasks show a bracket and [+]/[−] toggle; collapsed groups display a summary line; cursor auto-expands collapsed groups
 
 ### Changed

@@ -13,6 +13,7 @@ func (s *Server) registerProtectedResourceRoutes(r chi.Router) {
 	s.registerFeaturesRoutes(r)
 	s.registerJournalRoutes(r)
 	s.registerRecipeRoutes(r)
+	s.registerCanvasRoutes(r)
 	s.registerUserRoutes(r)
 }
 

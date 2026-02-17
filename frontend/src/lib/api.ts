@@ -3,6 +3,7 @@
 export * from './api/admin';
 export * from './api/ai';
 export * from './api/auth';
+export * from './api/canvas';
 export { ApiError, initApiAuth, refreshWithMutex, setOnOfflineEnqueue } from './api/client';
 export * from './api/config';
 export * from './api/due-dates';

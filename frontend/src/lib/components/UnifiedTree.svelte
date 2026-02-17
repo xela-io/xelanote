@@ -5,6 +5,7 @@
     FileText,
     Folder,
     FolderOpen,
+    LayoutDashboard,
     MoreVertical,
     Sparkles,
   } from 'lucide-svelte';
@@ -648,7 +649,11 @@
           class:dragging={isDragging}
           onclick={handleClick}
         >
-          <FileText size={folderIconSize} />
+          {#if node.noteType === 'canvas'}
+            <LayoutDashboard size={folderIconSize} />
+          {:else}
+            <FileText size={folderIconSize} />
+          {/if}
           <span class="node-name">{node.title}</span>
           {#if node.aiEnabled}
             <span class="ai-badge" title="KI aktiviert">

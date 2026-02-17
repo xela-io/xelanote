@@ -193,7 +193,7 @@ func (db *DB) ListNotes(userID int, limit int, cursor string, opts ListNotesOpti
 				SELECT %s
 				FROM notes
 				WHERE user_id = ?
-				  AND COALESCE(note_type, 'note') = 'note'
+				  AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 				  AND (is_deleted = 0 OR updated_at >= ?)
 				  AND (updated_at > ? OR (updated_at = ? AND id > ?))
 				ORDER BY updated_at ASC, id ASC
@@ -209,7 +209,7 @@ func (db *DB) ListNotes(userID int, limit int, cursor string, opts ListNotesOpti
 				SELECT %s
 				FROM notes
 				WHERE user_id = ?
-				  AND COALESCE(note_type, 'note') = 'note'
+				  AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 				  AND (is_deleted = 0 OR updated_at >= ?)
 				  AND (updated_at > ? OR (updated_at = ? AND id > ?))
 				ORDER BY updated_at ASC, id ASC
@@ -222,7 +222,7 @@ func (db *DB) ListNotes(userID int, limit int, cursor string, opts ListNotesOpti
 			rows, err = db.Query(fmt.Sprintf(`
 				SELECT %s
 				FROM notes
-				WHERE user_id = ? AND is_deleted = 0 AND COALESCE(note_type, 'note') = 'note'
+				WHERE user_id = ? AND is_deleted = 0 AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 				ORDER BY updated_at DESC, id DESC
 				LIMIT ?
 			`, cols), userID, limit+1)
@@ -235,7 +235,7 @@ func (db *DB) ListNotes(userID int, limit int, cursor string, opts ListNotesOpti
 			rows, err = db.Query(fmt.Sprintf(`
 				SELECT %s
 				FROM notes
-				WHERE user_id = ? AND is_deleted = 0 AND COALESCE(note_type, 'note') = 'note'
+				WHERE user_id = ? AND is_deleted = 0 AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 				  AND (updated_at < ? OR (updated_at = ? AND id < ?))
 				ORDER BY updated_at DESC, id DESC
 				LIMIT ?
@@ -302,7 +302,7 @@ func (db *DB) ListNotesByFolder(userID int, folderPath string, fields string) ([
 				SELECT %[1]s, 0 as is_shared
 				FROM notes
 				WHERE folder_path = ? AND user_id = ? AND is_deleted = 0
-				  AND COALESCE(note_type, 'note') = 'note'
+				  AND COALESCE(note_type, 'note') IN ('note', 'canvas')
 
 				UNION ALL
 

@@ -103,12 +103,18 @@ func (s *NoteService) UpdateNote(userID int, id, title, content, folderPath stri
 		return nil, err
 	}
 
-	// Reprocess links
-	if err := s.updateLinks(userID, id, content); err != nil {
-		// Log but don't fail
-		s.logger.Error("failed to update links after update", "err", err, "note_id", id, "user_id", userID)
+	// Canvas notes: extract links from JSON file nodes, skip markdown due-date parsing
+	if existingNote.NoteType == db.NoteTypeCanvas {
+		if err := s.updateCanvasLinks(userID, id, content); err != nil {
+			s.logger.Error("failed to update canvas links", "err", err, "note_id", id, "user_id", userID)
+		}
+	} else {
+		// Markdown notes: wikilink + due-date parsing
+		if err := s.updateLinks(userID, id, content); err != nil {
+			s.logger.Error("failed to update links after update", "err", err, "note_id", id, "user_id", userID)
+		}
+		s.updateDueDates(userID, id, content)
 	}
-	s.updateDueDates(userID, id, content)
 
 	s.cache.Set(noteCacheKey(userID, id), note)
 	if existingNote != nil {

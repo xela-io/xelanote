@@ -44,6 +44,7 @@ func NewServer(cfg ServerConfig) *Server {
 		summarizeService:        cfg.SummarizeService,
 		recipeService:           cfg.RecipeService,
 		recipeSuggestionService: cfg.RecipeSuggestSvc,
+		canvasService:           cfg.CanvasService,
 		jobManager:              cfg.JobManager,
 		wsManager:               cfg.WSManager,
 		log:                     cfg.Logger,

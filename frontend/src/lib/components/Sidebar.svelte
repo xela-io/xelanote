@@ -163,6 +163,7 @@
       loadShared: sharing.loadAllShared,
       loadJournalFeature: features.loadJournalFeature,
       loadRecipeFeature: features.loadRecipeFeature,
+      loadCanvasFeature: features.loadCanvasFeature,
       startInterval: (handler, ms) => window.setInterval(handler, ms),
       clearInterval: (id) => window.clearInterval(id),
     })
@@ -273,8 +274,8 @@
     },
   };
 
-  function handleCreateNoteConfirm(title: string) {
-    handleCreateNoteConfirmAction(title, sidebarActionDeps);
+  function handleCreateNoteConfirm(title: string, noteType?: string) {
+    handleCreateNoteConfirmAction(title, sidebarActionDeps, noteType);
   }
 
   function handleCreateFolder() {

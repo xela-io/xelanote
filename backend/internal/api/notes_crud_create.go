@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/websocket"
 )
@@ -31,6 +32,24 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 
 	if req.FolderPath == "" {
 		req.FolderPath = "/"
+	}
+
+	// Reject unknown note types
+	if req.NoteType != "" && req.NoteType != "note" && !db.AllowedNoteTypes[req.NoteType] {
+		respondError(w, http.StatusBadRequest, "invalid note_type")
+		return
+	}
+
+	// Canvas validation
+	if req.NoteType == "canvas" {
+		if req.JournalDate != nil && *req.JournalDate != "" {
+			respondError(w, http.StatusBadRequest, "journal_date not allowed for canvas notes")
+			return
+		}
+		if s.canvasService == nil {
+			respondError(w, http.StatusInternalServerError, "canvas service not available")
+			return
+		}
 	}
 
 	// Recipe validation
@@ -107,6 +126,18 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 				req.Keywords,
 				req.FolderPath,
 			)
+		} else if req.NoteType == "canvas" {
+			note, err = s.canvasService.CreateEncryptedCanvasNote(
+				userID,
+				req.Title,
+				req.EncryptedTitle,
+				req.TitleEncrypted,
+				encryptedBlob,
+				req.WrappedDEK,
+				req.EncryptionMetadata,
+				req.Keywords,
+				req.FolderPath,
+			)
 		} else {
 			note, err = s.noteService.CreateEncryptedNote(
 				userID,
@@ -130,6 +161,8 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 			note, err = s.noteService.CreateJournalNote(userID, req.Title, req.Content, req.FolderPath, *req.JournalDate)
 		} else if req.NoteType == "recipe" {
 			note, err = s.recipeService.CreateRecipeNote(userID, req.Title, req.Content, req.FolderPath)
+		} else if req.NoteType == "canvas" {
+			note, err = s.canvasService.CreateCanvasNote(userID, req.Title, req.Content, req.FolderPath)
 		} else {
 			note, err = s.noteService.CreateNote(userID, req.Title, req.Content, req.FolderPath)
 		}

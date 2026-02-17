@@ -4,6 +4,7 @@ export interface SidebarInitDeps {
   loadShared: () => void;
   loadJournalFeature: () => void;
   loadRecipeFeature: () => void;
+  loadCanvasFeature: () => void;
   startInterval: (handler: () => void, ms: number) => number;
   clearInterval: (id: number) => void;
 }
@@ -14,6 +15,7 @@ export function initSidebarOnMount(deps: SidebarInitDeps) {
   deps.loadShared();
   deps.loadJournalFeature();
   deps.loadRecipeFeature();
+  deps.loadCanvasFeature();
 
   const interval = deps.startInterval(() => {
     deps.loadTrashCount();

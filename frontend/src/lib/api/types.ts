@@ -761,3 +761,63 @@ export interface IngredientSuggestionResult {
   matches: IngredientMatchResult[];
   generated: GeneratedRecipe[];
 }
+
+// === JSON Canvas spec 1.0 types (https://jsoncanvas.org/spec/1.0/) ===
+
+export type CanvasNodeType = 'text' | 'file' | 'link' | 'group';
+export type CanvasSide = 'top' | 'right' | 'bottom' | 'left';
+export type CanvasEndpoint = 'none' | 'arrow';
+export type CanvasColor = '1' | '2' | '3' | '4' | '5' | '6' | string;
+
+export interface CanvasNodeBase {
+  id: string;
+  type: CanvasNodeType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color?: CanvasColor;
+}
+
+export interface CanvasTextNode extends CanvasNodeBase {
+  type: 'text';
+  text: string;
+}
+
+export interface CanvasFileNode extends CanvasNodeBase {
+  type: 'file';
+  file: string;
+  subpath?: string;
+  'x-xelanote-note-id'?: string;
+}
+
+export interface CanvasLinkNode extends CanvasNodeBase {
+  type: 'link';
+  url: string;
+}
+
+export interface CanvasGroupNode extends CanvasNodeBase {
+  type: 'group';
+  label?: string;
+  background?: string;
+  backgroundStyle?: 'cover' | 'ratio' | 'repeat';
+}
+
+export type CanvasNode = CanvasTextNode | CanvasFileNode | CanvasLinkNode | CanvasGroupNode;
+
+export interface CanvasEdge {
+  id: string;
+  fromNode: string;
+  toNode: string;
+  fromSide?: CanvasSide;
+  toSide?: CanvasSide;
+  fromEnd?: CanvasEndpoint;
+  toEnd?: CanvasEndpoint;
+  color?: CanvasColor;
+  label?: string;
+}
+
+export interface CanvasData {
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
+}

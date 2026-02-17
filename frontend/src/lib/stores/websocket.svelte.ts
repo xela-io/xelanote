@@ -58,6 +58,7 @@ function parseNote(payload: unknown): Note | null {
     version: payload.version,
     created_at: payload.created_at,
     updated_at: payload.updated_at,
+    note_type: typeof payload.note_type === 'string' ? payload.note_type : undefined,
   };
 }
 

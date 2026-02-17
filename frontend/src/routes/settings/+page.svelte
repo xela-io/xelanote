@@ -210,6 +210,7 @@
     loadGeminiApiKeyStatus();
     features.loadJournalFeature();
     features.loadRecipeFeature();
+    features.loadCanvasFeature();
   });
 
   const updateClaudeKeyForm = (next: Partial<ApiKeyFormState>) => {
@@ -418,6 +419,14 @@
       await features.toggleRecipeFeature(enabled);
     } catch (error) {
       console.error('Failed to toggle recipe feature:', error);
+    }
+  }
+
+  async function handleCanvasToggle(enabled: boolean) {
+    try {
+      await features.toggleCanvasFeature(enabled);
+    } catch (error) {
+      console.error('Failed to toggle canvas feature:', error);
     }
   }
 
@@ -895,6 +904,29 @@
                 </div>
               </div>
               {#if features.getRecipeFeatureLoading()}
+                <Loader2 size={16} class="animate-spin text-muted-foreground" />
+              {/if}
+            </label>
+
+            <label
+              class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              <input
+                type="checkbox"
+                checked={features.getCanvasFeatureEnabled()}
+                disabled={features.getCanvasFeatureLoading()}
+                onchange={(e) => handleCanvasToggle(e.currentTarget.checked)}
+                class="mt-1"
+              />
+              <div class="flex-1">
+                <div class="font-medium text-foreground">
+                  {$_('page.settings.editor.canvas_feature_title')}
+                </div>
+                <div class="text-sm text-muted-foreground mt-1">
+                  {$_('page.settings.editor.canvas_feature_description')}
+                </div>
+              </div>
+              {#if features.getCanvasFeatureLoading()}
                 <Loader2 size={16} class="animate-spin text-muted-foreground" />
               {/if}
             </label>

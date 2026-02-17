@@ -242,6 +242,7 @@ func (db *DB) runMigrations() error {
 		"045_registration_secure_default.sql",
 		"046_perf_metrics.sql",
 		"047_analytics_events.sql",
+		"048_canvas_support.sql",
 	}
 
 	for _, migrationFile := range migrations {

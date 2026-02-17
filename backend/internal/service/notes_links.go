@@ -87,6 +87,41 @@ func (s *NoteService) updateDueDates(userID int, noteID, content string) {
 	}
 }
 
+// updateCanvasLinks extracts file node references from canvas JSON content
+// and updates the links/unresolved_links tables.
+func (s *NoteService) updateCanvasLinks(userID int, noteID, content string) error {
+	fileRefs, err := parser.ExtractCanvasFileRefs(content)
+	if err != nil {
+		// Invalid JSON is not fatal -- canvas might be empty/malformed during editing
+		return nil
+	}
+
+	var resolvedIDs []string
+	var unresolvedRefs []string
+
+	seen := make(map[string]bool)
+	for _, title := range fileRefs {
+		titleNorm := parser.NormalizeTitle(title)
+		if seen[titleNorm] {
+			continue
+		}
+		seen[titleNorm] = true
+
+		targetNote, err := s.db.GetNoteByTitle(userID, title)
+		if err != nil && !errors.Is(err, db.ErrNotFound) {
+			return fmt.Errorf("failed to lookup note %q: %w", title, err)
+		}
+
+		if targetNote != nil {
+			resolvedIDs = append(resolvedIDs, targetNote.ID)
+		} else {
+			unresolvedRefs = append(unresolvedRefs, title)
+		}
+	}
+
+	return s.db.SetLinks(noteID, resolvedIDs, unresolvedRefs)
+}
+
 // updateLinks parses content and updates the links/unresolved_links tables.
 func (s *NoteService) updateLinks(userID int, noteID, content string) error {
 	result := parser.Parse(content)

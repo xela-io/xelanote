@@ -11,7 +11,16 @@ const (
 	NoteTypeNote    = "note"
 	NoteTypeJournal = "journal"
 	NoteTypeRecipe  = "recipe"
+	NoteTypeCanvas  = "canvas"
 )
+
+// AllowedNoteTypes is the authoritative set of valid note_type values.
+var AllowedNoteTypes = map[string]bool{
+	NoteTypeNote:    true,
+	NoteTypeJournal: true,
+	NoteTypeRecipe:  true,
+	NoteTypeCanvas:  true,
+}
 
 // GetJournalByDate retrieves a journal entry for a specific date.
 // Returns ErrNotFound if no journal exists for this date.

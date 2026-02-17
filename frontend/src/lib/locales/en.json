@@ -19,7 +19,9 @@
       "title": "New Note",
       "folder": "Folder",
       "label": "Title",
-      "placeholder": "My new note"
+      "placeholder": "My new note",
+      "type_note": "Note",
+      "type_canvas": "Canvas"
     },
     "create_folder": {
       "title": "New Folder",
@@ -711,7 +713,9 @@
         "journal_feature_title": "Journal (Diary)",
         "journal_feature_description": "Enable daily journal with calendar navigation. One entry can be created per day.",
         "recipe_feature_title": "Recipes (Cookbook)",
-        "recipe_feature_description": "Enable recipe management with ingredients, portion scaling, and cookbooks."
+        "recipe_feature_description": "Enable recipe management with ingredients, portion scaling, and cookbooks.",
+        "canvas_feature_title": "Canvas (Infinite Board)",
+        "canvas_feature_description": "Enable infinite canvas for visually organizing notes, text cards, links, and groups on a free-form spatial board."
       },
       "security": {
         "encryption_locked_title": "Encryption Locked",

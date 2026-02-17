@@ -529,6 +529,7 @@ export function logout() {
     journal.resetJournalState();
     features.resetRecipeFeature();
     recipes.resetRecipeState();
+    features.resetCanvasFeature();
   } catch (err) {
     console.error('[AUTH] Failed to reset feature state:', err);
   }

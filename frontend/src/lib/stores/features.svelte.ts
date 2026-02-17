@@ -170,3 +170,66 @@ export function resetRecipeFeature() {
   recipeFeatureLoaded = false;
   recipeFeatureLoading = false;
 }
+
+// === Canvas Feature (User-Specific Toggle) ===
+let canvasFeatureEnabled = $state(false);
+let canvasFeatureLoading = $state(false);
+let canvasFeatureLoaded = $state(false);
+
+export function getCanvasFeatureEnabled() {
+  return canvasFeatureEnabled;
+}
+
+export function getCanvasFeatureLoading() {
+  return canvasFeatureLoading;
+}
+
+export function getCanvasFeatureLoaded() {
+  return canvasFeatureLoaded;
+}
+
+/**
+ * Load the canvas feature setting for the current user.
+ * Should be called after authentication.
+ */
+export async function loadCanvasFeature() {
+  if (canvasFeatureLoading) return;
+
+  canvasFeatureLoading = true;
+  try {
+    const feature = await getFeature('canvas');
+    canvasFeatureEnabled = feature.enabled;
+    canvasFeatureLoaded = true;
+  } catch (error) {
+    console.error('Failed to load canvas feature:', error);
+    canvasFeatureEnabled = false;
+    canvasFeatureLoaded = true;
+  } finally {
+    canvasFeatureLoading = false;
+  }
+}
+
+/**
+ * Toggle the canvas feature for the current user.
+ */
+export async function toggleCanvasFeature(enabled: boolean) {
+  canvasFeatureLoading = true;
+  try {
+    await setFeature('canvas', enabled);
+    canvasFeatureEnabled = enabled;
+  } catch (error) {
+    console.error('Failed to toggle canvas feature:', error);
+    throw error;
+  } finally {
+    canvasFeatureLoading = false;
+  }
+}
+
+/**
+ * Reset canvas feature state (called on logout).
+ */
+export function resetCanvasFeature() {
+  canvasFeatureEnabled = false;
+  canvasFeatureLoaded = false;
+  canvasFeatureLoading = false;
+}

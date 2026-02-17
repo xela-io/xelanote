@@ -3,22 +3,27 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import * as features from '$lib/stores/features.svelte';
 
   interface Props {
     open: boolean;
     folderPath: string;
     onClose: () => void;
-    onCreate: (title: string) => void;
+    onCreate: (title: string, noteType?: string) => void;
   }
 
   const { open, folderPath, onClose, onCreate }: Props = $props();
 
   let title = $state('');
+  let noteType = $state<'note' | 'canvas'>('note');
   let titleInput: HTMLInputElement | null = null;
+
+  const canvasEnabled = $derived(features.getCanvasFeatureEnabled());
 
   $effect(() => {
     if (open) {
       title = '';
+      noteType = 'note';
       tick().then(() => {
         titleInput?.focus();
       });
@@ -27,7 +32,7 @@
 
   function handleCreate() {
     if (title.trim()) {
-      onCreate(title.trim());
+      onCreate(title.trim(), noteType === 'canvas' ? 'canvas' : undefined);
       onClose();
     }
   }
@@ -47,6 +52,33 @@
       <div class="text-sm text-muted-foreground">
         {$_('dialog.create_note.folder')}: <span class="font-mono">{folderPath}</span>
       </div>
+
+      {#if canvasEnabled}
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded-md border transition-colors"
+            class:bg-primary={noteType === 'note'}
+            class:text-primary-foreground={noteType === 'note'}
+            class:border-primary={noteType === 'note'}
+            class:border-border={noteType !== 'note'}
+            onclick={() => (noteType = 'note')}
+          >
+            {$_('dialog.create_note.type_note')}
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded-md border transition-colors"
+            class:bg-primary={noteType === 'canvas'}
+            class:text-primary-foreground={noteType === 'canvas'}
+            class:border-primary={noteType === 'canvas'}
+            class:border-border={noteType !== 'canvas'}
+            onclick={() => (noteType = 'canvas')}
+          >
+            {$_('dialog.create_note.type_canvas')}
+          </button>
+        </div>
+      {/if}
 
       <div class="space-y-2">
         <label for="note-title-input" class="text-sm font-medium"

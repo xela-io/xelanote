@@ -18,13 +18,15 @@
   // Dynamic import state
   let EditorComponent = $state<ComponentType | null>(null);
   let RecipeEditorComponent = $state<ComponentType | null>(null);
+  let CanvasEditorComponent = $state<ComponentType | null>(null);
   let editorLoading = $state(false);
   let editorLoadError = $state<string | null>(null);
   let retryCount = $state(0);
   const MAX_RETRIES = 3;
 
-  // Check if the current note is a recipe
+  // Check if the current note is a recipe or canvas
   const isRecipe = $derived(notes.getCurrentNote()?.note_type === 'recipe');
+  const isCanvas = $derived(notes.getCurrentNote()?.note_type === 'canvas');
 
   // Auto-cleanup: delete empty journal notes when navigating away
   let didAutoDelete = false;
@@ -78,15 +80,17 @@
           editorLoadError = null;
 
           // Load both editor components in parallel
-          const [editorModule, recipeModule] = await Promise.all([
+          const [editorModule, recipeModule, canvasModule] = await Promise.all([
             import('$lib/components/Editor.svelte'),
             import('$lib/components/RecipeEditor.svelte'),
+            import('$lib/components/CanvasEditor.svelte'),
           ]);
 
           if (cancelled) return; // Don't update if effect was cleaned up
 
           EditorComponent = loadSvelteComponentFromModule(editorModule, 'Editor');
           RecipeEditorComponent = loadSvelteComponentFromModule(recipeModule, 'RecipeEditor');
+          CanvasEditorComponent = loadSvelteComponentFromModule(canvasModule, 'CanvasEditor');
           editorLoading = false;
           retryCount = 0;
         } catch (error) {
@@ -140,6 +144,8 @@
         </button>
       </div>
     </div>
+  {:else if isCanvas && CanvasEditorComponent}
+    <CanvasEditorComponent {noteId} />
   {:else if isRecipe && RecipeEditorComponent}
     <RecipeEditorComponent {noteId} />
   {:else if EditorComponent}

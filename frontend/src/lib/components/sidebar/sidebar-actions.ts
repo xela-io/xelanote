@@ -1,6 +1,11 @@
 export interface SidebarActionsDeps {
   getSelectedFolderPath: () => string | null;
-  createNote: (title: string, content: string, folderPath: string) => Promise<{ id: string }>;
+  createNote: (
+    title: string,
+    content: string,
+    folderPath: string,
+    typeOptions?: { note_type: string; journal_date?: string }
+  ) => Promise<{ id: string }>;
   createFolder: (path: string) => Promise<void>;
   loadTree: () => Promise<void>;
   closeSidebarOnMobile: () => void;
@@ -24,10 +29,16 @@ export interface SidebarActionsDeps {
   };
 }
 
-export async function handleCreateNoteConfirm(title: string, deps: SidebarActionsDeps) {
+export async function handleCreateNoteConfirm(
+  title: string,
+  deps: SidebarActionsDeps,
+  noteType?: string
+) {
   const selectedPath = deps.getSelectedFolderPath();
   const folderPath = selectedPath || '/';
-  const note = await deps.createNote(title, '', folderPath);
+  const content = noteType === 'canvas' ? '{"nodes":[],"edges":[]}' : '';
+  const typeOptions = noteType ? { note_type: noteType } : undefined;
+  const note = await deps.createNote(title, content, folderPath, typeOptions);
   await deps.loadTree();
   deps.goto(`/note/${note.id}`);
   deps.closeSidebarOnMobile();

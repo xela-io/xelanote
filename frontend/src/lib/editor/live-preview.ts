@@ -665,13 +665,17 @@ function buildDecorations(
             const fromPos = base + listMarkerInfo.indentLength;
             const toPos = fromPos + listMarkerInfo.marker.length + listMarkerInfo.spacingLength;
             const marker = listMarkerInfo.marker;
-            const markerWidgetText = /^\d+[.)]$/.test(marker) ? `${marker} ` : '• ';
+            const isOrderedMarker = /^\d+[.)]$/.test(marker);
+            const markerWidgetText = isOrderedMarker ? marker : '';
+            const markerClassName = isOrderedMarker
+              ? 'cm-live-list-marker cm-live-list-marker-ordered'
+              : 'cm-live-list-marker cm-live-list-marker-unordered';
             addProtectedWidget(
               builder,
               protectedRanges,
               fromPos,
               toPos,
-              new InlineTextWidget(markerWidgetText, 'cm-live-list-marker')
+              new InlineTextWidget(markerWidgetText, markerClassName)
             );
           }
         }

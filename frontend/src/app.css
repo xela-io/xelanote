@@ -640,7 +640,7 @@ html {
 }
 
 .cm-editor .cm-content {
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 1.5rem;
   /* Fallback, falls EditorView.lineWrapping fehlt */
   white-space: pre-wrap;
 }
@@ -775,9 +775,21 @@ html {
 
 .cm-editor .cm-live-list-marker {
   color: var(--color-muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  min-width: 2.5ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.35rem;
+}
+
+.cm-editor .cm-live-list-marker-unordered::before {
+  content: '';
   display: inline-block;
-  min-width: 1.2em;
-  margin-right: 0.15rem;
+  width: 0.35em;
+  height: 0.35em;
+  border-radius: 9999px;
+  background: currentColor;
 }
 
 .cm-editor .cm-live-collapsed-line {
@@ -931,7 +943,7 @@ html {
 
 /* Markdown preview styling */
 .markdown-preview {
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 1.5rem;
   line-height: 1.7;
   /* Text wrapping für alle Geräte */
   overflow-wrap: anywhere;

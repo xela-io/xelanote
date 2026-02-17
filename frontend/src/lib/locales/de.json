@@ -1022,6 +1022,8 @@
       "ai_disabled_success": "KI-Funktionen für diese Notiz deaktiviert",
       "ai_toggle_error": "Fehler beim Umschalten der KI-Funktionen",
       "last_updated": "Bearbeitet {date}",
+      "show_bottom_panels": "Summary & Tags anzeigen",
+      "hide_bottom_panels": "Summary & Tags ausblenden",
       "completed_count": "{count} erledigt",
       "completed_toggle": "{count} erledigte Aufgaben ein-/ausklappen",
       "find": {

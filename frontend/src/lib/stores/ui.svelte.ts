@@ -21,6 +21,9 @@ const SPLIT_MAX = 80;
 // Mobile state
 let isMobile = $state(false);
 
+// Desktop editor panels (Summary/Tags area)
+let editorPanelsCollapsed = $state(false);
+
 // Keyboard state (for hiding toolbar on mobile when keyboard is open)
 let isKeyboardOpen = $state(false);
 
@@ -115,6 +118,30 @@ export function initSplitPosition() {
       if (!isNaN(parsed)) {
         splitPosition = Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, parsed));
       }
+    }
+  }
+}
+
+export function getEditorPanelsCollapsed() {
+  return editorPanelsCollapsed;
+}
+
+export function setEditorPanelsCollapsed(collapsed: boolean) {
+  editorPanelsCollapsed = collapsed;
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('xelanote-editor-panels-collapsed', String(editorPanelsCollapsed));
+  }
+}
+
+export function toggleEditorPanelsCollapsed() {
+  setEditorPanelsCollapsed(!editorPanelsCollapsed);
+}
+
+export function initEditorPanelsCollapsed() {
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem('xelanote-editor-panels-collapsed');
+    if (saved === 'true' || saved === 'false') {
+      editorPanelsCollapsed = saved === 'true';
     }
   }
 }
@@ -276,6 +303,9 @@ export function resetToDefaults() {
 
   // Reset preview theme to default
   previewThemeId = 'match-editor';
+
+  // Reset desktop editor panel visibility to default (visible)
+  editorPanelsCollapsed = false;
 
   console.log('[UI] Reset to defaults on logout');
 }

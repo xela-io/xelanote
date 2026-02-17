@@ -975,17 +975,34 @@
         {/if}
       </div>
 
-      <div class={ui.getIsMobile() ? '' : 'shrink-0 overflow-auto max-h-[40vh]'}>
-        <EditorPanels
-          note={notes.getCurrentNote()!}
-          backlinks={notes.getBacklinks()}
-          showTagSuggestions={FEATURE_FLAGS.tagSuggestions}
-          showLinkSuggestions={FEATURE_FLAGS.linkSuggestions}
-          {editorView}
-          onInsertLink={handleInsertLink}
-          onSummaryUpdated={handleSummaryUpdated}
-        />
-      </div>
+      {#if !ui.getIsMobile()}
+        <div class="shrink-0 px-4 pb-2 pt-1 border-t border-border">
+          <button
+            type="button"
+            class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            onclick={() => ui.toggleEditorPanelsCollapsed()}
+            aria-expanded={!ui.getEditorPanelsCollapsed()}
+          >
+            {ui.getEditorPanelsCollapsed()
+              ? $_('component.editor.show_bottom_panels')
+              : $_('component.editor.hide_bottom_panels')}
+          </button>
+        </div>
+      {/if}
+
+      {#if ui.getIsMobile() || !ui.getEditorPanelsCollapsed()}
+        <div class={ui.getIsMobile() ? '' : 'shrink-0 overflow-auto max-h-[40vh]'}>
+          <EditorPanels
+            note={notes.getCurrentNote()!}
+            backlinks={notes.getBacklinks()}
+            showTagSuggestions={FEATURE_FLAGS.tagSuggestions}
+            showLinkSuggestions={FEATURE_FLAGS.linkSuggestions}
+            {editorView}
+            onInsertLink={handleInsertLink}
+            onSummaryUpdated={handleSummaryUpdated}
+          />
+        </div>
+      {/if}
     {:else}
       <div class="flex-1 flex items-center justify-center text-muted-foreground h-full">
         {$_('component.editor.empty_state')}

@@ -1022,6 +1022,8 @@
       "ai_disabled_success": "AI features disabled for this note",
       "ai_toggle_error": "Failed to toggle AI features",
       "last_updated": "Edited {date}",
+      "show_bottom_panels": "Show Summary & Tags",
+      "hide_bottom_panels": "Hide Summary & Tags",
       "completed_count": "{count} completed",
       "completed_toggle": "Toggle {count} completed tasks",
       "find": {

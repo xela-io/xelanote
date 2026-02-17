@@ -66,6 +66,7 @@ export interface InitializeAppDeps {
     initPreviewTheme: () => void;
     initSidebarWidth: () => void;
     initSplitPosition: () => void;
+    initEditorPanelsCollapsed: () => void;
   };
   autosave: {
     initAutoSaveSettings: () => void;
@@ -182,6 +183,7 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
   deps.ui.initPreviewTheme();
   deps.ui.initSidebarWidth();
   deps.ui.initSplitPosition();
+  deps.ui.initEditorPanelsCollapsed();
 
   // Activity listeners right after confirmed auth (security: auto-lock + token refresh)
   if (deps.auth.isAuthenticated()) {

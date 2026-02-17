@@ -215,6 +215,7 @@
           initPreviewTheme: ui.initPreviewTheme,
           initSidebarWidth: ui.initSidebarWidth,
           initSplitPosition: ui.initSplitPosition,
+          initEditorPanelsCollapsed: ui.initEditorPanelsCollapsed,
         },
         autosave: {
           initAutoSaveSettings: autosave.initAutoSaveSettings,

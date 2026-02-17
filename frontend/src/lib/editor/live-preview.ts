@@ -166,6 +166,20 @@ interface HeadingInfo {
   keys: Set<string>;
 }
 
+interface CompletedTaskGroup {
+  key: string;
+  startLine: number;
+  endLine: number;
+  count: number;
+  collapsed: boolean;
+}
+
+interface CompletedTaskGroupInfo {
+  groups: CompletedTaskGroup[];
+  groupByLine: Map<number, CompletedTaskGroup>;
+  keys: Set<string>;
+}
+
 interface LinePrimitives {
   heading: { indentLength: number; level: number; spacingLength: number } | null;
   blockquote: { indentLength: number; spacingLength: number } | null;
@@ -377,6 +391,52 @@ function collectHeadingInfo(view: EditorView, collapsedSections: Set<string>): H
   return { headingByLine, sectionByLine, keys };
 }
 
+function collectCompletedTaskGroups(
+  view: EditorView,
+  collapsedTaskGroups: Set<string>
+): CompletedTaskGroupInfo {
+  const groups: CompletedTaskGroup[] = [];
+  const groupByLine = new Map<number, CompletedTaskGroup>();
+  const keys = new Set<string>();
+
+  let runStart = -1;
+  let runCount = 0;
+
+  const flushRun = (endLine: number) => {
+    if (runCount >= 2) {
+      const key = `tasks:${runStart}:${endLine}`;
+      keys.add(key);
+      const group: CompletedTaskGroup = {
+        key,
+        startLine: runStart,
+        endLine,
+        count: runCount,
+        collapsed: collapsedTaskGroups.has(key),
+      };
+      groups.push(group);
+      for (let l = runStart; l <= endLine; l++) {
+        groupByLine.set(l, group);
+      }
+    }
+    runStart = -1;
+    runCount = 0;
+  };
+
+  for (let lineNo = 1; lineNo <= view.state.doc.lines; lineNo++) {
+    const text = view.state.doc.line(lineNo).text;
+    const primitives = parseLinePrimitives(text);
+    if (primitives.taskRegex?.checked) {
+      if (runStart === -1) runStart = lineNo;
+      runCount++;
+    } else {
+      if (runStart !== -1) flushRun(lineNo - 1);
+    }
+  }
+  if (runStart !== -1) flushRun(view.state.doc.lines);
+
+  return { groups, groupByLine, keys };
+}
+
 function getActiveLines(view: EditorView): Set<number> {
   const lines = new Set<number>();
 
@@ -409,6 +469,7 @@ function buildDecorations(
   view: EditorView,
   staticData: LivePreviewStaticData,
   headingInfo: HeadingInfo,
+  completedTaskGroupInfo: CompletedTaskGroupInfo,
   reason: string,
   activeLines: Set<number>,
   getLinePrimitives: (lineNumber: number, text: string) => LinePrimitives
@@ -434,6 +495,34 @@ function buildDecorations(
         if (headingSectionLine?.collapsed) {
           builder.add(line.from, line.from, getLineDecoration('cm-live-collapsed-line'));
           builder.add(line.from, line.to, hiddenSyntaxDecoration);
+          continue;
+        }
+
+        // Completed task group: collapsed lines
+        const taskGroup = completedTaskGroupInfo.groupByLine.get(line.number);
+        if (taskGroup?.collapsed) {
+          if (line.number === taskGroup.startLine) {
+            // First line of collapsed group → summary widget replaces content
+            builder.add(
+              line.from,
+              line.from,
+              Decoration.widget({
+                side: -1,
+                widget: new CompletedTaskGroupToggleWidget(taskGroup.key, true, taskGroup.count),
+              })
+            );
+            builder.add(
+              line.from,
+              line.to,
+              Decoration.replace({
+                widget: new CompletedTaskGroupSummaryWidget(taskGroup.key, taskGroup.count),
+              })
+            );
+          } else {
+            // Remaining lines of collapsed group → hide
+            builder.add(line.from, line.from, getLineDecoration('cm-live-collapsed-line'));
+            builder.add(line.from, line.to, hiddenSyntaxDecoration);
+          }
           continue;
         }
 
@@ -493,6 +582,25 @@ function buildDecorations(
 
         if (lineClasses.length > 0) {
           builder.add(line.from, line.from, getLineDecoration(lineClasses.join(' ')));
+        }
+
+        // Expanded task group bracket decorations (always, even on active line)
+        if (taskGroup && !taskGroup.collapsed) {
+          let bracketClass = 'cm-live-task-group-middle';
+          if (line.number === taskGroup.startLine) bracketClass = 'cm-live-task-group-first';
+          else if (line.number === taskGroup.endLine) bracketClass = 'cm-live-task-group-last';
+          builder.add(line.from, line.from, getLineDecoration(bracketClass));
+
+          if (line.number === taskGroup.startLine) {
+            builder.add(
+              line.from,
+              line.from,
+              Decoration.widget({
+                side: -1,
+                widget: new CompletedTaskGroupToggleWidget(taskGroup.key, false, taskGroup.count),
+              })
+            );
+          }
         }
 
         if (showHeadingToggle && headingSection) {
@@ -770,17 +878,84 @@ class HeadingToggleWidget extends WidgetType {
   }
 }
 
+class CompletedTaskGroupToggleWidget extends WidgetType {
+  constructor(
+    private readonly groupKey: string,
+    private readonly collapsed: boolean,
+    private readonly count: number
+  ) {
+    super();
+  }
+
+  eq(other: CompletedTaskGroupToggleWidget): boolean {
+    return (
+      this.groupKey === other.groupKey &&
+      this.collapsed === other.collapsed &&
+      this.count === other.count
+    );
+  }
+
+  toDOM(): HTMLElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cm-live-task-group-toggle';
+    button.dataset.taskGroup = this.groupKey;
+    button.setAttribute(
+      'aria-label',
+      this.collapsed ? 'Erledigte Aufgaben aufklappen' : 'Erledigte Aufgaben einklappen'
+    );
+    button.textContent = this.collapsed ? '+' : '−';
+    if (!this.collapsed && this.count > 1) {
+      // Vertically center across the group: each line ≈ 1.7em (line-height of preview lines)
+      button.style.top = `${this.count * 0.85}em`;
+    }
+    return button;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
+class CompletedTaskGroupSummaryWidget extends WidgetType {
+  constructor(
+    private readonly groupKey: string,
+    private readonly count: number
+  ) {
+    super();
+  }
+
+  eq(other: CompletedTaskGroupSummaryWidget): boolean {
+    return this.groupKey === other.groupKey && this.count === other.count;
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement('span');
+    span.className = 'cm-live-task-group-summary';
+    span.dataset.taskGroup = this.groupKey;
+    span.textContent = `${this.count} erledigte Aufgaben`;
+    return span;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
 const livePreviewPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
     staticData: LivePreviewStaticData;
     headingInfo: HeadingInfo;
+    completedTaskGroupInfo: CompletedTaskGroupInfo;
     linePrimitivesCache = new Map<number, { text: string; parsed: LinePrimitives }>();
     activeLines: Set<number>;
     activeLinesSignature: string;
     collapsedHeadingSections = new Set<string>();
+    collapsedTaskGroups = new Set<string>();
     forceRebuild = false;
     headingInfoDirty = false;
+    taskGroupInfoDirty = false;
     pendingGutterSyncFrame: number | null = null;
     gutterObserver: MutationObserver | null = null;
 
@@ -789,12 +964,14 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       this.headingInfo = profile('structured', 'init', () =>
         collectHeadingInfo(view, this.collapsedHeadingSections)
       );
+      this.completedTaskGroupInfo = collectCompletedTaskGroups(view, this.collapsedTaskGroups);
       this.activeLines = getActiveLines(view);
       this.activeLinesSignature = activeLinesKey(this.activeLines);
       this.decorations = buildDecorations(
         view,
         this.staticData,
         this.headingInfo,
+        this.completedTaskGroupInfo,
         'init',
         this.activeLines,
         this.getLinePrimitives.bind(this)
@@ -825,17 +1002,45 @@ const livePreviewPlugin = ViewPlugin.fromClass(
           collectHeadingInfo(update.view, this.collapsedHeadingSections)
         );
         this.headingInfoDirty = false;
+        this.completedTaskGroupInfo = collectCompletedTaskGroups(
+          update.view,
+          this.collapsedTaskGroups
+        );
+        this.taskGroupInfoDirty = false;
       } else if (update.viewportChanged) {
         this.staticData = {
           ...this.staticData,
           treeFeatures: profile('tree', reason, () => collectTreeFeatures(update.view)),
         };
-      } else if (this.headingInfoDirty) {
-        this.headingInfo = profile('structured', reason, () =>
-          collectHeadingInfo(update.view, this.collapsedHeadingSections)
-        );
-        this.headingInfoDirty = false;
+      } else if (this.headingInfoDirty || this.taskGroupInfoDirty) {
+        if (this.headingInfoDirty) {
+          this.headingInfo = profile('structured', reason, () =>
+            collectHeadingInfo(update.view, this.collapsedHeadingSections)
+          );
+          this.headingInfoDirty = false;
+        }
+        if (this.taskGroupInfoDirty) {
+          this.completedTaskGroupInfo = collectCompletedTaskGroups(
+            update.view,
+            this.collapsedTaskGroups
+          );
+          this.taskGroupInfoDirty = false;
+        }
       }
+
+      // Auto-expand collapsed task groups when cursor moves into them
+      for (const group of this.completedTaskGroupInfo.groups) {
+        if (!group.collapsed) continue;
+        for (const activeLine of nextActiveLines) {
+          if (activeLine >= group.startLine && activeLine <= group.endLine) {
+            this.collapsedTaskGroups.delete(group.key);
+            group.collapsed = false;
+            this.forceRebuild = true;
+            break;
+          }
+        }
+      }
+
       if (
         this.forceRebuild ||
         update.docChanged ||
@@ -848,11 +1053,13 @@ const livePreviewPlugin = ViewPlugin.fromClass(
           update.view,
           this.staticData,
           this.headingInfo,
+          this.completedTaskGroupInfo,
           reason,
           nextActiveLines,
           this.getLinePrimitives.bind(this)
         );
         this.pruneHeadingSections(this.headingInfo.keys);
+        this.pruneTaskGroups(this.completedTaskGroupInfo.keys);
       }
       this.activeLines = nextActiveLines;
       this.activeLinesSignature = nextActiveLinesSignature;
@@ -872,10 +1079,30 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       return true;
     }
 
+    toggleCompletedTaskGroup(view: EditorView, key: string): boolean {
+      if (this.collapsedTaskGroups.has(key)) {
+        this.collapsedTaskGroups.delete(key);
+      } else {
+        this.collapsedTaskGroups.add(key);
+      }
+      this.taskGroupInfoDirty = true;
+      this.forceRebuild = true;
+      view.dispatch({});
+      return true;
+    }
+
     private pruneHeadingSections(validKeys: Set<string>) {
       for (const key of this.collapsedHeadingSections) {
         if (!validKeys.has(key)) {
           this.collapsedHeadingSections.delete(key);
+        }
+      }
+    }
+
+    private pruneTaskGroups(validKeys: Set<string>) {
+      for (const key of this.collapsedTaskGroups) {
+        if (!validKeys.has(key)) {
+          this.collapsedTaskGroups.delete(key);
         }
       }
     }
@@ -909,6 +1136,12 @@ const livePreviewPlugin = ViewPlugin.fromClass(
 
       for (const [lineNumber, section] of this.headingInfo.sectionByLine) {
         if (section.collapsed) {
+          collapsedLines.add(lineNumber);
+        }
+      }
+
+      for (const [lineNumber, group] of this.completedTaskGroupInfo.groupByLine) {
+        if (group.collapsed && lineNumber !== group.startLine) {
           collapsedLines.add(lineNumber);
         }
       }
@@ -973,6 +1206,12 @@ export function toggleLivePreviewHeadingSection(view: EditorView, key: string): 
   const plugin = view.plugin(livePreviewPlugin);
   if (!plugin) return false;
   return plugin.toggleHeadingSection(view, key);
+}
+
+export function toggleLivePreviewCompletedTaskGroup(view: EditorView, key: string): boolean {
+  const plugin = view.plugin(livePreviewPlugin);
+  if (!plugin) return false;
+  return plugin.toggleCompletedTaskGroup(view, key);
 }
 
 export function createLivePreviewExtension(): Extension {

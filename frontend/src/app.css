@@ -800,6 +800,67 @@ html {
   color: var(--color-foreground);
 }
 
+/* Completed task group toggle button [+]/[-] — positioned left of bracket */
+.cm-editor .cm-live-task-group-toggle {
+  position: absolute;
+  left: -1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  font-size: 0.8em;
+  line-height: 1;
+  padding: 0;
+}
+
+.cm-editor .cm-live-task-group-toggle:hover {
+  color: var(--color-foreground);
+}
+
+/* Completed task group bracket decorations */
+.cm-editor .cm-line.cm-live-task-group-first,
+.cm-editor .cm-line.cm-live-task-group-middle,
+.cm-editor .cm-line.cm-live-task-group-last {
+  position: relative;
+  margin-left: 1.4rem;
+}
+
+.cm-editor .cm-line.cm-live-task-group-first::before,
+.cm-editor .cm-line.cm-live-task-group-middle::before,
+.cm-editor .cm-line.cm-live-task-group-last::before {
+  content: '';
+  position: absolute;
+  left: -0.7rem;
+  top: 0;
+  bottom: 0;
+  width: 0.35rem;
+  border-left: 1.5px solid var(--color-border);
+}
+
+.cm-editor .cm-line.cm-live-task-group-first::before {
+  border-top: 1.5px solid var(--color-border);
+  border-top-left-radius: 2px;
+}
+
+.cm-editor .cm-line.cm-live-task-group-last::before {
+  border-bottom: 1.5px solid var(--color-border);
+  border-bottom-left-radius: 2px;
+}
+
+/* Completed task group summary (collapsed state) */
+.cm-editor .cm-live-task-group-summary {
+  color: var(--color-muted-foreground);
+  font-style: italic;
+  cursor: pointer;
+}
+
+.cm-editor .cm-live-task-group-summary:hover {
+  color: var(--color-foreground);
+}
+
 .cm-editor .cm-live-preview-line.cm-live-heading-h1 {
   font-size: 2rem;
   font-weight: 700;

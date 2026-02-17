@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
+### Added
 
-- Remove completed task collapse/expand mechanism from live preview — all completed tasks are now always visible
+- Collapsible completed task groups in live preview — groups of 2+ consecutive completed tasks show a bracket and [+]/[−] toggle; collapsed groups display a summary line; cursor auto-expands collapsed groups
 
 ### Changed
 

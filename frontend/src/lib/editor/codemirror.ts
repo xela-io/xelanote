@@ -16,7 +16,11 @@ import {
   setTypewriterMode,
   typewriterCompartment,
 } from './focus-mode-extensions';
-import { createLivePreviewExtension, toggleLivePreviewHeadingSection } from './live-preview';
+import {
+  createLivePreviewExtension,
+  toggleLivePreviewCompletedTaskGroup,
+  toggleLivePreviewHeadingSection,
+} from './live-preview';
 import { isValidDueDate } from './markdown';
 import {
   createSpellCheckExtension,
@@ -479,11 +483,21 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
         const target = event.target as HTMLElement;
         const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
+        const liveTaskGroupToggle = target.closest(
+          '.cm-live-task-group-toggle'
+        ) as HTMLElement | null;
+        const liveTaskGroupSummary = target.closest(
+          '.cm-live-task-group-summary'
+        ) as HTMLElement | null;
         if (liveTaskCheckbox) {
           event.preventDefault();
           return true;
         }
         if (liveHeadingToggle) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveTaskGroupToggle || liveTaskGroupSummary) {
           event.preventDefault();
           return true;
         }
@@ -495,6 +509,26 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         if (liveHeadingToggle?.dataset.section) {
           if (toggleLivePreviewHeadingSection(view, liveHeadingToggle.dataset.section)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveTaskGroupToggle = target.closest(
+          '.cm-live-task-group-toggle'
+        ) as HTMLElement | null;
+        if (liveTaskGroupToggle?.dataset.taskGroup) {
+          if (toggleLivePreviewCompletedTaskGroup(view, liveTaskGroupToggle.dataset.taskGroup)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveTaskGroupSummary = target.closest(
+          '.cm-live-task-group-summary'
+        ) as HTMLElement | null;
+        if (liveTaskGroupSummary?.dataset.taskGroup) {
+          if (toggleLivePreviewCompletedTaskGroup(view, liveTaskGroupSummary.dataset.taskGroup)) {
             event.preventDefault();
             return true;
           }

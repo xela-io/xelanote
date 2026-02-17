@@ -1055,14 +1055,18 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       }
 
       // Auto-expand collapsed task groups when cursor moves into them
-      for (const group of this.completedTaskGroupInfo.groups) {
-        if (!group.collapsed) continue;
-        for (const activeLine of nextActiveLines) {
-          if (activeLine >= group.startLine && activeLine <= group.endLine) {
-            this.collapsedTaskGroups.delete(group.key);
-            group.collapsed = false;
-            this.forceRebuild = true;
-            break;
+      // Only check when active lines actually changed, so that an explicit
+      // user toggle (which doesn't move the cursor) isn't immediately reversed.
+      if (nextActiveLinesSignature !== this.activeLinesSignature) {
+        for (const group of this.completedTaskGroupInfo.groups) {
+          if (!group.collapsed) continue;
+          for (const activeLine of nextActiveLines) {
+            if (activeLine >= group.startLine && activeLine <= group.endLine) {
+              this.collapsedTaskGroups.delete(group.key);
+              group.collapsed = false;
+              this.forceRebuild = true;
+              break;
+            }
           }
         }
       }

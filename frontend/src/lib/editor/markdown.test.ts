@@ -670,6 +670,21 @@ describe('task lists', () => {
       expect(result).toContain('data-task-index="2"');
     });
 
+    it('adds source line attribute for task items', () => {
+      const content = `- [ ] First task
+- [ ] Second task`;
+      const result = renderMarkdown(content);
+      expect(result).toContain('data-task-line="1"');
+      expect(result).toContain('data-task-line="2"');
+    });
+
+    it('keeps source line mapping aligned when empty task markers exist', () => {
+      const content = `- [ ] 
+- [ ] Visible`;
+      const result = renderMarkdown(content);
+      expect(result).toContain('data-task-index="0" data-task-line="2"');
+    });
+
     it('contains SVG icon in drag handle', () => {
       const result = renderMarkdown('- [ ] Task');
       expect(result).toContain('<svg');

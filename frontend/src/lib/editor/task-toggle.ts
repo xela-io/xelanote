@@ -33,6 +33,27 @@ interface ToggleTaskOptions {
   log?: (...args: unknown[]) => void;
 }
 
+interface ToggleTaskByLineOptions extends Omit<ToggleTaskOptions, 'checkboxIndex'> {
+  lineNumber: number;
+}
+
+function findTaskCheckboxIndexByLine(content: string, lineNumber: number): number {
+  const lines = content.split('\n');
+  let taskIndex = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const lineMatch = /^(\s*(?:[-*+]|\d+[.)]) )\[([xX ])\]/.exec(line);
+    if (!lineMatch) continue;
+    const taskBody = line.substring(lineMatch[0].length).trim();
+    if (!taskBody) continue;
+    if (i + 1 === lineNumber) return taskIndex;
+    taskIndex++;
+  }
+
+  return -1;
+}
+
 // Matches any list item marker (unordered: -, *, + or ordered: 1. / 1))
 const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])/;
 
@@ -179,6 +200,13 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
     const line = lines[lineIndex];
     const lineMatch = /^(\s*(?:[-*+]|\d+[.)]) )\[([xX ])\]/.exec(line);
     if (lineMatch) {
+      const taskBody = line.substring(lineMatch[0].length).trim();
+      // Keep index mapping aligned with markdown-it-task-lists:
+      // empty task items ("- [ ] ") are not rendered as checkboxes.
+      if (!taskBody) {
+        charOffset += line.length + 1;
+        continue;
+      }
       const indentMatch = line.match(/^(\s*)/);
       tasks.push({
         lineNum: lineIndex + 1, // 1-based
@@ -202,6 +230,11 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
 
   const task = tasks[checkboxIndex];
   const newCheckboxText = checked ? '[x]' : '[ ]';
+  const queuedTaskText =
+    lines[task.lineNum - 1]
+      ?.replace(/^\s*(?:[-*+]|\d+[.)]) \[[xX ]\]\s*/, '')
+      .trim()
+      .substring(0, 500) ?? '';
 
   // Find list boundaries
   const boundary = useEditorView
@@ -320,17 +353,28 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
   }
 
   // Queue task event for sending after next successful save
-  const taskLine = lines[task.lineNum - 1];
-  const taskText = taskLine.replace(/^\s*(?:[-*+]|\d+[.)]) \[[xX ]\]\s*/, '').trim();
-  if (taskText && noteId) {
-    queueTaskEvent(
-      noteId,
-      taskText.substring(0, 500),
-      checkboxIndex,
-      checked ? 'completed' : 'reopened'
-    );
+  if (queuedTaskText && noteId) {
+    queueTaskEvent(noteId, queuedTaskText, checkboxIndex, checked ? 'completed' : 'reopened');
   }
 
   // Trigger auto-save
   scheduleAutoSave();
+}
+
+export function toggleTaskByLine(options: ToggleTaskByLineOptions) {
+  const { lineNumber, editorView, getContent, ...rest } = options;
+  const content = editorView ? editorView.state.doc.toString() : getContent();
+  const checkboxIndex = findTaskCheckboxIndexByLine(content, lineNumber);
+
+  if (checkboxIndex === -1) {
+    options.log?.('[TaskSort] No task found for line:', lineNumber);
+    return;
+  }
+
+  toggleTaskByIndex({
+    editorView,
+    checkboxIndex,
+    getContent,
+    ...rest,
+  });
 }

@@ -57,6 +57,13 @@ describe('task-reorder', () => {
 
       expect(tasks).toHaveLength(3);
     });
+
+    it('ignores empty task markers', () => {
+      const doc = Text.of(['- [ ] ', '- [ ] Visible task']);
+      const tasks = getTasksInDocument(doc);
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].text).toBe('- [ ] Visible task');
+    });
   });
 
   describe('calculateMoveChanges', () => {

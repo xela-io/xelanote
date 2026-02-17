@@ -3,7 +3,7 @@ interface PreviewInteractionOptions {
   getLastTaskClickTime: () => number;
   setLastTaskClickTime: (value: number) => void;
   onWikilink: (title: string) => void;
-  onToggleTask: (index: number, checked: boolean) => void;
+  onToggleTask: (index: number, checked: boolean, lineNumber?: number) => void;
   log?: (...args: unknown[]) => void;
 }
 
@@ -70,12 +70,24 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
         const checkboxIndex = taskItem
           ? parseInt(taskItem.getAttribute('data-task-index') || '-1', 10)
           : -1;
-        options.log?.('[TaskSort] Checkbox index:', checkboxIndex, 'newChecked:', newChecked);
+        const lineNumber = taskItem ? parseInt(taskItem.getAttribute('data-task-line') || '-1', 10) : -1;
+        options.log?.(
+          '[TaskSort] Checkbox index:',
+          checkboxIndex,
+          'line:',
+          lineNumber,
+          'newChecked:',
+          newChecked
+        );
 
         if (checkboxIndex !== -1) {
           // Update timestamp before processing
           options.setLastTaskClickTime(now);
-          options.onToggleTask(checkboxIndex, newChecked);
+          options.onToggleTask(
+            checkboxIndex,
+            newChecked,
+            Number.isInteger(lineNumber) && lineNumber > 0 ? lineNumber : undefined
+          );
         }
       }
     }

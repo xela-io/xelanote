@@ -81,7 +81,7 @@
   import { taskCollapse } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable } from '$lib/editor/task-sortable';
-  import { toggleTaskByIndex } from '$lib/editor/task-toggle';
+  import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
@@ -517,7 +517,7 @@
         lastTaskClickTime = value;
       },
       onWikilink: (title) => handleWikilinkClick(title),
-      onToggleTask: (index, checked) => toggleTask(index, checked),
+      onToggleTask: (index, checked, lineNumber) => toggleTask(index, checked, lineNumber),
       log: console.log,
     });
   }
@@ -531,19 +531,31 @@
     return false;
   }
 
-  function toggleTask(checkboxIndex: number, checked: boolean) {
+  function toggleTask(checkboxIndex: number, checked: boolean, lineNumber?: number) {
     const cn = notes.getCurrentNote();
-    toggleTaskByIndex({
+    const baseOptions = {
       editorView,
-      checkboxIndex,
       checked,
       getContent: () => cn?.content ?? '',
-      setContent: (content) => notes.updateCurrentNoteContent(content),
+      setContent: (content: string) => notes.updateCurrentNoteContent(content),
       scheduleAutoSave: () => notes.scheduleAutoSave(),
-      queueTaskEvent: (noteId, taskText, index, status) =>
+      queueTaskEvent: (noteId: string, taskText: string, index: number, status: 'completed' | 'reopened') =>
         notes.queueTaskEvent(noteId, taskText, index, status),
       noteId: cn?.id,
       log: console.log,
+    };
+
+    if (lineNumber && lineNumber > 0) {
+      toggleTaskByLine({
+        ...baseOptions,
+        lineNumber,
+      });
+      return;
+    }
+
+    toggleTaskByIndex({
+      ...baseOptions,
+      checkboxIndex,
     });
   }
 

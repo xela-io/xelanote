@@ -23,7 +23,11 @@ export function getTasksInDocument(doc: Text): TaskInfo[] {
 
   for (let i = 1; i <= doc.lines; i++) {
     const line = doc.line(i);
-    if (taskPattern.test(line.text)) {
+    const match = taskPattern.exec(line.text);
+    if (match) {
+      const taskBody = line.text.substring(match[0].length).trim();
+      // Match markdown-it-task-lists behavior: no checkbox for empty tasks.
+      if (!taskBody) continue;
       tasks.push({
         index: tasks.length,
         lineNum: i,

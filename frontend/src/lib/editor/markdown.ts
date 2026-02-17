@@ -367,16 +367,18 @@ function wikilinkRule(state: StateInline, silent: boolean): boolean {
   return false;
 }
 
-// Create a configured MarkdownIt instance
-function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
+// Cached MarkdownIt instance — rules and plugins are static,
+// dynamic data (titleToIdMap, widthMap) flows through the env parameter.
+let cachedMd: MarkdownIt | null = null;
+
+function getMarkdownInstance(): MarkdownIt {
+  if (cachedMd) return cachedMd;
+
   const md = new MarkdownIt({
     html: false,
     linkify: true,
     typographer: true,
   });
-
-  const resolvedTitles = options.resolvedTitles ?? new Set<string>();
-  const titleToIdMap = options.titleToIdMap ?? new Map<string, string>();
 
   // Add task lists plugin (generates checkboxes with data-line attributes)
   if (FEATURE_FLAGS.taskLists) {
@@ -406,14 +408,21 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
     md.inline.ruler.before('link', 'color', colorRule);
   }
 
-  // Add wikilink renderer
-  md.renderer.rules.wikilink = (tokens: Token[], idx: number): string => {
+  // Wikilink renderer — reads titleToIdMap from env for each render
+  md.renderer.rules.wikilink = (
+    tokens: Token[],
+    idx: number,
+    _options: MarkdownItOptions,
+    env: MarkdownItEnv
+  ): string => {
     const token = tokens[idx];
     const title = token.content;
     const alias = token.meta?.alias as string | undefined;
     const displayText = alias || title;
 
     const titleLower = title.toLowerCase().trim();
+    const titleToIdMap = (env.titleToIdMap as Map<string, string>) ?? new Map<string, string>();
+    const resolvedTitles = (env.resolvedTitles as Set<string>) ?? new Set<string>();
     const isResolved = resolvedTitles.has(titleLower);
     const className = isResolved ? 'wikilink-resolved' : 'wikilink-unresolved';
 
@@ -462,7 +471,7 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
     md.renderer.rules.image = (
       tokens: Token[],
       idx: number,
-      options: MarkdownItOptions,
+      _options: MarkdownItOptions,
       env: MarkdownItEnv,
       _self: MarkdownItRenderer
     ): string => {
@@ -499,9 +508,14 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
     };
   }
 
-  // Add heading renderer with IDs for TOC anchor links
-  const slugCounts = new Map<string, number>();
-  md.renderer.rules.heading_open = (tokens: Token[], idx: number): string => {
+  // Heading renderer with IDs for TOC anchor links.
+  // slugCounts is reset per render via env to avoid cross-render collisions.
+  md.renderer.rules.heading_open = (
+    tokens: Token[],
+    idx: number,
+    _options: MarkdownItOptions,
+    env: MarkdownItEnv
+  ): string => {
     const token = tokens[idx];
     const level = token.tag; // h1, h2, etc.
 
@@ -521,7 +535,8 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-');
 
-    // Handle duplicate slugs
+    // Handle duplicate slugs (per-render counter stored in env)
+    const slugCounts = ((env._slugCounts as Map<string, number>) ??= new Map<string, number>());
     const count = slugCounts.get(slug) || 0;
     slugCounts.set(slug, count + 1);
     if (count > 0) {
@@ -531,6 +546,7 @@ function createMarkdownInstance(options: RenderOptions = {}): MarkdownIt {
     return `<${level} id="${escapeHtml(slug)}">`;
   };
 
+  cachedMd = md;
   return md;
 }
 
@@ -675,7 +691,25 @@ function extractImageWidths(content: string): {
  * Add drag handles and data-task-index attributes to task list items.
  * This post-processes the HTML after markdown-it rendering.
  */
-function addDragHandlesToTasks(html: string): string {
+function getRenderedTaskLineNumbers(content: string): number[] {
+  const lines = content.split('\n');
+  const taskLines: number[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = /^(\s*(?:[-*+]|\d+[.)]) )\[([xX ])\]/.exec(line);
+    if (!match) continue;
+
+    // Match markdown-it-task-lists behavior: no checkbox for empty tasks.
+    const taskBody = line.substring(match[0].length).trim();
+    if (!taskBody) continue;
+    taskLines.push(i + 1); // 1-based line number
+  }
+
+  return taskLines;
+}
+
+function addDragHandlesToTasks(html: string, taskLines: number[]): string {
   let taskIndex = 0;
 
   // Match task list items and add drag handle + data-task-index
@@ -683,12 +717,14 @@ function addDragHandlesToTasks(html: string): string {
   return html.replace(/<li class="task-list-item([^"]*)">/g, (match, existingClasses) => {
     const index = taskIndex++;
     const handle = `<span class="drag-handle" aria-hidden="true">${DRAG_HANDLE_SVG}</span>`;
-    return `<li class="task-list-item${existingClasses}" data-task-index="${index}">${handle}`;
+    const line = taskLines[index];
+    const lineAttr = Number.isInteger(line) ? ` data-task-line="${line}"` : '';
+    return `<li class="task-list-item${existingClasses}" data-task-index="${index}"${lineAttr}>${handle}`;
   });
 }
 
 export function renderMarkdown(content: string, options: RenderOptions = {}): string {
-  const md = createMarkdownInstance(options);
+  const md = getMarkdownInstance();
 
   // Extract image widths and clean content for parsing
   let processedContent = content;
@@ -700,13 +736,17 @@ export function renderMarkdown(content: string, options: RenderOptions = {}): st
     widthMap = extracted.widthMap;
   }
 
-  // Pass width map through env for the image renderer
-  const env = { widthMap };
+  // Pass dynamic data through env (titleToIdMap, resolvedTitles, widthMap)
+  const env: MarkdownItEnv = {
+    widthMap,
+    titleToIdMap: options.titleToIdMap,
+    resolvedTitles: options.resolvedTitles,
+  };
   let rendered = md.render(processedContent, env);
 
   // Add drag handles to task items for drag & drop support
   if (FEATURE_FLAGS.taskLists) {
-    rendered = addDragHandlesToTasks(rendered);
+    rendered = addDragHandlesToTasks(rendered, getRenderedTaskLineNumbers(processedContent));
   }
 
   // Apply DOMPurify layer for defense-in-depth

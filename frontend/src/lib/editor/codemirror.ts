@@ -38,14 +38,16 @@ const wikilinkDecoration = Decoration.mark({ class: 'cm-wikilink' });
 
 function getWikilinkDecorations(view: EditorView): DecorationSet {
   const decorations: { from: number; to: number }[] = [];
-  const doc = view.state.doc.toString();
 
-  let match;
-  while ((match = wikilinkMatcher.exec(doc)) !== null) {
-    decorations.push({
-      from: match.index,
-      to: match.index + match[0].length,
-    });
+  for (const { from, to } of view.visibleRanges) {
+    const text = view.state.doc.sliceString(from, to);
+    let match;
+    while ((match = wikilinkMatcher.exec(text)) !== null) {
+      decorations.push({
+        from: from + match.index,
+        to: from + match.index + match[0].length,
+      });
+    }
   }
 
   return Decoration.set(
@@ -85,23 +87,26 @@ function getColorTagDecorations(view: EditorView): DecorationSet {
   }
 
   const decorations: { from: number; to: number }[] = [];
-  const doc = view.state.doc.toString();
 
-  // Find opening tags
-  let match;
-  while ((match = colorOpenMatcher.exec(doc)) !== null) {
-    decorations.push({
-      from: match.index,
-      to: match.index + match[0].length,
-    });
-  }
+  for (const { from, to } of view.visibleRanges) {
+    const text = view.state.doc.sliceString(from, to);
 
-  // Find closing tags
-  while ((match = colorCloseMatcher.exec(doc)) !== null) {
-    decorations.push({
-      from: match.index,
-      to: match.index + match[0].length,
-    });
+    // Find opening tags
+    let match;
+    while ((match = colorOpenMatcher.exec(text)) !== null) {
+      decorations.push({
+        from: from + match.index,
+        to: from + match.index + match[0].length,
+      });
+    }
+
+    // Find closing tags
+    while ((match = colorCloseMatcher.exec(text)) !== null) {
+      decorations.push({
+        from: from + match.index,
+        to: from + match.index + match[0].length,
+      });
+    }
   }
 
   // Sort by position for proper decoration ordering
@@ -146,7 +151,7 @@ function getTaskBracketDecorations(view: EditorView): DecorationSet {
       const absFrom = from + match.index;
       const line = view.state.doc.lineAt(absFrom);
       // Only match inside list items (- [ ], * [ ], + [ ], 1. [ ])
-      if (/^\s*[-*+]\s/.test(line.text) || /^\s*\d+\.\s/.test(line.text)) {
+      if (/^\s*[-*+]\s/.test(line.text) || /^\s*\d+[.)]\s/.test(line.text)) {
         decorations.push({
           from: absFrom,
           to: absFrom + match[0].length,
@@ -236,7 +241,7 @@ const dueDatePlugin = ViewPlugin.fromClass(
 );
 
 // List hanging indent - makes wrapped text in list items align with text after the marker
-const listIndentPattern = /^(\s*)([-*+]|\d+\.)\s(\[[ xX]\]\s)?/;
+const listIndentPattern = /^(\s*)([-*+]|\d+[.)])\s(\[[ xX]\]\s)?/;
 
 function buildListIndentDecorations(view: EditorView): DecorationSet {
   const items: { pos: number; indent: number }[] = [];
@@ -381,9 +386,7 @@ export async function loadEditorExtensions(config: EditorConfig): Promise<Extens
       import('./wikilink-autocomplete'),
     ]);
 
-    console.log('[CodeMirror] Loading extensions with wikilink autocomplete');
     const wikilinkExt = createWikilinkAutocomplete();
-    console.log('[CodeMirror] Wikilink extension created:', wikilinkExt);
 
     return [
       history(),
@@ -391,18 +394,8 @@ export async function loadEditorExtensions(config: EditorConfig): Promise<Extens
       syntaxHighlighting(markdownSyntaxStyle),
       syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       wikilinkExt,
-      keymap.of([
-        ...defaultKeymap,
-        ...historyKeymap,
-        indentWithTab,
-        {
-          key: 'Mod-s',
-          run: () => {
-            config.onSave?.();
-            return true;
-          },
-        },
-      ]),
+      // Mod-s is already in the base extensions with Prec.highest
+      keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
     ];
   })();
 

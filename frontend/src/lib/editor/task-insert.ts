@@ -92,7 +92,9 @@ export function insertTask(editorView: EditorView) {
   // (including below the list), insert the new task BEFORE the first checked task
   if (firstCheckedTask && cursorLine.number >= firstCheckedTask.lineNum) {
     const targetLine = doc.line(firstCheckedTask.lineNum);
-    const text = '- [ ] \n';
+    const markerMatch = /^(\s*(?:[-*+]|\d+[.)]) )\[[xX ]\]/.exec(targetLine.text);
+    const markerPrefix = markerMatch ? markerMatch[1] : '- ';
+    const text = `${markerPrefix}[ ] \n`;
 
     editorView.dispatch({
       changes: { from: targetLine.from, insert: text },

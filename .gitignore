@@ -22,6 +22,7 @@ data/
 # Dependencies (all locations)
 **/node_modules/
 frontend/build/
+frontend/build-old/
 !frontend/build/icons/
 frontend/.svelte-kit/
 frontend/dist/
@@ -62,6 +63,7 @@ tmp/
 temp/
 *.tmp
 .cache/
+.gopath/
 
 # Backend compiled binaries
 backend/xelanote

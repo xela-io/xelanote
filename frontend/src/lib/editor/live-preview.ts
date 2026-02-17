@@ -1,11 +1,14 @@
 import type { Extension } from '@codemirror/state';
 import { RangeSetBuilder } from '@codemirror/state';
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
-
 import {
-  type CollapseInfo,
-  collectCollapseInfo,
-} from './live-preview/collapse';
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  ViewPlugin,
+  type ViewUpdate,
+  WidgetType,
+} from '@codemirror/view';
+
 import { collectTreeFeatures, extractMarkdownLinksFromText } from './live-preview-features';
 
 const lineDecorationCache = new Map<string, Decoration>();
@@ -248,21 +251,14 @@ function textMayAffectStructuredLines(text: string): boolean {
   return STRUCTURED_LINE_TRIGGER_RE.test(text);
 }
 
-function hasAnyLineInRange(
-  lines: Set<number>,
-  fromLine: number,
-  toLine: number
-): boolean {
+function hasAnyLineInRange(lines: Set<number>, fromLine: number, toLine: number): boolean {
   for (let line = fromLine; line <= toLine; line++) {
     if (lines.has(line)) return true;
   }
   return false;
 }
 
-function shouldRecomputeStructuredLines(
-  update: ViewUpdate,
-  previous: StructuredLines
-): boolean {
+function shouldRecomputeStructuredLines(update: ViewUpdate, previous: StructuredLines): boolean {
   if (!update.docChanged) return false;
   if (update.startState.doc.lines !== update.state.doc.lines) return true;
 
@@ -409,17 +405,14 @@ function isInsideRanges(position: number, ranges: Array<{ from: number; to: numb
   return ranges.some((range) => position >= range.from && position < range.to);
 }
 
-
 function buildDecorations(
   view: EditorView,
-  expandedGroups: Set<string>,
   staticData: LivePreviewStaticData,
-  collapseInfo: CollapseInfo,
   headingInfo: HeadingInfo,
   reason: string,
   activeLines: Set<number>,
   getLinePrimitives: (lineNumber: number, text: string) => LinePrimitives
-): { decorations: DecorationSet; keys: Set<string> } {
+): DecorationSet {
   return profile('build', reason, () => {
     const builder = new RangeSetBuilder<Decoration>();
     const seenLines = new Set<number>();
@@ -444,37 +437,9 @@ function buildDecorations(
           continue;
         }
 
-        const collapseGroup = collapseInfo.groupsByLine.get(line.number);
-        const showExpandedGroupToggle =
-          !!collapseGroup && collapseGroup.expanded && line.number === collapseGroup.firstHiddenLine;
         const headingSection = headingInfo.headingByLine.get(line.number);
-        const showHeadingToggle = !!headingSection && headingSection.endLine > headingSection.headingLine;
-        if (collapseGroup) {
-          if (!collapseGroup.expanded && line.number !== collapseGroup.firstHiddenLine) {
-            builder.add(line.from, line.from, getLineDecoration('cm-live-collapsed-line'));
-            builder.add(line.from, line.to, hiddenSyntaxDecoration);
-            continue;
-          }
-          if (!collapseGroup.expanded) {
-            builder.add(
-              line.from,
-              line.from,
-              getLineDecoration('cm-live-preview-line cm-live-collapsed-summary-line')
-            );
-            builder.add(
-              line.from,
-              line.to,
-              Decoration.replace({
-                widget: new CompletedTasksWidget(
-                  collapseGroup.key,
-                  collapseGroup.completedCount,
-                  false
-                ),
-              })
-            );
-            continue;
-          }
-        }
+        const showHeadingToggle =
+          !!headingSection && headingSection.endLine > headingSection.headingLine;
 
         const protectedRanges: Array<{ from: number; to: number }> = [];
         const text = line.text;
@@ -496,7 +461,10 @@ function buildDecorations(
               ? {
                   markerLength: primitives.taskRegex.markerLength,
                   from: base + primitives.taskRegex.markerLength,
-                  to: base + primitives.taskRegex.markerLength + primitives.taskRegex.markerTokenLength,
+                  to:
+                    base +
+                    primitives.taskRegex.markerLength +
+                    primitives.taskRegex.markerTokenLength,
                   checked: primitives.taskRegex.checked,
                 }
               : null;
@@ -513,15 +481,15 @@ function buildDecorations(
           if (listMarkerInfo) {
             lineClasses.push('cm-live-list-item');
           }
-        if (structuredLines.codeFenceLines.has(line.number)) {
-          lineClasses.push('cm-live-code-fence');
-        } else if (structuredLines.codeContentLines.has(line.number)) {
-          lineClasses.push('cm-live-code-line');
+          if (structuredLines.codeFenceLines.has(line.number)) {
+            lineClasses.push('cm-live-code-fence');
+          } else if (structuredLines.codeContentLines.has(line.number)) {
+            lineClasses.push('cm-live-code-line');
+          }
+          if (structuredLines.tableLines.has(line.number)) {
+            lineClasses.push('cm-live-table-line');
+          }
         }
-        if (structuredLines.tableLines.has(line.number)) {
-          lineClasses.push('cm-live-table-line');
-        }
-      }
 
         if (lineClasses.length > 0) {
           builder.add(line.from, line.from, getLineDecoration(lineClasses.join(' ')));
@@ -538,53 +506,35 @@ function buildDecorations(
           );
         }
 
-        if (collapseGroup?.expanded) {
-          const groupClasses = ['cm-live-completed-group-line'];
-          if (line.number === collapseGroup.firstHiddenLine) groupClasses.push('cm-live-completed-group-first');
-          if (line.number === collapseGroup.lastHiddenLine) groupClasses.push('cm-live-completed-group-last');
-          builder.add(line.from, line.from, getLineDecoration(groupClasses.join(' ')));
+        if (!isActiveLine && taskInfo) {
+          const markerFrom = base;
+          const markerTo = base + taskInfo.markerLength;
+          builder.add(markerFrom, markerTo, hiddenSyntaxDecoration);
         }
 
-        if (showExpandedGroupToggle && collapseGroup) {
+        if (taskInfo) {
           builder.add(
-            line.from,
-            line.from,
-            Decoration.widget({
-              side: -1,
-              widget: new CompletedTasksWidget(collapseGroup.key, collapseGroup.completedCount, true),
+            taskInfo.from,
+            taskInfo.to,
+            Decoration.replace({
+              widget: new TaskCheckboxWidget(taskInfo.checked, line.number),
             })
           );
         }
 
-      if (!isActiveLine && taskInfo) {
-        const markerFrom = base;
-        const markerTo = base + taskInfo.markerLength;
-        builder.add(markerFrom, markerTo, hiddenSyntaxDecoration);
-      }
+        if (isActiveLine) {
+          continue;
+        }
 
-      if (taskInfo) {
-        builder.add(
-          taskInfo.from,
-          taskInfo.to,
-          Decoration.replace({
-            widget: new TaskCheckboxWidget(taskInfo.checked, line.number),
-          })
-        );
-      }
-
-      if (isActiveLine) {
-        continue;
-      }
-
-      if (
-        structuredLines.codeFenceLines.has(line.number) ||
-        structuredLines.codeContentLines.has(line.number)
-      ) {
-        continue;
-      }
-      if (structuredLines.tableLines.has(line.number)) {
-        continue;
-      }
+        if (
+          structuredLines.codeFenceLines.has(line.number) ||
+          structuredLines.codeContentLines.has(line.number)
+        ) {
+          continue;
+        }
+        if (structuredLines.tableLines.has(line.number)) {
+          continue;
+        }
 
         if (primitives.heading) {
           const fromPos = base + primitives.heading.indentLength;
@@ -606,60 +556,46 @@ function buildDecorations(
             const markerWidgetText = /^\d+[.)]$/.test(marker) ? `${marker} ` : '• ';
             addProtectedWidget(
               builder,
-            protectedRanges,
-            fromPos,
-            toPos,
-            new InlineTextWidget(markerWidgetText, 'cm-live-list-marker')
-          );
-        }
-      }
-
-      const treeInline = treeFeatures.inlineByLine.get(line.number) ?? [];
-      if (treeInline.length > 0) {
-        for (const inline of treeInline) {
-          addProtectedWidget(
-            builder,
-            protectedRanges,
-            inline.from,
-            inline.to,
-            new InlineTextWidget(inline.text, inline.className)
-          );
-        }
-      } else {
-        if (text.includes('`')) {
-          const inlineCodePattern = /`([^`\n]+)`/g;
-          let inlineCodeMatch: RegExpExecArray | null;
-          while ((inlineCodeMatch = inlineCodePattern.exec(text)) !== null) {
-            const fromPos = base + inlineCodeMatch.index;
-            const toPos = fromPos + inlineCodeMatch[0].length;
-            addProtectedWidget(
-              builder,
               protectedRanges,
               fromPos,
               toPos,
-              new InlineTextWidget(inlineCodeMatch[1], 'cm-live-preview-code')
+              new InlineTextWidget(markerWidgetText, 'cm-live-list-marker')
             );
           }
         }
-      }
 
-      const treeLinks = treeFeatures.linksByLine.get(line.number) ?? [];
-      if (treeLinks.length > 0) {
-        for (const link of treeLinks) {
-          addProtectedWidget(
-            builder,
-            protectedRanges,
-            link.from,
-            link.to,
-            new InlineTextWidget(link.label, 'cm-live-preview-link', {
-              href: link.href,
-            })
-          );
+        const treeInline = treeFeatures.inlineByLine.get(line.number) ?? [];
+        if (treeInline.length > 0) {
+          for (const inline of treeInline) {
+            addProtectedWidget(
+              builder,
+              protectedRanges,
+              inline.from,
+              inline.to,
+              new InlineTextWidget(inline.text, inline.className)
+            );
+          }
+        } else {
+          if (text.includes('`')) {
+            const inlineCodePattern = /`([^`\n]+)`/g;
+            let inlineCodeMatch: RegExpExecArray | null;
+            while ((inlineCodeMatch = inlineCodePattern.exec(text)) !== null) {
+              const fromPos = base + inlineCodeMatch.index;
+              const toPos = fromPos + inlineCodeMatch[0].length;
+              addProtectedWidget(
+                builder,
+                protectedRanges,
+                fromPos,
+                toPos,
+                new InlineTextWidget(inlineCodeMatch[1], 'cm-live-preview-code')
+              );
+            }
+          }
         }
-      } else {
-        if (text.includes('[') && text.includes('](')) {
-          const fallbackLinks = extractMarkdownLinksFromText(text, base);
-          for (const link of fallbackLinks) {
+
+        const treeLinks = treeFeatures.linksByLine.get(line.number) ?? [];
+        if (treeLinks.length > 0) {
+          for (const link of treeLinks) {
             addProtectedWidget(
               builder,
               protectedRanges,
@@ -670,173 +606,137 @@ function buildDecorations(
               })
             );
           }
+        } else {
+          if (text.includes('[') && text.includes('](')) {
+            const fallbackLinks = extractMarkdownLinksFromText(text, base);
+            for (const link of fallbackLinks) {
+              addProtectedWidget(
+                builder,
+                protectedRanges,
+                link.from,
+                link.to,
+                new InlineTextWidget(link.label, 'cm-live-preview-link', {
+                  href: link.href,
+                })
+              );
+            }
+          }
         }
-      }
 
-      const treeWikilinks = treeFeatures.wikilinksByLine.get(line.number) ?? [];
-      if (treeWikilinks.length > 0) {
-        for (const wikilink of treeWikilinks) {
-          addProtectedWidget(
-            builder,
-            protectedRanges,
-            wikilink.from,
-            wikilink.to,
-            new InlineTextWidget(wikilink.label, 'cm-live-preview-wikilink', {
-              title: wikilink.title,
-            })
-          );
-        }
-      } else {
-        if (text.includes('[[')) {
-          const wikilinkPattern = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
-          let wikilinkMatch: RegExpExecArray | null;
-          while ((wikilinkMatch = wikilinkPattern.exec(text)) !== null) {
-            const fromPos = base + wikilinkMatch.index;
-            const toPos = fromPos + wikilinkMatch[0].length;
-            const label = wikilinkMatch[2] ?? wikilinkMatch[1];
+        const treeWikilinks = treeFeatures.wikilinksByLine.get(line.number) ?? [];
+        if (treeWikilinks.length > 0) {
+          for (const wikilink of treeWikilinks) {
             addProtectedWidget(
               builder,
               protectedRanges,
-              fromPos,
-              toPos,
-              new InlineTextWidget(label, 'cm-live-preview-wikilink', {
-                title: wikilinkMatch[1].trim(),
+              wikilink.from,
+              wikilink.to,
+              new InlineTextWidget(wikilink.label, 'cm-live-preview-wikilink', {
+                title: wikilink.title,
               })
             );
           }
+        } else {
+          if (text.includes('[[')) {
+            const wikilinkPattern = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+            let wikilinkMatch: RegExpExecArray | null;
+            while ((wikilinkMatch = wikilinkPattern.exec(text)) !== null) {
+              const fromPos = base + wikilinkMatch.index;
+              const toPos = fromPos + wikilinkMatch[0].length;
+              const label = wikilinkMatch[2] ?? wikilinkMatch[1];
+              addProtectedWidget(
+                builder,
+                protectedRanges,
+                fromPos,
+                toPos,
+                new InlineTextWidget(label, 'cm-live-preview-wikilink', {
+                  title: wikilinkMatch[1].trim(),
+                })
+              );
+            }
+          }
         }
-      }
 
-      const treeDueDates = treeFeatures.dueDatesByLine.get(line.number) ?? [];
-      if (treeDueDates.length > 0) {
-        for (const dueDate of treeDueDates) {
-          addProtectedWidget(
-            builder,
-            protectedRanges,
-            dueDate.from,
-            dueDate.to,
-            new InlineTextWidget(dueDate.date, 'cm-live-preview-due')
-          );
-        }
-      } else {
-        if (text.includes('@due(')) {
-          const dueDatePattern = /@due\((\d{4}-\d{2}-\d{2})\)/g;
-          let dueDateMatch: RegExpExecArray | null;
-          while ((dueDateMatch = dueDatePattern.exec(text)) !== null) {
-            const fromPos = base + dueDateMatch.index;
-            const toPos = fromPos + dueDateMatch[0].length;
+        const treeDueDates = treeFeatures.dueDatesByLine.get(line.number) ?? [];
+        if (treeDueDates.length > 0) {
+          for (const dueDate of treeDueDates) {
             addProtectedWidget(
               builder,
               protectedRanges,
-              fromPos,
-              toPos,
-              new InlineTextWidget(dueDateMatch[1], 'cm-live-preview-due')
+              dueDate.from,
+              dueDate.to,
+              new InlineTextWidget(dueDate.date, 'cm-live-preview-due')
             );
           }
+        } else {
+          if (text.includes('@due(')) {
+            const dueDatePattern = /@due\((\d{4}-\d{2}-\d{2})\)/g;
+            let dueDateMatch: RegExpExecArray | null;
+            while ((dueDateMatch = dueDatePattern.exec(text)) !== null) {
+              const fromPos = base + dueDateMatch.index;
+              const toPos = fromPos + dueDateMatch[0].length;
+              addProtectedWidget(
+                builder,
+                protectedRanges,
+                fromPos,
+                toPos,
+                new InlineTextWidget(dueDateMatch[1], 'cm-live-preview-due')
+              );
+            }
+          }
         }
-      }
 
-      if (treeInline.length === 0) {
-        if (text.includes('**') || text.includes('__')) {
-          const strongPattern = /(\*\*|__)(.+?)\1/g;
-          let strongMatch: RegExpExecArray | null;
-          while ((strongMatch = strongPattern.exec(text)) !== null) {
-            const fromPos = base + strongMatch.index;
+        if (treeInline.length === 0) {
+          if (text.includes('**') || text.includes('__')) {
+            const strongPattern = /(\*\*|__)(.+?)\1/g;
+            let strongMatch: RegExpExecArray | null;
+            while ((strongMatch = strongPattern.exec(text)) !== null) {
+              const fromPos = base + strongMatch.index;
+              if (isInsideRanges(fromPos, protectedRanges)) continue;
+              const toPos = fromPos + strongMatch[0].length;
+              addProtectedWidget(
+                builder,
+                protectedRanges,
+                fromPos,
+                toPos,
+                new InlineTextWidget(strongMatch[2], 'cm-live-preview-strong')
+              );
+            }
+          }
+
+          if (text.includes('*') || text.includes('_')) {
+            const emPattern = /(?<!\*)\*([^*\n]+)\*(?!\*)|(?<!_)_([^_\n]+)_(?!_)/g;
+            let emMatch: RegExpExecArray | null;
+            while ((emMatch = emPattern.exec(text)) !== null) {
+              const fromPos = base + emMatch.index;
+              if (isInsideRanges(fromPos, protectedRanges)) continue;
+              const toPos = fromPos + emMatch[0].length;
+              const emText = emMatch[1] ?? emMatch[2];
+              addProtectedWidget(
+                builder,
+                protectedRanges,
+                fromPos,
+                toPos,
+                new InlineTextWidget(emText, 'cm-live-preview-em')
+              );
+            }
+          }
+        }
+
+        if (text.includes('*') || text.includes('_') || text.includes('~') || text.includes('`')) {
+          const syntaxPattern = /(\*\*|__|~~|`|\*|_)/g;
+          let syntaxMatch: RegExpExecArray | null;
+          while ((syntaxMatch = syntaxPattern.exec(text)) !== null) {
+            const fromPos = base + syntaxMatch.index;
             if (isInsideRanges(fromPos, protectedRanges)) continue;
-            const toPos = fromPos + strongMatch[0].length;
-            addProtectedWidget(
-              builder,
-              protectedRanges,
-              fromPos,
-              toPos,
-              new InlineTextWidget(strongMatch[2], 'cm-live-preview-strong')
-            );
-          }
-        }
-
-        if (text.includes('*') || text.includes('_')) {
-          const emPattern = /(?<!\*)\*([^*\n]+)\*(?!\*)|(?<!_)_([^_\n]+)_(?!_)/g;
-          let emMatch: RegExpExecArray | null;
-          while ((emMatch = emPattern.exec(text)) !== null) {
-            const fromPos = base + emMatch.index;
-            if (isInsideRanges(fromPos, protectedRanges)) continue;
-            const toPos = fromPos + emMatch[0].length;
-            const emText = emMatch[1] ?? emMatch[2];
-            addProtectedWidget(
-              builder,
-              protectedRanges,
-              fromPos,
-              toPos,
-              new InlineTextWidget(emText, 'cm-live-preview-em')
-            );
+            const toPos = fromPos + syntaxMatch[0].length;
+            builder.add(fromPos, toPos, hiddenSyntaxDecoration);
           }
         }
       }
-
-      if (
-        text.includes('*') ||
-        text.includes('_') ||
-        text.includes('~') ||
-        text.includes('`')
-      ) {
-        const syntaxPattern = /(\*\*|__|~~|`|\*|_)/g;
-        let syntaxMatch: RegExpExecArray | null;
-        while ((syntaxMatch = syntaxPattern.exec(text)) !== null) {
-          const fromPos = base + syntaxMatch.index;
-          if (isInsideRanges(fromPos, protectedRanges)) continue;
-          const toPos = fromPos + syntaxMatch[0].length;
-          builder.add(fromPos, toPos, hiddenSyntaxDecoration);
-        }
-      }
-
-      }
-
     }
-    return { decorations: builder.finish(), keys: collapseInfo.keys };
+    return builder.finish();
   });
-}
-
-class CompletedTasksWidget extends WidgetType {
-  constructor(
-    private readonly groupKey: string,
-    private readonly completedCount: number,
-    private readonly expanded: boolean
-  ) {
-    super();
-  }
-
-  eq(other: CompletedTasksWidget): boolean {
-    return (
-      this.groupKey === other.groupKey &&
-      this.completedCount === other.completedCount &&
-      this.expanded === other.expanded
-    );
-  }
-
-  toDOM(): HTMLElement {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'cm-live-completed-toggle';
-    button.dataset.group = this.groupKey;
-    button.dataset.expanded = String(this.expanded);
-    button.style.setProperty('--cm-completed-count', String(this.completedCount));
-
-    const icon = document.createElement('span');
-    icon.className = 'cm-live-completed-toggle-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = this.expanded ? '−' : '+';
-
-    const label = document.createElement('span');
-    label.className = 'cm-live-completed-toggle-label';
-    label.textContent = `${this.completedCount} completed`;
-
-    button.append(icon, label);
-    return button;
-  }
-
-  ignoreEvent(): boolean {
-    return false;
-  }
 }
 
 class HeadingToggleWidget extends WidgetType {
@@ -857,7 +757,10 @@ class HeadingToggleWidget extends WidgetType {
     button.className = 'cm-live-heading-toggle';
     button.dataset.section = this.sectionKey;
     button.dataset.collapsed = String(this.collapsed);
-    button.setAttribute('aria-label', this.collapsed ? 'Expand heading section' : 'Collapse heading section');
+    button.setAttribute(
+      'aria-label',
+      this.collapsed ? 'Expand heading section' : 'Collapse heading section'
+    );
     button.textContent = this.collapsed ? '+' : '−';
     return button;
   }
@@ -871,39 +774,34 @@ const livePreviewPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
     staticData: LivePreviewStaticData;
-    collapseInfo: CollapseInfo;
     headingInfo: HeadingInfo;
     linePrimitivesCache = new Map<number, { text: string; parsed: LinePrimitives }>();
     activeLines: Set<number>;
     activeLinesSignature: string;
-    expandedGroups = new Set<string>();
     collapsedHeadingSections = new Set<string>();
     forceRebuild = false;
-    collapseInfoDirty = false;
     headingInfoDirty = false;
+    pendingGutterSyncFrame: number | null = null;
+    gutterObserver: MutationObserver | null = null;
 
     constructor(view: EditorView) {
       this.staticData = this.computeStaticData(view, 'init');
-      this.collapseInfo = profile('structured', 'init', () =>
-        collectCollapseInfo(view, this.expandedGroups)
-      );
       this.headingInfo = profile('structured', 'init', () =>
         collectHeadingInfo(view, this.collapsedHeadingSections)
       );
       this.activeLines = getActiveLines(view);
       this.activeLinesSignature = activeLinesKey(this.activeLines);
-      const next = buildDecorations(
+      this.decorations = buildDecorations(
         view,
-        this.expandedGroups,
         this.staticData,
-        this.collapseInfo,
         this.headingInfo,
         'init',
         this.activeLines,
         this.getLinePrimitives.bind(this)
       );
-      this.decorations = next.decorations;
-      this.pruneExpanded(next.keys);
+      this.setupGutterObserver(view);
+      this.syncCollapsedGutter(view);
+      this.scheduleCollapsedGutterSync(view);
     }
 
     update(update: ViewUpdate) {
@@ -923,27 +821,19 @@ const livePreviewPlugin = ViewPlugin.fromClass(
             : this.staticData.structuredLines,
           treeFeatures: profile('tree', reason, () => collectTreeFeatures(update.view)),
         };
-        this.collapseInfo = profile('structured', reason, () =>
-          collectCollapseInfo(update.view, this.expandedGroups)
-        );
         this.headingInfo = profile('structured', reason, () =>
           collectHeadingInfo(update.view, this.collapsedHeadingSections)
         );
-        this.collapseInfoDirty = false;
         this.headingInfoDirty = false;
       } else if (update.viewportChanged) {
         this.staticData = {
           ...this.staticData,
           treeFeatures: profile('tree', reason, () => collectTreeFeatures(update.view)),
         };
-      } else if (this.collapseInfoDirty || this.headingInfoDirty) {
-        this.collapseInfo = profile('structured', reason, () =>
-          collectCollapseInfo(update.view, this.expandedGroups)
-        );
+      } else if (this.headingInfoDirty) {
         this.headingInfo = profile('structured', reason, () =>
           collectHeadingInfo(update.view, this.collapsedHeadingSections)
         );
-        this.collapseInfoDirty = false;
         this.headingInfoDirty = false;
       }
       if (
@@ -954,34 +844,20 @@ const livePreviewPlugin = ViewPlugin.fromClass(
         update.focusChanged
       ) {
         this.forceRebuild = false;
-        const next = buildDecorations(
+        this.decorations = buildDecorations(
           update.view,
-          this.expandedGroups,
           this.staticData,
-          this.collapseInfo,
           this.headingInfo,
           reason,
           nextActiveLines,
           this.getLinePrimitives.bind(this)
         );
-        this.decorations = next.decorations;
-        this.pruneExpanded(next.keys);
         this.pruneHeadingSections(this.headingInfo.keys);
       }
       this.activeLines = nextActiveLines;
       this.activeLinesSignature = nextActiveLinesSignature;
-    }
-
-    toggleGroup(view: EditorView, key: string): boolean {
-      if (this.expandedGroups.has(key)) {
-        this.expandedGroups.delete(key);
-      } else {
-        this.expandedGroups.add(key);
-      }
-      this.collapseInfoDirty = true;
-      this.forceRebuild = true;
-      view.dispatch({});
-      return true;
+      this.syncCollapsedGutter(update.view);
+      this.scheduleCollapsedGutterSync(update.view);
     }
 
     toggleHeadingSection(view: EditorView, key: string): boolean {
@@ -994,14 +870,6 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       this.forceRebuild = true;
       view.dispatch({});
       return true;
-    }
-
-    private pruneExpanded(validKeys: Set<string>) {
-      for (const key of this.expandedGroups) {
-        if (!validKeys.has(key)) {
-          this.expandedGroups.delete(key);
-        }
-      }
     }
 
     private pruneHeadingSections(validKeys: Set<string>) {
@@ -1035,17 +903,71 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       if (update.focusChanged) return 'focusChanged';
       return 'other';
     }
+
+    private syncCollapsedGutter(view: EditorView): void {
+      const collapsedLines = new Set<number>();
+
+      for (const [lineNumber, section] of this.headingInfo.sectionByLine) {
+        if (section.collapsed) {
+          collapsedLines.add(lineNumber);
+        }
+      }
+
+      const gutterElements = view.dom.querySelectorAll<HTMLElement>(
+        '.cm-lineNumbers .cm-gutterElement'
+      );
+      for (const element of gutterElements) {
+        const lineNumber = Number.parseInt(element.textContent?.trim() ?? '', 10);
+        if (Number.isInteger(lineNumber) && collapsedLines.has(lineNumber)) {
+          element.classList.add('cm-live-collapsed-line');
+        } else {
+          element.classList.remove('cm-live-collapsed-line');
+        }
+      }
+    }
+
+    private scheduleCollapsedGutterSync(view: EditorView): void {
+      if (this.pendingGutterSyncFrame != null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(this.pendingGutterSyncFrame);
+      }
+
+      if (typeof requestAnimationFrame === 'function') {
+        this.pendingGutterSyncFrame = requestAnimationFrame(() => {
+          this.pendingGutterSyncFrame = null;
+          this.syncCollapsedGutter(view);
+        });
+        return;
+      }
+
+      this.syncCollapsedGutter(view);
+    }
+
+    private setupGutterObserver(view: EditorView): void {
+      if (typeof MutationObserver === 'undefined') return;
+      const lineNumberGutter = view.dom.querySelector('.cm-lineNumbers');
+      if (!lineNumberGutter) return;
+
+      this.gutterObserver?.disconnect();
+      this.gutterObserver = new MutationObserver(() => {
+        this.syncCollapsedGutter(view);
+      });
+      // React when CodeMirror adds/removes gutter rows during scroll/reflow.
+      this.gutterObserver.observe(lineNumberGutter, { childList: true, subtree: true });
+    }
+
+    destroy(): void {
+      if (this.pendingGutterSyncFrame != null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(this.pendingGutterSyncFrame);
+        this.pendingGutterSyncFrame = null;
+      }
+      this.gutterObserver?.disconnect();
+      this.gutterObserver = null;
+    }
   },
   {
     decorations: (value) => value.decorations,
   }
 );
-
-export function toggleLivePreviewCompletedGroup(view: EditorView, key: string): boolean {
-  const plugin = view.plugin(livePreviewPlugin);
-  if (!plugin) return false;
-  return plugin.toggleGroup(view, key);
-}
 
 export function toggleLivePreviewHeadingSection(view: EditorView, key: string): boolean {
   const plugin = view.plugin(livePreviewPlugin);

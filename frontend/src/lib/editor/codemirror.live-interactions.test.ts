@@ -100,12 +100,16 @@ describe('codemirror live interactions', () => {
 
     link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(openSpy).toHaveBeenCalledTimes(1);
-    expect(openSpy).toHaveBeenCalledWith('https://example.com/docs', '_blank', 'noopener,noreferrer');
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://example.com/docs',
+      '_blank',
+      'noopener,noreferrer'
+    );
 
     view.destroy();
   });
 
-  it('expands completed group when clicking live completed toggle', () => {
+  it('does not render a line-number gutter', () => {
     const parent = document.createElement('div');
     document.body.appendChild(parent);
 
@@ -115,61 +119,7 @@ describe('codemirror live interactions', () => {
 
     setLivePreviewMode(view, true);
 
-    const before = parent.querySelectorAll('.cm-live-task-checkbox');
-    expect(before.length).toBe(1);
-
-    const toggle = parent.querySelector('.cm-live-completed-toggle') as HTMLElement | null;
-    expect(toggle).not.toBeNull();
-    toggle?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-
-    const after = parent.querySelectorAll('.cm-live-task-checkbox');
-    expect(after.length).toBe(3);
-
-    const toggleAgain = parent.querySelector('.cm-live-completed-toggle') as HTMLElement | null;
-    expect(toggleAgain).not.toBeNull();
-    toggleAgain?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-    toggleAgain?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-
-    const afterCollapse = parent.querySelectorAll('.cm-live-task-checkbox');
-    expect(afterCollapse.length).toBe(1);
-
-    view.destroy();
-  });
-
-  it('keeps completed-toggle interaction latency within budget', () => {
-    const parent = document.createElement('div');
-    document.body.appendChild(parent);
-
-    const lines = ['Active', '- [ ] Open task'];
-    for (let i = 0; i < 220; i++) {
-      lines.push(`- [x] Done ${i}`);
-    }
-
-    const samples: number[] = [];
-    setLivePreviewProfilerSink((sample) => {
-      if (sample.phase === 'build' && sample.reason === 'forceRebuild') {
-        samples.push(sample.ms);
-      }
-    });
-
-    const view = createEditor(parent, {
-      doc: lines.join('\n'),
-    });
-    setLivePreviewMode(view, true);
-
-    const toggle = parent.querySelector('.cm-live-completed-toggle') as HTMLElement | null;
-    expect(toggle).not.toBeNull();
-    toggle?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-
-    expect(samples.length).toBeGreaterThanOrEqual(1);
-    const avg = samples.reduce((sum, value) => sum + value, 0) / samples.length;
-    const max = Math.max(...samples);
-
-    // Relaxed CI-friendly limits that still catch substantial interaction regressions.
-    expect(avg).toBeLessThan(8);
-    expect(max).toBeLessThan(20);
+    expect(parent.querySelector('.cm-lineNumbers')).toBeNull();
 
     view.destroy();
   });

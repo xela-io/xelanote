@@ -2,13 +2,7 @@
 
 import { bracketMatching, HighlightStyle } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, Prec } from '@codemirror/state';
-import {
-  drawSelection,
-  EditorView,
-  highlightActiveLine,
-  keymap,
-  lineNumbers,
-} from '@codemirror/view';
+import { drawSelection, EditorView, highlightActiveLine, keymap } from '@codemirror/view';
 import { Decoration, type DecorationSet, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
@@ -22,11 +16,7 @@ import {
   setTypewriterMode,
   typewriterCompartment,
 } from './focus-mode-extensions';
-import {
-  createLivePreviewExtension,
-  toggleLivePreviewCompletedGroup,
-  toggleLivePreviewHeadingSection,
-} from './live-preview';
+import { createLivePreviewExtension, toggleLivePreviewHeadingSection } from './live-preview';
 import { isValidDueDate } from './markdown';
 import {
   createSpellCheckExtension,
@@ -416,7 +406,6 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
   // Base extensions (loaded immediately)
   const baseExtensions: Extension[] = [
     EditorView.lineWrapping,
-    lineNumbers(),
     highlightActiveLine(),
     drawSelection(),
     bracketMatching(),
@@ -489,13 +478,8 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
       mousedown: (event) => {
         const target = event.target as HTMLElement;
         const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
-        const liveCompletedToggle = target.closest('.cm-live-completed-toggle') as HTMLElement | null;
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         if (liveTaskCheckbox) {
-          event.preventDefault();
-          return true;
-        }
-        if (liveCompletedToggle) {
           event.preventDefault();
           return true;
         }
@@ -507,13 +491,6 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
       },
       click: (event, view) => {
         const target = event.target as HTMLElement;
-        const liveCompletedToggle = target.closest('.cm-live-completed-toggle') as HTMLElement | null;
-        if (liveCompletedToggle?.dataset.group) {
-          if (toggleLivePreviewCompletedGroup(view, liveCompletedToggle.dataset.group)) {
-            event.preventDefault();
-            return true;
-          }
-        }
 
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         if (liveHeadingToggle?.dataset.section) {

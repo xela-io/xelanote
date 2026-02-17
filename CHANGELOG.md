@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Remove completed task collapse/expand mechanism from live preview — all completed tasks are now always visible
+
 ### Changed
 
 - Fix ESLint errors: prefer-const for $state vars, use SvelteSet for reactive Sets, sort imports, prefix unused params

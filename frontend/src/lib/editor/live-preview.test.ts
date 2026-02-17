@@ -41,7 +41,9 @@ describe('live-preview', () => {
     expect(checkbox).not.toBeNull();
     expect(checkbox?.dataset.line).toBe('2');
     expect(checkbox?.dataset.checked).toBe('false');
-    const input = checkbox?.querySelector('.cm-live-task-checkbox-input') as HTMLInputElement | null;
+    const input = checkbox?.querySelector(
+      '.cm-live-task-checkbox-input'
+    ) as HTMLInputElement | null;
     expect(input).not.toBeNull();
     expect(input?.checked).toBe(false);
 
@@ -181,45 +183,6 @@ describe('live-preview', () => {
 
     const tableLine = view.dom.querySelector('.cm-live-table-line') as HTMLElement | null;
     expect(tableLine).not.toBeNull();
-
-    view.destroy();
-  });
-
-  it('collapses trailing completed tasks in list blocks', () => {
-    const doc = 'Active\n- [ ] Open task\n- [x] Done 1\n- [x] Done 2';
-    const view = createView(doc, 0);
-
-    const summary = view.dom.querySelector('.cm-live-completed-toggle') as HTMLElement | null;
-    expect(summary).not.toBeNull();
-    expect(summary?.querySelector('.cm-live-completed-toggle-icon')?.textContent).toBe('+');
-    expect(summary?.querySelector('.cm-live-completed-toggle-label')?.textContent).toContain('2');
-
-    const checkboxes = view.dom.querySelectorAll('.cm-live-task-checkbox');
-    expect(checkboxes.length).toBe(1);
-
-    view.destroy();
-  });
-
-  it('recomputes collapsed groups when a single task-marker character changes', () => {
-    const doc = 'Active\n- [ ] Open task\n- [ ] Done task';
-    const view = createView(doc, 0);
-
-    expect(view.dom.querySelector('.cm-live-completed-toggle')).toBeNull();
-
-    const lineText = '- [ ] Done task';
-    const lineStart = doc.indexOf(lineText);
-    const markerCharPos = lineStart + 3; // "- [ ]": toggle inner marker char from space -> x
-    view.dispatch({
-      changes: {
-        from: markerCharPos,
-        to: markerCharPos + 1,
-        insert: 'x',
-      },
-    });
-
-    const summary = view.dom.querySelector('.cm-live-completed-toggle') as HTMLElement | null;
-    expect(summary).not.toBeNull();
-    expect(summary?.querySelector('.cm-live-completed-toggle-label')?.textContent).toContain('1');
 
     view.destroy();
   });

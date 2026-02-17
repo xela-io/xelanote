@@ -893,7 +893,7 @@ class HeadingToggleWidget extends WidgetType {
       'aria-label',
       this.collapsed ? 'Expand heading section' : 'Collapse heading section'
     );
-    button.textContent = this.collapsed ? '+' : '−';
+    button.textContent = this.collapsed ? '▷' : '▽';
     return button;
   }
 
@@ -928,7 +928,7 @@ class CompletedTaskGroupToggleWidget extends WidgetType {
       'aria-label',
       this.collapsed ? 'Erledigte Aufgaben aufklappen' : 'Erledigte Aufgaben einklappen'
     );
-    button.textContent = this.collapsed ? '+' : '−';
+    button.textContent = this.collapsed ? '▷' : '▽';
     if (!this.collapsed && this.count > 1) {
       // Vertically center across the group: each line = 1.7rem (line-height of preview lines)
       // Use rem (not em) because this button has font-size: 0.8em

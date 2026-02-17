@@ -811,26 +811,31 @@ html {
   display: none;
 }
 
+.cm-editor .cm-live-heading-toggle-line {
+  position: relative;
+}
+
 .cm-editor .cm-live-heading-toggle {
+  position: absolute;
+  left: -1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
   border: 0;
   background: transparent;
   color: var(--color-muted-foreground);
   cursor: pointer;
-  margin-right: 0.4rem;
-  margin-left: -1.1rem;
-  font-size: 0.8em;
+  font-size: 0.65em;
   line-height: 1;
   width: auto;
   height: auto;
   padding: 0;
-  vertical-align: middle;
 }
 
 .cm-editor .cm-live-heading-toggle:hover {
   color: var(--color-foreground);
 }
 
-/* Completed task group toggle button [+]/[-] — positioned left of bracket */
+/* Completed task group toggle button — positioned left of bracket */
 .cm-editor .cm-live-task-group-toggle {
   position: absolute;
   left: calc(var(--live-preview-task-group-indent) - 1.8rem);
@@ -841,7 +846,7 @@ html {
   background: transparent;
   color: var(--color-muted-foreground);
   cursor: pointer;
-  font-size: 0.8em;
+  font-size: 0.65em;
   line-height: 1;
   padding: 0;
 }

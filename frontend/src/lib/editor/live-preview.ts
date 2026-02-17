@@ -930,8 +930,9 @@ class CompletedTaskGroupToggleWidget extends WidgetType {
     );
     button.textContent = this.collapsed ? '+' : '−';
     if (!this.collapsed && this.count > 1) {
-      // Vertically center across the group: each line ≈ 1.7em (line-height of preview lines)
-      button.style.top = `${this.count * 0.85}em`;
+      // Vertically center across the group: each line = 1.7rem (line-height of preview lines)
+      // Use rem (not em) because this button has font-size: 0.8em
+      button.style.top = `${this.count * 0.85}rem`;
     }
     return button;
   }

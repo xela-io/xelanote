@@ -171,6 +171,7 @@
   // Split resize state
   let isSplitResizing = $state(false);
   let splitContainerRef: HTMLDivElement | null = $state(null);
+  let previewScrollRef: HTMLDivElement | null = $state(null);
   const splitResizeController = createSplitResizeController(
     {
       getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
@@ -789,6 +790,72 @@
     setFindReplaceState(nextState);
   }
 
+  function getScrollRatio(element: HTMLElement): number {
+    const maxScroll = element.scrollHeight - element.clientHeight;
+    if (maxScroll <= 0) return 0;
+    return Math.max(0, Math.min(1, element.scrollTop / maxScroll));
+  }
+
+  function setScrollByRatio(element: HTMLElement, ratio: number) {
+    const maxScroll = element.scrollHeight - element.clientHeight;
+    if (maxScroll <= 0) {
+      element.scrollTop = 0;
+      return;
+    }
+    element.scrollTop = maxScroll * Math.max(0, Math.min(1, ratio));
+  }
+
+  $effect(() => {
+    const isDesktopSplit = !ui.getIsMobile() && ui.getEditorMode() === 'split';
+    const previewScroller = previewScrollRef;
+    const editorScroller = editorView?.scrollDOM;
+    if (!isDesktopSplit || !previewScroller || !editorScroller) return;
+
+    let syncingFromEditor = false;
+    let syncingFromPreview = false;
+
+    const syncPreviewFromEditor = () => {
+      if (syncingFromPreview) return;
+      syncingFromEditor = true;
+      setScrollByRatio(previewScroller, getScrollRatio(editorScroller));
+      requestAnimationFrame(() => {
+        syncingFromEditor = false;
+      });
+    };
+
+    const syncEditorFromPreview = () => {
+      if (syncingFromEditor) return;
+      syncingFromPreview = true;
+      setScrollByRatio(editorScroller, getScrollRatio(previewScroller));
+      requestAnimationFrame(() => {
+        syncingFromPreview = false;
+      });
+    };
+
+    // Keep preview position aligned when entering split mode.
+    syncPreviewFromEditor();
+
+    editorScroller.addEventListener('scroll', syncPreviewFromEditor, { passive: true });
+    previewScroller.addEventListener('scroll', syncEditorFromPreview, { passive: true });
+    return () => {
+      editorScroller.removeEventListener('scroll', syncPreviewFromEditor);
+      previewScroller.removeEventListener('scroll', syncEditorFromPreview);
+    };
+  });
+
+  $effect(() => {
+    const isDesktopSplit = !ui.getIsMobile() && ui.getEditorMode() === 'split';
+    const previewScroller = previewScrollRef;
+    const editorScroller = editorView?.scrollDOM;
+    const renderedContentSnapshot = renderedContent;
+    if (!isDesktopSplit || !previewScroller || !editorScroller) return;
+
+    requestAnimationFrame(() => {
+      void renderedContentSnapshot;
+      setScrollByRatio(previewScroller, getScrollRatio(editorScroller));
+    });
+  });
+
   $effect(() => {
     maybeLoadDialog(showMoveDialog, dialogLoaders, loadMoveToFolderDialog, (next) => {
       dialogLoaders = next;
@@ -916,6 +983,7 @@
             role="region"
             aria-label={$_('component.editor.editor_area')}
             class:flex-1={ui.getEditorMode() !== 'split'}
+            class:desktop-split-editor={ui.getEditorMode() === 'split' && !ui.getIsMobile()}
             ondrop={(e) => handleEditorDrop(e, uploadImagesFromEditor)}
             ondragover={handleEditorDragOver}
             onpaste={(e) => handleEditorPaste(e, uploadImagesFromEditor)}
@@ -945,11 +1013,10 @@
         {#if ui.getEditorMode() === 'preview' || ui.getEditorMode() === 'split'}
           <!-- Theme wrapper for preview (overflow-auto for internal scrolling) -->
           <div
-            class="relative {ui.getIsMobile()
-              ? ''
-              : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
+            class="relative {ui.getIsMobile() ? '' : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
             class:flex-1={ui.getEditorMode() !== 'split'}
             style={ui.getEditorMode() === 'split' ? `width: ${100 - ui.getSplitPosition()}%;` : ''}
+            bind:this={previewScrollRef}
           >
             <!-- Floating Table of Contents -->
             {#if headings.length > 0}
@@ -1138,5 +1205,17 @@
   .split-resize-handle:hover,
   .split-resize-handle.active {
     background: var(--color-primary, oklch(0.65 0.15 155));
+  }
+
+  /* Desktop split: keep only the right-side scrollbar visible (preview pane). */
+  .desktop-split-editor :global(.cm-scroller) {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .desktop-split-editor :global(.cm-scroller::-webkit-scrollbar) {
+    width: 0;
+    height: 0;
+    display: none;
   }
 </style>

@@ -2,10 +2,7 @@ import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import {
-  createLivePreviewExtension,
-  setLivePreviewProfilerSink,
-} from './live-preview';
+import { createLivePreviewExtension, setLivePreviewProfilerSink } from './live-preview';
 
 type ProfileSample = {
   phase: 'build' | 'tree' | 'structured';

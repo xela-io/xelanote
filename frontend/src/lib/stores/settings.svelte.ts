@@ -180,16 +180,12 @@ export async function loadPreferences(): Promise<void> {
 /**
  * Save preferences to server and update UI.
  */
-export async function savePreferences(
-  theme: ThemeId,
-  editorMode: EditorMode
-): Promise<boolean> {
+export async function savePreferences(theme: ThemeId, editorMode: EditorMode): Promise<boolean> {
   isSavingPreferences = true;
   error = null;
 
   try {
-    const uiMode =
-      !FEATURE_FLAGS.livePreview && editorMode === 'live' ? 'edit' : editorMode;
+    const uiMode = !FEATURE_FLAGS.livePreview && editorMode === 'live' ? 'edit' : editorMode;
     // Backend compatibility: until server-side validation allows `live`,
     // persist it as `split` while keeping the client in `live` mode.
     const persistedMode = uiMode === 'live' ? 'split' : uiMode;
@@ -222,9 +218,7 @@ export async function setThemePreference(theme: ThemeId): Promise<boolean> {
 /**
  * Update editor mode preference (convenience wrapper).
  */
-export async function setEditorModePreference(
-  mode: EditorMode
-): Promise<boolean> {
+export async function setEditorModePreference(mode: EditorMode): Promise<boolean> {
   const currentTheme = ui.getCurrentThemeId();
   return savePreferences(currentTheme, mode);
 }

@@ -247,7 +247,10 @@
                 type="button"
                 onclick={cycleEditorMode}
                 class="h-8 w-8 p-0 hover:bg-accent rounded-md toolbar-btn flex-shrink-0 inline-flex items-center justify-center"
-                class:bg-accent={editorMode === 'live' || editorMode === 'edit' || editorMode === 'preview' || editorMode === 'split'}
+                class:bg-accent={editorMode === 'live' ||
+                  editorMode === 'edit' ||
+                  editorMode === 'preview' ||
+                  editorMode === 'split'}
                 aria-label={getModeLabel(editorMode)}
                 title={getModeLabel(editorMode)}
               >

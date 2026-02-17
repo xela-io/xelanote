@@ -40,11 +40,14 @@ const FAKE_USER: auth.User = { id: 1, username: 'test', email: 'test@test.com', 
 const FAKE_ACCESS_TOKEN = 'fake_access_token';
 const FAKE_REFRESH_TOKEN = 'fake_refresh_token';
 const FAKE_ENCRYPTION_SALT = 'NZ/UXtGgL4+Cg2NGAi4e/w=='; // Dummy Base64 salt
+const fetchMock = vi.fn();
 
 describe('E2E Encryption Feature Flow', () => {
   beforeEach(() => {
     // Reset mocks and state before each test
     vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
     sessionStorage.clear();
     localStorage.clear(); // Clear local storage for setup too
     // Directly reset auth state to avoid calling logout() and its side effects
@@ -78,6 +81,7 @@ describe('E2E Encryption Feature Flow', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     sessionStorage.clear();
     localStorage.clear();
   });

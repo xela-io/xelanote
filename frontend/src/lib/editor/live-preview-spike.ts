@@ -163,7 +163,8 @@ export function benchmarkExtraction(
   tree: BenchmarkResult;
 } {
   const now =
-    typeof globalThis.performance !== 'undefined' && typeof globalThis.performance.now === 'function'
+    typeof globalThis.performance !== 'undefined' &&
+    typeof globalThis.performance.now === 'function'
       ? () => performance.now()
       : () => Date.now();
 
@@ -237,7 +238,10 @@ export const spikeCases: SpikeCase[] = [
   },
 ];
 
-export function calculateBugCount(cases: SpikeCase[], extractor: (doc: string) => ExtractionResult): number {
+export function calculateBugCount(
+  cases: SpikeCase[],
+  extractor: (doc: string) => ExtractionResult
+): number {
   let bugs = 0;
   for (const testCase of cases) {
     const result = extractor(testCase.markdown);

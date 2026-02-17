@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Live-Preview tests stabilized for auth init flow by mocking initial `/auth/me` probe fetch in SEC-001 and E2E auth tests; removes nondeterministic network-error path in Vitest
 - **Sidebar: E-Mail und Changelog-Button entfernt** — Die Benutzer-E-Mail wird nicht mehr in der Seitenleiste angezeigt; der Versions-/Changelog-Button im Footer wurde ebenfalls entfernt (mobile + desktop).
 - **Editor shows stale content when switching notes** — Preview updated immediately while CodeMirror kept showing the old note; caused by `isLoading` guard blocking the editor update effect after `currentNote` was already set; also debounce headings extraction and split-mode preview rendering to reduce per-keystroke work
 - **Unlock modal flashes on every page refresh** — Race condition: `loadNotes()` fires before async KEK restore completes, `encryption.getUserID()` returns null so silent restore is skipped; now falls back to `auth.getCurrentUser()?.id` which is available immediately

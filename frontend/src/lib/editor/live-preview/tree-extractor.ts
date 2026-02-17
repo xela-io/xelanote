@@ -8,7 +8,7 @@ import type {
   TreeInlineFeature,
   TreeLinkFeature,
   TreeTaskFeature,
-  TreeWikilinkFeature
+  TreeWikilinkFeature,
 } from './types';
 
 function parseLinkFromRange(text: string): { label: string; href: string } | null {
@@ -27,12 +27,18 @@ function stripDelimitedText(text: string, kind: 'code' | 'strong' | 'em'): strin
     return match ? match[2] : text;
   }
   if (kind === 'strong') {
-    if ((text.startsWith('**') && text.endsWith('**')) || (text.startsWith('__') && text.endsWith('__'))) {
+    if (
+      (text.startsWith('**') && text.endsWith('**')) ||
+      (text.startsWith('__') && text.endsWith('__'))
+    ) {
       return text.slice(2, -2);
     }
     return text;
   }
-  if ((text.startsWith('*') && text.endsWith('*')) || (text.startsWith('_') && text.endsWith('_'))) {
+  if (
+    (text.startsWith('*') && text.endsWith('*')) ||
+    (text.startsWith('_') && text.endsWith('_'))
+  ) {
     return text.slice(1, -1);
   }
   return text;

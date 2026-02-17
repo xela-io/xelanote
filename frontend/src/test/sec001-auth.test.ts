@@ -30,6 +30,7 @@ import * as api from '$lib/api';
 import * as auth from '$lib/stores/auth.svelte';
 
 const FAKE_USER: auth.User = { id: 1, username: 'test', email: 'test@test.com', is_admin: false };
+const fetchMock = vi.fn();
 
 function resetAuthState() {
   Object.assign(auth.getAuthState(), {
@@ -43,6 +44,8 @@ function resetAuthState() {
 describe('SEC-001: Token exposure elimination', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
     sessionStorage.clear();
     localStorage.clear();
     resetAuthState();
@@ -50,6 +53,7 @@ describe('SEC-001: Token exposure elimination', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     sessionStorage.clear();
     localStorage.clear();
   });

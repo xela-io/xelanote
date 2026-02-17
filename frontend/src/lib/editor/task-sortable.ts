@@ -15,7 +15,7 @@ export interface TaskSortableOptions {
  * Handles cleanup on unmount and re-initialization when content changes.
  */
 export function taskSortable(container: HTMLElement, options: TaskSortableOptions) {
-  let instancesByList = new Map<HTMLElement, Sortable>();
+  const instancesByList = new Map<HTMLElement, Sortable>();
   let rafId: number | null = null;
 
   function refresh() {

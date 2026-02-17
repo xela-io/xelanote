@@ -367,7 +367,7 @@ export interface EditorConfig {
 // Lazy load editor extensions
 let lazyExtensionsPromise: Promise<Extension[]> | null = null;
 
-export async function loadEditorExtensions(config: EditorConfig): Promise<Extension[]> {
+export async function loadEditorExtensions(_config: EditorConfig): Promise<Extension[]> {
   // Return cached promise if already loading
   if (lazyExtensionsPromise) {
     return lazyExtensionsPromise;

@@ -3,7 +3,6 @@
   import { _ } from 'svelte-i18n';
 
   import { bottomsheet } from '$lib/actions/bottomsheet';
-
   import type { TreeNode } from '$lib/stores/tree.svelte';
 
   interface Props {

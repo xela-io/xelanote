@@ -118,13 +118,13 @@
     $_('component.editor.completed_count', { values: { count } });
   const completedAriaLabel = (count: number) =>
     $_('component.editor.completed_toggle', { values: { count } });
-  let taskCollapseOptions = $state<TaskCollapseOptions>({
+  const taskCollapseOptions = $state<TaskCollapseOptions>({
     completedLabel,
     completedAriaLabel,
     noteId: '',
     revision: '',
   });
-  let taskSortableOptions = $state<TaskSortableOptions>({
+  const taskSortableOptions = $state<TaskSortableOptions>({
     onReorder: (fromIndex, toIndex) => handleTaskReorder(fromIndex, toIndex),
     revision: '',
   });
@@ -561,8 +561,12 @@
       getContent: () => cn?.content ?? '',
       setContent: (content: string) => notes.updateCurrentNoteContent(content),
       scheduleAutoSave: () => notes.scheduleAutoSave(),
-      queueTaskEvent: (noteId: string, taskText: string, index: number, status: 'completed' | 'reopened') =>
-        notes.queueTaskEvent(noteId, taskText, index, status),
+      queueTaskEvent: (
+        noteId: string,
+        taskText: string,
+        index: number,
+        status: 'completed' | 'reopened'
+      ) => notes.queueTaskEvent(noteId, taskText, index, status),
       noteId: cn?.id,
       log: console.log,
     };

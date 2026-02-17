@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fix ESLint errors: prefer-const for $state vars, use SvelteSet for reactive Sets, sort imports, prefix unused params
+
 ### Security
 
 - Remove silent CAPTCHA bypass for desktop clients (SEC-002) — all clients must provide valid CAPTCHA tokens when CAPTCHA is enabled

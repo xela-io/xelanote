@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Crosshair, Focus, ScanSearch, Target } from 'lucide-svelte';
   import type { ForceGraphGeneric, LinkObject, NodeObject } from 'force-graph';
+  import { Crosshair, Focus, ScanSearch, Target } from 'lucide-svelte';
   import { onMount } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
 
   import { goto } from '$app/navigation';
   import type { GraphEdge, GraphNode } from '$lib/api';
@@ -227,7 +228,7 @@
       connectedNodeIds = new Set();
       return;
     }
-    const next = new Set<string>([selectedId]);
+    const next = new SvelteSet<string>([selectedId]);
     for (const edge of edges) {
       const sourceId = String(edge.source_id);
       const targetId = String(edge.target_id);
@@ -297,7 +298,8 @@
     const label = node.title || '';
     const fontSize = Math.max((zoomLevel < 0.8 ? 9 : 10) / globalScale, 3.3);
     const baseRadius = zoomLevel < 0.75 ? 4.2 : 5;
-    const radius = selectedNode && String(node.id) === String(selectedNode.id) ? baseRadius + 1.7 : baseRadius;
+    const radius =
+      selectedNode && String(node.id) === String(selectedNode.id) ? baseRadius + 1.7 : baseRadius;
     const x = Number(node.x || 0);
     const y = Number(node.y || 0);
 
@@ -383,7 +385,7 @@
     }
 
     const selectedId = String(selectedNode.id);
-    const visibleIds = new Set<string>([selectedId]);
+    const visibleIds = new SvelteSet<string>([selectedId]);
     for (const edge of edges) {
       const sourceId = String(edge.source_id);
       const targetId = String(edge.target_id);
@@ -524,10 +526,22 @@
   {/if}
 
   <div class="floating-toolbar">
-    <button class="tool-btn" type="button" onclick={fitGraph} title="Fit graph" aria-label="Fit graph">
+    <button
+      class="tool-btn"
+      type="button"
+      onclick={fitGraph}
+      title="Fit graph"
+      aria-label="Fit graph"
+    >
       <ScanSearch size={15} />
     </button>
-    <button class="tool-btn" type="button" onclick={resetGraphView} title="Reset view" aria-label="Reset view">
+    <button
+      class="tool-btn"
+      type="button"
+      onclick={resetGraphView}
+      title="Reset view"
+      aria-label="Reset view"
+    >
       <Target size={15} />
     </button>
     <button
@@ -558,8 +572,16 @@
 <style>
   .graph-canvas-wrapper {
     background:
-      radial-gradient(circle at 15% 12%, color-mix(in oklch, var(--color-primary), transparent 92%), transparent 55%),
-      radial-gradient(circle at 85% 84%, color-mix(in oklch, var(--color-accent), transparent 90%), transparent 50%),
+      radial-gradient(
+        circle at 15% 12%,
+        color-mix(in oklch, var(--color-primary), transparent 92%),
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 85% 84%,
+        color-mix(in oklch, var(--color-accent), transparent 90%),
+        transparent 50%
+      ),
       var(--color-background);
   }
 

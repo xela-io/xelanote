@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 
 /* ===== Mobile Safari Fixes ===== */
 
@@ -238,7 +242,7 @@ body,
   --duration-slow: 300ms;
 
   /* Fonts */
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
 }
 
@@ -628,8 +632,9 @@ html {
 /* CodeMirror customization */
 .cm-editor {
   height: 100%;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 1rem; /* 16px on mobile to prevent iOS auto-zoom */
+  letter-spacing: -0.01em;
   --live-preview-line-height: 1.7;
   --live-preview-marker-column-width: 1.6rem;
   --live-preview-marker-gap: 0.35rem;

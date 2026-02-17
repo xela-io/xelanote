@@ -22,6 +22,11 @@ import {
   setTypewriterMode,
   typewriterCompartment,
 } from './focus-mode-extensions';
+import {
+  createLivePreviewExtension,
+  toggleLivePreviewCompletedGroup,
+  toggleLivePreviewHeadingSection,
+} from './live-preview';
 import { isValidDueDate } from './markdown';
 import {
   createSpellCheckExtension,
@@ -358,6 +363,7 @@ export interface EditorConfig {
   onChange?: (content: string) => void;
   onSave?: () => void;
   onWikilinkClick?: (title: string) => void;
+  onToggleTaskByLine?: (lineNumber: number, checked: boolean) => void;
   onColorPicker?: () => void;
   onBeforeNewline?: (view: EditorView) => boolean; // Return true if handled (prevents default)
   onFindReplace?: (options?: { replace?: boolean }) => void;
@@ -366,6 +372,7 @@ export interface EditorConfig {
 
 // Lazy load editor extensions
 let lazyExtensionsPromise: Promise<Extension[]> | null = null;
+const livePreviewCompartment = new Compartment();
 
 export async function loadEditorExtensions(_config: EditorConfig): Promise<Extension[]> {
   // Return cached promise if already loading
@@ -479,8 +486,71 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
     }),
     // Handle wikilink clicks
     EditorView.domEventHandlers({
+      mousedown: (event) => {
+        const target = event.target as HTMLElement;
+        const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
+        const liveCompletedToggle = target.closest('.cm-live-completed-toggle') as HTMLElement | null;
+        const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
+        if (liveTaskCheckbox) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveCompletedToggle) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveHeadingToggle) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
       click: (event, view) => {
         const target = event.target as HTMLElement;
+        const liveCompletedToggle = target.closest('.cm-live-completed-toggle') as HTMLElement | null;
+        if (liveCompletedToggle?.dataset.group) {
+          if (toggleLivePreviewCompletedGroup(view, liveCompletedToggle.dataset.group)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
+        if (liveHeadingToggle?.dataset.section) {
+          if (toggleLivePreviewHeadingSection(view, liveHeadingToggle.dataset.section)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
+        if (liveTaskCheckbox) {
+          const lineNumber = parseInt(liveTaskCheckbox.dataset.line ?? '', 10);
+          const checked = liveTaskCheckbox.dataset.checked === 'true';
+          if (Number.isInteger(lineNumber) && lineNumber > 0) {
+            config.onToggleTaskByLine?.(lineNumber, !checked);
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveWikilink = target.closest('.cm-live-preview-wikilink') as HTMLElement | null;
+        if (liveWikilink?.dataset.title) {
+          config.onWikilinkClick?.(liveWikilink.dataset.title);
+          event.preventDefault();
+          return true;
+        }
+
+        const liveLink = target.closest('.cm-live-preview-link') as HTMLElement | null;
+        if (liveLink?.dataset.href) {
+          const href = liveLink.dataset.href;
+          if (href) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+            event.preventDefault();
+            return true;
+          }
+        }
+
         if (target.classList.contains('cm-wikilink')) {
           // Extract wikilink title from the clicked element
           const pos = view.posAtDOM(target);
@@ -511,6 +581,8 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
     spellCheckCompartment.of(createSpellCheckExtension({ enabled: false })),
     // Find & Replace (search extension with hidden panel for custom UI)
     createFindReplaceExtension(),
+    // Live preview compartment (disabled by default)
+    livePreviewCompartment.of(emptyExtension),
   ];
 
   const state = EditorState.create({
@@ -547,6 +619,14 @@ export function updateEditorContent(view: EditorView, content: string) {
       to: view.state.doc.length,
       insert: content,
     },
+  });
+}
+
+export function setLivePreviewMode(view: EditorView, enabled: boolean) {
+  view.dispatch({
+    effects: livePreviewCompartment.reconfigure(
+      enabled ? createLivePreviewExtension() : emptyExtension
+    ),
   });
 }
 

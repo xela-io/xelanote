@@ -1,6 +1,9 @@
 <script lang="ts">
   import {
+    Columns,
     Download,
+    Edit,
+    Eye,
     FolderInput,
     HelpCircle,
     Indent,
@@ -33,6 +36,9 @@
     aiEnabled: boolean;
     isEncrypted?: boolean;
     onClose: () => void;
+    onSetEditorMode?: (mode: 'edit' | 'preview' | 'split' | 'live') => void;
+    editorMode?: 'edit' | 'preview' | 'split' | 'live';
+    isMobile?: boolean;
     triggerRect?: {
       top: number;
       right: number;
@@ -57,6 +63,9 @@
     aiEnabled,
     isEncrypted = false,
     onClose,
+    onSetEditorMode,
+    editorMode = 'live',
+    isMobile = false,
     triggerRect = null,
   }: Props = $props();
 
@@ -111,6 +120,69 @@
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
 
   <div class="space-y-1">
+    {#if onSetEditorMode}
+      <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">View Mode</div>
+      <button
+        type="button"
+        onclick={() => {
+          onSetEditorMode('live');
+          onClose();
+        }}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+        class:bg-accent={editorMode === 'live'}
+        role="menuitemradio"
+        aria-checked={editorMode === 'live'}
+      >
+        <span class="text-xs font-semibold w-[18px] text-center">LP</span>
+        {$_('component.editor.toolbar.mode_live')}
+      </button>
+      <button
+        type="button"
+        onclick={() => {
+          onSetEditorMode('edit');
+          onClose();
+        }}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+        class:bg-accent={editorMode === 'edit'}
+        role="menuitemradio"
+        aria-checked={editorMode === 'edit'}
+      >
+        <Edit size={18} />
+        {$_('component.editor.toolbar.mode_edit')}
+      </button>
+      <button
+        type="button"
+        onclick={() => {
+          onSetEditorMode('preview');
+          onClose();
+        }}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+        class:bg-accent={editorMode === 'preview'}
+        role="menuitemradio"
+        aria-checked={editorMode === 'preview'}
+      >
+        <Eye size={18} />
+        {$_('component.editor.toolbar.mode_preview')}
+      </button>
+      {#if !isMobile}
+        <button
+          type="button"
+          onclick={() => {
+            onSetEditorMode('split');
+            onClose();
+          }}
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+          class:bg-accent={editorMode === 'split'}
+          role="menuitemradio"
+          aria-checked={editorMode === 'split'}
+        >
+          <Columns size={18} />
+          {$_('component.editor.toolbar.mode_split')}
+        </button>
+      {/if}
+      <hr class="my-2 border-border" />
+    {/if}
+
     <button
       type="button"
       onclick={() => {

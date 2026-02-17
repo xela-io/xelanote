@@ -10,7 +10,7 @@
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
   import type { AITransformState } from '$lib/editor/ai-actions';
-  import { updateEditorContent, updateFocusMode } from '$lib/editor/codemirror';
+  import { setLivePreviewMode, updateEditorContent, updateFocusMode } from '$lib/editor/codemirror';
   import {
     type DialogLoaderState,
     loadAIActionsDropdown,
@@ -260,6 +260,9 @@
     },
     onSave: handleSave,
     onWikilinkClick: handleWikilinkClick,
+    onToggleTaskByLine: (lineNumber, checked) => {
+      toggleTask(-1, checked, lineNumber);
+    },
     onColorPicker: () => {
       openColorPicker();
     },
@@ -280,6 +283,18 @@
     setExtensionsReady: (ready) => {
       editorExtensionsReady = ready;
     },
+  });
+
+  $effect(() => {
+    if (!FEATURE_FLAGS.livePreview && ui.getEditorMode() === 'live') {
+      ui.setEditorMode('edit');
+    }
+  });
+
+  $effect(() => {
+    const view = editorView;
+    if (!view) return;
+    setLivePreviewMode(view, FEATURE_FLAGS.livePreview && ui.getEditorMode() === 'live');
   });
 
   // Update editor when note content changes externally (note switch, load).
@@ -926,7 +941,9 @@
       isEncryptionUnlocked={encryption.isEncryptionUnlocked()}
       focusModeActive={focusMode.isActive()}
       showSpellCheck={Boolean(notes.getCurrentNote()?.ai_enabled) &&
-        (ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split')}
+        (ui.getEditorMode() === 'edit' ||
+          ui.getEditorMode() === 'split' ||
+          ui.getEditorMode() === 'live')}
       onTitleInput={handleTitleInput}
       onOpenSidebar={() => ui.setSidebarOpen(true)}
       onSetEditorMode={settings.setEditorModePreference}
@@ -980,7 +997,7 @@
       <!-- Editor / Preview area — flex-1 so it fills remaining height -->
       <div class="flex min-h-0 {ui.getIsMobile() ? '' : 'flex-1'}" bind:this={splitContainerRef}>
         <!-- Editor -->
-        {#if ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split'}
+        {#if ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split' || ui.getEditorMode() === 'live'}
           <div
             use:initEditor
             role="region"
@@ -1141,6 +1158,9 @@
     onAIToggle={handleAIToggle}
     onShare={() => (showShareDialog = true)}
     onEncryptionToggle={handleEncryptionToggle}
+    onSetEditorMode={settings.setEditorModePreference}
+    editorMode={ui.getEditorMode()}
+    isMobile={ui.getIsMobile()}
     aiEnabled={notes.getCurrentNote()?.ai_enabled ?? false}
     isEncrypted={notes.getCurrentNote()?.content_encrypted ?? false}
     onClose={() => (showMoreMenu = false)}

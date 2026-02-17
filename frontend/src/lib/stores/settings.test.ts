@@ -80,13 +80,13 @@ describe('settings store', () => {
     await settings.loadPreferences();
 
     expect(setTheme).toHaveBeenCalledWith('gruvbox-dark');
-    expect(setEditorMode).toHaveBeenCalledWith('split');
+    expect(setEditorMode).toHaveBeenCalledWith('live');
     expect(setSecurityLevel).toHaveBeenCalledWith('balanced');
     expect(initSettingsFromPreferences).toHaveBeenCalledWith(true, true);
     expect(initAutoLock).not.toHaveBeenCalled();
   });
 
-  it('should fallback editor mode to edit on mobile', async () => {
+  it('should resolve split preference to live mode on mobile', async () => {
     getIsMobile.mockReturnValue(true);
     getPreferences.mockResolvedValue({
       theme: 'gruvbox-dark',
@@ -100,7 +100,24 @@ describe('settings store', () => {
     const settings = await import('$lib/stores/settings.svelte');
     await settings.loadPreferences();
 
-    expect(setEditorMode).toHaveBeenCalledWith('edit');
+    expect(setEditorMode).toHaveBeenCalledWith('live');
+  });
+
+  it('should prefer locally stored editor mode when server returns split', async () => {
+    localStorage.setItem('xelanote-editor-mode', 'preview');
+    getPreferences.mockResolvedValue({
+      theme: 'gruvbox-dark',
+      editor_mode: 'split',
+      security_level: 'balanced',
+      auto_lock_timeout: 0,
+      keywords_enabled: false,
+      encrypt_titles: false,
+    });
+
+    const settings = await import('$lib/stores/settings.svelte');
+    await settings.loadPreferences();
+
+    expect(setEditorMode).toHaveBeenCalledWith('preview');
   });
 
   it('should save preferences and update UI', async () => {
@@ -111,6 +128,20 @@ describe('settings store', () => {
     expect(ok).toBe(true);
     expect(setTheme).toHaveBeenCalledWith('gruvbox-dark');
     expect(setEditorMode).toHaveBeenCalledWith('edit');
+  });
+
+  it('should persist live mode as split but keep live mode in UI', async () => {
+    updatePreferences.mockResolvedValue(undefined);
+    const settings = await import('$lib/stores/settings.svelte');
+
+    const ok = await settings.savePreferences('gruvbox-dark', 'live');
+    expect(ok).toBe(true);
+    expect(updatePreferences).toHaveBeenCalledWith({
+      theme: 'gruvbox-dark',
+      editor_mode: 'split',
+    });
+    expect(setEditorMode).toHaveBeenCalledWith('live');
+    expect(localStorage.getItem('xelanote-editor-mode')).toBe('live');
   });
 
   it('should map changeEmail errors', async () => {

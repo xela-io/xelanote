@@ -6,6 +6,7 @@
  */
 
 import * as api from '$lib/api';
+import { FEATURE_FLAGS } from '$lib/config';
 import { fromBase64Standard } from '$lib/crypto/sodium';
 import * as autoLock from '$lib/stores/auto-lock.svelte';
 import * as encryption from '$lib/stores/encryption.svelte';
@@ -25,7 +26,10 @@ let isChangingPassword = $state(false);
 
 // Virtual Tree Preference (local only, no server sync)
 const VIRTUAL_TREE_KEY = 'xelanote_virtual_tree_enabled';
+const EDITOR_MODE_KEY = 'xelanote-editor-mode';
 let virtualTreeEnabled = $state<boolean>(false);
+
+type EditorMode = 'edit' | 'preview' | 'split' | 'live';
 
 // Getters
 export function getIsLoading() {
@@ -93,6 +97,22 @@ function parseBooleanPreference(raw: string): boolean | null {
   }
 }
 
+function parseEditorModePreference(raw: string): EditorMode | null {
+  if (raw === 'edit' || raw === 'preview' || raw === 'split' || raw === 'live') return raw;
+  return null;
+}
+
+function readLocalEditorMode(): EditorMode | null {
+  if (typeof localStorage === 'undefined') return null;
+  const stored = localStorage.getItem(EDITOR_MODE_KEY);
+  return stored ? parseEditorModePreference(stored) : null;
+}
+
+function writeLocalEditorMode(mode: EditorMode): void {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(EDITOR_MODE_KEY, mode);
+}
+
 /**
  * Load preferences from server (theme + editor mode + security level).
  * This function loads ALL preferences in one API call.
@@ -110,10 +130,21 @@ export async function loadPreferences(): Promise<void> {
     if (isValidThemeId(prefs.theme)) {
       ui.setTheme(prefs.theme as ThemeId);
     }
+    // Backend currently persists `live` as `split`; restore the intended UI mode.
+    const localEditorMode = readLocalEditorMode();
+    const serverMode = parseEditorModePreference(prefs.editor_mode) ?? 'edit';
+    let resolvedMode: EditorMode;
+    if (!FEATURE_FLAGS.livePreview && serverMode === 'live') {
+      resolvedMode = 'edit';
+    } else if (FEATURE_FLAGS.livePreview && serverMode === 'split') {
+      resolvedMode = localEditorMode ?? 'live';
+    } else {
+      resolvedMode = serverMode;
+    }
     // On mobile, split mode is not supported - fall back to edit
-    const effectiveMode =
-      ui.getIsMobile() && prefs.editor_mode === 'split' ? 'edit' : prefs.editor_mode;
+    const effectiveMode = ui.getIsMobile() && resolvedMode === 'split' ? 'edit' : resolvedMode;
     ui.setEditorMode(effectiveMode);
+    writeLocalEditorMode(effectiveMode);
 
     // CRITICAL FIX: Apply security preferences (same API call, no duplication)
     encryption.setSecurityLevel(prefs.security_level);
@@ -151,17 +182,23 @@ export async function loadPreferences(): Promise<void> {
  */
 export async function savePreferences(
   theme: ThemeId,
-  editorMode: 'edit' | 'preview' | 'split'
+  editorMode: EditorMode
 ): Promise<boolean> {
   isSavingPreferences = true;
   error = null;
 
   try {
-    await api.updatePreferences({ theme, editor_mode: editorMode });
+    const uiMode =
+      !FEATURE_FLAGS.livePreview && editorMode === 'live' ? 'edit' : editorMode;
+    // Backend compatibility: until server-side validation allows `live`,
+    // persist it as `split` while keeping the client in `live` mode.
+    const persistedMode = uiMode === 'live' ? 'split' : uiMode;
+    await api.updatePreferences({ theme, editor_mode: persistedMode });
 
     // Apply to UI
     ui.setTheme(theme);
-    ui.setEditorMode(editorMode);
+    ui.setEditorMode(uiMode);
+    writeLocalEditorMode(uiMode);
 
     return true;
   } catch (err: unknown) {
@@ -186,7 +223,7 @@ export async function setThemePreference(theme: ThemeId): Promise<boolean> {
  * Update editor mode preference (convenience wrapper).
  */
 export async function setEditorModePreference(
-  mode: 'edit' | 'preview' | 'split'
+  mode: EditorMode
 ): Promise<boolean> {
   const currentTheme = ui.getCurrentThemeId();
   return savePreferences(currentTheme, mode);

@@ -37,7 +37,7 @@ let currentThemeId = $state<ThemeId>('gruvbox-dark');
 let previewThemeId = $state<PreviewThemeId>('match-editor');
 
 // Editor mode
-let editorMode = $state<'edit' | 'preview' | 'split'>('split');
+let editorMode = $state<'edit' | 'preview' | 'split' | 'live'>('live');
 
 // Standalone PWA state
 let isStandalone = $state(false);
@@ -279,7 +279,7 @@ export function getEditorMode() {
   return editorMode;
 }
 
-export function setEditorMode(mode: 'edit' | 'preview' | 'split') {
+export function setEditorMode(mode: 'edit' | 'preview' | 'split' | 'live') {
   editorMode = mode;
 }
 

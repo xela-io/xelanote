@@ -14,7 +14,7 @@ export interface FindReplaceState {
 
 export interface FindReplaceHandlers {
   getEditorView: () => EditorView | undefined;
-  getEditorMode: () => 'edit' | 'split' | 'preview';
+  getEditorMode: () => 'edit' | 'split' | 'preview' | 'live';
   getNoteId: () => string | null;
   getUrlHighlight: () => string | null;
   setUrlHighlight: (value: string | null) => void;

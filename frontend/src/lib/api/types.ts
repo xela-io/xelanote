@@ -333,7 +333,7 @@ export interface WebAuthnCredentialInfo {
 
 export interface UserPreferences {
   theme: string;
-  editor_mode: 'edit' | 'preview' | 'split';
+  editor_mode: 'edit' | 'preview' | 'split' | 'live';
   keywords_enabled: boolean;
   encrypt_titles: boolean;
   security_level: 'paranoid' | 'balanced' | 'convenient';
@@ -344,7 +344,7 @@ export interface UserPreferences {
 
 export interface UpdatePreferencesRequest {
   theme: string;
-  editor_mode: 'edit' | 'preview' | 'split';
+  editor_mode: 'edit' | 'preview' | 'split' | 'live';
 }
 
 export interface UpdateSecurityPreferencesRequest {

@@ -28,7 +28,7 @@
 
   import SpellCheckToggle from '../SpellCheckToggle.svelte';
 
-  type EditorMode = 'edit' | 'split' | 'preview';
+  type EditorMode = 'edit' | 'split' | 'preview' | 'live';
 
   interface Props {
     note?: Note | null;
@@ -125,6 +125,22 @@
 
   function handleMoreMenuClick(e: MouseEvent) {
     onOpenMoreMenu((e.currentTarget as HTMLElement).getBoundingClientRect());
+  }
+
+  function cycleEditorMode() {
+    const modes: EditorMode[] = isMobile
+      ? ['live', 'edit', 'preview']
+      : ['live', 'edit', 'preview', 'split'];
+    const currentIndex = modes.indexOf(editorMode);
+    const nextMode = modes[(currentIndex + 1) % modes.length] ?? modes[0];
+    onSetEditorMode(nextMode);
+  }
+
+  function getModeLabel(mode: EditorMode): string {
+    if (mode === 'live') return $_('component.editor.toolbar.mode_live');
+    if (mode === 'edit') return $_('component.editor.toolbar.mode_edit');
+    if (mode === 'preview') return $_('component.editor.toolbar.mode_preview');
+    return $_('component.editor.toolbar.mode_split');
   }
 </script>
 
@@ -226,48 +242,26 @@
               </button>
             {/if}
 
-            <!-- Editor mode toggles - always visible -->
-            <div
-              class="flex rounded-md border border-border flex-shrink-0"
-              role="group"
-              aria-label={$_('component.editor.toolbar.mode_group')}
-            >
+            {#if FEATURE_FLAGS.livePreview}
               <button
                 type="button"
-                onclick={() => onSetEditorMode('edit')}
-                class="p-2 hover:bg-accent rounded-l-md toolbar-btn"
-                class:rounded-r-md={isMobile}
-                class:bg-accent={editorMode === 'edit'}
-                aria-label={$_('component.editor.toolbar.mode_edit')}
-                aria-pressed={editorMode === 'edit'}
+                onclick={cycleEditorMode}
+                class="h-8 w-8 p-0 hover:bg-accent rounded-md toolbar-btn flex-shrink-0 inline-flex items-center justify-center"
+                class:bg-accent={editorMode === 'live' || editorMode === 'edit' || editorMode === 'preview' || editorMode === 'split'}
+                aria-label={getModeLabel(editorMode)}
+                title={getModeLabel(editorMode)}
               >
-                <Edit size={16} />
-              </button>
-              {#if !isMobile}
-                <button
-                  type="button"
-                  onclick={() => onSetEditorMode('split')}
-                  class="p-2 hover:bg-accent border-x border-border toolbar-btn"
-                  class:bg-accent={editorMode === 'split'}
-                  aria-label={$_('component.editor.toolbar.mode_split')}
-                  aria-pressed={editorMode === 'split'}
-                >
+                {#if editorMode === 'live'}
+                  <span class="text-[10px] font-semibold leading-none tracking-tight">LP</span>
+                {:else if editorMode === 'edit'}
+                  <Edit size={16} />
+                {:else if editorMode === 'preview'}
+                  <Eye size={16} />
+                {:else}
                   <Columns size={16} />
-                </button>
-              {/if}
-              <button
-                type="button"
-                onclick={() => onSetEditorMode('preview')}
-                class="p-2 hover:bg-accent rounded-r-md toolbar-btn"
-                class:border-l={isMobile}
-                class:border-border={isMobile}
-                class:bg-accent={editorMode === 'preview'}
-                aria-label={$_('component.editor.toolbar.mode_preview')}
-                aria-pressed={editorMode === 'preview'}
-              >
-                <Eye size={16} />
+                {/if}
               </button>
-            </div>
+            {/if}
 
             <!-- Formatting tools - always visible -->
             {#if FEATURE_FLAGS.taskLists}
@@ -340,7 +334,7 @@
             {/if}
 
             <!-- AI Actions button - only when AI enabled -->
-            {#if aiEnabled && (editorMode === 'edit' || editorMode === 'split')}
+            {#if aiEnabled && (editorMode === 'edit' || editorMode === 'split' || editorMode === 'live')}
               <div class="flex-shrink-0">
                 <button
                   type="button"

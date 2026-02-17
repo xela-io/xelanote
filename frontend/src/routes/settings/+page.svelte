@@ -25,6 +25,7 @@
   import TwoFactorDisable from '$lib/components/TwoFactorDisable.svelte';
   import TwoFactorSetup from '$lib/components/TwoFactorSetup.svelte';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import { FEATURE_FLAGS } from '$lib/config';
   import { getDefaultServerUrl, getServerUrl, isTauri, setServerUrl } from '$lib/config';
   import { e2eEncryption } from '$lib/crypto/e2e';
   import type { WebAuthnCredential } from '$lib/crypto/webauthn';
@@ -184,6 +185,15 @@
       label: $_('page.settings.editor.mode_split_label'),
       description: $_('page.settings.editor.mode_split_description'),
     },
+    ...(FEATURE_FLAGS.livePreview
+      ? [
+          {
+            id: 'live' as const,
+            label: $_('page.settings.editor.mode_live_label'),
+            description: $_('page.settings.editor.mode_live_description'),
+          },
+        ]
+      : []),
   ];
 
   onMount(() => {
@@ -391,7 +401,7 @@
     await settings.setThemePreference(themeId);
   }
 
-  async function handleEditorModeChange(mode: 'edit' | 'preview' | 'split') {
+  async function handleEditorModeChange(mode: 'edit' | 'preview' | 'split' | 'live') {
     await settings.setEditorModePreference(mode);
   }
 

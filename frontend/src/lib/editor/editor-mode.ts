@@ -2,7 +2,7 @@ import type { EditorView } from '@codemirror/view';
 
 interface EnsureEditorReadyParams {
   getEditorView: () => EditorView | undefined;
-  setEditorMode: (mode: 'edit' | 'preview' | 'split') => void;
+  setEditorMode: (mode: 'edit' | 'preview' | 'split' | 'live') => void;
   tick: () => Promise<void>;
 }
 

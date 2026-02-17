@@ -14,6 +14,7 @@ vi.mock('$lib/api', () => ({
 }));
 
 vi.mock('$lib/config', () => ({
+  getApiBaseUrl: () => 'http://localhost:8080/api',
   getServerUrl: () => 'http://localhost',
   isDesktop: () => false,
 }));

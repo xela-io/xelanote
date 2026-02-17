@@ -7,6 +7,7 @@ export interface InitEditorDeps {
   onChange: (content: string) => void;
   onSave: () => void;
   onWikilinkClick: (title: string) => void;
+  onToggleTaskByLine: (lineNumber: number, checked: boolean) => void;
   onColorPicker: () => void;
   onBeforeNewline: (view: EditorView) => boolean;
   onFindReplace: (options?: { replace?: boolean }) => void;
@@ -22,6 +23,7 @@ export function initEditorAction(deps: InitEditorDeps) {
       onChange: deps.onChange,
       onSave: deps.onSave,
       onWikilinkClick: deps.onWikilinkClick,
+      onToggleTaskByLine: deps.onToggleTaskByLine,
       onColorPicker: deps.onColorPicker,
       onBeforeNewline: deps.onBeforeNewline,
       onFindReplace: deps.onFindReplace,

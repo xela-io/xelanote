@@ -75,6 +75,7 @@ Dokumente in `docs/planning/` beschreiben geplante, noch nicht implementierte Fe
 -   **[Mobile Improvements](./planning/mobile-improvements.md)** — Mobile UI-Verbesserungen
 -   **[P0 Optimization Plan](./planning/p0-optimization.md)** — Performance-Optimierungsplan
 -   **[List Types](./planning/list-types.md)** — Generisches Listenarten-System
+-   **[Canvas RFC](./planning/canvas.md)** — Obsidian-Canvas-aehnliches Board-Feature (Architektur + API + Rollout)
 
 ## Postmortems & Incident Reports
 

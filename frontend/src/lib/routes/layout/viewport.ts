@@ -1,8 +1,8 @@
 export interface ViewportDeps {
   getIsMobile: () => boolean;
   setIsMobile: (value: boolean) => void;
-  getEditorMode: () => 'split' | 'edit' | 'preview';
-  setEditorMode: (mode: 'split' | 'edit' | 'preview') => void;
+  getEditorMode: () => 'split' | 'edit' | 'preview' | 'live';
+  setEditorMode: (mode: 'split' | 'edit' | 'preview' | 'live') => void;
   getSidebarOpen: () => boolean;
   setSidebarOpen: (open: boolean) => void;
   setIsKeyboardOpen: (open: boolean) => void;

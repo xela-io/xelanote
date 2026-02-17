@@ -701,6 +701,8 @@
         "default_editor_mode": "Standard Editor-Modus",
         "mode_edit_label": "Nur Editor",
         "mode_edit_description": "Vollbild-Editor ohne Preview",
+        "mode_live_label": "Live Preview",
+        "mode_live_description": "Hybrid: aktive Zeile als Markdown, Rest als Vorschau",
         "mode_preview_label": "Nur Preview",
         "mode_preview_description": "Nur Markdown-Vorschau",
         "mode_split_label": "Split View",
@@ -977,6 +979,7 @@
       "toolbar": {
         "mode_group": "Editor-Modus",
         "mode_edit": "Nur Editor",
+        "mode_live": "Live Preview",
         "mode_split": "Editor und Preview",
         "mode_preview": "Nur Preview",
         "save": "Manuell speichern (Strg+S)",

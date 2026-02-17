@@ -704,6 +704,263 @@ html {
   opacity: 0.7;
 }
 
+/* Live preview mode */
+.cm-editor .cm-live-hidden-syntax {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+}
+
+.cm-editor .cm-live-preview-line {
+  line-height: 1.7;
+}
+
+.cm-editor .cm-live-preview-link,
+.cm-editor .cm-live-preview-wikilink {
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cm-editor .cm-live-preview-due {
+  display: inline-block;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-xs);
+  background-color: var(--color-muted);
+  color: var(--color-foreground);
+  font-size: 0.85em;
+}
+
+.cm-editor .cm-live-preview-code {
+  font-family: var(--font-mono);
+  background: var(--color-muted);
+  border-radius: var(--radius-xs);
+  padding: 0 0.2rem;
+  font-size: 0.9em;
+}
+
+.cm-editor .cm-live-preview-strong {
+  font-weight: 700;
+}
+
+.cm-editor .cm-live-preview-em {
+  font-style: italic;
+}
+
+.cm-editor .cm-live-task-checkbox {
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1em;
+  margin-right: 0.15rem;
+  vertical-align: baseline;
+}
+
+.cm-editor .cm-live-task-checkbox-input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  pointer-events: none;
+  accent-color: var(--color-primary);
+}
+
+.cm-editor .cm-live-list-marker {
+  color: var(--color-muted-foreground);
+  display: inline-block;
+  min-width: 1.2em;
+  margin-right: 0.15rem;
+}
+
+.cm-editor .cm-live-collapsed-line {
+  display: none;
+}
+
+.cm-editor .cm-live-collapsed-summary-line {
+  display: block !important;
+  margin-left: 0 !important;
+  text-indent: 0 !important;
+  padding-left: 0.9rem !important;
+  transform: none !important;
+}
+
+.cm-editor .cm-gutterElement.cm-live-collapsed-line {
+  display: none;
+}
+
+.cm-editor .cm-line.cm-live-collapsed-summary-line {
+  text-indent: 0 !important;
+  padding-left: 0.9rem !important;
+}
+
+.cm-editor .cm-gutterElement.cm-live-collapsed-summary-line {
+  visibility: hidden;
+}
+
+.cm-editor .cm-live-completed-toggle {
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  font-size: 0.85em;
+  padding: 0.1rem 0 0.1rem 0.8rem;
+  margin: 0.2rem 0 0.2rem 0.2rem;
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+  border-radius: 0;
+  text-decoration: none;
+  position: relative;
+}
+
+.cm-editor .cm-live-completed-toggle::before,
+.cm-editor .cm-live-completed-toggle::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  width: 0.5rem;
+  border-top: 3px solid color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+.cm-editor .cm-live-completed-toggle::before {
+  top: 0;
+}
+
+.cm-editor .cm-live-completed-toggle::after {
+  bottom: 0;
+}
+
+.cm-editor .cm-live-completed-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--color-primary) 70%, var(--color-border));
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+.cm-editor .cm-live-completed-toggle-label {
+  text-decoration: underline;
+}
+
+.cm-editor .cm-live-heading-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  margin-right: 0.4rem;
+  margin-left: -0.1rem;
+  font-size: 0.8em;
+  line-height: 1;
+  width: auto;
+  height: auto;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.cm-editor .cm-live-heading-toggle:hover {
+  color: var(--color-foreground);
+}
+
+.cm-editor .cm-live-completed-group-line {
+  position: relative;
+  margin-left: 0.45rem;
+  padding-left: 0.85rem;
+}
+
+.cm-editor .cm-live-completed-group-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-first::before,
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-last::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 0.55rem;
+  border-top: 3px solid color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-first::before {
+  top: 0;
+}
+
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-last::after {
+  bottom: 0;
+}
+
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-first .cm-live-completed-toggle[data-expanded='true'] {
+  position: absolute;
+  left: -0.65rem;
+  top: calc((var(--cm-completed-count, 1) * 1.7em) / 2);
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-first .cm-live-completed-toggle[data-expanded='true']::before,
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-first .cm-live-completed-toggle[data-expanded='true']::after {
+  display: none;
+}
+
+.cm-editor .cm-live-completed-group-line.cm-live-completed-group-first .cm-live-completed-toggle[data-expanded='true'] .cm-live-completed-toggle-label {
+  display: none;
+}
+
+.cm-editor .cm-live-preview-line.cm-live-heading-h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.cm-editor .cm-live-preview-line.cm-live-heading-h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.cm-editor .cm-live-preview-line.cm-live-heading-h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.cm-editor .cm-live-preview-line.cm-live-blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.cm-editor .cm-live-preview-line.cm-live-code-fence {
+  font-family: var(--font-mono);
+  color: transparent;
+  user-select: none;
+  min-height: 0.4rem;
+}
+
+.cm-editor .cm-live-preview-line.cm-live-code-line {
+  font-family: var(--font-mono);
+  background-color: var(--color-muted);
+}
+
+.cm-editor .cm-live-preview-line.cm-live-table-line {
+  font-family: var(--font-mono);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-border) 65%, transparent);
+  text-underline-offset: 0.2em;
+}
+
 /* Named color classes for markdown preview */
 .text-color-primary {
   color: var(--color-primary);

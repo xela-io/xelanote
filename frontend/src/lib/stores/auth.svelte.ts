@@ -1,7 +1,7 @@
 // Auth store for managing user authentication state
 import type { User as ApiUser } from '$lib/api';
 import * as api from '$lib/api';
-import { getServerUrl, isDesktop } from '$lib/config';
+import { getApiBaseUrl, getServerUrl, isDesktop } from '$lib/config';
 import { fromBase64Standard } from '$lib/crypto/sodium';
 import { type DesktopBridge, getDesktopBridge } from '$lib/desktop';
 
@@ -270,12 +270,26 @@ export async function initAuth() {
       }
     }
 
-    // SEC-006: Authentication now relies on HttpOnly cookies
-    // FIX: First try token refresh (Refresh Token Cookie valid 30 days),
-    // then load user. This handles the case where Access Token Cookie (15 min)
-    // is expired but Refresh Token Cookie is still valid after browser restart.
+    // SEC-006: Authentication relies on HttpOnly cookies.
+    // First try direct /auth/me with current cookies, then refresh only on 401.
     try {
-      console.log('[AUTH] Attempting token refresh to restore session...');
+      const meResult = await loadCurrentUserWithoutRefresh();
+      if (meResult.success) {
+        authState.isAuthenticated = true;
+        console.log('[AUTH] Session restored from existing auth cookie');
+        return;
+      }
+
+      if (!meResult.needsRefresh) {
+        console.warn(`[AUTH] Session probe failed: ${meResult.reason}`);
+        if (typeof window !== 'undefined' && meResult.reason === 'network_error') {
+          window.addEventListener('online', () => initAuth(), { once: true });
+          console.log('[AUTH] Will retry session restore when back online');
+        }
+        return;
+      }
+
+      console.log('[AUTH] Access token invalid, attempting token refresh...');
       const result = await api.refreshTokenViaCookie();
 
       if (result.success) {
@@ -322,6 +336,44 @@ export async function initAuth() {
       // Unexpected error - should not happen with RefreshResult
       console.error('[AUTH] Unexpected error during session restore:', err);
     }
+  }
+}
+
+async function loadCurrentUserWithoutRefresh(): Promise<{
+  success: boolean;
+  needsRefresh?: boolean;
+  reason?: 'auth_error' | 'network_error' | 'server_error';
+}> {
+  try {
+    const headers = new Headers();
+    const accessToken = authState.accessToken;
+    if (accessToken) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      const user = (await response.json()) as User;
+      authState.user = user;
+      return { success: true };
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return { success: false, needsRefresh: true, reason: 'auth_error' };
+    }
+
+    if (response.status >= 500) {
+      return { success: false, needsRefresh: false, reason: 'server_error' };
+    }
+
+    return { success: false, needsRefresh: false, reason: 'network_error' };
+  } catch {
+    return { success: false, needsRefresh: false, reason: 'network_error' };
   }
 }
 

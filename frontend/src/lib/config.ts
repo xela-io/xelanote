@@ -2,6 +2,7 @@
 export const FEATURE_FLAGS = {
   colorSyntax: true,
   taskLists: true,
+  livePreview: true,
   imageResize: true,
   dueDateSyntax: true,
   // LLM-based features (requires Ollama backend)

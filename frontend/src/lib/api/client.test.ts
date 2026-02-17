@@ -184,7 +184,11 @@ describe('api client', () => {
 
       notesCalls += 1;
       if (notesCalls === 1) {
-        return { ok: false, status: 401, json: async () => ({ error: 'missing authorization' }) } as Response;
+        return {
+          ok: false,
+          status: 401,
+          json: async () => ({ error: 'missing authorization' }),
+        } as Response;
       }
 
       return {

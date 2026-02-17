@@ -1013,7 +1013,9 @@
         {#if ui.getEditorMode() === 'preview' || ui.getEditorMode() === 'split'}
           <!-- Theme wrapper for preview (overflow-auto for internal scrolling) -->
           <div
-            class="relative {ui.getIsMobile() ? '' : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
+            class="relative {ui.getIsMobile()
+              ? ''
+              : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
             class:flex-1={ui.getEditorMode() !== 'split'}
             style={ui.getEditorMode() === 'split' ? `width: ${100 - ui.getSplitPosition()}%;` : ''}
             bind:this={previewScrollRef}

@@ -12,10 +12,7 @@ import type {
   OfflineOperation,
   OfflineUpdatePayload,
 } from '../offline/types';
-import {
-  startSessionRestore,
-  stopSessionRestore,
-} from '../stores/session-restore.svelte';
+import { startSessionRestore, stopSessionRestore } from '../stores/session-restore.svelte';
 import type { Note, NotePayload, RefreshResponse, RefreshResult } from './types';
 
 // Import auth store functions (will be available at runtime)

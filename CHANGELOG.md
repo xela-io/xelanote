@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix ESLint errors: prefer-const for $state vars, use SvelteSet for reactive Sets, sort imports, prefix unused params
 - Fix Prettier formatting in Graph components, API client, and Editor
+- Add project-wide Prettier and ESLint checks to pre-push hook to catch formatting issues before CI
 
 ### Security
 

@@ -55,3 +55,11 @@ pre-push:
     svelte-check:
       root: "frontend/"
       run: npm run check
+
+    prettier:
+      root: "frontend/"
+      run: npx prettier --check .
+
+    eslint:
+      root: "frontend/"
+      run: npx eslint --no-warn-ignored --max-warnings 0 "src/**/*.{ts,svelte,js}"

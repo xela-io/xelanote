@@ -2,10 +2,6 @@
 
 import { getApiBaseUrl, isDesktop } from '../config';
 import {
-  startSessionRestore,
-  stopSessionRestore,
-} from '../stores/session-restore.svelte';
-import {
   enqueueOperation as enqueueOfflineOp,
   getQueueCount as getOfflineQueueCount,
 } from '../offline/offline-queue';
@@ -16,6 +12,10 @@ import type {
   OfflineOperation,
   OfflineUpdatePayload,
 } from '../offline/types';
+import {
+  startSessionRestore,
+  stopSessionRestore,
+} from '../stores/session-restore.svelte';
 import type { Note, NotePayload, RefreshResponse, RefreshResult } from './types';
 
 // Import auth store functions (will be available at runtime)

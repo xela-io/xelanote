@@ -48,8 +48,8 @@
   import * as notes from '$lib/stores/notes.svelte';
   import * as perfMetrics from '$lib/stores/perf-metrics.svelte';
   import * as pwa from '$lib/stores/pwa.svelte';
-  import * as settings from '$lib/stores/settings.svelte';
   import * as sessionRestore from '$lib/stores/session-restore.svelte';
+  import * as settings from '$lib/stores/settings.svelte';
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import * as websocket from '$lib/stores/websocket.svelte';

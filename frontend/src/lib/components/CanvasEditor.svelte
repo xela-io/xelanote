@@ -704,7 +704,7 @@
     --xy-background-color: var(--color-background);
     --xy-node-border-radius: 0.5rem;
     --xy-edge-stroke: var(--color-muted-foreground);
-    --xy-edge-stroke-width: 1.5px;
+    --xy-edge-stroke-width: 3px;
     --xy-edge-stroke-selected: var(--color-ring);
     --xy-handle-background-color: var(--color-ring);
     --xy-handle-border-color: var(--color-background);

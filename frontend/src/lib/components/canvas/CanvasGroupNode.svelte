@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { NodeResizer } from '@xyflow/svelte';
+  import { Handle, NodeResizer, Position } from '@xyflow/svelte';
 
   import { getCanvasBgColor, getCanvasColor } from './canvas-colors';
 
@@ -31,6 +31,11 @@
     <span class="canvas-group-label" style:color={borderColor}>{label}</span>
   {/if}
 </div>
+
+<Handle type="source" position={Position.Right} />
+<Handle type="source" position={Position.Bottom} />
+<Handle type="target" position={Position.Left} />
+<Handle type="target" position={Position.Top} />
 
 <style>
   .canvas-group-node {

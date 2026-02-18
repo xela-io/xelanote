@@ -196,17 +196,35 @@ function getDueDateDecorations(view: EditorView): DecorationSet {
     return Decoration.set([]);
   }
 
+  const livePreviewExt = livePreviewCompartment.get(view.state);
+  const livePreviewEnabled = livePreviewExt !== undefined && livePreviewExt !== emptyExtension;
+  const activeLines = new Set<number>();
+  if (livePreviewEnabled) {
+    for (const range of view.state.selection.ranges) {
+      const fromLine = view.state.doc.lineAt(range.from).number;
+      const toLine = view.state.doc.lineAt(range.to).number;
+      for (let line = fromLine; line <= toLine; line += 1) {
+        activeLines.add(line);
+      }
+    }
+  }
+
   const decorations: { from: number; to: number }[] = [];
 
   for (const { from, to } of view.visibleRanges) {
     const text = view.state.doc.sliceString(from, to);
     let match;
     while ((match = dueDateMatcher.exec(text)) !== null) {
+      const matchFrom = from + match.index;
+      const lineNumber = view.state.doc.lineAt(matchFrom).number;
+      if (livePreviewEnabled && !activeLines.has(lineNumber)) {
+        continue;
+      }
       const dateStr = match[1];
       if (isValidDueDate(dateStr)) {
         decorations.push({
-          from: from + match.index,
-          to: from + match.index + match[0].length,
+          from: matchFrom,
+          to: matchFrom + match[0].length,
         });
       }
     }

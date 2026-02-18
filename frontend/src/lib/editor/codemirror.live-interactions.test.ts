@@ -125,6 +125,33 @@ describe('codemirror live interactions', () => {
     view.destroy();
   });
 
+  it('renders due date once on inactive task lines in live preview', () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = createEditor(parent, {
+      doc: '- [ ] First @due(2026-02-10)\n- [ ] Second @due(2026-02-11)',
+    });
+
+    setLivePreviewMode(view, true);
+
+    const dueWidgets = parent.querySelectorAll('.cm-live-preview-due');
+    expect(dueWidgets.length).toBeGreaterThan(0);
+
+    const lines = Array.from(parent.querySelectorAll('.cm-line'));
+    const inactiveSecondLine = lines.find((line) => line.textContent?.includes('Second')) as
+      | HTMLElement
+      | undefined;
+    expect(inactiveSecondLine).toBeTruthy();
+
+    const lineText = inactiveSecondLine?.textContent ?? '';
+    expect(lineText.includes('@due(')).toBe(false);
+    const dateMatches = lineText.match(/2026-02-11/g) ?? [];
+    expect(dateMatches.length).toBe(1);
+
+    view.destroy();
+  });
+
   it('collapses heading section when clicking live heading toggle', () => {
     const parent = document.createElement('div');
     document.body.appendChild(parent);

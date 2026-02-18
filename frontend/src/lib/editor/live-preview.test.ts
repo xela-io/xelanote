@@ -145,6 +145,20 @@ describe('live-preview', () => {
     view.destroy();
   });
 
+  it('renders due date widget inside task lines in live preview', () => {
+    const doc = 'Active\n- [ ] Task @due(2027-02-10)';
+    const view = createView(doc, 0);
+
+    const taskLine = view.dom.querySelector('.cm-line.cm-live-task-line') as HTMLElement | null;
+    const due = view.dom.querySelector('.cm-live-preview-due') as HTMLElement | null;
+
+    expect(taskLine).not.toBeNull();
+    expect(due).not.toBeNull();
+    expect(due?.textContent).toBe('2027-02-10');
+
+    view.destroy();
+  });
+
   it('renders bold and italic markdown as styled preview widgets', () => {
     const doc = 'Active\n**Bold** and *Italic*';
     const view = createView(doc, 0);

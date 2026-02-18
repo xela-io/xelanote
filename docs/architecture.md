@@ -51,8 +51,8 @@ Xelanote ist eine selbst-gehostete Notiz-Anwendung mit Wiki-style Verlinkung. Kl
 
 | Komponente | Technologie | Version |
 |------------|-------------|---------|
-| Sprache | Go | 1.24 |
-| HTTP Router | Chi v5 | 5.1.0 |
+| Sprache | Go | 1.25.0 |
+| HTTP Router | Chi v5 | 5.2.5 |
 | Datenbank | SQLite 3 + FTS5 | via go-sqlite3 1.14.24 |
 | Auth | JWT (HS256) | golang-jwt/jwt v5.3.0 |
 | WebAuthn | go-webauthn | 0.15.0 |
@@ -86,12 +86,12 @@ Xelanote ist eine selbst-gehostete Notiz-Anwendung mit Wiki-style Verlinkung. Kl
 
 ```
 API Handler (internal/api/)  -->  Service (internal/service/)  -->  DB (internal/db/)
-     101 Dateien                      47 Dateien                     70 Dateien
+     114 Dateien                      66 Dateien                     94 Dateien
 ```
 
 1. **API Layer** (`internal/api/`): HTTP Request/Response, Validierung, Auth-Check, CSRF, Rate Limiting, WebSocket Events
 2. **Service Layer** (`internal/service/`): Business Logic, Caching, Orchestrierung, Link Processing
-3. **DB Layer** (`internal/db/`): SQL Queries, Modelle, 44 Migrationen (002-045)
+3. **DB Layer** (`internal/db/`): SQL Queries, Modelle, 46 Migrationen (002-047)
 
 ### Package-Struktur
 
@@ -136,7 +136,7 @@ backend/
 │   │   ├── db.go            # Connection, Migration Runner
 │   │   ├── schema.sql       # Base Schema fuer neue DBs
 │   │   ├── errors.go        # Custom Error Types
-│   │   ├── migrations/      # 44 SQL-Migrationen (002-045)
+│   │   ├── migrations/      # 46 SQL-Migrationen (002-047)
 │   │   ├── notes_*.go       # Note Queries (11 Dateien)
 │   │   ├── folders_*.go     # Folder Queries (10 Dateien)
 │   │   ├── recipes_*.go     # Recipe Queries (10 Dateien)
@@ -155,7 +155,7 @@ backend/
 └── go.mod
 ```
 
-**Gesamt: 252 Go-Dateien + 44 SQL-Migrationen**
+**Gesamt: 325 Go-Dateien + 46 SQL-Migrationen**
 
 ### Request Flow
 
@@ -427,7 +427,7 @@ activity_logs (id, user_id, event_type TEXT, ...)
 
 ### Migrationen
 
-44 SQL-Migrationen (002-045), forward-only. Alle verwenden `IF NOT EXISTS` / `IF EXISTS`.
+46 SQL-Migrationen (002-047), forward-only. Alle verwenden `IF NOT EXISTS` / `IF EXISTS`.
 Neue DB: `schema.sql` (Basis) + alle Migrationen. Bestehende DB: nur neue Migrationen.
 
 ---
@@ -621,7 +621,7 @@ make build  # Frontend build + Copy + Go build → bin/xelanote
 
 ```
 Stage 1: node:22-alpine    → npm ci + npm run build
-Stage 2: golang:1.24-alpine → go build -tags "fts5"
+Stage 2: golang:1.25-alpine → go build -tags "fts5"
 Stage 3: alpine:latest      → ~30MB Runtime Image
 ```
 

@@ -35,6 +35,28 @@ func NewSharingService(database *db.DB) *SharingService {
 	}
 }
 
+func (s *SharingService) requireNoteOwner(ownerUserID int, noteID string) error {
+	actualOwnerID, err := s.db.GetNoteOwnerUserID(noteID)
+	if err != nil {
+		return err
+	}
+	if actualOwnerID != ownerUserID {
+		return ErrNotNoteOwner
+	}
+	return nil
+}
+
+func (s *SharingService) requireFolderOwner(ownerUserID, folderID int) error {
+	actualOwnerID, err := s.db.GetFolderOwnerUserID(folderID)
+	if err != nil {
+		return err
+	}
+	if actualOwnerID != ownerUserID {
+		return ErrNotFolderOwner
+	}
+	return nil
+}
+
 // ============================================================================
 // Note Sharing
 // ============================================================================
@@ -43,12 +65,8 @@ func NewSharingService(database *db.DB) *SharingService {
 // Validates ownership, encryption status, and prevents self-sharing.
 func (s *SharingService) ShareNote(ownerUserID int, noteID string, targetIdentifier string, role string) (*db.NoteShare, error) {
 	// Check ownership
-	actualOwnerID, err := s.db.GetNoteOwnerUserID(noteID)
-	if err != nil {
+	if err := s.requireNoteOwner(ownerUserID, noteID); err != nil {
 		return nil, err
-	}
-	if actualOwnerID != ownerUserID {
-		return nil, ErrNotNoteOwner
 	}
 
 	// Check if note is encrypted
@@ -93,12 +111,8 @@ func (s *SharingService) ShareNote(ownerUserID int, noteID string, targetIdentif
 // UnshareNote removes a share for a note.
 func (s *SharingService) UnshareNote(ownerUserID int, noteID string, targetUserID int) error {
 	// Check ownership
-	actualOwnerID, err := s.db.GetNoteOwnerUserID(noteID)
-	if err != nil {
+	if err := s.requireNoteOwner(ownerUserID, noteID); err != nil {
 		return err
-	}
-	if actualOwnerID != ownerUserID {
-		return ErrNotNoteOwner
 	}
 
 	return s.db.DeleteNoteShare(ownerUserID, noteID, targetUserID)
@@ -107,12 +121,8 @@ func (s *SharingService) UnshareNote(ownerUserID int, noteID string, targetUserI
 // GetNoteShares returns all shares for a note.
 func (s *SharingService) GetNoteShares(ownerUserID int, noteID string) ([]db.NoteShare, error) {
 	// Check ownership
-	actualOwnerID, err := s.db.GetNoteOwnerUserID(noteID)
-	if err != nil {
+	if err := s.requireNoteOwner(ownerUserID, noteID); err != nil {
 		return nil, err
-	}
-	if actualOwnerID != ownerUserID {
-		return nil, ErrNotNoteOwner
 	}
 
 	return s.db.GetNoteShares(ownerUserID, noteID)
@@ -138,12 +148,8 @@ func (s *SharingService) GetSharedNote(userID int, noteID string) (*db.SharedNot
 // UpdateShareRole updates the role for a share.
 func (s *SharingService) UpdateShareRole(ownerUserID int, noteID string, targetUserID int, role string) error {
 	// Check ownership
-	actualOwnerID, err := s.db.GetNoteOwnerUserID(noteID)
-	if err != nil {
+	if err := s.requireNoteOwner(ownerUserID, noteID); err != nil {
 		return err
-	}
-	if actualOwnerID != ownerUserID {
-		return ErrNotNoteOwner
 	}
 
 	return s.db.UpdateNoteShareRole(ownerUserID, noteID, targetUserID, role)
@@ -184,12 +190,8 @@ func (s *SharingService) SearchUsers(query string, requestingUserID int) ([]db.U
 // Validates ownership, encryption status, and prevents self-sharing.
 func (s *SharingService) ShareFolder(ownerUserID, folderID int, targetIdentifier, role string) (*db.FolderShare, error) {
 	// Check folder ownership
-	actualOwnerID, err := s.db.GetFolderOwnerUserID(folderID)
-	if err != nil {
+	if err := s.requireFolderOwner(ownerUserID, folderID); err != nil {
 		return nil, err
-	}
-	if actualOwnerID != ownerUserID {
-		return nil, ErrNotFolderOwner
 	}
 
 	// Check encryption_default on folder
@@ -243,12 +245,8 @@ func (s *SharingService) ShareFolder(ownerUserID, folderID int, targetIdentifier
 // UnshareFolder removes a folder share.
 func (s *SharingService) UnshareFolder(ownerUserID, folderID, targetUserID int) error {
 	// Check ownership
-	actualOwnerID, err := s.db.GetFolderOwnerUserID(folderID)
-	if err != nil {
+	if err := s.requireFolderOwner(ownerUserID, folderID); err != nil {
 		return err
-	}
-	if actualOwnerID != ownerUserID {
-		return ErrNotFolderOwner
 	}
 
 	return s.db.DeleteFolderShare(ownerUserID, folderID, targetUserID)
@@ -257,12 +255,8 @@ func (s *SharingService) UnshareFolder(ownerUserID, folderID, targetUserID int) 
 // GetFolderShares returns all shares for a folder.
 func (s *SharingService) GetFolderShares(ownerUserID, folderID int) ([]db.FolderShare, error) {
 	// Check ownership
-	actualOwnerID, err := s.db.GetFolderOwnerUserID(folderID)
-	if err != nil {
+	if err := s.requireFolderOwner(ownerUserID, folderID); err != nil {
 		return nil, err
-	}
-	if actualOwnerID != ownerUserID {
-		return nil, ErrNotFolderOwner
 	}
 
 	return s.db.GetFolderShares(ownerUserID, folderID)
@@ -281,12 +275,8 @@ func (s *SharingService) GetSharedFolderNotes(userID, folderID int) ([]db.Shared
 // UpdateFolderShareRole updates the role for a folder share.
 func (s *SharingService) UpdateFolderShareRole(ownerUserID, folderID, targetUserID int, role string) error {
 	// Check ownership
-	actualOwnerID, err := s.db.GetFolderOwnerUserID(folderID)
-	if err != nil {
+	if err := s.requireFolderOwner(ownerUserID, folderID); err != nil {
 		return err
-	}
-	if actualOwnerID != ownerUserID {
-		return ErrNotFolderOwner
 	}
 
 	return s.db.UpdateFolderShareRole(ownerUserID, folderID, targetUserID, role)

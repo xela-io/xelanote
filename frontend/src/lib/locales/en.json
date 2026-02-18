@@ -867,6 +867,14 @@
   },
   "component": {
     "canvas": {
+      "link_dialog": {
+        "title": "Add link",
+        "url_label": "URL",
+        "placeholder": "https://example.com",
+        "add_button": "Add",
+        "error_empty": "Please enter a URL",
+        "error_invalid": "Please enter a valid http(s) URL"
+      },
       "toolbar": {
         "export_canvas": "Export as .canvas"
       }

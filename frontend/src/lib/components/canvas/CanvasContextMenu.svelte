@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Copy, Trash2 } from 'lucide-svelte';
+  import { Copy, Pencil, Trash2 } from 'lucide-svelte';
 
   import { CANVAS_COLOR_PRESETS } from './canvas-colors';
 
@@ -10,10 +10,12 @@
     onDelete: () => void;
     onDuplicate: () => void;
     onColorChange: (color: string) => void;
+    onRename?: () => void;
     currentColor?: string;
   };
 
-  const { x, y, onClose, onDelete, onDuplicate, onColorChange, currentColor }: Props = $props();
+  const { x, y, onClose, onDelete, onDuplicate, onColorChange, onRename, currentColor }: Props =
+    $props();
 
   function handleClickOutside(e: MouseEvent) {
     if (!(e.target as HTMLElement).closest('.canvas-context-menu')) {
@@ -58,6 +60,19 @@
   </div>
 
   <div class="canvas-context-separator"></div>
+
+  {#if onRename}
+    <button
+      class="canvas-context-item"
+      onclick={() => {
+        onRename();
+        onClose();
+      }}
+    >
+      <Pencil size={16} />
+      <span>Rename</span>
+    </button>
+  {/if}
 
   <button
     class="canvas-context-item"

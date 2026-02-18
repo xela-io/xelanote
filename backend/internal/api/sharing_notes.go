@@ -28,29 +28,16 @@ func (s *Server) shareNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Identifier == "" {
-		respondError(w, http.StatusBadRequest, "identifier (username or email) required")
-		return
-	}
-	if req.Role != "viewer" && req.Role != "editor" {
-		respondError(w, http.StatusBadRequest, "role must be 'viewer' or 'editor'")
+	if msg := validateShareCreateInput(req.Identifier, req.Role); msg != "" {
+		respondError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	share, err := s.sharingService.ShareNote(userID, noteID, req.Identifier, req.Role)
 	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrNotFound):
-			respondError(w, http.StatusNotFound, "note not found")
-		case errors.Is(err, service.ErrCannotShareEncrypted):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrCannotShareWithSelf):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrNotNoteOwner):
-			respondError(w, http.StatusForbidden, "only the note owner can share")
-		case errors.Is(err, service.ErrUserNotFound):
-			respondError(w, http.StatusBadRequest, "unable to share with specified user")
-		default:
+		if status, msg, handled := mapShareCreateError(shareResourceNote, err); handled {
+			respondError(w, status, msg)
+		} else {
 			s.logger().Error("unexpected sharing error", "error", err)
 			respondError(w, http.StatusInternalServerError, "an unexpected error occurred")
 		}
@@ -76,12 +63,8 @@ func (s *Server) getNoteShares(w http.ResponseWriter, r *http.Request) {
 
 	shares, err := s.sharingService.GetNoteShares(userID, noteID)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "note not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotNoteOwner) {
-			respondError(w, http.StatusForbidden, "only the note owner can view shares")
+		if status, msg, handled := mapShareAccessError(shareResourceNote, err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to get note shares", err)
@@ -121,19 +104,15 @@ func (s *Server) updateShareRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Role != "viewer" && req.Role != "editor" {
-		respondError(w, http.StatusBadRequest, "role must be 'viewer' or 'editor'")
+	if msg := validateShareRoleInput(req.Role); msg != "" {
+		respondError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	err := s.sharingService.UpdateShareRole(userID, noteID, targetUserID, req.Role)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "share not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotNoteOwner) {
-			respondError(w, http.StatusForbidden, "only the note owner can update shares")
+		if status, msg, handled := mapShareMutateError(shareResourceNote, "update", err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to update share role", err)
@@ -164,12 +143,8 @@ func (s *Server) removeShare(w http.ResponseWriter, r *http.Request) {
 
 	err := s.sharingService.UnshareNote(userID, noteID, targetUserID)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "share not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotNoteOwner) {
-			respondError(w, http.StatusForbidden, "only the note owner can remove shares")
+		if status, msg, handled := mapShareMutateError(shareResourceNote, "remove", err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to remove share", err)

@@ -1,10 +1,15 @@
 # Audit TODO Checklist
 
-- [x] Owner: docs | Effort: S | Risk: low | Task: Update `docs/environment-variables.md` wording for `CORS_ALLOWED_ORIGINS` to clarify "strongly recommended" vs "required."
-- [x] Owner: backend | Effort: S | Risk: low | Task: Replace duplicated note field validation with a shared helper (keep error strings stable).
-- [x] Owner: backend | Effort: S | Risk: low | Task: Consolidate journal feature checks via a shared helper or middleware.
-- [x] Owner: backend | Effort: S | Risk: low | Task: Use `parseETag` helper or remove it if unused, and add a unit test for ETag parsing.
-- [x] Owner: backend | Effort: M | Risk: medium | Task: Standardize JSON error responses across API handlers (`respondError` everywhere) and validate client compatibility.
-- [x] Owner: devops | Effort: M | Risk: low | Task: Add CI workflow to run `make quality`, `make test`, `npm run test`, and `npm run test:e2e`.
-- [x] Owner: devops | Effort: S | Risk: low | Task: Add markdown lint + link check in CI for `README.md` and `docs/**`.
-- [x] Owner: docs | Effort: S | Risk: low | Task: Add a short README link to `docs/offline-mode.md` for offline details.
+- [x] Owner: docs | Effort: S | Risk: low | Task: Fix `docs/api.md` auth/public endpoint rules and content-type exceptions.
+- [x] Owner: docs | Effort: S | Risk: low | Task: Update `GET /api/config` docs to include `version`, `error_reporting_enabled`, and `captcha_iframe_url`.
+- [x] Owner: docs | Effort: S | Risk: low | Task: Correct WebAuthn delete/touch request/response contracts in `docs/api.md`.
+- [x] Owner: docs | Effort: S | Risk: low | Task: Fix API ToC drift (`/api/uploads/{user_id}/{filename}` and broken shared-folder anchor).
+- [x] Owner: docs | Effort: S | Risk: low | Task: Align Tauri dev port docs (`docs/desktop-app.md`) with `frontend/src-tauri/tauri.conf.json`.
+- [x] Owner: docs | Effort: S | Risk: low | Task: Align Go version docs in `README.md`, `docs/development.md`, and `docs/architecture.md` with `backend/go.mod`.
+- [x] Owner: docs+backend | Effort: S | Risk: low | Task: Add missing API docs for `GET /api/due-dates`, `POST /api/perf-metrics`, and `POST /api/analytics/events`.
+- [x] Owner: platform | Effort: M | Risk: low | Task: Add `scripts/check-api-doc-coverage.sh` and wire it into `.github/workflows/quality.yml` + `lefthook.yml`.
+- [x] Owner: backend | Effort: S | Risk: low | Task: Centralize template/snippet size constants into one shared constraints module.
+- [x] Owner: frontend | Effort: S | Risk: low | Task: Introduce shared query helper in `frontend/src/lib/api/query.ts` and migrate `notes.ts`, `trash.ts`, `graph.ts`, `admin.ts`, `versions.ts`.
+- [x] Owner: backend | Effort: M | Risk: medium | Task: Extract shared share-input validation/error-mapping helper for notes/folders/collection handlers.
+- [x] Owner: backend | Effort: M | Risk: medium | Task: Add ownership guard helpers in `sharing.go` and `recipes_collections.go`; migrate methods incrementally.
+- [x] Owner: qa+backend | Effort: M | Risk: medium | Task: Add endpoint contract smoke tests for documented examples in CI.

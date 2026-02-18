@@ -307,8 +307,8 @@ WEBKIT_DISABLE_COMPOSITING_MODE=1 GDK_BACKEND=x11 npm run tauri:dev
 ```
 
 Die App startet automatisch:
-- Frontend Dev Server auf Port 5174
-- Tauri-Fenster verbindet sich mit `http://localhost:5174`
+- Frontend Dev Server auf Port 5173
+- Tauri-Fenster verbindet sich mit `http://localhost:5173`
 
 ### Entwicklungs-Workflow
 
@@ -736,7 +736,7 @@ killall xelanote
 
 ### Dev Server Port Conflict
 
-**Problem**: "Port 5174 already in use"
+**Problem**: "Port 5173 already in use"
 
 **Lösung 1** (anderen Port nutzen):
 
@@ -752,7 +752,7 @@ npm run dev -- --port 5175
 
 ```bash
 # Finde Prozess
-lsof -i :5174
+lsof -i :5173
 
 # Kill process
 kill -9 <PID>

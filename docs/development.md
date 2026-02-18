@@ -33,7 +33,7 @@ Dieses Dokument beschreibt das Setup, die Entwicklungs-Workflows und Best Practi
 
 | Tool | Version | Zweck |
 |------|---------|-------|
-| **Go** | 1.24+ | Backend Development |
+| **Go** | 1.25+ | Backend Development |
 | **Node.js** | 20+ | Frontend Build |
 | **npm** | 10+ | Frontend Package Manager |
 | **Docker** | 24+ | Optional: Container Deployment |
@@ -52,8 +52,8 @@ brew install go node npm
 
 ```bash
 # Go
-wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 # Node.js
@@ -70,7 +70,7 @@ Verwende offizielle Installer:
 ### Verifizierung
 
 ```bash
-go version    # go1.24.0 oder höher
+go version    # go1.25.0 oder höher
 node --version  # v20.x.x oder höher
 npm --version   # 10.x.x oder höher
 ```

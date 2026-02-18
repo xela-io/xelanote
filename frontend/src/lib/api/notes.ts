@@ -1,5 +1,6 @@
 import type { OfflineNoteContext } from '../offline/types';
 import { request } from './client';
+import { withQuery } from './query';
 import type { Backlink, Job, Note, NotePayload, RenameResult } from './types';
 
 export async function listNotes(
@@ -11,15 +12,15 @@ export async function listNotes(
     updated_since?: string;
   } = {}
 ): Promise<{ notes: Note[]; next_cursor?: string; sync_token?: string }> {
-  const params = new URLSearchParams();
-  if (options.limit) params.set('limit', options.limit.toString());
-  if (options.cursor) params.set('cursor', options.cursor);
-  if (options.folder) params.set('folder', options.folder);
-  if (options.fields) params.set('fields', options.fields);
-  if (options.updated_since) params.set('updated_since', options.updated_since);
-
-  const query = params.toString();
-  return request(`/notes${query ? '?' + query : ''}`);
+  return request(
+    withQuery('/notes', (params) => {
+      if (options.limit) params.set('limit', options.limit.toString());
+      if (options.cursor) params.set('cursor', options.cursor);
+      if (options.folder) params.set('folder', options.folder);
+      if (options.fields) params.set('fields', options.fields);
+      if (options.updated_since) params.set('updated_since', options.updated_since);
+    })
+  );
 }
 
 export async function getNote(id: string): Promise<Note> {
@@ -91,10 +92,13 @@ export async function renameNoteAsync(
   id: string,
   newTitle: string
 ): Promise<{ job_id: string; status: string }> {
-  return request(`/notes/${id}/rename?async=true`, {
-    method: 'POST',
-    body: JSON.stringify({ newTitle }),
-  });
+  return request(
+    withQuery(`/notes/${id}/rename`, (params) => params.set('async', 'true')),
+    {
+      method: 'POST',
+      body: JSON.stringify({ newTitle }),
+    }
+  );
 }
 
 export async function getJobStatus(jobId: string): Promise<Job> {

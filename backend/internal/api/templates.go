@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/xela-io/xelanote/internal/constraints"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -23,25 +24,18 @@ type UpdateTemplateRequest struct {
 	Content     string `json:"content"`
 }
 
-// Validation constants (match db layer)
-const (
-	MaxTemplateContentSize = 102400 // 100KB
-	MaxTemplateTitleSize   = 200
-	MaxTemplateNameSize    = 100
-)
-
 // validateTemplateRequest validates a template request.
 func validateTemplateRequest(name, title, content string) error {
-	if len(name) == 0 || len(name) > MaxTemplateNameSize {
-		respondErrorMsg := "name must be 1-" + strconv.Itoa(MaxTemplateNameSize) + " characters"
+	if len(name) == 0 || len(name) > constraints.MaxTemplateNameSize {
+		respondErrorMsg := "name must be 1-" + strconv.Itoa(constraints.MaxTemplateNameSize) + " characters"
 		return &validationError{respondErrorMsg}
 	}
-	if len(title) == 0 || len(title) > MaxTemplateTitleSize {
-		respondErrorMsg := "title must be 1-" + strconv.Itoa(MaxTemplateTitleSize) + " characters"
+	if len(title) == 0 || len(title) > constraints.MaxTemplateTitleSize {
+		respondErrorMsg := "title must be 1-" + strconv.Itoa(constraints.MaxTemplateTitleSize) + " characters"
 		return &validationError{respondErrorMsg}
 	}
-	if len(content) > MaxTemplateContentSize {
-		respondErrorMsg := "content must not exceed " + strconv.Itoa(MaxTemplateContentSize) + " bytes"
+	if len(content) > constraints.MaxTemplateContentSize {
+		respondErrorMsg := "content must not exceed " + strconv.Itoa(constraints.MaxTemplateContentSize) + " bytes"
 		return &validationError{respondErrorMsg}
 	}
 	return nil

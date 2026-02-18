@@ -5,12 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
-)
 
-const (
-	MaxTemplateContentSize = 102400 // 100KB
-	MaxTemplateTitleSize   = 200
-	MaxTemplateNameSize    = 100
+	"github.com/xela-io/xelanote/internal/constraints"
 )
 
 // Template represents a reusable note template.
@@ -91,20 +87,20 @@ func (d *DB) CreateTemplate(userID int, name, description, title, content string
 	if name == "" {
 		return nil, fmt.Errorf("template name cannot be empty")
 	}
-	if len(name) > MaxTemplateNameSize {
-		return nil, fmt.Errorf("template name must not exceed %d characters", MaxTemplateNameSize)
+	if len(name) > constraints.MaxTemplateNameSize {
+		return nil, fmt.Errorf("template name must not exceed %d characters", constraints.MaxTemplateNameSize)
 	}
 
 	title = strings.TrimSpace(title)
 	if title == "" {
 		return nil, fmt.Errorf("template title cannot be empty")
 	}
-	if len(title) > MaxTemplateTitleSize {
-		return nil, fmt.Errorf("template title must not exceed %d characters", MaxTemplateTitleSize)
+	if len(title) > constraints.MaxTemplateTitleSize {
+		return nil, fmt.Errorf("template title must not exceed %d characters", constraints.MaxTemplateTitleSize)
 	}
 
-	if len(content) > MaxTemplateContentSize {
-		return nil, fmt.Errorf("template content must not exceed %d bytes", MaxTemplateContentSize)
+	if len(content) > constraints.MaxTemplateContentSize {
+		return nil, fmt.Errorf("template content must not exceed %d bytes", constraints.MaxTemplateContentSize)
 	}
 
 	nameNorm := normalizeTemplateName(name)
@@ -135,20 +131,20 @@ func (d *DB) UpdateTemplate(userID, templateID int, name, description, title, co
 	if name == "" {
 		return fmt.Errorf("template name cannot be empty")
 	}
-	if len(name) > MaxTemplateNameSize {
-		return fmt.Errorf("template name must not exceed %d characters", MaxTemplateNameSize)
+	if len(name) > constraints.MaxTemplateNameSize {
+		return fmt.Errorf("template name must not exceed %d characters", constraints.MaxTemplateNameSize)
 	}
 
 	title = strings.TrimSpace(title)
 	if title == "" {
 		return fmt.Errorf("template title cannot be empty")
 	}
-	if len(title) > MaxTemplateTitleSize {
-		return fmt.Errorf("template title must not exceed %d characters", MaxTemplateTitleSize)
+	if len(title) > constraints.MaxTemplateTitleSize {
+		return fmt.Errorf("template title must not exceed %d characters", constraints.MaxTemplateTitleSize)
 	}
 
-	if len(content) > MaxTemplateContentSize {
-		return fmt.Errorf("template content must not exceed %d bytes", MaxTemplateContentSize)
+	if len(content) > constraints.MaxTemplateContentSize {
+		return fmt.Errorf("template content must not exceed %d bytes", constraints.MaxTemplateContentSize)
 	}
 
 	nameNorm := normalizeTemplateName(name)

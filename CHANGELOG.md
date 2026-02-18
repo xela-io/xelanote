@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Canvas group renaming — double-click a group label to edit inline, or use "Rename" in the context menu; groups without a custom name show a dimmed "Group" placeholder
+- Canvas drag-and-drop tool placement — drag tools from the bottom toolbar onto the canvas to place nodes at the exact drop position with a live size-accurate preview ghost
 - Canvas keyboard shortcuts: `T/N/L/G` to add text/note/link/group nodes, `Esc` to close canvas menus, and `Ctrl/Cmd + C/V` for internal canvas copy/paste of selected nodes (including edges between selected nodes)
 - Canvas note preview — embedded notes now display their actual content with full markdown live preview instead of a static "Click to open note" placeholder; uses a read-only CodeMirror instance with the same rendering as text nodes
 - Canvas EditorToolbar-style toolbar — replaces minimal header with full-featured toolbar matching notes editor design: editable title, save/upload/history/focus-mode buttons, responsive 3-column grid layout, and a more menu with export, share, move, and delete actions; lazy-loaded dialogs for version history, move-to-folder, and share

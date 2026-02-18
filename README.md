@@ -72,7 +72,7 @@ SQLite database file.
 
 **Prerequisites**
 
-- Go 1.24+
+- Go 1.25+
 - Node.js 20+
 - GCC (for SQLite CGO)
 

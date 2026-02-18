@@ -7,6 +7,8 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
 - [Basis-Informationen](#basis-informationen)
 - [Configuration](#configuration)
   - [GET /api/config](#get-apiconfig)
+  - [GET /api/changelog](#get-apichangelog)
+  - [POST /api/error-reports](#post-apierror-reports)
 - [Authentication](#authentication)
   - [POST /api/auth/register](#post-apiauthregister)
   - [POST /api/auth/login](#post-apiauthlogin)
@@ -87,16 +89,18 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
   - [PUT /api/folders/:id/shares/:userId](#put-apifoldersidsharesuserId)
   - [DELETE /api/folders/:id/shares/:userId](#delete-apifoldersidsharesuserId)
   - [GET /api/shared/folders](#get-apisharedfolders)
-  - [GET /api/shared/folders/:id/notes](#get-apisharedfoldersiднotes)
+  - [GET /api/shared/folders/:id/notes](#get-apisharedfoldersidnotes)
 - [Shared Note Placements](#shared-note-placements)
   - [POST /api/shared/:id/placement](#post-apisharedidplacement)
   - [DELETE /api/shared/:id/placement](#delete-apisharedidplacement)
 - [Search](#search)
   - [GET /api/search](#get-apisearch)
   - [GET /api/quick-search](#get-apiquick-search)
+- [Due Dates](#due-dates)
+  - [GET /api/due-dates](#get-apidue-dates)
 - [Uploads](#uploads)
   - [POST /api/uploads](#post-apiuploads)
-  - [GET /api/uploads/:filename](#get-apiuploadsfilename)
+  - [GET /api/uploads/{user_id}/{filename}](#get-apiuploadsuser_idfilename)
 - [Import](#import)
   - [POST /api/import/markdown](#post-apiimportmarkdown)
 - [Export](#export)
@@ -105,6 +109,9 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
   - [GET /api/graph](#get-apigraph)
 - [WebSocket](#websocket)
   - [GET /api/ws](#get-apiws)
+- [Telemetry](#telemetry)
+  - [POST /api/perf-metrics](#post-apiperf-metrics)
+  - [POST /api/analytics/events](#post-apianalyticsevents)
 - [Users](#users)
   - [GET /api/users/preferences](#get-apiuserspreferences)
   - [PUT /api/users/preferences](#put-apiuserspreferences)
@@ -147,7 +154,14 @@ Bei Docker Deployment ggf. anderen Port verwenden.
 
 ### Content-Type
 
-Alle Requests und Responses verwenden JSON:
+Fast alle Requests/Responses verwenden JSON.
+
+Ausnahmen:
+
+- `GET /health` gibt `text/plain` (`ok`) zurueck.
+- `GET /api/changelog` gibt `text/plain; charset=utf-8` zurueck.
+- `GET /api/uploads/{user_id}/{filename}` liefert Binardaten (Bild-MIME-Type).
+- `POST /api/uploads` erwartet `multipart/form-data`.
 
 ```http
 Content-Type: application/json
@@ -155,7 +169,25 @@ Content-Type: application/json
 
 ### Authentication
 
-Alle API-Requests (außer `/health` und `/api/auth/*`) erfordern JWT Authentication.
+Alle geschuetzten API-Requests erfordern Authentication.
+
+Public Endpoints (kein bestehender Access-Token erforderlich):
+
+- `GET /health`
+- `GET /captcha`
+- `GET /api/config`
+- `GET /api/changelog`
+- `POST /api/error-reports`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `POST /api/auth/fido2/begin`
+- `POST /api/auth/fido2/finish`
+- `POST /api/auth/recovery/salt`
+- `POST /api/auth/recovery/reset-password`
+
+Hinweis: `GET /api/auth/me` ist geschuetzt.
 
 **Header (primär)**:
 
@@ -218,11 +250,84 @@ GET /api/config
 ```json
 {
   "captcha_enabled": true,
-  "captcha_site_key": "0x4AAAAAACNggULpFEdcIsrE"
+  "captcha_site_key": "0x4AAAAAACNggULpFEdcIsrE",
+  "captcha_iframe_url": "/captcha?sitekey=0x4AAAAAACNggULpFEdcIsrE",
+  "version": "v1.2.3",
+  "error_reporting_enabled": true
 }
 ```
 
-**Hinweis**: `captcha_site_key` ist nur vorhanden wenn `captcha_enabled: true`.
+**Hinweis**:
+
+- `captcha_site_key` und `captcha_iframe_url` sind nur vorhanden wenn `captcha_enabled: true`.
+- `version` ist die Backend-Build-Version.
+- `error_reporting_enabled` signalisiert, ob `POST /api/error-reports` verfuegbar ist.
+
+### GET /api/changelog
+
+Liefert den Inhalt von `CHANGELOG.md` als Text.
+
+#### Request
+
+```http
+GET /api/changelog
+```
+
+#### Response
+
+```http
+200 OK
+Content-Type: text/plain; charset=utf-8
+```
+
+#### Errors
+
+```http
+404 Not Found - "changelog not found"
+```
+
+### POST /api/error-reports
+
+Nimmt Frontend-Fehlerreports entgegen (rate-limited, oeffentlich).
+Fuer Details und Datenmodell: `docs/error-reporting.md`.
+
+#### Request
+
+```http
+POST /api/error-reports
+Content-Type: application/json
+```
+
+```json
+{
+  "type": "automatic",
+  "error_type": "TypeError",
+  "message": "Cannot read properties of undefined",
+  "fingerprint": "a1b2c3d4e5f6a7b8",
+  "url": "/note/abc123"
+}
+```
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "accepted": true
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - Validierung/JSON fehlgeschlagen
+413 Payload Too Large - Request Body > 16KB
+429 Too Many Requests - Rate limit erreicht
+503 Service Unavailable - Error Reporting deaktiviert
+```
 
 ---
 
@@ -2501,6 +2606,64 @@ Gibt leere Liste zurück:
 
 ---
 
+## Due Dates
+
+### GET /api/due-dates
+
+Liefert alle erkannten Due-Date-Einträge des authentifizierten Users über alle nicht-geloeschten Notizen.
+
+#### Query Parameters
+
+| Parameter | Typ | Default | Beschreibung |
+|-----------|-----|---------|--------------|
+| `show_completed` | boolean | `false` | Wenn `true`, werden abgeschlossene Task-Einträge mit Due Date mitgeliefert |
+
+#### Request
+
+```http
+GET /api/due-dates
+GET /api/due-dates?show_completed=true
+Authorization: Bearer <access_token>
+```
+
+#### Response
+
+```http
+200 OK
+Content-Type: application/json
+```
+
+```json
+{
+  "due_dates": [
+    {
+      "id": 123,
+      "note_id": "550e8400-e29b-41d4-a716-446655440000",
+      "note_title": "Sprint Planning",
+      "due_date": "2026-02-20",
+      "line_text": "- [ ] Prepare demo // due: 2026-02-20",
+      "line_index": 14,
+      "is_task_item": true,
+      "is_completed": false
+    }
+  ]
+}
+```
+
+**Hinweise**:
+
+- Ergebnis ist nach `due_date` aufsteigend sortiert.
+- Wenn keine Einträge vorhanden sind, ist `due_dates` ein leeres Array (`[]`), nicht `null`.
+
+#### Errors
+
+```http
+401 Unauthorized - "unauthorized"
+500 Internal Server Error - "failed to get due dates"
+```
+
+---
+
 ## Uploads
 
 ### POST /api/uploads
@@ -2962,6 +3125,115 @@ const graph = ForceGraph()(container)
 {
   "error": "failed to get global graph: <details>"
 }
+```
+
+---
+
+## Telemetry
+
+Telemetry-Endpunkte sind authentifiziert, rate-limited und auf kleine Payloads (max. 1KB) begrenzt.
+
+### POST /api/perf-metrics
+
+Speichert Web-Vitals-Metriken (z.B. LCP/INP/CLS).
+
+#### Request
+
+```http
+POST /api/perf-metrics
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "metric_name": "LCP",
+  "value": 1832.4,
+  "rating": "good",
+  "sanitized_url": "/note/:id"
+}
+```
+
+#### Validierung
+
+- `metric_name`: `LCP`, `INP`, `CLS`, `FCP`, `TTFB`
+- `rating`: `good`, `needs-improvement`, `poor`
+- `sanitized_url`: max. 200 Zeichen
+- Max Request-Body: 1KB
+
+#### Response
+
+```http
+201 Created
+```
+
+```json
+{
+  "status": "recorded"
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - "invalid JSON", "invalid metric_name", "invalid rating", "sanitized_url too long"
+401 Unauthorized - "user not authenticated"
+413 Payload Too Large - "request body too large"
+429 Too Many Requests - Rate limit erreicht
+500 Internal Server Error - "internal server error"
+503 Service Unavailable - "telemetry not available"
+```
+
+---
+
+### POST /api/analytics/events
+
+Speichert whitelisted Analytics-Events.
+
+#### Request
+
+```http
+POST /api/analytics/events
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "event_name": "ios_coach_shown",
+  "data": {
+    "step": 1
+  }
+}
+```
+
+#### Validierung
+
+- `event_name` (Whitelist): `ios_coach_shown`, `ios_step_changed`, `ios_snoozed`, `ios_dismissed`, `ios_installed_detected`
+- `data` ist optional; fehlt es, wird serverseitig `{}` gespeichert.
+- Max Request-Body: 1KB
+
+#### Response
+
+```http
+201 Created
+```
+
+```json
+{
+  "status": "recorded"
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - "invalid JSON", "invalid event_name"
+401 Unauthorized - "user not authenticated"
+413 Payload Too Large - "request body too large"
+429 Too Many Requests - Rate limit erreicht
+500 Internal Server Error - "internal server error"
+503 Service Unavailable - "telemetry not available"
 ```
 
 ---
@@ -3837,15 +4109,8 @@ Entfernt eine WebAuthn-Credential.
 #### Request
 
 ```http
-DELETE /api/users/webauthn/credentials
+DELETE /api/users/webauthn/credentials?credential_id=base64-credential-id
 Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-```json
-{
-  "credential_id": "base64-credential-id"
-}
 ```
 
 #### Response
@@ -3856,16 +4121,15 @@ Content-Type: application/json
 
 ```json
 {
-  "message": "credential deleted successfully"
+  "status": "deleted"
 }
 ```
 
 #### Errors
 
 ```http
-400 Bad Request - "credential_id required"
+400 Bad Request - "credential_id query parameter required"
 401 Unauthorized - Keine gültige Authentifizierung
-404 Not Found - "credential not found"
 500 Internal Server Error - Fehler beim Löschen
 ```
 
@@ -3878,15 +4142,8 @@ Aktualisiert den "last_used_at" Zeitstempel einer WebAuthn-Credential.
 #### Request
 
 ```http
-PATCH /api/users/webauthn/credentials/touch
+PATCH /api/users/webauthn/credentials/touch?credential_id=base64-credential-id
 Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-```json
-{
-  "credential_id": "base64-credential-id"
-}
 ```
 
 #### Response
@@ -3897,16 +4154,15 @@ Content-Type: application/json
 
 ```json
 {
-  "message": "credential touched successfully"
+  "status": "updated"
 }
 ```
 
 #### Errors
 
 ```http
-400 Bad Request - "credential_id required"
+400 Bad Request - "credential_id query parameter required"
 401 Unauthorized - Keine gültige Authentifizierung
-404 Not Found - "credential not found"
 500 Internal Server Error - Fehler beim Aktualisieren
 ```
 

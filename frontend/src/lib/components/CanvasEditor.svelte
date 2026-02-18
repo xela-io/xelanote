@@ -10,12 +10,14 @@
     Panel,
     SvelteFlow,
   } from '@xyflow/svelte';
+  import { ExternalLink, FileText, Group as GroupIcon, Type } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
   import type { Note } from '$lib/api/types';
   import { uploadImage } from '$lib/api/uploads';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
+  import { TOOL_DRAG_MIME, type ToolbarAction } from '$lib/components/canvas/canvas-toolbar-tools';
   import CanvasContextMenu from '$lib/components/canvas/CanvasContextMenu.svelte';
   import CanvasEditorToolbar from '$lib/components/canvas/CanvasEditorToolbar.svelte';
   import CanvasFileNode from '$lib/components/canvas/CanvasFileNode.svelte';
@@ -25,6 +27,7 @@
   import CanvasNotePicker from '$lib/components/canvas/CanvasNotePicker.svelte';
   import CanvasTextNode from '$lib/components/canvas/CanvasTextNode.svelte';
   import CanvasToolbar from '$lib/components/canvas/CanvasToolbar.svelte';
+  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import {
     type DialogLoaderState,
     loadMoveToFolderDialog,
@@ -88,6 +91,7 @@
   let viewport = $state<{ x: number; y: number; zoom: number } | undefined>(undefined);
   let containerEl: HTMLDivElement | undefined = $state();
   let draggingOver = $state(false);
+  let toolDragPreview = $state<{ action: ToolbarAction; x: number; y: number } | null>(null);
 
   // Allowed image MIME types (must match backend allowedTypes)
   const allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
@@ -98,6 +102,10 @@
   // Note picker state
   let notePickerOpen = $state(false);
   let pendingFileNodePosition = $state<{ x: number; y: number } | null>(null);
+  let linkDialogOpen = $state(false);
+  let pendingLinkNodePosition = $state<{ x: number; y: number } | null>(null);
+  let linkUrl = $state('');
+  let linkUrlError = $state<string | null>(null);
 
   // More menu & dialog state
   let showMoreMenu = $state(false);
@@ -233,35 +241,31 @@
   }
 
   // Toolbar actions (floating bottom toolbar)
-  function handleToolbarAction(action: string) {
-    const centerX = Math.random() * 400 + 100;
-    const centerY = Math.random() * 300 + 100;
+  function handleToolbarAction(action: ToolbarAction, flowPosition?: { x: number; y: number }) {
+    const position = flowPosition ?? { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 };
 
     switch (action) {
       case 'add-text': {
-        const node = createTextNode(centerX, centerY);
+        const node = createTextNode(position.x, position.y);
         const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
         flowNodes = [...flowNodes, ...nodes];
         scheduleSave();
         break;
       }
       case 'add-file': {
-        pendingFileNodePosition = { x: centerX, y: centerY };
+        pendingFileNodePosition = { x: position.x, y: position.y };
         notePickerOpen = true;
         break;
       }
       case 'add-link': {
-        const url = prompt('Enter URL:');
-        if (url) {
-          const node = createLinkNode(centerX, centerY, url);
-          const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
-          flowNodes = [...flowNodes, ...nodes];
-          scheduleSave();
-        }
+        pendingLinkNodePosition = { x: position.x, y: position.y };
+        linkUrl = '';
+        linkUrlError = null;
+        linkDialogOpen = true;
         break;
       }
       case 'add-group': {
-        const node = createGroupNode(centerX, centerY);
+        const node = createGroupNode(position.x, position.y);
         const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
         flowNodes = [...flowNodes, ...nodes];
         scheduleSave();
@@ -306,6 +310,24 @@
     scheduleSave();
   }
 
+  function handleRenameGroup() {
+    if (!contextMenu) return;
+    const nodeId = contextMenu.nodeId;
+    const node = flowNodes.find((n) => n.id === nodeId);
+    if (!node || node.type !== 'canvas-group') return;
+    const currentLabel = (node.data.label as string) || 'Group';
+    const newLabel = prompt('Group name:', currentLabel);
+    if (newLabel !== null && newLabel.trim() && newLabel.trim() !== currentLabel) {
+      flowNodes = flowNodes.map((n) => {
+        if (n.id === nodeId) {
+          return { ...n, data: { ...n.data, label: newLabel.trim() } };
+        }
+        return n;
+      });
+      scheduleSave();
+    }
+  }
+
   // Convert client coordinates to flow coordinates using bound viewport
   function clientToFlowPosition(clientX: number, clientY: number): { x: number; y: number } {
     const rect = containerEl?.getBoundingClientRect();
@@ -314,6 +336,14 @@
     return {
       x: (clientX - rect.left - vp.x) / vp.zoom,
       y: (clientY - rect.top - vp.y) / vp.zoom,
+    };
+  }
+
+  function flowToContainerPosition(flowX: number, flowY: number): { x: number; y: number } {
+    const vp = viewport ?? { x: 0, y: 0, zoom: 1 };
+    return {
+      x: flowX * vp.zoom + vp.x,
+      y: flowY * vp.zoom + vp.y,
     };
   }
 
@@ -340,24 +370,126 @@
 
   // Drag-and-drop handlers for external files
   function handleDragOver(e: DragEvent) {
-    if (!e.dataTransfer?.types.includes('Files')) return;
+    const types = e.dataTransfer?.types;
+    if (!types) return;
+    const isFileDrag = types.includes('Files');
+    const isToolDrag = types.includes(TOOL_DRAG_MIME);
+    if (!isFileDrag && !isToolDrag) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
     draggingOver = true;
+    if (isToolDrag) {
+      const action = parseDroppedToolAction(e);
+      if (action) {
+        const pos = clientToFlowPosition(e.clientX, e.clientY);
+        toolDragPreview = { action, x: pos.x, y: pos.y };
+      }
+      return;
+    }
+    toolDragPreview = null;
+  }
+
+  function parseDroppedToolAction(e: DragEvent): ToolbarAction | null {
+    const action = e.dataTransfer?.getData(TOOL_DRAG_MIME);
+    if (
+      action === 'add-text' ||
+      action === 'add-file' ||
+      action === 'add-link' ||
+      action === 'add-group'
+    ) {
+      return action;
+    }
+    return null;
+  }
+
+  function getToolLabel(action: ToolbarAction): string {
+    switch (action) {
+      case 'add-text':
+        return 'Text';
+      case 'add-file':
+        return 'Note';
+      case 'add-link':
+        return 'Link';
+      case 'add-group':
+        return 'Group';
+    }
+  }
+
+  function getToolSize(action: ToolbarAction): { width: number; height: number } {
+    if (action === 'add-group') return { width: 500, height: 400 };
+    return { width: 300, height: 200 };
+  }
+
+  function getDropOriginForTool(
+    _action: ToolbarAction,
+    cursorFlowPos: { x: number; y: number }
+  ): { x: number; y: number } {
+    return {
+      x: cursorFlowPos.x,
+      y: cursorFlowPos.y,
+    };
   }
 
   function handleDrop(e: DragEvent) {
     draggingOver = false;
+    const droppedTool = parseDroppedToolAction(e);
+    if (droppedTool) {
+      e.preventDefault();
+      const cursorPos = clientToFlowPosition(e.clientX, e.clientY);
+      const originPos = getDropOriginForTool(droppedTool, cursorPos);
+      handleToolbarAction(droppedTool, originPos);
+      toolDragPreview = null;
+      return;
+    }
     if (!e.dataTransfer?.types.includes('Files')) return;
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     handleImageFiles(files, e.clientX, e.clientY);
+    toolDragPreview = null;
+  }
+
+  function closeLinkDialog() {
+    linkDialogOpen = false;
+    linkUrl = '';
+    linkUrlError = null;
+    pendingLinkNodePosition = null;
+  }
+
+  function normalizeLinkUrl(raw: string): string {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  }
+
+  function submitLinkDialog() {
+    const normalized = normalizeLinkUrl(linkUrl);
+    if (!normalized) {
+      linkUrlError = $_('component.canvas.link_dialog.error_empty');
+      return;
+    }
+    try {
+      const parsed = new URL(normalized);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        linkUrlError = $_('component.canvas.link_dialog.error_invalid');
+        return;
+      }
+      const pos = pendingLinkNodePosition ?? { x: 200, y: 200 };
+      const node = createLinkNode(pos.x, pos.y, normalized);
+      const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
+      flowNodes = [...flowNodes, ...nodes];
+      scheduleSave();
+      closeLinkDialog();
+    } catch {
+      linkUrlError = $_('component.canvas.link_dialog.error_invalid');
+    }
   }
 
   function handleDragLeave(e: DragEvent) {
     // Only reset when leaving the container (not entering a child)
     if (containerEl && !containerEl.contains(e.relatedTarget as Node)) {
       draggingOver = false;
+      toolDragPreview = null;
     }
   }
 
@@ -496,10 +628,13 @@
         notePickerOpen = false;
         pendingFileNodePosition = null;
       }
+      if (linkDialogOpen) {
+        closeLinkDialog();
+      }
       return;
     }
 
-    if (notePickerOpen || showMoreMenu || contextMenu) return;
+    if (notePickerOpen || linkDialogOpen || showMoreMenu || contextMenu) return;
 
     if ((e.ctrlKey || e.metaKey) && key === 'c') {
       if (copySelectionToClipboard()) {
@@ -611,16 +746,19 @@
     const el = containerEl;
     if (!el) return;
     const onTextChange = () => scheduleSave();
+    const onGroupLabelChange = () => scheduleSave();
     const onSave = () => handleManualSave();
     const onWikilinkClick = (e: Event) => {
       const detail = (e as CustomEvent<{ title: string }>).detail;
       if (detail?.title) handleCanvasWikilinkClick(detail.title);
     };
     el.addEventListener('canvastextchange', onTextChange);
+    el.addEventListener('canvasgrouplabelchange', onGroupLabelChange);
     el.addEventListener('canvassave', onSave);
     el.addEventListener('wikilinkclick', onWikilinkClick);
     return () => {
       el.removeEventListener('canvastextchange', onTextChange);
+      el.removeEventListener('canvasgrouplabelchange', onGroupLabelChange);
       el.removeEventListener('canvassave', onSave);
       el.removeEventListener('wikilinkclick', onWikilinkClick);
     };
@@ -696,7 +834,14 @@
   }
 </script>
 
-<svelte:window onkeydown={handleKeydown} onpaste={handlePaste} />
+<svelte:window
+  onkeydown={handleKeydown}
+  onpaste={handlePaste}
+  ondragend={() => {
+    draggingOver = false;
+    toolDragPreview = null;
+  }}
+/>
 
 <div class="canvas-editor">
   <!-- Toolbar -->
@@ -754,6 +899,55 @@
         <CanvasToolbar onAction={handleToolbarAction} />
       </Panel>
     </SvelteFlow>
+
+    {#if toolDragPreview}
+      {@const previewSize = getToolSize(toolDragPreview.action)}
+      {@const previewOrigin = getDropOriginForTool(toolDragPreview.action, {
+        x: toolDragPreview.x,
+        y: toolDragPreview.y,
+      })}
+      {@const previewPos = flowToContainerPosition(previewOrigin.x, previewOrigin.y)}
+      <div
+        class={`tool-drag-preview tool-drag-preview--${toolDragPreview.action}`}
+        style={`left:${previewPos.x}px;top:${previewPos.y}px;width:${previewSize.width}px;height:${previewSize.height}px;`}
+        aria-hidden="true"
+      >
+        {#if toolDragPreview.action === 'add-text'}
+          <div class="tool-drag-preview-header">
+            <Type size={14} />
+            <span>{getToolLabel(toolDragPreview.action)}</span>
+          </div>
+          <div class="tool-drag-preview-text-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        {:else if toolDragPreview.action === 'add-file'}
+          <div class="tool-drag-preview-header">
+            <FileText size={14} />
+            <span>{getToolLabel(toolDragPreview.action)}</span>
+          </div>
+          <div class="tool-drag-preview-text-lines">
+            <span></span>
+            <span></span>
+          </div>
+        {:else if toolDragPreview.action === 'add-link'}
+          <div class="tool-drag-preview-header">
+            <ExternalLink size={14} />
+            <span>{getToolLabel(toolDragPreview.action)}</span>
+          </div>
+          <div class="tool-drag-preview-link-url">example.com/path</div>
+          <div class="tool-drag-preview-text-lines">
+            <span></span>
+          </div>
+        {:else}
+          <div class="tool-drag-preview-group-label">
+            <GroupIcon size={14} />
+            <span>{getToolLabel(toolDragPreview.action)}</span>
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 
   <!-- Context Menu -->
@@ -768,6 +962,9 @@
       onDelete={handleDeleteNode}
       onDuplicate={handleDuplicateNode}
       onColorChange={handleColorChange}
+      onRename={flowNodes.find((n) => n.id === contextMenu?.nodeId)?.type === 'canvas-group'
+        ? handleRenameGroup
+        : undefined}
     />
   {/if}
 
@@ -781,6 +978,54 @@
     }}
   />
 </div>
+
+<!-- Add Link Dialog -->
+<BaseDialog
+  open={linkDialogOpen}
+  title={$_('component.canvas.link_dialog.title')}
+  onClose={closeLinkDialog}
+  size="sm"
+>
+  {#snippet content()}
+    <div class="space-y-3">
+      <label for="canvas-link-input" class="text-sm font-medium text-foreground">
+        {$_('component.canvas.link_dialog.url_label')}
+      </label>
+      <input
+        id="canvas-link-input"
+        type="text"
+        bind:value={linkUrl}
+        placeholder={$_('component.canvas.link_dialog.placeholder')}
+        class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+        onkeydown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            submitLinkDialog();
+          }
+        }}
+      />
+      {#if linkUrlError}
+        <p class="text-sm text-red-600">{linkUrlError}</p>
+      {/if}
+    </div>
+  {/snippet}
+  {#snippet footer()}
+    <button
+      type="button"
+      onclick={closeLinkDialog}
+      class="px-4 py-2 text-sm hover:bg-accent rounded-md"
+    >
+      {$_('common.cancel')}
+    </button>
+    <button
+      type="button"
+      onclick={submitLinkDialog}
+      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"
+    >
+      {$_('component.canvas.link_dialog.add_button')}
+    </button>
+  {/snippet}
+</BaseDialog>
 
 <!-- More Menu (rendered outside .canvas-editor for proper z-index) -->
 {#if showMoreMenu}
@@ -861,6 +1106,90 @@
   .canvas-flow-container.drag-over {
     outline: 2px dashed var(--color-ring);
     outline-offset: -2px;
+  }
+
+  .tool-drag-preview {
+    position: absolute;
+    z-index: 20;
+    border-radius: 0.6rem;
+    border: 1px solid var(--color-border);
+    background: color-mix(in oklch, var(--color-card) 90%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-ring) 30%, transparent),
+      0 14px 32px color-mix(in oklch, var(--color-foreground) 16%, transparent);
+    pointer-events: none;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .tool-drag-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+  }
+
+  .tool-drag-preview-text-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tool-drag-preview-text-lines span {
+    display: block;
+    height: 8px;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--color-muted-foreground) 26%, transparent);
+  }
+
+  .tool-drag-preview-text-lines span:nth-child(1) {
+    width: 88%;
+  }
+
+  .tool-drag-preview-text-lines span:nth-child(2) {
+    width: 70%;
+  }
+
+  .tool-drag-preview-text-lines span:nth-child(3) {
+    width: 55%;
+  }
+
+  .tool-drag-preview-link-url {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-muted-foreground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-drag-preview-group-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: color-mix(in oklch, var(--color-foreground) 76%, var(--color-primary));
+  }
+
+  .tool-drag-preview--add-group {
+    border-style: dashed;
+    border-width: 1.5px;
+    background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+  }
+
+  .tool-drag-preview--add-text,
+  .tool-drag-preview--add-file,
+  .tool-drag-preview--add-link {
+    border-left-width: 3px;
+    border-left-color: var(--color-primary);
   }
 
   /* Svelte Flow theme overrides */

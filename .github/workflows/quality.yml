@@ -108,6 +108,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: API doc coverage check
+        run: bash scripts/check-api-doc-coverage.sh
       - name: Layer violation check
         run: bash scripts/check-layer-violations.sh
       - name: Svelte 4 import check

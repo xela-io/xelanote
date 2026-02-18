@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/xela-io/xelanote/internal/service"
@@ -30,31 +29,16 @@ func (s *Server) shareFolderHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Identifier == "" {
-		respondError(w, http.StatusBadRequest, "identifier (username or email) required")
-		return
-	}
-	if req.Role != "viewer" && req.Role != "editor" {
-		respondError(w, http.StatusBadRequest, "role must be 'viewer' or 'editor'")
+	if msg := validateShareCreateInput(req.Identifier, req.Role); msg != "" {
+		respondError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	share, err := s.sharingService.ShareFolder(userID, folderID, req.Identifier, req.Role)
 	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrNotFound):
-			respondError(w, http.StatusNotFound, "folder not found")
-		case errors.Is(err, service.ErrCannotShareEncryptedFolder):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrFolderHasEncryptedNotes):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrCannotShareWithSelf):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrNotFolderOwner):
-			respondError(w, http.StatusForbidden, "only the folder owner can share")
-		case errors.Is(err, service.ErrUserNotFound):
-			respondError(w, http.StatusBadRequest, "unable to share with specified user")
-		default:
+		if status, msg, handled := mapShareCreateError(shareResourceFolder, err); handled {
+			respondError(w, status, msg)
+		} else {
 			s.logger().Error("unexpected sharing error", "error", err)
 			respondError(w, http.StatusInternalServerError, "an unexpected error occurred")
 		}
@@ -79,12 +63,8 @@ func (s *Server) getFolderSharesHandler(w http.ResponseWriter, r *http.Request) 
 
 	shares, err := s.sharingService.GetFolderShares(userID, folderID)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "folder not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotFolderOwner) {
-			respondError(w, http.StatusForbidden, "only the folder owner can view shares")
+		if status, msg, handled := mapShareAccessError(shareResourceFolder, err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to get folder shares", err)
@@ -122,19 +102,15 @@ func (s *Server) updateFolderShareRoleHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if req.Role != "viewer" && req.Role != "editor" {
-		respondError(w, http.StatusBadRequest, "role must be 'viewer' or 'editor'")
+	if msg := validateShareRoleInput(req.Role); msg != "" {
+		respondError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	err := s.sharingService.UpdateFolderShareRole(userID, folderID, targetUserID, req.Role)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "share not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotFolderOwner) {
-			respondError(w, http.StatusForbidden, "only the folder owner can update shares")
+		if status, msg, handled := mapShareMutateError(shareResourceFolder, "update", err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to update folder share role", err)
@@ -164,12 +140,8 @@ func (s *Server) removeFolderShareHandler(w http.ResponseWriter, r *http.Request
 
 	err := s.sharingService.UnshareFolder(userID, folderID, targetUserID)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "share not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotFolderOwner) {
-			respondError(w, http.StatusForbidden, "only the folder owner can remove shares")
+		if status, msg, handled := mapShareMutateError(shareResourceFolder, "remove", err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to remove folder share", err)

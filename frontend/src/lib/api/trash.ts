@@ -1,4 +1,5 @@
 import { request } from './client';
+import { withQuery } from './query';
 import type { Note } from './types';
 
 export async function listTrash(
@@ -7,12 +8,12 @@ export async function listTrash(
     cursor?: string;
   } = {}
 ): Promise<{ notes: Note[]; next_cursor?: string }> {
-  const params = new URLSearchParams();
-  if (options.limit) params.set('limit', options.limit.toString());
-  if (options.cursor) params.set('cursor', options.cursor);
-
-  const query = params.toString();
-  return request(`/trash${query ? '?' + query : ''}`);
+  return request(
+    withQuery('/trash', (params) => {
+      if (options.limit) params.set('limit', options.limit.toString());
+      if (options.cursor) params.set('cursor', options.cursor);
+    })
+  );
 }
 
 export async function getTrashCount(): Promise<{ count: number }> {

@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
-)
 
-const (
-	MaxSnippetContentSize = 102400 // 100KB
-	MaxSnippetNameSize    = 100
+	"github.com/xela-io/xelanote/internal/constraints"
 )
 
 // Snippet represents a reusable text snippet.
@@ -90,12 +87,12 @@ func (d *DB) CreateSnippet(userID int, name, description, content, shortcut stri
 	if name == "" {
 		return nil, fmt.Errorf("snippet name cannot be empty")
 	}
-	if len(name) > MaxSnippetNameSize {
-		return nil, fmt.Errorf("snippet name must not exceed %d characters", MaxSnippetNameSize)
+	if len(name) > constraints.MaxSnippetNameSize {
+		return nil, fmt.Errorf("snippet name must not exceed %d characters", constraints.MaxSnippetNameSize)
 	}
 
-	if len(content) > MaxSnippetContentSize {
-		return nil, fmt.Errorf("snippet content must not exceed %d bytes", MaxSnippetContentSize)
+	if len(content) > constraints.MaxSnippetContentSize {
+		return nil, fmt.Errorf("snippet content must not exceed %d bytes", constraints.MaxSnippetContentSize)
 	}
 
 	nameNorm := normalizeSnippetName(name)
@@ -126,12 +123,12 @@ func (d *DB) UpdateSnippet(userID, snippetID int, name, description, content, sh
 	if name == "" {
 		return fmt.Errorf("snippet name cannot be empty")
 	}
-	if len(name) > MaxSnippetNameSize {
-		return fmt.Errorf("snippet name must not exceed %d characters", MaxSnippetNameSize)
+	if len(name) > constraints.MaxSnippetNameSize {
+		return fmt.Errorf("snippet name must not exceed %d characters", constraints.MaxSnippetNameSize)
 	}
 
-	if len(content) > MaxSnippetContentSize {
-		return fmt.Errorf("snippet content must not exceed %d bytes", MaxSnippetContentSize)
+	if len(content) > constraints.MaxSnippetContentSize {
+		return fmt.Errorf("snippet content must not exceed %d bytes", constraints.MaxSnippetContentSize)
 	}
 
 	nameNorm := normalizeSnippetName(name)

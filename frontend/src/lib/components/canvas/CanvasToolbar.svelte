@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ExternalLink, FileText, Group, Type } from 'lucide-svelte';
 
-  type ToolbarAction = 'add-text' | 'add-file' | 'add-link' | 'add-group';
+  import { TOOL_DRAG_MIME, type ToolbarAction } from './canvas-toolbar-tools';
 
   const { onAction }: { onAction: (action: ToolbarAction) => void } = $props();
 
@@ -11,6 +11,13 @@
     { action: 'add-link', icon: ExternalLink, label: 'Link', shortcut: 'L' },
     { action: 'add-group', icon: Group, label: 'Group', shortcut: 'G' },
   ];
+
+  function handleDragStart(event: DragEvent, action: ToolbarAction) {
+    if (!event.dataTransfer) return;
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData(TOOL_DRAG_MIME, action);
+    event.dataTransfer.setData('text/plain', action);
+  }
 </script>
 
 <div class="canvas-toolbar">
@@ -19,7 +26,9 @@
       class="canvas-toolbar-btn"
       title={`${tool.label} (${tool.shortcut})`}
       aria-label={`${tool.label} (${tool.shortcut})`}
+      draggable="true"
       onclick={() => onAction(tool.action)}
+      ondragstart={(event) => handleDragStart(event, tool.action)}
     >
       <tool.icon size={18} />
     </button>

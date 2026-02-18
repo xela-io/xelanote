@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/xela-io/xelanote/internal/constraints"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -23,20 +24,14 @@ type UpdateSnippetRequest struct {
 	Shortcut    string `json:"shortcut"`
 }
 
-// Validation constants (match db layer)
-const (
-	MaxSnippetContentSize = 102400 // 100KB
-	MaxSnippetNameSize    = 100
-)
-
 // validateSnippetRequest validates a snippet request.
 func validateSnippetRequest(name, content string) error {
-	if len(name) == 0 || len(name) > MaxSnippetNameSize {
-		respondErrorMsg := "name must be 1-" + strconv.Itoa(MaxSnippetNameSize) + " characters"
+	if len(name) == 0 || len(name) > constraints.MaxSnippetNameSize {
+		respondErrorMsg := "name must be 1-" + strconv.Itoa(constraints.MaxSnippetNameSize) + " characters"
 		return &validationError{respondErrorMsg}
 	}
-	if len(content) > MaxSnippetContentSize {
-		respondErrorMsg := "content must not exceed " + strconv.Itoa(MaxSnippetContentSize) + " bytes"
+	if len(content) > constraints.MaxSnippetContentSize {
+		respondErrorMsg := "content must not exceed " + strconv.Itoa(constraints.MaxSnippetContentSize) + " bytes"
 		return &validationError{respondErrorMsg}
 	}
 	return nil

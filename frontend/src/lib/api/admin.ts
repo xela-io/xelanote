@@ -1,4 +1,5 @@
 import { request } from './client';
+import { withQuery } from './query';
 import type {
   ActivityLogsOptions,
   ActivityLogsResponse,
@@ -40,17 +41,17 @@ export async function deleteUserAdmin(id: number): Promise<void> {
 export async function getActivityLogs(
   options: ActivityLogsOptions = {}
 ): Promise<ActivityLogsResponse> {
-  const params = new URLSearchParams();
-  if (options.limit) params.set('limit', options.limit.toString());
-  if (options.page) params.set('page', options.page.toString());
-  if (options.action) params.set('action', options.action);
-  if (options.user_id) params.set('user_id', options.user_id.toString());
-  if (options.target_type) params.set('target_type', options.target_type);
-  if (options.date_from) params.set('date_from', options.date_from);
-  if (options.date_to) params.set('date_to', options.date_to);
-
-  const query = params.toString();
-  return request(`/admin/activity${query ? '?' + query : ''}`);
+  return request(
+    withQuery('/admin/activity', (params) => {
+      if (options.limit) params.set('limit', options.limit.toString());
+      if (options.page) params.set('page', options.page.toString());
+      if (options.action) params.set('action', options.action);
+      if (options.user_id) params.set('user_id', options.user_id.toString());
+      if (options.target_type) params.set('target_type', options.target_type);
+      if (options.date_from) params.set('date_from', options.date_from);
+      if (options.date_to) params.set('date_to', options.date_to);
+    })
+  );
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {

@@ -1,10 +1,7 @@
 package api
 
 import (
-	"errors"
 	"net/http"
-
-	"github.com/xela-io/xelanote/internal/service"
 )
 
 // --- Collection Sharing handlers ---
@@ -28,31 +25,16 @@ func (s *Server) shareCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Identifier == "" {
-		respondError(w, http.StatusBadRequest, "identifier (username or email) required")
-		return
-	}
-	if req.Role != "viewer" && req.Role != "editor" {
-		respondError(w, http.StatusBadRequest, "role must be 'viewer' or 'editor'")
+	if msg := validateShareCreateInput(req.Identifier, req.Role); msg != "" {
+		respondError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	share, err := s.recipeService.ShareCollection(userID, collID, req.Identifier, req.Role)
 	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrNotFound):
-			respondError(w, http.StatusNotFound, "collection not found")
-		case errors.Is(err, service.ErrNotCollectionOwner):
-			respondError(w, http.StatusForbidden, "only the collection owner can share")
-		case errors.Is(err, service.ErrCollectionHasEncryptedRecipes):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrCannotShareWithSelf):
-			respondError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, service.ErrCollectionAlreadyShared):
-			respondError(w, http.StatusConflict, err.Error())
-		case errors.Is(err, service.ErrUserNotFound):
-			respondError(w, http.StatusBadRequest, "unable to share with specified user")
-		default:
+		if status, msg, handled := mapShareCreateError(shareResourceCollection, err); handled {
+			respondError(w, status, msg)
+		} else {
 			s.logger().Error("unexpected sharing error", "error", err)
 			respondError(w, http.StatusInternalServerError, "an unexpected error occurred")
 		}
@@ -77,12 +59,8 @@ func (s *Server) getCollectionShares(w http.ResponseWriter, r *http.Request) {
 
 	shares, err := s.recipeService.GetCollectionShares(userID, collID)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "collection not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotCollectionOwner) {
-			respondError(w, http.StatusForbidden, "only the collection owner can view shares")
+		if status, msg, handled := mapShareAccessError(shareResourceCollection, err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to get collection shares", err)
@@ -118,18 +96,14 @@ func (s *Server) updateCollectionShareRole(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if req.Role != "viewer" && req.Role != "editor" {
-		respondError(w, http.StatusBadRequest, "role must be 'viewer' or 'editor'")
+	if msg := validateShareRoleInput(req.Role); msg != "" {
+		respondError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	if err := s.recipeService.UpdateCollectionShareRole(userID, collID, targetUserID, req.Role); err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "share not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotCollectionOwner) {
-			respondError(w, http.StatusForbidden, "only the collection owner can manage shares")
+		if status, msg, handled := mapShareMutateError(shareResourceCollection, "update", err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -158,12 +132,8 @@ func (s *Server) removeCollectionShare(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.recipeService.UnshareCollection(userID, collID, targetUserID); err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			respondError(w, http.StatusNotFound, "share not found")
-			return
-		}
-		if errors.Is(err, service.ErrNotCollectionOwner) {
-			respondError(w, http.StatusForbidden, "only the collection owner can manage shares")
+		if status, msg, handled := mapShareMutateError(shareResourceCollection, "remove", err); handled {
+			respondError(w, status, msg)
 			return
 		}
 		s.respondInternalErr(w, "failed to remove collection share", err)

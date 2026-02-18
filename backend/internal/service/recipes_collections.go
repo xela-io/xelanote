@@ -8,6 +8,21 @@ import (
 
 // --- Collection Sharing ---
 
+func (s *RecipeService) getCollectionOwnerID(collectionID int) (int, error) {
+	return s.db.GetCollectionOwnerUserID(collectionID)
+}
+
+func (s *RecipeService) requireCollectionOwner(ownerUserID, collectionID int) error {
+	actualOwnerID, err := s.getCollectionOwnerID(collectionID)
+	if err != nil {
+		return err
+	}
+	if actualOwnerID != ownerUserID {
+		return ErrNotCollectionOwner
+	}
+	return nil
+}
+
 // ShareCollection shares a collection with another user.
 func (s *RecipeService) ShareCollection(ownerUserID, collectionID int, targetIdentifier, role string) (*db.CollectionShare, error) {
 	// Check feature enabled
@@ -16,12 +31,8 @@ func (s *RecipeService) ShareCollection(ownerUserID, collectionID int, targetIde
 	}
 
 	// Check ownership
-	actualOwnerID, err := s.db.GetCollectionOwnerUserID(collectionID)
-	if err != nil {
+	if err := s.requireCollectionOwner(ownerUserID, collectionID); err != nil {
 		return nil, err
-	}
-	if actualOwnerID != ownerUserID {
-		return nil, ErrNotCollectionOwner
 	}
 
 	// R4: Check if collection has encrypted recipes
@@ -66,12 +77,8 @@ func (s *RecipeService) ShareCollection(ownerUserID, collectionID int, targetIde
 // UnshareCollection removes a collection share.
 func (s *RecipeService) UnshareCollection(ownerUserID, collectionID, targetUserID int) error {
 	// Check ownership
-	actualOwnerID, err := s.db.GetCollectionOwnerUserID(collectionID)
-	if err != nil {
+	if err := s.requireCollectionOwner(ownerUserID, collectionID); err != nil {
 		return err
-	}
-	if actualOwnerID != ownerUserID {
-		return ErrNotCollectionOwner
 	}
 
 	return s.db.DeleteCollectionShare(ownerUserID, collectionID, targetUserID)
@@ -80,12 +87,8 @@ func (s *RecipeService) UnshareCollection(ownerUserID, collectionID, targetUserI
 // GetCollectionShares returns all shares for a collection (owner-only).
 func (s *RecipeService) GetCollectionShares(ownerUserID, collectionID int) ([]db.CollectionShare, error) {
 	// Check ownership
-	actualOwnerID, err := s.db.GetCollectionOwnerUserID(collectionID)
-	if err != nil {
+	if err := s.requireCollectionOwner(ownerUserID, collectionID); err != nil {
 		return nil, err
-	}
-	if actualOwnerID != ownerUserID {
-		return nil, ErrNotCollectionOwner
 	}
 
 	return s.db.GetCollectionShares(ownerUserID, collectionID)
@@ -94,12 +97,8 @@ func (s *RecipeService) GetCollectionShares(ownerUserID, collectionID int) ([]db
 // UpdateCollectionShareRole updates the role for a collection share.
 func (s *RecipeService) UpdateCollectionShareRole(ownerUserID, collectionID, targetUserID int, role string) error {
 	// Check ownership
-	actualOwnerID, err := s.db.GetCollectionOwnerUserID(collectionID)
-	if err != nil {
+	if err := s.requireCollectionOwner(ownerUserID, collectionID); err != nil {
 		return err
-	}
-	if actualOwnerID != ownerUserID {
-		return ErrNotCollectionOwner
 	}
 
 	return s.db.UpdateCollectionShareRole(ownerUserID, collectionID, targetUserID, role)
@@ -165,7 +164,7 @@ func (s *RecipeService) RemoveFromSharedCollection(callerUserID, collectionID in
 		return ErrForbidden
 	}
 
-	ownerID, err := s.db.GetCollectionOwnerUserID(collectionID)
+	ownerID, err := s.getCollectionOwnerID(collectionID)
 	if err != nil {
 		return err
 	}

@@ -28,6 +28,10 @@ jobs:
       working-directory: ./backend
       run: CGO_ENABLED=1 go test -tags "fts5 sqlite_crypt" -v ./...
 
+    - name: Run API contract smoke tests
+      working-directory: ./backend
+      run: CGO_ENABLED=1 go test -tags "fts5 sqlite_crypt" -v ./internal/api -run TestAPIContractSmoke
+
     - name: Run Go vet
       working-directory: ./backend
       run: CGO_ENABLED=1 go vet -tags "fts5" ./...

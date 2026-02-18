@@ -803,6 +803,7 @@ export function insertWikiLink(view: EditorView, term: string, targetTitle: stri
 
 export interface CanvasEditorConfig {
   doc?: string;
+  readOnly?: boolean;
   onChange?: (content: string) => void;
   onSave?: () => void;
   onWikilinkClick?: (title: string) => void;
@@ -819,6 +820,7 @@ export function createCanvasEditor(
 
   const baseExtensions: Extension[] = [
     EditorView.lineWrapping,
+    ...(config.readOnly ? [EditorView.editable.of(false), EditorState.readOnly.of(true)] : []),
     drawSelection(),
     bracketMatching(),
     wikilinkPlugin,
@@ -827,7 +829,7 @@ export function createCanvasEditor(
     dueDatePlugin,
     listIndentPlugin,
     lightTheme,
-    placeholder('Type markdown here...'),
+    ...(config.readOnly ? [] : [placeholder('Type markdown here...')]),
     // High priority keymaps
     Prec.highest(
       keymap.of([

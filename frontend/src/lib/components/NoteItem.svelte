@@ -23,6 +23,7 @@
     };
 
     e.dataTransfer.setData('application/x-xelanote-note', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'move';
     isDragging = true;
   }

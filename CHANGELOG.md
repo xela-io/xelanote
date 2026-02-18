@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Canvas sidebar-to-canvas drag-and-drop — drag notes from the sidebar tree directly onto the canvas to create file nodes at the drop position; supports both UnifiedTree and legacy NoteItem drag sources with text/plain fallback parsing
 - Canvas group renaming — double-click a group label to edit inline, or use "Rename" in the context menu; groups without a custom name show a dimmed "Group" placeholder
 - Canvas drag-and-drop tool placement — drag tools from the bottom toolbar onto the canvas to place nodes at the exact drop position with a live size-accurate preview ghost
 - Canvas keyboard shortcuts: `T/N/L/G` to add text/note/link/group nodes, `Esc` to close canvas menus, and `Ctrl/Cmd + C/V` for internal canvas copy/paste of selected nodes (including edges between selected nodes)
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix @due() date badge overlapping with preceding text in todo list live preview; reset inherited text-indent on inline-block badge and skip mark decoration on non-active lines to prevent double rendering
 - Fix collapsed completed-task groups reopening in live preview after checking tasks or adding new items; collapse state is now preserved across task-group key changes during document updates
 - Fix canvas view staying stuck when navigating back to a regular note; caused by stale currentNote and missing loadNote call in CanvasEditor
+- Fix sidebar-to-canvas note drag-and-drop not working — dropEffect/effectAllowed mismatch ('copy' vs 'move') caused browsers to suppress the drop event per HTML5 DnD spec; also narrowed overly broad text/plain detection and added stopPropagation to prevent SvelteFlow interference
 - Fix canvas frontend check blockers: corrected `FlowNode`/`FlowEdge` type narrowing in paste handling, stabilized concurrent canvas feature-load test typing, and removed `CanvasNotePicker` a11y warnings (`autofocus` + non-interactive click handler)
 - Mobile Todo-Bereiche behalten ihren Collapse-Zustand zuverlässig: erledigte Task-Gruppen in Live-Preview und im Preview-Renderer werden jetzt persistent pro Notiz gespeichert und nach Re-Mount/Reload wiederhergestellt
 - Mobile Trefferfläche für den Live-Preview-Taskgruppen-Toggle vergrößert, damit das Dreieck-Symbol auf Touch-Geräten leichter getroffen werden kann

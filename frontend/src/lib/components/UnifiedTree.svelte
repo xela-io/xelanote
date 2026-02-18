@@ -35,8 +35,10 @@
   // Event dispatcher for virtual tree scroll restoration
   const dispatch = createEventDispatcher();
 
-  // Drag & Drop enabled only in non-virtual mode and on desktop (HTML5 drag API not supported on touch)
-  const dragEnabled = $derived(!isVirtualized && !ui.getIsMobile());
+  // Tree-internal drag & drop (reorder/move) is disabled in virtual mode and on mobile.
+  const treeDragEnabled = $derived(!isVirtualized && !ui.getIsMobile());
+  // External note drag (e.g. to Canvas) should still work on desktop in virtual mode.
+  const noteExternalDragEnabled = $derived(!ui.getIsMobile());
 
   // Responsive icon sizes: 18px on mobile (< 640px), 16px on desktop
   const folderIconSize = $derived(ui.getIsMobile() ? 18 : 16);
@@ -265,6 +267,7 @@
     };
 
     e.dataTransfer.setData('application/x-xelanote-item', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'move';
     isDragging = true;
   }
@@ -280,6 +283,7 @@
     };
 
     e.dataTransfer.setData('application/x-xelanote-item', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'move';
     isDragging = true;
   }
@@ -594,12 +598,12 @@
         onkeydown={handleRowKeydown}
       >
         <button
-          draggable={dragEnabled}
-          ondragstart={dragEnabled ? handleFolderDragStart : undefined}
-          ondragend={dragEnabled ? handleDragEnd : undefined}
-          ondragover={dragEnabled ? handleDragOver : undefined}
-          ondragleave={dragEnabled ? handleDragLeave : undefined}
-          ondrop={dragEnabled ? handleDrop : undefined}
+          draggable={treeDragEnabled}
+          ondragstart={treeDragEnabled ? handleFolderDragStart : undefined}
+          ondragend={treeDragEnabled ? handleDragEnd : undefined}
+          ondragover={treeDragEnabled ? handleDragOver : undefined}
+          ondragleave={treeDragEnabled ? handleDragLeave : undefined}
+          ondrop={treeDragEnabled ? handleDrop : undefined}
           class="tree-button"
           class:selected={isSelected}
           class:drag-over={isDragOver}
@@ -638,12 +642,12 @@
         onkeydown={handleRowKeydown}
       >
         <button
-          draggable={dragEnabled}
-          ondragstart={dragEnabled ? handleNoteDragStart : undefined}
-          ondragend={dragEnabled ? handleDragEnd : undefined}
-          ondragover={dragEnabled ? handleDragOver : undefined}
-          ondragleave={dragEnabled ? handleDragLeave : undefined}
-          ondrop={dragEnabled ? handleDrop : undefined}
+          draggable={noteExternalDragEnabled}
+          ondragstart={noteExternalDragEnabled ? handleNoteDragStart : undefined}
+          ondragend={noteExternalDragEnabled ? handleDragEnd : undefined}
+          ondragover={treeDragEnabled ? handleDragOver : undefined}
+          ondragleave={treeDragEnabled ? handleDragLeave : undefined}
+          ondrop={treeDragEnabled ? handleDrop : undefined}
           class="tree-button note-button"
           class:selected={isSelected}
           class:dragging={isDragging}

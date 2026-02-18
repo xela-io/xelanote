@@ -17,6 +17,11 @@
   import type { Note } from '$lib/api/types';
   import { uploadImage } from '$lib/api/uploads';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
+  import {
+    CANVAS_LEGACY_NOTE_MIME,
+    CANVAS_TREE_ITEM_MIME,
+    parseDroppedSidebarNote,
+  } from '$lib/components/canvas/canvas-note-drop';
   import { TOOL_DRAG_MIME, type ToolbarAction } from '$lib/components/canvas/canvas-toolbar-tools';
   import CanvasContextMenu from '$lib/components/canvas/CanvasContextMenu.svelte';
   import CanvasEditorToolbar from '$lib/components/canvas/CanvasEditorToolbar.svelte';
@@ -374,9 +379,13 @@
     if (!types) return;
     const isFileDrag = types.includes('Files');
     const isToolDrag = types.includes(TOOL_DRAG_MIME);
-    if (!isFileDrag && !isToolDrag) return;
+    const isSidebarNoteDrag =
+      types.includes(CANVAS_TREE_ITEM_MIME) || types.includes(CANVAS_LEGACY_NOTE_MIME);
+    if (!isFileDrag && !isToolDrag && !isSidebarNoteDrag) return;
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    // Sidebar drags use effectAllowed='move' – dropEffect must match or the
+    // browser will suppress the drop event entirely (per HTML5 DnD spec).
+    e.dataTransfer.dropEffect = isSidebarNoteDrag ? 'move' : 'copy';
     draggingOver = true;
     if (isToolDrag) {
       const action = parseDroppedToolAction(e);
@@ -438,6 +447,18 @@
       const cursorPos = clientToFlowPosition(e.clientX, e.clientY);
       const originPos = getDropOriginForTool(droppedTool, cursorPos);
       handleToolbarAction(droppedTool, originPos);
+      toolDragPreview = null;
+      return;
+    }
+    const droppedNote = e.dataTransfer ? parseDroppedSidebarNote(e.dataTransfer) : null;
+    if (droppedNote) {
+      e.preventDefault();
+      e.stopPropagation();
+      const pos = clientToFlowPosition(e.clientX, e.clientY);
+      const node = createFileNode(pos.x, pos.y, droppedNote.title, droppedNote.id);
+      const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
+      flowNodes = [...flowNodes, ...nodes];
+      scheduleSave();
       toolDragPreview = null;
       return;
     }
@@ -875,9 +896,9 @@
     class="canvas-flow-container"
     class:drag-over={draggingOver}
     bind:this={containerEl}
-    ondragover={handleDragOver}
-    ondrop={handleDrop}
-    ondragleave={handleDragLeave}
+    ondragovercapture={handleDragOver}
+    ondropcapture={handleDrop}
+    ondragleavecapture={handleDragLeave}
     role="application"
   >
     <SvelteFlow

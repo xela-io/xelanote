@@ -181,11 +181,8 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 		// Attempt 1: Authorization Header (preferred)
 		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			parts := strings.Split(authHeader, " ")
-			if len(parts) == 2 && parts[0] == "Bearer" {
-				tokenString = parts[1]
-			}
+		if parsedToken, ok := parseBearerToken(authHeader); ok {
+			tokenString = parsedToken
 		}
 
 		// Attempt 2: access_token Cookie (fallback)

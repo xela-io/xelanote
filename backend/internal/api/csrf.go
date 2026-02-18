@@ -143,7 +143,7 @@ func (s *Server) csrfMiddleware(next http.Handler) http.Handler {
 		// 1. Authorization header present (Bearer token)
 		// 2. AND no auth cookies (pure API client, not browser)
 		// SEC-006: Also check refresh_token cookie for /auth/refresh and /auth/logout
-		if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " && !hasAnyCookie {
+		if hasBearerAuthorizationHeader(authHeader) && !hasAnyCookie {
 			// Pure Bearer token auth without cookies → no CSRF risk
 			next.ServeHTTP(w, r)
 			return

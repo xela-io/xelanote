@@ -883,6 +883,18 @@ html {
   color: var(--color-foreground);
 }
 
+@media (pointer: coarse) {
+  .cm-editor .cm-live-task-group-toggle {
+    /* Bigger touch target on mobile while keeping the visual marker in place */
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    left: calc(var(--live-preview-task-group-indent) - 2.3rem);
+  }
+}
+
 /* Completed task group bracket decorations */
 .cm-editor .cm-line.cm-live-task-group-first,
 .cm-editor .cm-line.cm-live-task-group-middle,

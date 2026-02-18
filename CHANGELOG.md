@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix canvas view staying stuck when navigating back to a regular note; caused by stale currentNote and missing loadNote call in CanvasEditor
 - Mobile Todo-Bereiche behalten ihren Collapse-Zustand zuverlässig: erledigte Task-Gruppen in Live-Preview und im Preview-Renderer werden jetzt persistent pro Notiz gespeichert und nach Re-Mount/Reload wiederhergestellt
+- Mobile Trefferfläche für den Live-Preview-Taskgruppen-Toggle vergrößert, damit das Dreieck-Symbol auf Touch-Geräten leichter getroffen werden kann
 
 ### Changed
 

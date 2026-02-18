@@ -436,6 +436,20 @@
         "edit_ingredients": "Zutaten",
         "edit_instructions": "Anleitung",
         "photo_formats": "JPG, PNG oder WebP"
+      },
+      "import": {
+        "button": "Rezept importieren",
+        "title": "Rezept per KI importieren",
+        "from_image": "Aus Foto",
+        "from_url": "Aus URL",
+        "drop_or_click": "Foto hier ablegen oder klicken zum Auswählen",
+        "url_placeholder": "https://beispiel.de/rezept",
+        "extract": "Rezept extrahieren",
+        "extracting": "Rezept wird extrahiert...",
+        "extraction_failed": "Rezept konnte nicht extrahiert werden",
+        "no_recipe_found": "Kein verwertbares Rezept gefunden",
+        "fetch_failed": "Rezept-URL konnte nicht geladen werden",
+        "invalid_input": "Ungültige Eingabe"
       }
     },
     "sidebar": {

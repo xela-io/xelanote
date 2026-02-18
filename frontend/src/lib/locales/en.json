@@ -436,6 +436,20 @@
         "edit_ingredients": "Ingredients",
         "edit_instructions": "Instructions",
         "photo_formats": "JPG, PNG, or WebP"
+      },
+      "import": {
+        "button": "Import recipe",
+        "title": "Import recipe with AI",
+        "from_image": "From image",
+        "from_url": "From URL",
+        "drop_or_click": "Drop photo here or click to select",
+        "url_placeholder": "https://example.com/recipe",
+        "extract": "Extract recipe",
+        "extracting": "Extracting recipe...",
+        "extraction_failed": "Could not extract recipe",
+        "no_recipe_found": "No usable recipe found",
+        "fetch_failed": "Could not load recipe URL",
+        "invalid_input": "Invalid input"
       }
     },
     "sidebar": {

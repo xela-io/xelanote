@@ -746,6 +746,7 @@ export interface GeneratedIngredient {
   name: string;
   amount?: number | null;
   unit?: string | null;
+  group_name?: string | null;
   scalable: boolean;
   optional: boolean;
 }
@@ -756,6 +757,7 @@ export interface GeneratedRecipe {
   prep_time_minutes?: number | null;
   cook_time_minutes?: number | null;
   difficulty?: 'easy' | 'medium' | 'hard' | null;
+  source_url?: string | null;
   ingredients: GeneratedIngredient[];
   instructions: string;
 }

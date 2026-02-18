@@ -126,7 +126,7 @@
 
   function handleNavigate(noteId: string) {
     onClose();
-    goto(`/recipes/${noteId}`);
+    goto(`/note/${noteId}`);
   }
 
   function mapError(err: unknown): string {
@@ -411,7 +411,7 @@
     onSaved={(noteId) => {
       previewRecipe = null;
       onClose();
-      goto(`/recipes/${noteId}`);
+      goto(`/note/${noteId}`);
     }}
   />
 {/if}

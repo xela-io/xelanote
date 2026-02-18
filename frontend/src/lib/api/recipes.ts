@@ -2,6 +2,7 @@ import { request } from './client';
 import type {
   CollectionShare,
   GeneratedIngredient,
+  GeneratedRecipe,
   IngredientSuggestionResult,
   Note,
   RecipeCollection,
@@ -359,6 +360,7 @@ export async function saveGeneratedRecipe(data: {
   prep_time_minutes?: number | null;
   cook_time_minutes?: number | null;
   difficulty?: string | null;
+  source_url?: string | null;
   ingredients: GeneratedIngredient[];
   folder_path?: string;
 }): Promise<{ note_id: string; title: string }> {
@@ -384,4 +386,28 @@ export async function extractIngredientsFromPhoto(file: File, locale: string): P
     }
   );
   return result.ingredients || [];
+}
+
+/**
+ * Extract a full recipe from an uploaded image using AI vision.
+ */
+export async function importRecipeFromImage(file: File, locale: string): Promise<GeneratedRecipe> {
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('locale', locale);
+
+  return request<GeneratedRecipe>('/recipes/suggestions/import-from-image', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+/**
+ * Extract a full recipe from a recipe webpage URL.
+ */
+export async function importRecipeFromURL(url: string, locale: string): Promise<GeneratedRecipe> {
+  return request<GeneratedRecipe>('/recipes/suggestions/import-from-url', {
+    method: 'POST',
+    body: JSON.stringify({ url, locale }),
+  });
 }

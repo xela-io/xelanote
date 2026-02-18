@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChefHat, Clock, Loader2, Lock, Plus, Sparkles } from 'lucide-svelte';
+  import { ChefHat, Clock, Loader2, Lock, Plus, Sparkles, Upload } from 'lucide-svelte';
   import { ArrowLeft, Edit, Eye, Pencil, Trash2, Users, Users as UsersIcon } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -7,6 +7,7 @@
   import { goto } from '$app/navigation';
   import type { RecipeCollection } from '$lib/api';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
+  import RecipeImportDialog from '$lib/components/RecipeImportDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
   import RecipeSuggestionDialog from '$lib/components/RecipeSuggestionDialog.svelte';
   import ShareDialog from '$lib/components/ShareDialog.svelte';
@@ -21,6 +22,7 @@
   let editingCollection = $state<RecipeCollection | null>(null);
   let sharingCollectionId = $state<number | null>(null);
   let showIngredientSuggestions = $state(false);
+  let showImportDialog = $state(false);
 
   const recipeList = $derived(recipes.getRecipes());
   const loading = $derived(recipes.getRecipesLoading());
@@ -137,6 +139,13 @@
       >
         <Sparkles size={16} />
         {$_('page.recipes.suggestions.what_can_i_cook')}
+      </button>
+      <button
+        onclick={() => (showImportDialog = true)}
+        class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-accent transition-colors"
+      >
+        <Upload size={16} />
+        {$_('page.recipes.import.button')}
       </button>
       <button
         onclick={() => (showCreateDialog = true)}
@@ -435,3 +444,5 @@
   collectionId={selectedCollectionId}
   onClose={() => (showIngredientSuggestions = false)}
 />
+
+<RecipeImportDialog open={showImportDialog} onClose={() => (showImportDialog = false)} />

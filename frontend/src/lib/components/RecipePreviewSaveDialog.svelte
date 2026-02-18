@@ -66,6 +66,7 @@
         prep_time_minutes: prepTime,
         cook_time_minutes: cookTime,
         difficulty,
+        source_url: recipe.source_url ?? null,
         ingredients: ingredients.filter((i) => i.name.trim()),
         folder_path: '/Rezepte',
       });

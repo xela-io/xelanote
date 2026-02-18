@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/websocket"
 )
@@ -35,7 +34,7 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Reject unknown note types
-	if req.NoteType != "" && req.NoteType != "note" && !db.AllowedNoteTypes[req.NoteType] {
+	if !service.IsAllowedNoteType(req.NoteType) {
 		respondError(w, http.StatusBadRequest, "invalid note_type")
 		return
 	}

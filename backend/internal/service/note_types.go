@@ -14,3 +14,12 @@ type SearchFilters = db.SearchFilters
 type FolderInfo = db.FolderInfo
 type TaskEvent = db.TaskEvent
 type Feature = db.Feature
+
+// IsAllowedNoteType validates whether a note type is supported.
+// Empty means default note type.
+func IsAllowedNoteType(noteType string) bool {
+	if noteType == "" || noteType == "note" {
+		return true
+	}
+	return db.AllowedNoteTypes[noteType]
+}

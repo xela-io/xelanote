@@ -80,6 +80,9 @@
   let saveStatus = $state<'saved' | 'saving' | 'unsaved'>('saved');
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let lastSavedContent = '';
+  let copiedNodes: FlowNode[] = [];
+  let copiedEdges: FlowEdge[] = [];
+  let pasteCount = 0;
 
   // Viewport state for coordinate conversion (bound to SvelteFlow)
   let viewport = $state<{ x: number; y: number; zoom: number } | undefined>(undefined);
@@ -289,18 +292,7 @@
 
   function handleDuplicateNode() {
     if (!contextMenu) return;
-    const original = flowNodes.find((n) => n.id === contextMenu!.nodeId);
-    if (!original) return;
-
-    const newNode: FlowNode = {
-      ...original,
-      id: `node-${crypto.randomUUID().slice(0, 8)}`,
-      position: { x: original.position.x + 40, y: original.position.y + 40 },
-      selected: false,
-      data: { ...original.data },
-    };
-    flowNodes = [...flowNodes, newNode];
-    scheduleSave();
+    duplicateNodes([contextMenu.nodeId]);
   }
 
   function handleColorChange(color: string) {
@@ -386,12 +378,149 @@
     handleImageFiles(files, centerX, centerY);
   }
 
+  function duplicateNodes(nodeIds: string[]) {
+    const idSet = new Set(nodeIds);
+    const originals = flowNodes.filter((n) => idSet.has(n.id));
+    if (originals.length === 0) return;
+
+    const duplicates = originals.map((original, index) => {
+      const offset = 40 * (index + 1);
+      const newNode: FlowNode = {
+        ...original,
+        id: `node-${crypto.randomUUID().slice(0, 8)}`,
+        position: { x: original.position.x + offset, y: original.position.y + offset },
+        selected: false,
+        data: { ...original.data },
+      };
+      return newNode;
+    });
+
+    flowNodes = [...flowNodes, ...duplicates];
+    scheduleSave();
+  }
+
+  function copySelectionToClipboard(): boolean {
+    const selectedNodes = flowNodes.filter((n) => n.selected);
+    if (selectedNodes.length === 0) return false;
+
+    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
+    const connectedEdges = flowEdges.filter(
+      (e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target)
+    );
+
+    copiedNodes = selectedNodes.map((node) => ({
+      ...node,
+      selected: false,
+      data: { ...node.data },
+      position: { ...node.position },
+    }));
+    copiedEdges = connectedEdges.map((edge) => ({
+      ...edge,
+      selected: false,
+      data: edge.data ? { ...edge.data } : edge.data,
+    }));
+    pasteCount = 0;
+    return true;
+  }
+
+  function pasteCopiedSelection() {
+    if (copiedNodes.length === 0) return;
+
+    pasteCount += 1;
+    const offset = 40 * pasteCount;
+    const idMap: Record<string, string> = {};
+
+    const newNodes: FlowNode[] = copiedNodes.map((node) => {
+      const newId = `node-${crypto.randomUUID().slice(0, 8)}`;
+      idMap[node.id] = newId;
+      return {
+        ...node,
+        id: newId,
+        selected: true,
+        position: {
+          x: node.position.x + offset,
+          y: node.position.y + offset,
+        },
+        data: { ...node.data },
+      };
+    });
+
+    // Keep group-child relations when both were copied; otherwise detach from old parent.
+    const remappedNodes = newNodes.map((node) => {
+      if (!node.parentId) return node;
+      const newParentId = idMap[node.parentId];
+      return {
+        ...node,
+        parentId: newParentId,
+      };
+    });
+
+    const newEdges: FlowEdge[] = copiedEdges
+      .map((edge) => {
+        const source = idMap[edge.source];
+        const target = idMap[edge.target];
+        if (!source || !target) return null;
+        return {
+          ...edge,
+          id: generateEdgeId(),
+          source,
+          target,
+          selected: true,
+          data: edge.data
+            ? {
+                ...edge.data,
+                fromNode: source,
+                toNode: target,
+              }
+            : edge.data,
+        } as FlowEdge;
+      })
+      .filter((edge): edge is FlowEdge => edge !== null);
+
+    flowNodes = flowNodes.map((node) => ({ ...node, selected: false })).concat(remappedNodes);
+    flowEdges = flowEdges.map((edge) => ({ ...edge, selected: false })).concat(newEdges);
+    scheduleSave();
+  }
+
   // Handle keyboard shortcuts
   function handleKeydown(e: KeyboardEvent) {
-    if ((e.key === 'Delete' || e.key === 'Backspace') && !isEditingText(e)) {
+    if (isEditingText(e)) return;
+
+    const key = e.key.toLowerCase();
+    const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
+
+    if (e.key === 'Escape') {
+      contextMenu = null;
+      showMoreMenu = false;
+      if (notePickerOpen) {
+        notePickerOpen = false;
+        pendingFileNodePosition = null;
+      }
+      return;
+    }
+
+    if (notePickerOpen || showMoreMenu || contextMenu) return;
+
+    if ((e.ctrlKey || e.metaKey) && key === 'c') {
+      if (copySelectionToClipboard()) {
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && key === 'v') {
+      if (copiedNodes.length > 0) {
+        e.preventDefault();
+        pasteCopiedSelection();
+      }
+      return;
+    }
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
       const selectedNodes = flowNodes.filter((n) => n.selected);
       const selectedEdges = flowEdges.filter((ed) => ed.selected);
       if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+        e.preventDefault();
         const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
         const selectedEdgeIds = new Set(selectedEdges.map((ed) => ed.id));
         flowNodes = flowNodes.filter((n) => !selectedNodeIds.has(n.id));
@@ -404,11 +533,46 @@
         scheduleSave();
       }
     }
+
+    if ((e.ctrlKey || e.metaKey) && key === 'd') {
+      const selectedIds = flowNodes.filter((n) => n.selected).map((n) => n.id);
+      if (selectedIds.length > 0) {
+        e.preventDefault();
+        duplicateNodes(selectedIds);
+      }
+      return;
+    }
+
+    if (hasModifier || e.repeat) return;
+
+    switch (key) {
+      case 't':
+        e.preventDefault();
+        handleToolbarAction('add-text');
+        return;
+      case 'n':
+        e.preventDefault();
+        handleToolbarAction('add-file');
+        return;
+      case 'l':
+        e.preventDefault();
+        handleToolbarAction('add-link');
+        return;
+      case 'g':
+        e.preventDefault();
+        handleToolbarAction('add-group');
+        return;
+    }
   }
 
   function isEditingText(e: KeyboardEvent): boolean {
     const target = e.target as HTMLElement;
-    return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+    return (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable ||
+      !!target.closest('.cm-editor')
+    );
   }
 
   // Export as .canvas file

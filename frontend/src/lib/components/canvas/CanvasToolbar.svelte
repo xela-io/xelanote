@@ -5,17 +5,22 @@
 
   const { onAction }: { onAction: (action: ToolbarAction) => void } = $props();
 
-  const tools: { action: ToolbarAction; icon: typeof Type; label: string }[] = [
-    { action: 'add-text', icon: Type, label: 'Text' },
-    { action: 'add-file', icon: FileText, label: 'Note' },
-    { action: 'add-link', icon: ExternalLink, label: 'Link' },
-    { action: 'add-group', icon: Group, label: 'Group' },
+  const tools: { action: ToolbarAction; icon: typeof Type; label: string; shortcut: string }[] = [
+    { action: 'add-text', icon: Type, label: 'Text', shortcut: 'T' },
+    { action: 'add-file', icon: FileText, label: 'Note', shortcut: 'N' },
+    { action: 'add-link', icon: ExternalLink, label: 'Link', shortcut: 'L' },
+    { action: 'add-group', icon: Group, label: 'Group', shortcut: 'G' },
   ];
 </script>
 
 <div class="canvas-toolbar">
   {#each tools as tool (tool.action)}
-    <button class="canvas-toolbar-btn" title={tool.label} onclick={() => onAction(tool.action)}>
+    <button
+      class="canvas-toolbar-btn"
+      title={`${tool.label} (${tool.shortcut})`}
+      aria-label={`${tool.label} (${tool.shortcut})`}
+      onclick={() => onAction(tool.action)}
+    >
       <tool.icon size={18} />
     </button>
   {/each}

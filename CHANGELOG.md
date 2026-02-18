@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Canvas keyboard shortcuts: `T/N/L/G` to add text/note/link/group nodes, `Esc` to close canvas menus, and `Ctrl/Cmd + C/V` for internal canvas copy/paste of selected nodes (including edges between selected nodes)
+- Canvas note preview — embedded notes now display their actual content with full markdown live preview instead of a static "Click to open note" placeholder; uses a read-only CodeMirror instance with the same rendering as text nodes
 - Canvas EditorToolbar-style toolbar — replaces minimal header with full-featured toolbar matching notes editor design: editable title, save/upload/history/focus-mode buttons, responsive 3-column grid layout, and a more menu with export, share, move, and delete actions; lazy-loaded dialogs for version history, move-to-folder, and share
 - Canvas drag-and-drop image support — drop image files from the desktop onto the canvas to create image nodes at the drop position; paste images from clipboard with Ctrl+V; CanvasFileNode renders actual images with object-fit scaling and error fallback instead of placeholder icon
 - Journal E2E encryption enforcement — journal entries are now always encrypted regardless of folder settings; journal page shows lock overlay when encryption is locked with unlock button; lock icon next to note title in editor toolbar indicates encrypted notes

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix viewport jumping to the bottom of the list when toggling a todo checkbox that triggers task reordering in live preview
 - Fix @due() date badge overlapping with preceding text in todo list live preview; reset inherited text-indent on inline-block badge and skip mark decoration on non-active lines to prevent double rendering
 - Fix canvas view staying stuck when navigating back to a regular note; caused by stale currentNote and missing loadNote call in CanvasEditor
+- Fix canvas frontend check blockers: corrected `FlowNode`/`FlowEdge` type narrowing in paste handling, stabilized concurrent canvas feature-load test typing, and removed `CanvasNotePicker` a11y warnings (`autofocus` + non-interactive click handler)
 - Mobile Todo-Bereiche behalten ihren Collapse-Zustand zuverlässig: erledigte Task-Gruppen in Live-Preview und im Preview-Renderer werden jetzt persistent pro Notiz gespeichert und nach Re-Mount/Reload wiederhergestellt
 - Mobile Trefferfläche für den Live-Preview-Taskgruppen-Toggle vergrößert, damit das Dreieck-Symbol auf Touch-Geräten leichter getroffen werden kann
 

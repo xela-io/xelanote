@@ -65,11 +65,7 @@
   $effect(() => {
     const id = noteId;
     const encryptionUnlocked = encryption.isEncryptionUnlocked();
-    if (
-      !id ||
-      (id === fetchedForId && !(loadState === 'locked' && encryptionUnlocked))
-    )
-      return;
+    if (!id || (id === fetchedForId && !(loadState === 'locked' && encryptionUnlocked))) return;
     fetchedForId = id;
     loadState = 'loading';
     noteContent = null;

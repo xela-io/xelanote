@@ -609,8 +609,10 @@
       })
       .filter((edge): edge is FlowEdge => edge !== null);
 
-    flowNodes = flowNodes.map((node) => ({ ...node, selected: false })).concat(remappedNodes);
-    flowEdges = flowEdges.map((edge) => ({ ...edge, selected: false })).concat(newEdges);
+    flowNodes = flowNodes
+      .map((node): FlowNode => ({ ...node, selected: false }))
+      .concat(remappedNodes);
+    flowEdges = flowEdges.map((edge): FlowEdge => ({ ...edge, selected: false })).concat(newEdges);
     scheduleSave();
   }
 

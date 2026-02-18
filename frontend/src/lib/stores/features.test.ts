@@ -145,13 +145,14 @@ describe('features store', () => {
     });
 
     it('does not execute a second concurrent canvas load while loading', async () => {
-      let resolveLoad: ((value: { enabled: boolean }) => void) | null = null;
-      getFeature.mockImplementation(
-        () =>
-          new Promise<{ enabled: boolean }>((resolve) => {
-            resolveLoad = resolve;
-          })
-      );
+      let releaseLoad: () => void = () => undefined;
+      const loadGate = new Promise<void>((resolve) => {
+        releaseLoad = resolve;
+      });
+      getFeature.mockImplementation(async () => {
+        await loadGate;
+        return { enabled: true };
+      });
       const features = await import('$lib/stores/features.svelte');
 
       const firstLoad = features.loadCanvasFeature();
@@ -160,7 +161,7 @@ describe('features store', () => {
       await features.loadCanvasFeature();
       expect(getFeature).toHaveBeenCalledTimes(1);
 
-      resolveLoad?.({ enabled: true });
+      releaseLoad();
       await firstLoad;
 
       expect(features.getCanvasFeatureEnabled()).toBe(true);

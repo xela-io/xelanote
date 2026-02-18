@@ -14,10 +14,15 @@
 
   let query = $state('');
   let results = $state<Note[]>([]);
+  let searchInput: HTMLInputElement | undefined = $state();
 
   $effect(() => {
     if (open) {
       searchNotes(query);
+      const focusTimeout = setTimeout(() => {
+        searchInput?.focus();
+      }, 0);
+      return () => clearTimeout(focusTimeout);
     }
   });
 
@@ -42,13 +47,18 @@
       query = '';
     }
   }
+
+  function handleOverlayClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }
 </script>
 
 {#if open}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="canvas-note-picker-overlay" onclick={onClose} onkeydown={handleKeydown}>
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="canvas-note-picker" onclick={(e) => e.stopPropagation()}>
+  <div class="canvas-note-picker-overlay" onclick={handleOverlayClick} onkeydown={handleKeydown}>
+    <div class="canvas-note-picker">
       <div class="canvas-note-picker-header">
         <div class="canvas-note-picker-search">
           <Search size={16} class="text-muted-foreground" />
@@ -56,7 +66,7 @@
             type="text"
             placeholder="Search notes..."
             bind:value={query}
-            autofocus
+            bind:this={searchInput}
             onkeydown={handleKeydown}
           />
         </div>

@@ -14,6 +14,7 @@
 
   import { goto } from '$app/navigation';
   import type { Note } from '$lib/api/types';
+  import { uploadImage } from '$lib/api/uploads';
   import CanvasContextMenu from '$lib/components/canvas/CanvasContextMenu.svelte';
   import CanvasFileNode from '$lib/components/canvas/CanvasFileNode.svelte';
   import CanvasGroupNode from '$lib/components/canvas/CanvasGroupNode.svelte';
@@ -54,6 +55,14 @@
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let lastSavedContent = '';
   const zoom = $state(1);
+
+  // Viewport state for coordinate conversion (bound to SvelteFlow)
+  let viewport = $state<{ x: number; y: number; zoom: number } | undefined>(undefined);
+  let containerEl: HTMLDivElement | undefined = $state();
+  let draggingOver = $state(false);
+
+  // Allowed image MIME types (must match backend allowedTypes)
+  const allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
   // Context menu state
   let contextMenu = $state<{ x: number; y: number; nodeId: string } | null>(null);
@@ -240,6 +249,78 @@
     scheduleSave();
   }
 
+  // Convert client coordinates to flow coordinates using bound viewport
+  function clientToFlowPosition(clientX: number, clientY: number): { x: number; y: number } {
+    const rect = containerEl?.getBoundingClientRect();
+    if (!rect) return { x: clientX, y: clientY };
+    const vp = viewport ?? { x: 0, y: 0, zoom: 1 };
+    return {
+      x: (clientX - rect.left - vp.x) / vp.zoom,
+      y: (clientY - rect.top - vp.y) / vp.zoom,
+    };
+  }
+
+  // Upload image files and create file nodes at given position
+  async function handleImageFiles(files: File[], clientX: number, clientY: number) {
+    const imageFiles = files.filter((f) => allowedImageTypes.includes(f.type));
+    if (imageFiles.length === 0) return;
+
+    const basePos = clientToFlowPosition(clientX, clientY);
+
+    for (let i = 0; i < imageFiles.length; i++) {
+      try {
+        const result = await uploadImage(imageFiles[i]);
+        const pos = { x: basePos.x + i * 40, y: basePos.y + i * 40 };
+        const node = createFileNode(pos.x, pos.y, result.url);
+        const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
+        flowNodes = [...flowNodes, ...nodes];
+      } catch (err) {
+        console.error('Failed to upload image:', err);
+      }
+    }
+    scheduleSave();
+  }
+
+  // Drag-and-drop handlers for external files
+  function handleDragOver(e: DragEvent) {
+    if (!e.dataTransfer?.types.includes('Files')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    draggingOver = true;
+  }
+
+  function handleDrop(e: DragEvent) {
+    draggingOver = false;
+    if (!e.dataTransfer?.types.includes('Files')) return;
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    handleImageFiles(files, e.clientX, e.clientY);
+  }
+
+  function handleDragLeave(e: DragEvent) {
+    // Only reset when leaving the container (not entering a child)
+    if (containerEl && !containerEl.contains(e.relatedTarget as Node)) {
+      draggingOver = false;
+    }
+  }
+
+  // Clipboard paste for images (only when not editing text)
+  function handlePaste(e: ClipboardEvent) {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+    if (!e.clipboardData?.files.length) return;
+    const files = Array.from(e.clipboardData.files);
+    if (!files.some((f) => allowedImageTypes.includes(f.type))) return;
+    e.preventDefault();
+    // Place pasted images at center of the visible canvas area
+    const rect = containerEl?.getBoundingClientRect();
+    const centerX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const centerY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+    handleImageFiles(files, centerX, centerY);
+  }
+
   // Handle keyboard shortcuts
   function handleKeydown(e: KeyboardEvent) {
     if ((e.key === 'Delete' || e.key === 'Backspace') && !isEditingText(e)) {
@@ -279,7 +360,7 @@
   }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} onpaste={handlePaste} />
 
 <div class="canvas-editor">
   <!-- Header -->
@@ -304,7 +385,15 @@
   </div>
 
   <!-- Canvas -->
-  <div class="canvas-flow-container">
+  <div
+    class="canvas-flow-container"
+    class:drag-over={draggingOver}
+    bind:this={containerEl}
+    ondragover={handleDragOver}
+    ondrop={handleDrop}
+    ondragleave={handleDragLeave}
+    role="application"
+  >
     <SvelteFlow
       bind:nodes={flowNodes}
       bind:edges={flowEdges}
@@ -314,6 +403,7 @@
       onnodedragstop={handleNodeDragStop}
       onconnect={handleConnect}
       onnodecontextmenu={handleNodeContextMenu}
+      bind:viewport
     >
       <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       <Controls />
@@ -429,6 +519,12 @@
   .canvas-flow-container {
     flex: 1;
     min-height: 0;
+    position: relative;
+  }
+
+  .canvas-flow-container.drag-over {
+    outline: 2px dashed var(--color-ring);
+    outline-offset: -2px;
   }
 
   /* Svelte Flow theme overrides */

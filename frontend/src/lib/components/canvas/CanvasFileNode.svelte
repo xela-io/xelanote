@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Handle, NodeResizer, Position } from '@xyflow/svelte';
-  import { FileText, Image } from 'lucide-svelte';
+  import { FileText } from 'lucide-svelte';
+
+  import { getApiBaseUrl } from '$lib/config';
 
   import { getCanvasBgColor, getCanvasColor } from './canvas-colors';
 
@@ -11,9 +13,35 @@
   const borderColor = $derived(getCanvasColor(color));
   const bgColor = $derived(getCanvasBgColor(color));
 
-  // Detect if this is an image file
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
-  const isImage = $derived(imageExtensions.some((ext) => file.toLowerCase().endsWith(ext)));
+  // Strip query parameters before checking extension
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+  const filePathname = $derived.by(() => {
+    try {
+      return new URL(file, 'http://x').pathname;
+    } catch {
+      return file;
+    }
+  });
+  const isImage = $derived(imageExtensions.some((ext) => filePathname.toLowerCase().endsWith(ext)));
+
+  // Build the full image src URL for uploaded images
+  // Upload URLs are like /api/uploads/{userId}/{filename} — works as relative path in web,
+  // but needs the server base URL for desktop (Tauri) where getApiBaseUrl() returns http://...
+  const imageSrc = $derived.by(() => {
+    if (!file.startsWith('/api/uploads/')) return file;
+    const base = getApiBaseUrl();
+    // Web: base is "/api" → strip to get "" + file = "/api/uploads/..."
+    // Desktop: base is "http://host:port/api" → strip to get "http://host:port" + file
+    return base.replace(/\/api$/, '') + file;
+  });
+
+  // Track image load error to fall back to icon
+  let imageError = $state(false);
+  // Reset error state when file changes
+  $effect(() => {
+    void file;
+    imageError = false;
+  });
 </script>
 
 <NodeResizer
@@ -27,13 +55,13 @@
 <div
   class="canvas-file-node"
   class:selected
+  class:has-image={isImage && !imageError}
   style:border-left-color={borderColor}
   style:background={bgColor ? `color-mix(in oklch, ${bgColor} 40%, var(--color-card))` : undefined}
 >
-  {#if isImage}
+  {#if isImage && !imageError}
     <div class="canvas-file-image">
-      <Image size={24} class="text-muted-foreground" />
-      <span class="canvas-file-title">{file}</span>
+      <img src={imageSrc} alt={file} draggable="false" onerror={() => (imageError = true)} />
     </div>
   {:else}
     <div class="canvas-file-header">
@@ -86,6 +114,10 @@
     border-left-width: 3px;
   }
 
+  .canvas-file-node.has-image {
+    padding: 4px;
+  }
+
   .canvas-file-header {
     display: flex;
     align-items: center;
@@ -115,10 +147,15 @@
 
   .canvas-file-image {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
     height: 100%;
+    overflow: hidden;
+  }
+
+  .canvas-file-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 </style>

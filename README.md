@@ -136,22 +136,22 @@ Full API documentation: `docs/api.md`.
 
 **Required**
 
-| Variable | Description |
-| --- | --- |
-| `JWT_SECRET` | Min. 64 characters. Generate: `openssl rand -hex 32` |
+| Variable               | Description                                                               |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `JWT_SECRET`           | Min. 64 characters. Generate: `openssl rand -hex 32`                      |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated origins for production (e.g. `https://notes.example.com`) |
 
 **Optional**
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `XELANOTE_DB` | `./data/xelanote.db` | Path to SQLite database |
-| `XELANOTE_ENV` | `development` | Set to `production` for secure cookies and hardened defaults |
-| `XELANOTE_DB_KEY` | — | SQLCipher encryption key for database-at-rest encryption |
-| `XELANOTE_DB_KEY_FILE` | — | Path to file containing the SQLCipher key |
-| `TURNSTILE_SECRET_KEY` | — | Cloudflare Turnstile CAPTCHA secret |
-| `TURNSTILE_SITE_KEY` | — | Cloudflare Turnstile CAPTCHA site key |
-| `PPROF_ENABLED` | `false` | Enable Go pprof profiling endpoint |
+| Variable               | Default              | Description                                                  |
+| ---------------------- | -------------------- | ------------------------------------------------------------ |
+| `XELANOTE_DB`          | `./data/xelanote.db` | Path to SQLite database                                      |
+| `XELANOTE_ENV`         | `development`        | Set to `production` for secure cookies and hardened defaults |
+| `XELANOTE_DB_KEY`      | —                    | SQLCipher encryption key for database-at-rest encryption     |
+| `XELANOTE_DB_KEY_FILE` | —                    | Path to file containing the SQLCipher key                    |
+| `TURNSTILE_SECRET_KEY` | —                    | Cloudflare Turnstile CAPTCHA secret                          |
+| `TURNSTILE_SITE_KEY`   | —                    | Cloudflare Turnstile CAPTCHA site key                        |
+| `PPROF_ENABLED`        | `false`              | Enable Go pprof profiling endpoint                           |
 
 ---
 

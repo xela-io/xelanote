@@ -682,10 +682,14 @@ export function updateEditorContent(view: EditorView, content: string) {
   });
 }
 
-export function setLivePreviewMode(view: EditorView, enabled: boolean) {
+export function setLivePreviewMode(
+  view: EditorView,
+  enabled: boolean,
+  options: { noteId?: string } = {}
+) {
   view.dispatch({
     effects: livePreviewCompartment.reconfigure(
-      enabled ? createLivePreviewExtension() : emptyExtension
+      enabled ? createLivePreviewExtension({ noteId: options.noteId }) : emptyExtension
     ),
   });
 }

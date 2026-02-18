@@ -2,16 +2,20 @@ import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createLivePreviewExtension, toggleLivePreviewHeadingSection } from './live-preview';
+import {
+  createLivePreviewExtension,
+  toggleLivePreviewCompletedTaskGroup,
+  toggleLivePreviewHeadingSection,
+} from './live-preview';
 
-function createView(doc: string, selectionAnchor = 0): EditorView {
+function createView(doc: string, selectionAnchor = 0, noteId?: string): EditorView {
   const parent = document.createElement('div');
   document.body.appendChild(parent);
 
   const state = EditorState.create({
     doc,
     selection: EditorSelection.cursor(selectionAnchor),
-    extensions: [createLivePreviewExtension()],
+    extensions: [createLivePreviewExtension({ noteId })],
   });
 
   const view = new EditorView({ state, parent });
@@ -29,11 +33,13 @@ describe('live-preview', () => {
     // JSDOM doesn't support document.hasFocus(), but CodeMirror's view.hasFocus
     // relies on it. Stub it so active-line detection works in tests.
     document.hasFocus = () => true;
+    localStorage.clear();
   });
 
   afterEach(() => {
     document.hasFocus = originalHasFocus;
     document.body.innerHTML = '';
+    localStorage.clear();
   });
 
   it('marks non-active lines as live preview lines', () => {
@@ -237,5 +243,24 @@ describe('live-preview', () => {
     expect(afterExpand.length).toBe(0);
 
     view.destroy();
+  });
+
+  it('persists collapsed completed task groups by noteId', () => {
+    const noteId = 'note-persist-1';
+    const doc = 'Active\n- [x] Done A\n- [x] Done B\nNext';
+    const view = createView(doc, 0, noteId);
+
+    const toggle = view.dom.querySelector('.cm-live-task-group-toggle') as HTMLElement | null;
+    expect(toggle).not.toBeNull();
+    const groupKey = toggle?.dataset.taskGroup;
+    expect(groupKey).toBeTruthy();
+
+    toggleLivePreviewCompletedTaskGroup(view, groupKey!);
+    expect(view.dom.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+    view.destroy();
+
+    const recreated = createView(doc, 0, noteId);
+    expect(recreated.dom.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+    recreated.destroy();
   });
 });

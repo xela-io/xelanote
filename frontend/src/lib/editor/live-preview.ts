@@ -180,6 +180,10 @@ interface CompletedTaskGroupInfo {
   keys: Set<string>;
 }
 
+interface LivePreviewPersistenceOptions {
+  noteId?: string;
+}
+
 interface LinePrimitives {
   heading: { indentLength: number; level: number; spacingLength: number } | null;
   blockquote: { indentLength: number; spacingLength: number } | null;
@@ -199,6 +203,7 @@ interface LivePreviewProfileSample {
 type LivePreviewProfilerSink = (sample: LivePreviewProfileSample) => void;
 
 let livePreviewProfilerSink: LivePreviewProfilerSink | null = null;
+const TASK_COLLAPSE_STORAGE_PREFIX = 'xelanote-live-task-collapse-v1:';
 
 function nowMs(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -214,6 +219,47 @@ function profile<T>(phase: LivePreviewProfilePhase, reason: string, fn: () => T)
     ms: end - start,
   });
   return result;
+}
+
+function buildTaskGroupKey(view: EditorView, startLine: number, endLine: number): string {
+  let content = '';
+  const anchorLine = startLine > 1 ? view.state.doc.line(startLine - 1).text.trim() : '';
+  if (anchorLine) content += `anchor:${anchorLine}\n`;
+  for (let lineNo = startLine; lineNo <= endLine; lineNo++) {
+    content += `${view.state.doc.line(lineNo).text.trim()}\n`;
+  }
+  let hash = 2166136261;
+  for (let i = 0; i < content.length; i++) {
+    hash ^= content.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `tasks:${(hash >>> 0).toString(36)}`;
+}
+
+function loadCollapsedTaskGroups(noteId?: string): Set<string> {
+  if (!noteId || typeof localStorage === 'undefined') return new Set<string>();
+  try {
+    const raw = localStorage.getItem(`${TASK_COLLAPSE_STORAGE_PREFIX}${noteId}`);
+    if (!raw) return new Set<string>();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set<string>();
+    return new Set<string>(parsed.filter((value): value is string => typeof value === 'string'));
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function persistCollapsedTaskGroups(noteId: string | undefined, keys: Set<string>): void {
+  if (!noteId || typeof localStorage === 'undefined') return;
+  try {
+    if (keys.size === 0) {
+      localStorage.removeItem(`${TASK_COLLAPSE_STORAGE_PREFIX}${noteId}`);
+      return;
+    }
+    localStorage.setItem(`${TASK_COLLAPSE_STORAGE_PREFIX}${noteId}`, JSON.stringify([...keys]));
+  } catch {
+    // localStorage unavailable or quota exceeded
+  }
 }
 
 export function setLivePreviewProfilerSink(sink: LivePreviewProfilerSink | null): void {
@@ -404,7 +450,7 @@ function collectCompletedTaskGroups(
 
   const flushRun = (endLine: number) => {
     if (runCount >= 2) {
-      const key = `tasks:${runStart}:${endLine}`;
+      const key = buildTaskGroupKey(view, runStart, endLine);
       keys.add(key);
       const group: CompletedTaskGroup = {
         key,
@@ -981,10 +1027,13 @@ const livePreviewPlugin = ViewPlugin.fromClass(
     forceRebuild = false;
     headingInfoDirty = false;
     taskGroupInfoDirty = false;
+    persistenceOptions: LivePreviewPersistenceOptions;
     pendingGutterSyncFrame: number | null = null;
     gutterObserver: MutationObserver | null = null;
 
-    constructor(view: EditorView) {
+    constructor(view: EditorView, persistenceOptions: LivePreviewPersistenceOptions = {}) {
+      this.persistenceOptions = persistenceOptions;
+      this.collapsedTaskGroups = loadCollapsedTaskGroups(this.persistenceOptions.noteId);
       this.staticData = this.computeStaticData(view, 'init');
       this.headingInfo = profile('structured', 'init', () =>
         collectHeadingInfo(view, this.collapsedHeadingSections)
@@ -1064,6 +1113,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
             if (activeLine >= group.startLine && activeLine <= group.endLine) {
               this.collapsedTaskGroups.delete(group.key);
               group.collapsed = false;
+              persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
               this.forceRebuild = true;
               break;
             }
@@ -1115,6 +1165,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       } else {
         this.collapsedTaskGroups.add(key);
       }
+      persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
       this.taskGroupInfoDirty = true;
       this.forceRebuild = true;
       view.dispatch({});
@@ -1130,10 +1181,15 @@ const livePreviewPlugin = ViewPlugin.fromClass(
     }
 
     private pruneTaskGroups(validKeys: Set<string>) {
+      let changed = false;
       for (const key of this.collapsedTaskGroups) {
         if (!validKeys.has(key)) {
           this.collapsedTaskGroups.delete(key);
+          changed = true;
         }
+      }
+      if (changed) {
+        persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
       }
     }
 
@@ -1244,6 +1300,8 @@ export function toggleLivePreviewCompletedTaskGroup(view: EditorView, key: strin
   return plugin.toggleCompletedTaskGroup(view, key);
 }
 
-export function createLivePreviewExtension(): Extension {
-  return livePreviewPlugin;
+export function createLivePreviewExtension(
+  persistenceOptions: LivePreviewPersistenceOptions = {}
+): Extension {
+  return livePreviewPlugin.of(persistenceOptions);
 }

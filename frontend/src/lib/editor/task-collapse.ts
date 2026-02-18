@@ -13,8 +13,57 @@ export interface TaskCollapseOptions {
   revision?: string | number;
 }
 
-// Persist collapse state across re-renders (noteId-listIndex -> open)
+const TASK_COLLAPSE_STORAGE_KEY = 'xelanote-task-collapse-v1';
+
+// Persist collapse state across re-renders (noteId-groupSignature -> open)
 const collapseState = new Map<string, boolean>();
+
+let persistedStateLoaded = false;
+
+function normalizeText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function buildStateKey(noteId: string, checkedItems: HTMLLIElement[], anchorText: string): string {
+  const parts = checkedItems.map((item) => normalizeText(item.textContent ?? ''));
+  const signature = `${normalizeText(anchorText)}|${parts.join('|')}`;
+  let hash = 2166136261;
+  for (let i = 0; i < signature.length; i++) {
+    hash ^= signature.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${noteId}-${(hash >>> 0).toString(36)}`;
+}
+
+function loadPersistedState() {
+  if (persistedStateLoaded || typeof localStorage === 'undefined') return;
+  persistedStateLoaded = true;
+  try {
+    const raw = localStorage.getItem(TASK_COLLAPSE_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === 'boolean') {
+        collapseState.set(key, value);
+      }
+    }
+  } catch {
+    // localStorage unavailable or invalid JSON
+  }
+}
+
+function persistState() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(
+      TASK_COLLAPSE_STORAGE_KEY,
+      JSON.stringify(Object.fromEntries(collapseState.entries()))
+    );
+  } catch {
+    // localStorage unavailable or quota exceeded
+  }
+}
 
 const CHEVRON_SVG = `<svg class="chevron-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
 
@@ -23,14 +72,15 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
   let rafId: number | null = null;
 
   function init() {
+    loadPersistedState();
     const lists = container.querySelectorAll('ul.contains-task-list');
 
-    lists.forEach((list, listIndex) => {
+    lists.forEach((list) => {
       // Defensive: skip if already wrapped
       if (list.querySelector(':scope > li.completed-tasks-wrapper')) return;
 
       // Only consider direct children that are task items
-      const items = Array.from(list.querySelectorAll(':scope > li.task-list-item'));
+      const items = Array.from(list.querySelectorAll<HTMLLIElement>(':scope > li.task-list-item'));
 
       if (items.length === 0) return;
 
@@ -54,7 +104,9 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
       if (checkedCount === 0) return;
 
       const checkedItems = items.slice(items.length - checkedCount);
-      const stateKey = `${options.noteId}-${listIndex}`;
+      const anchorItem = items[items.length - checkedCount - 1];
+      const anchorText = anchorItem ? (anchorItem.textContent ?? '') : '';
+      const stateKey = buildStateKey(options.noteId, checkedItems, anchorText);
       const isOpen = collapseState.get(stateKey) ?? false;
 
       // Build DOM structure
@@ -86,6 +138,7 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
       // Toggle listener to persist state
       const onToggle = () => {
         collapseState.set(stateKey, details.open);
+        persistState();
       };
       details.addEventListener('toggle', onToggle);
       cleanups.push(() => details.removeEventListener('toggle', onToggle));

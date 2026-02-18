@@ -301,7 +301,9 @@
   $effect(() => {
     const view = editorView;
     if (!view) return;
-    setLivePreviewMode(view, FEATURE_FLAGS.livePreview && ui.getEditorMode() === 'live');
+    setLivePreviewMode(view, FEATURE_FLAGS.livePreview && ui.getEditorMode() === 'live', {
+      noteId,
+    });
   });
 
   // Update editor when note content changes externally (note switch, load).

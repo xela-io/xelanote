@@ -15,6 +15,15 @@ export interface TaskSortableOptions {
   revision?: string | number;
 }
 
+interface MutationObserverControl {
+  stop(): void;
+  start(): void;
+}
+
+type EditorViewWithObserver = EditorView & {
+  observer?: MutationObserverControl;
+};
+
 /**
  * Stop CodeMirror's internal MutationObserver. This prevents CM from
  * interpreting SortableJS DOM mutations as user input during a drag.
@@ -22,8 +31,7 @@ export interface TaskSortableOptions {
  * and used by CM itself via `ignore()`).
  */
 export function stopCMObserver(view: EditorView): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (view as any).observer?.stop();
+  (view as unknown as EditorViewWithObserver).observer?.stop();
 }
 
 /**
@@ -31,8 +39,7 @@ export function stopCMObserver(view: EditorView): void {
  * even if the observer is already active.
  */
 export function startCMObserver(view: EditorView): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (view as any).observer?.start();
+  (view as unknown as EditorViewWithObserver).observer?.start();
 }
 
 interface SortableIndexEventLike {

@@ -1,3 +1,4 @@
+import type { EditorView } from '@codemirror/view';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -122,25 +123,22 @@ describe('task-sortable', () => {
   describe('stopCMObserver / startCMObserver', () => {
     it('calls observer.stop() on the EditorView', () => {
       const stop = vi.fn();
-      const mockView = { observer: { stop, start: vi.fn() } };
+      const mockView = { observer: { stop, start: vi.fn() } } as unknown as EditorView;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      stopCMObserver(mockView as any);
+      stopCMObserver(mockView);
       expect(stop).toHaveBeenCalledOnce();
     });
 
     it('calls observer.start() on the EditorView', () => {
       const start = vi.fn();
-      const mockView = { observer: { stop: vi.fn(), start } };
+      const mockView = { observer: { stop: vi.fn(), start } } as unknown as EditorView;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      startCMObserver(mockView as any);
+      startCMObserver(mockView);
       expect(start).toHaveBeenCalledOnce();
     });
 
     it('handles missing observer gracefully', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mockView = {} as any;
+      const mockView = {} as unknown as EditorView;
 
       expect(() => stopCMObserver(mockView)).not.toThrow();
       expect(() => startCMObserver(mockView)).not.toThrow();

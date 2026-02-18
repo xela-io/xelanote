@@ -48,6 +48,8 @@ POST /api/recipes/collections/:param/items
 POST /api/recipes/collections/:param/shares
 POST /api/recipes/suggestions/by-ingredients
 POST /api/recipes/suggestions/extract-ingredients
+POST /api/recipes/suggestions/import-from-image
+POST /api/recipes/suggestions/import-from-url
 POST /api/recipes/suggestions/save-generated
 POST /api/recipes/suggestions/similar
 POST /api/shared/collections/:param/items

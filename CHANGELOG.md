@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Pre-push lint issues: gofmt formatting, ESLint import sorting, API doc coverage baseline update
+
 ### Changed
 
 - Canvas feature is now enabled by default for all users (previously required manual activation in settings)

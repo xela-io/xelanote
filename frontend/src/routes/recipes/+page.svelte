@@ -7,8 +7,8 @@
   import { goto } from '$app/navigation';
   import type { RecipeCollection } from '$lib/api';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
-  import RecipeImportDialog from '$lib/components/RecipeImportDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
+  import RecipeImportDialog from '$lib/components/RecipeImportDialog.svelte';
   import RecipeSuggestionDialog from '$lib/components/RecipeSuggestionDialog.svelte';
   import ShareDialog from '$lib/components/ShareDialog.svelte';
   import * as features from '$lib/stores/features.svelte';

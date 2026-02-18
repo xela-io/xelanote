@@ -48,7 +48,7 @@ func FetchAndStripHTML(ctx context.Context, rawURL string) (string, error) {
 	}
 
 	client := &http.Client{
-		Timeout: requestTimeout,
+		Timeout:   requestTimeout,
 		Transport: newPinnedTransport(),
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= maxRedirects {

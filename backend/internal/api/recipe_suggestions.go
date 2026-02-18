@@ -268,7 +268,7 @@ type requestStatusError struct {
 	msg  string
 }
 
-func (e requestStatusError) Error() string  { return e.msg }
+func (e requestStatusError) Error() string   { return e.msg }
 func (e requestStatusError) StatusCode() int { return e.code }
 
 func parseImageUpload(r *http.Request) ([]byte, string, string, error) {

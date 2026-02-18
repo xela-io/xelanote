@@ -82,7 +82,6 @@
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable, type TaskSortableOptions } from '$lib/editor/task-sortable';
   import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
-  import { getTasksInDocument } from '$lib/utils/task-reorder';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
@@ -98,6 +97,7 @@
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
+  import { getTasksInDocument } from '$lib/utils/task-reorder';
 
   import AITransformDialog from './AITransformDialog.svelte';
   import ColorPickerPopover from './ColorPickerPopover.svelte';

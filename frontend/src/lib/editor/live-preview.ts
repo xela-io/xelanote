@@ -12,6 +12,8 @@ import {
 import { collectTreeFeatures, extractMarkdownLinksFromText } from './live-preview-features';
 
 const lineDecorationCache = new Map<string, Decoration>();
+const LIVE_TASK_DRAG_HANDLE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
 
 class InlineTextWidget extends WidgetType {
   constructor(
@@ -110,12 +112,20 @@ class TaskCheckboxWidget extends WidgetType {
     wrapper.setAttribute('role', 'checkbox');
     wrapper.setAttribute('aria-checked', String(this.checked));
     wrapper.tabIndex = -1;
+
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'cm-live-task-drag-handle';
+    dragHandle.dataset.line = String(this.lineNumber);
+    dragHandle.setAttribute('aria-hidden', 'true');
+    dragHandle.innerHTML = LIVE_TASK_DRAG_HANDLE_SVG;
+
     const input = document.createElement('input');
     input.type = 'checkbox';
     input.className = 'cm-live-task-checkbox-input';
     input.checked = this.checked;
     input.tabIndex = -1;
     input.setAttribute('aria-hidden', 'true');
+    wrapper.appendChild(dragHandle);
     wrapper.appendChild(input);
     return wrapper;
   }
@@ -481,6 +491,62 @@ function collectCompletedTaskGroups(
   if (runStart !== -1) flushRun(view.state.doc.lines);
 
   return { groups, groupByLine, keys };
+}
+
+function rangesOverlap(
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+  tolerance = 0
+): boolean {
+  return aStart <= bEnd + tolerance && bStart <= aEnd + tolerance;
+}
+
+function remapCollapsedTaskGroups(
+  previousInfo: CompletedTaskGroupInfo,
+  nextInfo: CompletedTaskGroupInfo,
+  collapsedTaskGroups: Set<string>
+): Set<string> {
+  const remapped = new Set<string>();
+  const previousCollapsedGroups = previousInfo.groups.filter((group) =>
+    collapsedTaskGroups.has(group.key)
+  );
+
+  if (previousCollapsedGroups.length === 0) return remapped;
+
+  for (const group of nextInfo.groups) {
+    if (collapsedTaskGroups.has(group.key)) {
+      remapped.add(group.key);
+      continue;
+    }
+
+    // Preserve collapse state when a completed run changes shape after edits
+    // (toggle, insert/remove items) but still maps to the same visual group.
+    const overlapsCollapsedGroup = previousCollapsedGroups.some((previousGroup) =>
+      rangesOverlap(
+        group.startLine,
+        group.endLine,
+        previousGroup.startLine,
+        previousGroup.endLine,
+        1
+      )
+    );
+
+    if (overlapsCollapsedGroup) {
+      remapped.add(group.key);
+    }
+  }
+
+  return remapped;
+}
+
+function setsEqual<T>(left: Set<T>, right: Set<T>): boolean {
+  if (left.size !== right.size) return false;
+  for (const value of left) {
+    if (!right.has(value)) return false;
+  }
+  return true;
 }
 
 function getActiveLines(view: EditorView): Set<number> {
@@ -1080,6 +1146,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
 
     update(update: ViewUpdate) {
       const reason = this.describeUpdateReason(update);
+      const previousTaskGroupInfo = this.completedTaskGroupInfo;
       const shouldRecalcActive = update.selectionSet || update.focusChanged;
       const nextActiveLines = shouldRecalcActive ? getActiveLines(update.view) : this.activeLines;
       const nextActiveLinesSignature = shouldRecalcActive
@@ -1100,10 +1167,20 @@ const livePreviewPlugin = ViewPlugin.fromClass(
           collectHeadingInfo(update.view, this.collapsedHeadingSections)
         );
         this.headingInfoDirty = false;
-        this.completedTaskGroupInfo = collectCompletedTaskGroups(
-          update.view,
+        const nextTaskGroupInfo = collectCompletedTaskGroups(update.view, this.collapsedTaskGroups);
+        const remappedCollapsedTaskGroups = remapCollapsedTaskGroups(
+          previousTaskGroupInfo,
+          nextTaskGroupInfo,
           this.collapsedTaskGroups
         );
+        for (const group of nextTaskGroupInfo.groups) {
+          group.collapsed = remappedCollapsedTaskGroups.has(group.key);
+        }
+        if (!setsEqual(this.collapsedTaskGroups, remappedCollapsedTaskGroups)) {
+          this.collapsedTaskGroups = remappedCollapsedTaskGroups;
+          persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
+        }
+        this.completedTaskGroupInfo = nextTaskGroupInfo;
         this.taskGroupInfoDirty = false;
       } else if (update.viewportChanged) {
         this.staticData = {

@@ -58,8 +58,11 @@ describe('live-preview', () => {
     const view = createView(doc, 0);
 
     const checkbox = view.dom.querySelector('.cm-live-task-checkbox') as HTMLElement | null;
+    const handle = view.dom.querySelector('.cm-live-task-drag-handle') as HTMLElement | null;
     expect(checkbox).not.toBeNull();
+    expect(handle).not.toBeNull();
     expect(checkbox?.dataset.line).toBe('2');
+    expect(handle?.dataset.line).toBe('2');
     expect(checkbox?.dataset.checked).toBe('false');
     const input = checkbox?.querySelector(
       '.cm-live-task-checkbox-input'
@@ -276,5 +279,44 @@ describe('live-preview', () => {
     const recreated = createView(doc, 0, noteId);
     expect(recreated.dom.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
     recreated.destroy();
+  });
+
+  it('keeps completed task group collapsed after task updates', () => {
+    const doc = 'Active\n- [ ] Todo\n- [x] Done A\n- [x] Done B';
+    const view = createView(doc, 0);
+
+    const initialToggle = view.dom.querySelector(
+      '.cm-live-task-group-toggle'
+    ) as HTMLElement | null;
+    expect(initialToggle).not.toBeNull();
+    const groupKey = initialToggle?.dataset.taskGroup;
+    expect(groupKey).toBeTruthy();
+
+    toggleLivePreviewCompletedTaskGroup(view, groupKey!);
+    expect(view.dom.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    const todoLine = view.state.doc.line(2);
+    const uncheckedTokenStart = todoLine.text.indexOf('[ ]');
+    expect(uncheckedTokenStart).toBeGreaterThanOrEqual(0);
+    view.dispatch({
+      changes: {
+        from: todoLine.from + uncheckedTokenStart + 1,
+        to: todoLine.from + uncheckedTokenStart + 2,
+        insert: 'x',
+      },
+    });
+    expect(view.dom.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    const groupEnd = view.state.doc.line(4).to;
+    view.dispatch({
+      changes: {
+        from: groupEnd,
+        to: groupEnd,
+        insert: '\n- [x] Done C',
+      },
+    });
+    expect(view.dom.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    view.destroy();
   });
 });

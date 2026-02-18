@@ -37,7 +37,8 @@ type Note struct {
 	// Delta-sync fields
 	IsDeleted bool `json:"is_deleted,omitempty"` // true for soft-deleted notes in delta-sync responses
 	// Sharing fields (populated by ListNotesByFolder UNION)
-	IsShared bool `json:"is_shared,omitempty"` // true if this is a placed shared note
+	IsShared   bool   `json:"is_shared,omitempty"`   // true if this is a placed shared note
+	ShareRole  string `json:"share_role,omitempty"`  // viewer|editor for shared recipient views
 }
 
 // NoteWithBacklinks extends Note with backlink information.

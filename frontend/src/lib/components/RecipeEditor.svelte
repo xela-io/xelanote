@@ -54,7 +54,9 @@
 
   // Determine access level
   const isEncrypted = $derived(currentRecipe?.encrypted ?? false);
-  const isReadonly = $derived(false); // TODO: Check share role for viewer
+  const isReadonly = $derived(
+    currentRecipe?.note?.share_role === 'viewer' || currentNote?.share_role === 'viewer'
+  );
 
   // Sync local ingredients from server state (initial load + remote updates).
   // Uses untrack on ingredientsDirty so it doesn't become a dependency —

@@ -127,6 +127,10 @@ func (s *RecipeService) GetRecipeDetail(callerUserID int, noteID string) (*db.Re
 	}
 
 	isOwner := callerUserID == ownerID
+	if !isOwner {
+		note.IsShared = true
+		note.ShareRole = perm
+	}
 
 	// Encryption check (I2)
 	if note.ContentEncrypted {
@@ -172,8 +176,6 @@ func (s *RecipeService) GetRecipeDetail(callerUserID int, noteID string) (*db.Re
 	} else {
 		collections = []db.RecipeCollection{}
 	}
-
-	_ = perm // perm checked implicitly in resolveOwnerID
 
 	return &db.RecipeDetail{
 		Note:        *note,

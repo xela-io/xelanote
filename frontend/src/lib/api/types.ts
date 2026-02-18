@@ -83,6 +83,9 @@ export interface Note {
   ai_enabled?: boolean; // true = Cloud-KI (Claude) allowed for this note
   // Delta-sync field
   is_deleted?: boolean; // true for soft-deleted notes in delta-sync responses
+  // Sharing fields
+  is_shared?: boolean; // true if the note is shared with current user
+  share_role?: 'viewer' | 'editor'; // recipient role on shared notes
 }
 
 export interface Backlink {

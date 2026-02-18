@@ -54,6 +54,15 @@ function destroySearchIndexSafely(): void {
     });
 }
 
+function stopAutoLockSafely(): void {
+  void import('$lib/stores/auto-lock.svelte')
+    .then((m) => m.stopAutoLock())
+    .catch((err) => {
+      // Ignore module-runner shutdown noise in tests; keep runtime resilient.
+      console.warn('[ENCRYPTION] Skipping auto-lock stop:', err);
+    });
+}
+
 /**
  * Setup encryption on login.
  * Fetches salt from server and derives KEK using libsodium (in Web Worker).
@@ -121,6 +130,8 @@ export async function setupEncryption(
  * To clear IndexedDB, call clearPersistedKEK() separately (logout or paranoid switch).
  */
 export function lockEncryption(): void {
+  stopAutoLockSafely();
+
   // Destroy search index synchronously via cached module (dynamic import to avoid circular dep)
   // Module is already loaded at this point since buildIndex was called earlier
   destroySearchIndexSafely();
@@ -384,6 +395,8 @@ export function setIsUnlocked(unlocked: boolean): void {
  * Full logout - clears all encryption state including IndexedDB.
  */
 export async function logout(): Promise<void> {
+  stopAutoLockSafely();
+
   // Destroy search index (dynamic import to avoid circular dep)
   import('$lib/stores/search-index.svelte').then((m) => m.destroyIndex());
 
@@ -404,6 +417,4 @@ export async function logout(): Promise<void> {
       console.error('[ENCRYPTION] Failed to clear KEK from desktop memory:', err);
     });
   }
-
-  // TODO: Stop auto-lock timer (Phase 2)
 }

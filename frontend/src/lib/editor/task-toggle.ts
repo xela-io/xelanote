@@ -313,7 +313,6 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
 
       editorView!.dispatch({
         changes,
-        scrollIntoView: true,
       });
     }
   } else {

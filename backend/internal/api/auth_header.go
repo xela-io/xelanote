@@ -18,6 +18,8 @@ func parseBearerToken(authHeader string) (string, bool) {
 	return parts[1], true
 }
 
+// hasBearerAuthorizationHeader reports whether authHeader contains a valid
+// Bearer authorization scheme and token.
 func hasBearerAuthorizationHeader(authHeader string) bool {
 	_, ok := parseBearerToken(authHeader)
 	return ok

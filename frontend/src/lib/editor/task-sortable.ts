@@ -3,11 +3,88 @@
  * Supports both mouse (desktop) and touch (mobile with long-press).
  */
 
+import type { EditorView } from '@codemirror/view';
 import Sortable from 'sortablejs';
 
 export interface TaskSortableOptions {
   onReorder: (fromIndex: number, toIndex: number) => void;
+  onReorderByLine?: (fromLine: number, toLine: number) => void;
+  editorView?: EditorView;
+  mode?: 'preview' | 'live';
+  enabled?: boolean;
   revision?: string | number;
+}
+
+/**
+ * Stop CodeMirror's internal MutationObserver. This prevents CM from
+ * interpreting SortableJS DOM mutations as user input during a drag.
+ * Uses the internal `observer` property (not public API, but stable
+ * and used by CM itself via `ignore()`).
+ */
+export function stopCMObserver(view: EditorView): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (view as any).observer?.stop();
+}
+
+/**
+ * Restart CodeMirror's MutationObserver. Idempotent — safe to call
+ * even if the observer is already active.
+ */
+export function startCMObserver(view: EditorView): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (view as any).observer?.start();
+}
+
+interface SortableIndexEventLike {
+  oldDraggableIndex?: number;
+  newDraggableIndex?: number;
+  oldIndex?: number;
+  newIndex?: number;
+}
+
+/**
+ * Determine the target line for a live-mode task reorder by comparing the
+ * dragged item's original line number with its new DOM neighbors.
+ *
+ * Returns the target line number, or -1 if no effective movement occurred.
+ *
+ * @param fromLine - The dragged item's original 1-based line number
+ * @param prevLine - Line number of the item now above the dragged item (-1 if none)
+ * @param nextLine - Line number of the item now below the dragged item (-1 if none)
+ */
+export function determineMoveTarget(fromLine: number, prevLine: number, nextLine: number): number {
+  // If the item's original line is smaller than its new predecessor,
+  // it was dragged downward past that predecessor.
+  const movedDown = prevLine !== -1 && fromLine < prevLine;
+  // If the item's original line is larger than its new successor,
+  // it was dragged upward past that successor.
+  const movedUp = nextLine !== -1 && fromLine > nextLine;
+
+  if (movedDown) return prevLine;
+  if (movedUp) return nextLine;
+  return -1;
+}
+
+export function getSortableIndices(
+  evt: SortableIndexEventLike,
+  options: { draggableOnly?: boolean } = {}
+): {
+  oldIndex: number;
+  newIndex: number;
+} | null {
+  if (options.draggableOnly) {
+    if (evt.oldDraggableIndex === undefined || evt.newDraggableIndex === undefined) {
+      return null;
+    }
+    return { oldIndex: evt.oldDraggableIndex, newIndex: evt.newDraggableIndex };
+  }
+
+  const oldIndex = evt.oldDraggableIndex ?? evt.oldIndex;
+  const newIndex = evt.newDraggableIndex ?? evt.newIndex;
+  if (oldIndex === undefined || newIndex === undefined) {
+    return null;
+  }
+  return { oldIndex, newIndex };
 }
 
 /**
@@ -15,31 +92,59 @@ export interface TaskSortableOptions {
  * Handles cleanup on unmount and re-initialization when content changes.
  */
 export function taskSortable(container: HTMLElement, options: TaskSortableOptions) {
-  const instancesByList = new Map<HTMLElement, Sortable>();
+  const instancesByContainer = new Map<HTMLElement, Sortable>();
   let rafId: number | null = null;
+  const liveDraggableSelector = '.cm-line.cm-live-task-line:not(.cm-live-collapsed-line)';
+
+  function getLineNumberFromLiveTaskItem(item: Element | null): number {
+    if (!item) return -1;
+    const lineSource = item.querySelector(
+      '.cm-live-task-drag-handle, .cm-live-task-checkbox'
+    ) as HTMLElement | null;
+    const line = parseInt(lineSource?.dataset.line ?? '-1', 10);
+    return Number.isInteger(line) && line > 0 ? line : -1;
+  }
 
   function refresh() {
-    const lists = Array.from(container.querySelectorAll('ul.contains-task-list')) as HTMLElement[];
-    const activeLists = new Set(lists);
+    const mode = options.mode ?? 'preview';
+    const enabled = options.enabled ?? true;
+    const containers =
+      enabled && mode === 'live'
+        ? (Array.from(container.querySelectorAll('.cm-content')) as HTMLElement[])
+        : enabled
+          ? (Array.from(container.querySelectorAll('ul.contains-task-list')) as HTMLElement[])
+          : [];
+    const activeContainers = new Set(containers);
 
-    // Remove instances for lists that no longer exist
-    for (const [list, instance] of instancesByList) {
-      if (!activeLists.has(list)) {
+    // Remove instances for containers that no longer exist
+    for (const [sortableContainer, instance] of instancesByContainer) {
+      if (!activeContainers.has(sortableContainer)) {
         instance.destroy();
-        instancesByList.delete(list);
+        instancesByContainer.delete(sortableContainer);
       }
     }
 
-    lists.forEach((list) => {
-      if (instancesByList.has(list)) return;
+    containers.forEach((sortableContainer) => {
+      if (instancesByContainer.has(sortableContainer)) return;
 
-      const sortable = Sortable.create(list as HTMLElement, {
+      // Track boundary listeners added during drag so we can clean up.
+      let boundaryCleanup: (() => void) | null = null;
+
+      const sortable = Sortable.create(sortableContainer, {
         animation: 150,
-        handle: '.drag-handle',
-        draggable: '.task-list-item',
+        handle: mode === 'live' ? '.cm-live-task-drag-handle' : '.drag-handle',
+        draggable: mode === 'live' ? liveDraggableSelector : '.task-list-item',
         // Long-press delay for touch devices (prevents accidental drags)
         delay: 200,
         delayOnTouchOnly: true,
+        // Live preview uses contenteditable DOM; force fallback DnD is more stable there.
+        forceFallback: mode === 'live',
+        fallbackOnBody: mode === 'live',
+        // Improve drop precision and avoid viewport autoscroll jumps in live mode.
+        scroll: mode === 'live' ? false : undefined,
+        swapThreshold: mode === 'live' ? 0.65 : undefined,
+        invertSwap: mode === 'live' ? true : undefined,
+        invertedSwapThreshold: mode === 'live' ? 0.65 : undefined,
         // Visual feedback classes
         ghostClass: 'task-drag-ghost',
         chosenClass: 'task-drag-chosen',
@@ -52,56 +157,144 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
           pull: false,
           put: false,
         },
+        onStart: () => {
+          // Stop CodeMirror's MutationObserver so it doesn't interpret
+          // SortableJS DOM mutations (moving .cm-line elements) as user
+          // input. Without this, CM processes each intermediate move
+          // between pointer events and corrupts the document state.
+          if (mode === 'live' && options.editorView) {
+            stopCMObserver(options.editorView);
+          }
+
+          // Freeze sorting when the pointer leaves the container bounds.
+          // mouseleave/mouseenter are unreliable during forceFallback drags
+          // (SortableJS may capture pointer events). Instead, track the
+          // pointer position directly on document and toggle `sort`.
+          if (mode === 'live') {
+            const onPointerMove = (e: PointerEvent) => {
+              const rect = sortableContainer.getBoundingClientRect();
+              const inside =
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom;
+              sortable.option('sort', inside);
+            };
+            document.addEventListener('pointermove', onPointerMove);
+            boundaryCleanup = () => {
+              document.removeEventListener('pointermove', onPointerMove);
+              sortable.option('sort', true);
+            };
+          }
+        },
+        onUnchoose: () => {
+          // Clean up boundary listeners and re-enable sorting.
+          boundaryCleanup?.();
+          boundaryCleanup = null;
+
+          // Safety net: ensure observer is restarted even if onEnd
+          // bails out early (e.g. oldIndex === newIndex).
+          // start() is idempotent — no-op if already active.
+          if (mode === 'live' && options.editorView) {
+            startCMObserver(options.editorView);
+          }
+        },
+        onMove: (evt, originalEvent) => {
+          if (mode !== 'live') return undefined;
+
+          const target = evt.related as HTMLElement | null;
+          if (!target || !target.classList.contains('cm-live-task-line')) return false;
+
+          const getClientY = (event: Event): number | null => {
+            const mouseLike = event as MouseEvent;
+            if (typeof mouseLike.clientY === 'number') {
+              return mouseLike.clientY;
+            }
+            const touchLike = event as TouchEvent;
+            if (touchLike.touches && touchLike.touches.length > 0) {
+              return touchLike.touches[0].clientY;
+            }
+            if (touchLike.changedTouches && touchLike.changedTouches.length > 0) {
+              return touchLike.changedTouches[0].clientY;
+            }
+            return null;
+          };
+
+          // Cursor-precise insert direction:
+          // upper half => before target, lower half => after target.
+          const rect = target.getBoundingClientRect();
+          const clientY = getClientY(originalEvent);
+          if (clientY === null) return undefined;
+          const midpoint = rect.top + rect.height / 2;
+          return clientY < midpoint ? -1 : 1;
+        },
         onEnd: (evt) => {
-          // No actual movement happened
-          if (evt.oldIndex === evt.newIndex) return;
-          if (evt.oldIndex === undefined || evt.newIndex === undefined) return;
+          if (mode === 'live') {
+            // Determine the move target from the actual DOM position of the
+            // dragged element rather than SortableJS's reported draggable
+            // indices, which can desynchronize from the real DOM order when
+            // onMove overrides (-1/1) interact with invertSwap and non-task
+            // elements are interspersed between task lines.
+            const fromLine = getLineNumberFromLiveTaskItem(evt.item);
+            if (fromLine === -1) return;
 
-          // Get task indices from data attributes
+            const items = Array.from(evt.to.querySelectorAll(liveDraggableSelector));
+            const actualIndex = items.indexOf(evt.item as HTMLElement);
+            if (actualIndex === -1) return;
+
+            const prevLine =
+              actualIndex > 0 ? getLineNumberFromLiveTaskItem(items[actualIndex - 1]) : -1;
+            const nextLine =
+              actualIndex < items.length - 1
+                ? getLineNumberFromLiveTaskItem(items[actualIndex + 1])
+                : -1;
+
+            const toLine = determineMoveTarget(fromLine, prevLine, nextLine);
+
+            if (toLine === -1 || fromLine === toLine) return;
+
+            // Restart observer BEFORE dispatching so that dispatch() →
+            // ignore() correctly calls clear() to discard stale mutations.
+            // (ignore() short-circuits with just f() when observer is inactive.)
+            if (options.editorView) {
+              startCMObserver(options.editorView);
+            }
+
+            options.onReorderByLine?.(fromLine, toLine);
+            return;
+          }
+
+          // Preview mode: use precomputed task indices from rendered HTML.
+          const indices = getSortableIndices(evt);
+          if (!indices) return;
+          const { oldIndex, newIndex } = indices;
+          if (oldIndex === newIndex) return;
+
           const items = evt.to.querySelectorAll('.task-list-item');
-          const movedItem = items[evt.newIndex];
-
+          const movedItem = items[newIndex];
           if (!movedItem) return;
 
           const fromIndex = parseInt(movedItem.getAttribute('data-task-index') || '-1', 10);
-
-          // Calculate target index: we need to find which task is at the position
-          // where we want to insert
-          // After the DOM move, the item at newIndex is our moved item
-          // We need to determine where it should go in the source
-
-          // The target task is the one that was at newIndex before the move
-          // Since SortableJS already moved the DOM, we need to calculate based on
-          // the new positions
-
-          // Find the task that should be at the target position
           let toIndex: number;
 
-          if (evt.oldIndex < evt.newIndex) {
-            // Moving down: target is the item now before us (which moved up)
-            const targetItem = items[evt.newIndex - 1];
-            if (targetItem) {
-              toIndex = parseInt(targetItem.getAttribute('data-task-index') || '-1', 10);
-            } else {
-              toIndex = fromIndex;
-            }
+          if (oldIndex < newIndex) {
+            const targetItem = items[newIndex - 1];
+            toIndex = targetItem
+              ? parseInt(targetItem.getAttribute('data-task-index') || '-1', 10)
+              : fromIndex;
           } else {
-            // Moving up: target is the item now after us (which moved down)
-            const targetItem = items[evt.newIndex + 1];
-            if (targetItem) {
-              toIndex = parseInt(targetItem.getAttribute('data-task-index') || '-1', 10);
-            } else {
-              toIndex = fromIndex;
-            }
+            const targetItem = items[newIndex + 1];
+            toIndex = targetItem
+              ? parseInt(targetItem.getAttribute('data-task-index') || '-1', 10)
+              : fromIndex;
           }
 
           if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
-
           options.onReorder(fromIndex, toIndex);
         },
       });
 
-      instancesByList.set(list, sortable);
+      instancesByContainer.set(sortableContainer, sortable);
     });
   }
 
@@ -118,8 +311,8 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
       cancelAnimationFrame(rafId);
       rafId = null;
     }
-    instancesByList.forEach((s) => s.destroy());
-    instancesByList.clear();
+    instancesByContainer.forEach((s) => s.destroy());
+    instancesByContainer.clear();
   }
 
   // Initial setup

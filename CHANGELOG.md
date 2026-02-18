@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix live preview task drag-and-drop items jumping to the top of the note — replaced SortableJS index-based target computation with DOM-based neighbor comparison that is immune to index desynchronization caused by onMove overrides and non-task elements
 - Fix note title being truncated to only a few characters on narrow desktop windows; title input now uses flex-grow instead of character-count-based width so the lock icon and last-updated label no longer squeeze it
 - Fix viewport jumping to the bottom of the list when toggling a todo checkbox that triggers task reordering in live preview
 - Fix @due() date badge overlapping with preceding text in todo list live preview; reset inherited text-indent on inline-block badge and skip mark decoration on non-active lines to prevent double rendering

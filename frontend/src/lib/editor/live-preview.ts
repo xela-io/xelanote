@@ -690,7 +690,11 @@ function buildDecorations(
                 }
               : null;
         const listMarkerInfo = !taskInfo ? primitives.listMarker : null;
-        if (taskInfo) {
+        // Only mark lines with actual body text as task lines — empty tasks
+        // (checkbox but no text) are excluded so the draggable set stays
+        // consistent with getTasksInDocument() which also skips them.
+        const hasTaskBody = taskInfo && text.substring(taskInfo.to - base).trim().length > 0;
+        if (hasTaskBody) {
           // Keep task-line layout stable even when active to avoid checkbox shifting.
           lineClasses.push('cm-live-task-line');
         }

@@ -553,6 +553,9 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
     EditorView.domEventHandlers({
       mousedown: (event) => {
         const target = event.target as HTMLElement;
+        const liveTaskDragHandle = target.closest(
+          '.cm-live-task-drag-handle'
+        ) as HTMLElement | null;
         const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         const liveTaskGroupToggle = target.closest(
@@ -562,6 +565,10 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
           '.cm-live-task-group-summary'
         ) as HTMLElement | null;
         if (liveTaskCheckbox) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveTaskDragHandle) {
           event.preventDefault();
           return true;
         }
@@ -587,6 +594,13 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
       },
       click: (event, view) => {
         const target = event.target as HTMLElement;
+        const liveTaskDragHandle = target.closest(
+          '.cm-live-task-drag-handle'
+        ) as HTMLElement | null;
+        if (liveTaskDragHandle) {
+          event.preventDefault();
+          return true;
+        }
 
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         if (liveHeadingToggle?.dataset.section) {
@@ -858,6 +872,9 @@ export function createCanvasEditor(
     EditorView.domEventHandlers({
       mousedown: (event) => {
         const target = event.target as HTMLElement;
+        const liveTaskDragHandle = target.closest(
+          '.cm-live-task-drag-handle'
+        ) as HTMLElement | null;
         const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         const liveTaskGroupToggle = target.closest(
@@ -867,6 +884,10 @@ export function createCanvasEditor(
           '.cm-live-task-group-summary'
         ) as HTMLElement | null;
         if (liveTaskCheckbox) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveTaskDragHandle) {
           event.preventDefault();
           return true;
         }
@@ -892,6 +913,13 @@ export function createCanvasEditor(
       },
       click: (event, view) => {
         const target = event.target as HTMLElement;
+        const liveTaskDragHandle = target.closest(
+          '.cm-live-task-drag-handle'
+        ) as HTMLElement | null;
+        if (liveTaskDragHandle) {
+          event.preventDefault();
+          return true;
+        }
 
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
         if (liveHeadingToggle?.dataset.section) {

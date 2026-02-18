@@ -82,6 +82,7 @@
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable, type TaskSortableOptions } from '$lib/editor/task-sortable';
   import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
+  import { getTasksInDocument } from '$lib/utils/task-reorder';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as auth from '$lib/stores/auth.svelte';
   import * as autosave from '$lib/stores/autosave.svelte';
@@ -127,6 +128,16 @@
   });
   const taskSortableOptions = $state<TaskSortableOptions>({
     onReorder: (fromIndex, toIndex) => handleTaskReorder(fromIndex, toIndex),
+    mode: 'preview',
+    enabled: true,
+    onReorderByLine: undefined,
+    revision: '',
+  });
+  const liveTaskSortableOptions = $state<TaskSortableOptions>({
+    onReorder: (fromIndex, toIndex) => handleTaskReorder(fromIndex, toIndex),
+    onReorderByLine: (fromLine, toLine) => handleTaskReorderByLine(fromLine, toLine),
+    mode: 'live',
+    enabled: false,
     revision: '',
   });
   let lastTaskClickTime = 0; // Timestamp-based debounce for task checkbox clicks
@@ -235,6 +246,14 @@
 
   $effect(() => {
     taskCollapseOptions.noteId = noteId;
+  });
+
+  $effect(() => {
+    const note = notes.getCurrentNote();
+    liveTaskSortableOptions.enabled =
+      FEATURE_FLAGS.taskLists && ui.getEditorMode() === 'live' && Boolean(note);
+    liveTaskSortableOptions.revision = note?.content ?? '';
+    liveTaskSortableOptions.editorView = editorView;
   });
 
   // Reactive: load note when ID changes
@@ -614,13 +633,27 @@
   }
 
   // Task Drag & Drop Reorder Handler
-  function handleTaskReorder(fromTaskIndex: number, toTaskIndex: number) {
+  function handleTaskReorder(
+    fromTaskIndex: number,
+    toTaskIndex: number,
+    options?: { scrollIntoView?: boolean }
+  ) {
     handleTaskReorderAction({
       editorView,
       fromTaskIndex,
       toTaskIndex,
       scheduleAutoSave: () => notes.scheduleAutoSave(),
+      scrollIntoView: options?.scrollIntoView ?? true,
     });
+  }
+
+  function handleTaskReorderByLine(fromLine: number, toLine: number) {
+    if (!editorView) return;
+    const tasks = getTasksInDocument(editorView.state.doc);
+    const fromTask = tasks.find((task) => task.lineNum === fromLine);
+    const toTask = tasks.find((task) => task.lineNum === toLine);
+    if (!fromTask || !toTask) return;
+    handleTaskReorder(fromTask.index, toTask.index, { scrollIntoView: false });
   }
 
   // Image Resize Handler
@@ -1009,6 +1042,7 @@
         {#if ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split' || ui.getEditorMode() === 'live'}
           <div
             use:initEditor
+            use:taskSortable={liveTaskSortableOptions}
             role="region"
             aria-label={$_('component.editor.editor_area')}
             class:flex-1={ui.getEditorMode() !== 'split'}

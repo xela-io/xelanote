@@ -8,17 +8,24 @@ interface TaskReorderActionParams {
   fromTaskIndex: number;
   toTaskIndex: number;
   scheduleAutoSave: () => void;
+  scrollIntoView?: boolean;
 }
 
 export function handleTaskReorderAction(params: TaskReorderActionParams): void {
-  const { editorView, fromTaskIndex, toTaskIndex, scheduleAutoSave } = params;
+  const {
+    editorView,
+    fromTaskIndex,
+    toTaskIndex,
+    scheduleAutoSave,
+    scrollIntoView = true,
+  } = params;
   if (!editorView) return;
 
   const doc = editorView.state.doc;
   const changes = calculateMoveChanges(doc, fromTaskIndex, toTaskIndex);
   if (changes.length === 0) return;
 
-  editorView.dispatch({ changes, scrollIntoView: true });
+  editorView.dispatch({ changes, scrollIntoView });
   scheduleAutoSave();
 }
 

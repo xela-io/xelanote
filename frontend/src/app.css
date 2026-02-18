@@ -810,6 +810,39 @@ html {
   min-width: var(--live-preview-marker-column-width);
   margin-right: var(--live-preview-marker-gap);
   vertical-align: baseline;
+  position: relative;
+}
+
+.cm-editor .cm-live-task-drag-handle {
+  position: absolute;
+  left: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted-foreground);
+  opacity: 0;
+  cursor: grab;
+  padding: 2px 4px;
+  border-radius: var(--radius-xs);
+  transition:
+    opacity var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+}
+
+.cm-editor .cm-live-task-drag-handle:hover {
+  opacity: 1 !important;
+  color: var(--color-foreground);
+  background-color: var(--color-accent);
+}
+
+.cm-editor .cm-line.cm-live-task-line:hover .cm-live-task-drag-handle {
+  opacity: 0.6;
+}
+
+.cm-editor .cm-live-task-drag-handle:active {
+  cursor: grabbing;
 }
 
 .cm-editor .cm-live-task-checkbox-input {
@@ -818,6 +851,27 @@ html {
   margin: 0;
   pointer-events: none;
   accent-color: var(--color-primary);
+}
+
+@media (pointer: coarse) {
+  .cm-editor .cm-live-task-drag-handle {
+    opacity: 0.5;
+  }
+}
+
+.cm-editor .cm-line.task-drag-ghost {
+  opacity: 0.4;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.cm-editor .cm-line.task-drag-chosen {
+  background: var(--color-selection);
+  border-radius: var(--radius-sm);
+}
+
+.cm-editor .cm-line.task-drag-active {
+  cursor: grabbing !important;
 }
 
 .cm-editor .cm-live-list-marker {

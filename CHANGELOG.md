@@ -28,8 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sidebar sort dropdown — sort notes by manual order, last modified, title A-Z, or date created; persisted in localStorage; folder order remains manual
 - Infinite canvas feature (JSON Canvas spec v1.0) — visually organize notes, text cards, links, and groups on a free-form spatial board; uses @xyflow/svelte with 4 custom node types, 6 Gruvbox color presets, toolbar, context menu, auto-save, and .canvas export; user-togglable feature flag (disabled by default)
 - Collapsible completed task groups in live preview — groups of 2+ consecutive completed tasks show a bracket and [+]/[−] toggle; collapsed groups display a summary line; cursor auto-expands collapsed groups
+- Live preview task drag handles — grab handle appears on hover to the left of each task item for intuitive drag-and-drop reordering directly in live preview mode; touch devices show handles permanently; uses line-based reorder mapping for accurate task movement
 
 ### Fixed
+
+- Fix empty tasks (checkbox without body text) incorrectly receiving task-line decoration in live preview, causing inconsistency with the drag-sortable task set
 
 - Fix live preview task drag-and-drop items jumping to the top of the note — replaced SortableJS index-based target computation with DOM-based neighbor comparison that is immune to index desynchronization caused by onMove overrides and non-task elements
 - Fix note title being truncated to only a few characters on narrow desktop windows; title input now uses flex-grow instead of character-count-based width so the lock icon and last-updated label no longer squeeze it

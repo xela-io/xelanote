@@ -29,7 +29,7 @@ func (db *DB) GetUserFeature(userID int, feature string) (*Feature, error) {
 
 	if err == sql.ErrNoRows {
 		// Features enabled by default when not explicitly set
-		defaultEnabled := feature == "journal" || feature == "recipe"
+		defaultEnabled := feature == "journal" || feature == "recipe" || feature == "canvas"
 		return &Feature{UserID: userID, Feature: feature, Enabled: defaultEnabled}, nil
 	}
 	if err != nil {

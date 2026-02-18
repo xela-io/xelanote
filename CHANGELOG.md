@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Canvas feature is now enabled by default for all users (previously required manual activation in settings)
+
 ### Added
 
 - Canvas group renaming — double-click a group label to edit inline, or use "Rename" in the context menu; groups without a custom name show a dimmed "Group" placeholder

@@ -33,9 +33,11 @@ vi.mock('$lib/stores/ui.svelte', () => ({ resetToDefaults }));
 
 const resetJournalFeature = vi.fn();
 const resetRecipeFeature = vi.fn();
+const resetCanvasFeature = vi.fn();
 vi.mock('$lib/stores/features.svelte', () => ({
   resetJournalFeature,
   resetRecipeFeature,
+  resetCanvasFeature,
 }));
 
 const resetJournalState = vi.fn();
@@ -117,5 +119,23 @@ describe('auth store', () => {
     expect(resetJournalState).toHaveBeenCalled();
     expect(resetRecipeFeature).toHaveBeenCalled();
     expect(resetRecipeState).toHaveBeenCalled();
+    expect(resetCanvasFeature).toHaveBeenCalled();
+  });
+
+  it('should reset all feature toggles exactly once per logout', async () => {
+    const auth = await import('$lib/stores/auth.svelte');
+    await auth.setAuth(makeJwt(1234, 1000), 'refresh', {
+      id: 1,
+      username: 'user',
+      email: 'user@example.com',
+      is_admin: false,
+    });
+
+    vi.clearAllMocks();
+    auth.logout();
+
+    expect(resetJournalFeature).toHaveBeenCalledTimes(1);
+    expect(resetRecipeFeature).toHaveBeenCalledTimes(1);
+    expect(resetCanvasFeature).toHaveBeenCalledTimes(1);
   });
 });

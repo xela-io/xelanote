@@ -46,6 +46,15 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    backend-tests:
+      run: make test
+
+    frontend-tests:
+      run: make test-frontend
+
+    api-doc-coverage:
+      run: bash scripts/check-api-doc-coverage.sh
+
     gofmt:
       run: cd backend && test -z "$(gofmt -l .)" || (echo "gofmt needed"; gofmt -l .; exit 1)
 

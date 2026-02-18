@@ -328,6 +328,10 @@ export async function openJournalForDate(date: string): Promise<string | null> {
     journalLoading = false;
     return note.id;
   } catch (error) {
+    if (error instanceof Error && error.message === 'ENCRYPTION_LOCKED') {
+      journalLoading = false;
+      return null;
+    }
     console.error('Failed to open/create journal:', error);
     if (error instanceof ApiError && error.status === 409) {
       // Journal already exists (race condition) - try to load it

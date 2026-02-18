@@ -333,7 +333,9 @@
       "days": "{count, plural, one {Tag} other {Tage}}",
       "recentActivity": "Letzte Aktivität",
       "daysAgo": "vor {count} T.",
-      "today": "Heute"
+      "today": "Heute",
+      "encryptionRequired": "Journal-Einträge sind verschlüsselt. Bitte entsperre die Verschlüsselung, um auf dein Journal zuzugreifen.",
+      "unlockButton": "Verschlüsselung entsperren"
     },
     "recipes": {
       "title": "Rezepte",

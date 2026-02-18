@@ -14,8 +14,10 @@
   import { goto } from '$app/navigation';
   import JournalActivityWidget from '$lib/components/JournalActivityWidget.svelte';
   import JournalHeatmap from '$lib/components/JournalHeatmap.svelte';
+  import * as encryption from '$lib/stores/encryption.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as journal from '$lib/stores/journal.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
 
   const featureEnabled = $derived(features.getJournalFeatureEnabled());
   const featureLoaded = $derived(features.getJournalFeatureLoaded());
@@ -27,6 +29,7 @@
   const calendarLoading = $derived(journal.getCalendarLoading());
   const journalLoading = $derived(journal.getJournalLoading());
   const today = $derived(journal.getTodayDate());
+  const isEncryptionLocked = $derived(!encryption.isEncryptionUnlocked());
 
   // Mobile calendar collapsed state
   const COLLAPSED_KEY = 'xelanote_journal_page_collapsed';
@@ -146,9 +149,9 @@
     }
   }
 
-  // Load data reactively once feature is confirmed enabled
+  // Load data reactively once feature is confirmed enabled and encryption is unlocked
   $effect(() => {
-    if (featureLoaded && featureEnabled && !dataLoaded) {
+    if (featureLoaded && featureEnabled && !isEncryptionLocked && !dataLoaded) {
       dataLoaded = true;
       Promise.all([
         journal.loadEntries(),
@@ -156,6 +159,13 @@
         // force=true bypasses cache so heatmap reflects deletions made on other pages
         journal.loadYearCalendar(new Date().getFullYear(), true),
       ]);
+    }
+  });
+
+  // Reset when encryption locks again, so data reloads after unlock
+  $effect(() => {
+    if (isEncryptionLocked) {
+      dataLoaded = false;
     }
   });
 </script>
@@ -183,6 +193,18 @@
   {#if !featureLoaded || loading}
     <div class="flex items-center justify-center flex-1">
       <Loader2 class="w-8 h-8 animate-spin" />
+    </div>
+  {:else if isEncryptionLocked}
+    <div class="flex flex-col items-center justify-center flex-1 gap-4 text-muted-foreground">
+      <Lock class="w-12 h-12 opacity-50" />
+      <p class="text-center max-w-sm">{$_('page.journal.encryptionRequired')}</p>
+      <button
+        onclick={() => notes.signalEncryptionLocked()}
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+      >
+        <Lock size={16} />
+        {$_('page.journal.unlockButton')}
+      </button>
     </div>
   {:else}
     <div class="flex-1 overflow-y-auto p-6">

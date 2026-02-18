@@ -149,6 +149,10 @@ export const getAutoSaveStatus = accessors.getAutoSaveStatus;
 export const getLastAutoSave = accessors.getLastAutoSave;
 export const getAutoSaveError = accessors.getAutoSaveError;
 
+export function signalEncryptionLocked(): void {
+  error = 'ENCRYPTION_LOCKED';
+}
+
 export async function loadNotes(mode: 'full' | 'delta' = 'full') {
   await loadNotesHelper(
     {

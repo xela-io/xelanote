@@ -333,7 +333,9 @@
       "days": "{count, plural, one {day} other {days}}",
       "recentActivity": "Recent Activity",
       "daysAgo": "{count}d ago",
-      "today": "Today"
+      "today": "Today",
+      "encryptionRequired": "Journal entries are encrypted. Please unlock encryption to access your journal.",
+      "unlockButton": "Unlock Encryption"
     },
     "recipes": {
       "title": "Recipes",

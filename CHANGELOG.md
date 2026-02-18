@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Journal E2E encryption enforcement — journal entries are now always encrypted regardless of folder settings; journal page shows lock overlay when encryption is locked with unlock button; lock icon next to note title in editor toolbar indicates encrypted notes
 - Sidebar sort dropdown — sort notes by manual order, last modified, title A-Z, or date created; persisted in localStorage; folder order remains manual
 - Infinite canvas feature (JSON Canvas spec v1.0) — visually organize notes, text cards, links, and groups on a free-form spatial board; uses @xyflow/svelte with 4 custom node types, 6 Gruvbox color presets, toolbar, context menu, auto-save, and .canvas export; user-togglable feature flag (disabled by default)
 - Collapsible completed task groups in live preview — groups of 2+ consecutive completed tasks show a bracket and [+]/[−] toggle; collapsed groups display a summary line; cursor auto-expands collapsed groups

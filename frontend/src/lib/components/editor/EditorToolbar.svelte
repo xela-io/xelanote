@@ -169,6 +169,9 @@
           : 'focus:ring-1 focus:ring-ring'}"
         style="width: {Math.max((note?.title ?? '').length, 2) + 1}ch; max-width: 100%"
       />
+      {#if note?.content_encrypted}
+        <Lock size={14} class="flex-shrink-0 text-muted-foreground" />
+      {/if}
       {#if isMobile}
         <span class="flex-shrink-0">
           {#if autoSaveStatus === 'saving'}

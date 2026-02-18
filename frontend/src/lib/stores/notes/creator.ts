@@ -45,7 +45,12 @@ export async function createNote(deps: CreateNoteDeps) {
     const allFolders = deps.getFolders();
     const targetFolder = allFolders.find((f) => f.path === deps.folderPath);
     const isRecipe = deps.journalOptions?.note_type === 'recipe';
-    const shouldEncrypt = isRecipe ? false : targetFolder?.encryption_default !== false;
+    const isJournal = deps.journalOptions?.note_type === 'journal';
+    const shouldEncrypt = isRecipe
+      ? false
+      : isJournal
+        ? true
+        : targetFolder?.encryption_default !== false;
 
     let note: Note;
     let processedNote: Note;

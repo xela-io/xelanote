@@ -445,6 +445,15 @@ export async function loadEditorExtensions(_config: EditorConfig): Promise<Exten
 export function createEditor(parent: HTMLElement, config: EditorConfig = {}): EditorView {
   // Compartment for lazy-loaded extensions
   const lazyCompartment = new Compartment();
+  const moveCursorToTaskGroupStart = (view: EditorView, element: HTMLElement | null) => {
+    const lineNumber = parseInt(element?.dataset.line ?? '', 10);
+    if (!Number.isInteger(lineNumber) || lineNumber <= 0 || lineNumber > view.state.doc.lines) {
+      return;
+    }
+    const line = view.state.doc.line(lineNumber);
+    view.dispatch({ selection: { anchor: line.from } });
+    view.focus();
+  };
 
   // Base extensions (loaded immediately)
   const baseExtensions: Extension[] = [
@@ -577,6 +586,7 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
           '.cm-live-task-group-summary'
         ) as HTMLElement | null;
         if (liveTaskGroupSummary?.dataset.taskGroup) {
+          moveCursorToTaskGroupStart(view, liveTaskGroupSummary);
           if (toggleLivePreviewCompletedTaskGroup(view, liveTaskGroupSummary.dataset.taskGroup)) {
             event.preventDefault();
             return true;

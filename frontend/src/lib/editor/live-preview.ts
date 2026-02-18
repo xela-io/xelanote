@@ -558,14 +558,23 @@ function buildDecorations(
               line.from,
               Decoration.widget({
                 side: -1,
-                widget: new CompletedTaskGroupToggleWidget(taskGroup.key, true, taskGroup.count),
+                widget: new CompletedTaskGroupToggleWidget(
+                  taskGroup.key,
+                  true,
+                  taskGroup.count,
+                  taskGroup.startLine
+                ),
               })
             );
             builder.add(
               line.from,
               line.to,
               Decoration.replace({
-                widget: new CompletedTaskGroupSummaryWidget(taskGroup.key, taskGroup.count),
+                widget: new CompletedTaskGroupSummaryWidget(
+                  taskGroup.key,
+                  taskGroup.count,
+                  taskGroup.startLine
+                ),
               })
             );
           } else {
@@ -663,7 +672,12 @@ function buildDecorations(
               line.from,
               Decoration.widget({
                 side: -1,
-                widget: new CompletedTaskGroupToggleWidget(taskGroup.key, false, taskGroup.count),
+                widget: new CompletedTaskGroupToggleWidget(
+                  taskGroup.key,
+                  false,
+                  taskGroup.count,
+                  taskGroup.startLine
+                ),
               })
             );
           }
@@ -952,7 +966,8 @@ class CompletedTaskGroupToggleWidget extends WidgetType {
   constructor(
     private readonly groupKey: string,
     private readonly collapsed: boolean,
-    private readonly count: number
+    private readonly count: number,
+    private readonly startLine: number
   ) {
     super();
   }
@@ -961,7 +976,8 @@ class CompletedTaskGroupToggleWidget extends WidgetType {
     return (
       this.groupKey === other.groupKey &&
       this.collapsed === other.collapsed &&
-      this.count === other.count
+      this.count === other.count &&
+      this.startLine === other.startLine
     );
   }
 
@@ -970,6 +986,7 @@ class CompletedTaskGroupToggleWidget extends WidgetType {
     button.type = 'button';
     button.className = 'cm-live-task-group-toggle';
     button.dataset.taskGroup = this.groupKey;
+    button.dataset.line = String(this.startLine);
     button.setAttribute(
       'aria-label',
       this.collapsed ? 'Erledigte Aufgaben aufklappen' : 'Erledigte Aufgaben einklappen'
@@ -991,19 +1008,25 @@ class CompletedTaskGroupToggleWidget extends WidgetType {
 class CompletedTaskGroupSummaryWidget extends WidgetType {
   constructor(
     private readonly groupKey: string,
-    private readonly count: number
+    private readonly count: number,
+    private readonly startLine: number
   ) {
     super();
   }
 
   eq(other: CompletedTaskGroupSummaryWidget): boolean {
-    return this.groupKey === other.groupKey && this.count === other.count;
+    return (
+      this.groupKey === other.groupKey &&
+      this.count === other.count &&
+      this.startLine === other.startLine
+    );
   }
 
   toDOM(): HTMLElement {
     const span = document.createElement('span');
     span.className = 'cm-live-task-group-summary';
     span.dataset.taskGroup = this.groupKey;
+    span.dataset.line = String(this.startLine);
     span.textContent = `${this.count} erledigte Aufgaben`;
     return span;
   }

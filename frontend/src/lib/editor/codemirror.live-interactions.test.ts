@@ -13,6 +13,7 @@ describe('codemirror live interactions', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
+    localStorage.clear();
     vi.restoreAllMocks();
     setLivePreviewProfilerSink(null);
   });
@@ -140,6 +141,32 @@ describe('codemirror live interactions', () => {
 
     const hiddenLines = parent.querySelectorAll('.cm-live-collapsed-line');
     expect(hiddenLines.length).toBeGreaterThan(0);
+
+    view.destroy();
+  });
+
+  it('moves cursor to completed-group start when clicking collapsed summary', () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = createEditor(parent, {
+      doc: 'Active\n- [x] Done 1\n- [x] Done 2\nNext',
+    });
+    setLivePreviewMode(view, true);
+
+    let summary = parent.querySelector('.cm-live-task-group-summary') as HTMLElement | null;
+    if (!summary) {
+      const toggle = parent.querySelector('.cm-live-task-group-toggle') as HTMLElement | null;
+      expect(toggle).not.toBeNull();
+      toggle?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      summary = parent.querySelector('.cm-live-task-group-summary') as HTMLElement | null;
+    }
+    expect(summary).not.toBeNull();
+    summary?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    summary?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(view.state.doc.lineAt(view.state.selection.main.anchor).number).toBe(2);
 
     view.destroy();
   });

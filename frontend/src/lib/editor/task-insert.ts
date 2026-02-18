@@ -64,6 +64,10 @@ export function insertTask(editorView: EditorView) {
       nearestTaskListEnd = i;
       break;
     }
+    // Don't jump across section boundaries into unrelated headings/lists.
+    if (i !== cursorLine.number && (line.text.trim() === '' || /^#{1,6}\s/.test(line.text))) {
+      break;
+    }
   }
 
   // If we found a task list nearby, get its full boundaries

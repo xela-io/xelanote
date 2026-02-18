@@ -1,14 +1,21 @@
 <script lang="ts">
+  import type { EditorView } from '@codemirror/view';
   import { Handle, NodeResizer, Position } from '@xyflow/svelte';
   import { FileText } from 'lucide-svelte';
+  import { untrack } from 'svelte';
 
+  import { getNote } from '$lib/api/notes';
   import { getApiBaseUrl } from '$lib/config';
+  import { createCanvasEditor } from '$lib/editor/codemirror';
+  import * as encryption from '$lib/stores/encryption.svelte';
+  import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
   import { getCanvasBgColor, getCanvasColor } from './canvas-colors';
 
   const { data, selected } = $props<{ data: Record<string, unknown>; selected?: boolean }>();
 
   const file = $derived((data.file as string) || '');
+  const noteId = $derived((data['x-xelanote-note-id'] as string) || '');
   const color = $derived(data.color as string | undefined);
   const borderColor = $derived(getCanvasColor(color));
   const bgColor = $derived(getCanvasBgColor(color));
@@ -42,6 +49,77 @@
     void file;
     imageError = false;
   });
+
+  // Note content fetching — no synchronous $state writes inside the effect
+  // to avoid re-render loops with SvelteFlow.
+  let noteContent = $state<string | null>(null);
+  let loadState = $state<'idle' | 'loading' | 'locked' | 'error'>('idle');
+  let fetchedForId = ''; // plain var, not reactive — prevents duplicate fetches
+
+  $effect(() => {
+    const id = noteId;
+    const encryptionUnlocked = encryption.isEncryptionUnlocked();
+    if (
+      !id ||
+      (id === fetchedForId && !(loadState === 'locked' && encryptionUnlocked))
+    )
+      return;
+    fetchedForId = id;
+    loadState = 'loading';
+    noteContent = null;
+    getNote(id)
+      .then((note) => {
+        if (fetchedForId !== id) return;
+        if (note.content_encrypted && note.encrypted_content) {
+          if (!encryption.isEncryptionUnlocked()) {
+            loadState = 'locked';
+            noteContent = null;
+            return;
+          }
+          try {
+            const decrypted = encryption.decryptNote(note.encrypted_title || null, {
+              ciphertext: note.encrypted_content,
+              metadata: parseEncryptionMetadata(note.encryption_metadata),
+            });
+            noteContent = decrypted.content;
+            loadState = 'idle';
+            return;
+          } catch {
+            loadState = 'error';
+            noteContent = null;
+            return;
+          }
+        }
+        noteContent = note.content || '';
+        loadState = 'idle';
+      })
+      .catch(() => {
+        if (fetchedForId === id) {
+          loadState = 'error';
+          noteContent = null;
+          fetchedForId = ''; // allow retry
+        }
+      });
+  });
+
+  // Read-only CodeMirror editor for note preview.
+  // editorView is a plain variable (not $state) to avoid reactive writes inside $effect.
+  let editorContainer: HTMLDivElement | undefined = $state();
+  let editorView: EditorView | undefined;
+
+  // Mount/destroy editor when container appears/disappears
+  $effect(() => {
+    if (!editorContainer) return;
+    const text = untrack(() => noteContent || '');
+    editorView = createCanvasEditor(editorContainer, {
+      doc: text,
+      readOnly: true,
+    });
+    return () => {
+      editorView?.destroy();
+      editorView = undefined;
+    };
+  });
 </script>
 
 <NodeResizer
@@ -71,7 +149,17 @@
     {#if data.subpath}
       <div class="canvas-file-subpath">{data.subpath}</div>
     {/if}
-    <div class="canvas-file-preview">Click to open note</div>
+    {#if noteId && noteContent !== null}
+      <div class="canvas-file-preview nodrag nowheel nopan" bind:this={editorContainer}></div>
+    {:else if noteId && loadState === 'locked'}
+      <div class="canvas-file-placeholder">Encrypted note is locked</div>
+    {:else if noteId && loadState === 'error'}
+      <div class="canvas-file-placeholder">Failed to load note</div>
+    {:else if noteId}
+      <div class="canvas-file-placeholder">Loading...</div>
+    {:else}
+      <div class="canvas-file-placeholder">Click to open note</div>
+    {/if}
   {/if}
 </div>
 
@@ -139,6 +227,20 @@
   }
 
   .canvas-file-preview {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .canvas-file-preview :global(.cm-editor) {
+    height: 100%;
+  }
+
+  .canvas-file-preview :global(.cm-scroller) {
+    overflow: auto;
+  }
+
+  .canvas-file-placeholder {
     font-size: 0.75rem;
     color: var(--color-muted-foreground);
     flex: 1;

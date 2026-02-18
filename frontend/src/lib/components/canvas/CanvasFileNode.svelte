@@ -5,8 +5,11 @@
   import { untrack } from 'svelte';
 
   import { getNote } from '$lib/api/notes';
+  import { updateNote } from '$lib/api/notes';
+  import type { Note } from '$lib/api/types';
   import { getApiBaseUrl } from '$lib/config';
-  import { createCanvasEditor } from '$lib/editor/codemirror';
+  import { createCanvasEditor, updateEditorContent } from '$lib/editor/codemirror';
+  import { extractDueDatesDetailed, extractWikilinks } from '$lib/editor/markdown';
   import * as encryption from '$lib/stores/encryption.svelte';
   import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
@@ -54,7 +57,10 @@
   // to avoid re-render loops with SvelteFlow.
   let noteContent = $state<string | null>(null);
   let loadState = $state<'idle' | 'loading' | 'locked' | 'error'>('idle');
+  let saveState = $state<'idle' | 'saving' | 'error'>('idle');
+  let loadedNote = $state<Note | null>(null);
   let fetchedForId = ''; // plain var, not reactive — prevents duplicate fetches
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {
     const id = noteId;
@@ -67,6 +73,7 @@
     fetchedForId = id;
     loadState = 'loading';
     noteContent = null;
+    loadedNote = null;
     getNote(id)
       .then((note) => {
         if (fetchedForId !== id) return;
@@ -82,6 +89,11 @@
               metadata: parseEncryptionMetadata(note.encryption_metadata),
             });
             noteContent = decrypted.content;
+            loadedNote = {
+              ...note,
+              title: decrypted.title || note.title,
+              content: decrypted.content,
+            };
             loadState = 'idle';
             return;
           } catch {
@@ -91,6 +103,7 @@
           }
         }
         noteContent = note.content || '';
+        loadedNote = note;
         loadState = 'idle';
       })
       .catch(() => {
@@ -106,6 +119,85 @@
   // editorView is a plain variable (not $state) to avoid reactive writes inside $effect.
   let editorContainer: HTMLDivElement | undefined = $state();
   let editorView: EditorView | undefined;
+  let suppressExternalSync = false;
+
+  function scheduleEmbeddedSave(content: string) {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      void persistEmbeddedNote(content);
+    }, 1200);
+  }
+
+  async function persistEmbeddedNote(content: string) {
+    const note = loadedNote;
+    if (!note) return;
+    if (content === note.content) return;
+    saveState = 'saving';
+
+    try {
+      const uniqueLinks = extractWikilinks(content);
+      let updated: Note;
+      if (note.content_encrypted === false) {
+        updated = await updateNote(
+          note.id,
+          {
+            title: note.title,
+            content,
+            folder_path: note.folder_path,
+            links: uniqueLinks.map((l) => ({ target_title: l.title })),
+            due_dates: extractDueDatesDetailed(content),
+          },
+          note.version
+        );
+      } else {
+        if (!encryption.isEncryptionUnlocked()) {
+          loadState = 'locked';
+          saveState = 'error';
+          return;
+        }
+        const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(
+          note.title,
+          content
+        );
+        updated = await updateNote(
+          note.id,
+          {
+            title: encryptedTitle ? '' : note.title,
+            encrypted_title: encryptedTitle,
+            title_encrypted: !!encryptedTitle,
+            encrypted_content: encryptedContent.ciphertext,
+            wrapped_dek: encryptedContent.metadata.wrapped_dek,
+            encryption_metadata: JSON.stringify(encryptedContent.metadata),
+            keywords,
+            folder_path: note.folder_path,
+            links: uniqueLinks.map((l) => ({ target_title: l.title })),
+            due_dates: extractDueDatesDetailed(content),
+          },
+          note.version
+        );
+      }
+
+      let processed = updated;
+      if (updated.content_encrypted && updated.encrypted_content) {
+        const decrypted = encryption.decryptNote(updated.encrypted_title || null, {
+          ciphertext: updated.encrypted_content,
+          metadata: parseEncryptionMetadata(updated.encryption_metadata),
+        });
+        processed = {
+          ...updated,
+          title: decrypted.title || updated.title,
+          content: decrypted.content,
+        };
+      }
+
+      loadedNote = processed;
+      noteContent = processed.content || '';
+      saveState = 'idle';
+      loadState = 'idle';
+    } catch {
+      saveState = 'error';
+    }
+  }
 
   // Mount/destroy editor when container appears/disappears
   $effect(() => {
@@ -113,12 +205,48 @@
     const text = untrack(() => noteContent || '');
     editorView = createCanvasEditor(editorContainer, {
       doc: text,
-      readOnly: true,
+      onChange: (content) => {
+        if (suppressExternalSync) return;
+        noteContent = content;
+        scheduleEmbeddedSave(content);
+      },
+      onToggleTaskByLine: (lineNumber, checked) => {
+        if (!editorView) return;
+        const line = editorView.state.doc.line(lineNumber);
+        const newText = checked
+          ? line.text.replace(/\[ \]/, '[x]')
+          : line.text.replace(/\[x\]/i, '[ ]');
+        editorView.dispatch({
+          changes: { from: line.from, to: line.to, insert: newText },
+        });
+      },
+      onSave: () => {
+        if (saveTimeout) {
+          clearTimeout(saveTimeout);
+          saveTimeout = null;
+        }
+        if (noteContent !== null) {
+          void persistEmbeddedNote(noteContent);
+        }
+      },
     });
     return () => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+        saveTimeout = null;
+      }
       editorView?.destroy();
       editorView = undefined;
     };
+  });
+
+  // Sync external updates (initial load, remote updates) into the editor.
+  $effect(() => {
+    if (!editorView) return;
+    const text = noteContent || '';
+    suppressExternalSync = true;
+    updateEditorContent(editorView, text);
+    suppressExternalSync = false;
   });
 </script>
 
@@ -151,6 +279,11 @@
     {/if}
     {#if noteId && noteContent !== null}
       <div class="canvas-file-preview nodrag nowheel nopan" bind:this={editorContainer}></div>
+      {#if saveState === 'saving'}
+        <div class="canvas-file-meta">Saving...</div>
+      {:else if saveState === 'error'}
+        <div class="canvas-file-meta">Save failed</div>
+      {/if}
     {:else if noteId && loadState === 'locked'}
       <div class="canvas-file-placeholder">Encrypted note is locked</div>
     {:else if noteId && loadState === 'error'}
@@ -245,6 +378,12 @@
     color: var(--color-muted-foreground);
     flex: 1;
     overflow: hidden;
+  }
+
+  .canvas-file-meta {
+    font-size: 0.7rem;
+    color: var(--color-muted-foreground);
+    text-align: right;
   }
 
   .canvas-file-image {

@@ -151,26 +151,40 @@
   // Get the note title
   const noteTitle = $derived(notes.getCurrentNote()?.title ?? 'Canvas');
 
+  // Mirror real note save state from notes store for toolbar save button/status.
+  $effect(() => {
+    const isDirty = notes.getIsDirty();
+    const autoSaveStatus = notes.getAutoSaveStatus();
+    if (!isDirty) {
+      saveStatus = 'saved';
+      return;
+    }
+    if (autoSaveStatus === 'saving' || autoSaveStatus === 'pending') {
+      saveStatus = 'saving';
+      return;
+    }
+    saveStatus = 'unsaved';
+  });
+
   // Debounced save
   function scheduleSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
-    saveStatus = 'unsaved';
     saveTimeout = setTimeout(() => {
-      saveCanvas();
+      saveCanvasSnapshot();
+      notes.scheduleAutoSave();
     }, 3000);
   }
 
-  async function saveCanvas() {
-    saveStatus = 'saving';
+  function saveCanvasSnapshot() {
     try {
       const data = flowToCanvas(flowNodes, flowEdges);
       const json = serializeCanvas(data);
       lastSavedContent = json;
       notes.updateCurrentNoteContent(json);
-      saveStatus = 'saved';
+      return true;
     } catch (err) {
       console.error('Failed to save canvas:', err);
-      saveStatus = 'unsaved';
+      return false;
     }
   }
 
@@ -420,8 +434,12 @@
   }
 
   function handleManualSave() {
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveCanvas();
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+      saveTimeout = null;
+    }
+    if (!saveCanvasSnapshot()) return;
+    void notes.saveNote();
   }
 
   // Listen for custom events bubbling up from CanvasTextNode CodeMirror instances

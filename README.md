@@ -164,8 +164,16 @@ Full API documentation: `docs/api.md`.
 - `make test-frontend`: frontend unit tests
 - `make test-e2e`: Playwright tests
 - `make quality`: format/lint/typecheck checks
+- `make check-policy`: architecture/security guardrails (layering, Svelte 5-only imports, auth-storage checks)
 
 Full list: `docs/environment-variables.md`.
+
+## Quality Guardrails
+
+- Backend follows strict layering: `api -> service -> db` (enforced by `scripts/check-layer-violations.sh`).
+- Frontend disallows Svelte 4 store imports in app code (`scripts/check-svelte4-imports.sh`).
+- Auth token persistence in `localStorage` is blocked by policy checks (`scripts/check-security-patterns.sh`).
+- CI runs `ci.yml`, `quality.yml`, and `security.yml` on pushes/PRs.
 
 ---
 

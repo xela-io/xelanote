@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -58,12 +59,15 @@ func TestPreFilterByJaccard(t *testing.T) {
 func TestValidateGeneratedRecipe_ClampsAndTrims(t *testing.T) {
 	longName := strings.Repeat("a", 250)
 	longUnit := strings.Repeat("b", 80)
+	longGroup := strings.Repeat("g", 130)
 	badDifficulty := "impossible"
+	source := "  https://example.com/recipe  "
 	r := &GeneratedRecipe{
 		Servings:   0,
 		Difficulty: &badDifficulty,
+		SourceURL:  &source,
 		Ingredients: []GeneratedIngredient{
-			{Name: "  name  ", Unit: &longUnit},
+			{Name: "  name  ", Unit: &longUnit, GroupName: &longGroup},
 			{Name: longName},
 		},
 	}
@@ -81,8 +85,14 @@ func TestValidateGeneratedRecipe_ClampsAndTrims(t *testing.T) {
 	if r.Ingredients[0].Unit == nil || len(*r.Ingredients[0].Unit) != 50 {
 		t.Fatalf("expected trimmed unit length 50")
 	}
+	if r.Ingredients[0].GroupName == nil || len(*r.Ingredients[0].GroupName) != 100 {
+		t.Fatalf("expected trimmed group_name length 100")
+	}
 	if len(r.Ingredients[1].Name) != 200 {
 		t.Fatalf("expected name trimmed to 200")
+	}
+	if r.SourceURL == nil || *r.SourceURL != "https://example.com/recipe" {
+		t.Fatalf("expected trimmed source_url, got %+v", r.SourceURL)
 	}
 }
 
@@ -103,9 +113,10 @@ func TestSaveGeneratedRecipe_ValidationsAndDefaults(t *testing.T) {
 		Servings:     0,
 		Difficulty:   func() *string { v := "invalid"; return &v }(),
 		Ingredients: []GeneratedIngredient{
-			{Name: "  sugar ", Scalable: true},
+			{Name: "  sugar ", Scalable: true, GroupName: func() *string { v := "Teig"; return &v }()},
 			{Name: "   "},
 		},
+		SourceURL: func() *string { v := "https://example.com/cake"; return &v }(),
 	}
 	note, err := service.SaveGeneratedRecipe(user.ID, req)
 	if err != nil {
@@ -125,6 +136,9 @@ func TestSaveGeneratedRecipe_ValidationsAndDefaults(t *testing.T) {
 	if meta.Difficulty != nil {
 		t.Fatalf("expected difficulty nil")
 	}
+	if meta.SourceURL == nil || *meta.SourceURL != "https://example.com/cake" {
+		t.Fatalf("expected source_url to be set")
+	}
 
 	ingredients, err := database.GetRecipeIngredients(note.ID)
 	if err != nil {
@@ -132,5 +146,15 @@ func TestSaveGeneratedRecipe_ValidationsAndDefaults(t *testing.T) {
 	}
 	if len(ingredients) != 1 || ingredients[0].Name != "sugar" {
 		t.Fatalf("unexpected ingredients: %+v", ingredients)
+	}
+	if ingredients[0].GroupName == nil || *ingredients[0].GroupName != "Teig" {
+		t.Fatalf("expected ingredient group_name to be set")
+	}
+}
+
+func TestParseExtractedRecipe_NoRecipeFoundSentinel(t *testing.T) {
+	_, err := parseExtractedRecipe(`{"error":"no_recipe_found"}`)
+	if err == nil || !errors.Is(err, ErrNoRecipeFound) {
+		t.Fatalf("expected ErrNoRecipeFound, got: %v", err)
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/xela-io/xelanote/internal/htmlutil"
 	"github.com/xela-io/xelanote/internal/llm"
 	"github.com/xela-io/xelanote/internal/service"
 	// WebP decoder (requires golang.org/x/image)
@@ -29,6 +30,11 @@ type byIngredientsRequest struct {
 	Ingredients  []string `json:"ingredients"`
 	CollectionID *int     `json:"collection_id,omitempty"`
 	Locale       string   `json:"locale"`
+}
+
+type importRecipeFromURLRequest struct {
+	URL    string `json:"url"`
+	Locale string `json:"locale"`
 }
 
 // --- Handlers ---
@@ -173,6 +179,68 @@ func (s *Server) extractIngredientsFromPhoto(w http.ResponseWriter, r *http.Requ
 	})
 }
 
+func (s *Server) importRecipeFromImage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	imageData, decodedMime, locale, err := parseImageUpload(r)
+	if err != nil {
+		var statusErr interface{ StatusCode() int }
+		if errors.As(err, &statusErr) {
+			respondError(w, statusErr.StatusCode(), err.Error())
+			return
+		}
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	recipe, err := s.recipeSuggestionService.ExtractRecipeFromImage(
+		r.Context(), userID, imageData, decodedMime, locale,
+	)
+	if err != nil {
+		s.handleSuggestionError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, recipe)
+}
+
+func (s *Server) importRecipeFromURL(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req importRecipeFromURLRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if strings.TrimSpace(req.URL) == "" {
+		respondError(w, http.StatusBadRequest, "url is required")
+		return
+	}
+
+	recipe, err := s.recipeSuggestionService.ExtractRecipeFromURL(r.Context(), userID, req.URL, req.Locale)
+	if err != nil {
+		switch {
+		case errors.Is(err, htmlutil.ErrInvalidURL), errors.Is(err, htmlutil.ErrDisallowedAddress):
+			respondError(w, http.StatusBadRequest, "invalid or disallowed URL")
+		case errors.Is(err, htmlutil.ErrFetchFailed):
+			respondError(w, http.StatusBadGateway, "failed to fetch recipe URL")
+		default:
+			s.handleSuggestionError(w, err)
+		}
+		return
+	}
+
+	respondJSON(w, http.StatusOK, recipe)
+}
+
 // handleSuggestionError maps service-layer errors to appropriate HTTP status codes.
 func (s *Server) handleSuggestionError(w http.ResponseWriter, err error) {
 	switch {
@@ -180,6 +248,8 @@ func (s *Server) handleSuggestionError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusFailedDependency, "no AI provider configured - add API key in settings")
 	case errors.Is(err, llm.ErrVisionNotAvailable):
 		respondError(w, http.StatusFailedDependency, "no vision-capable AI provider available")
+	case errors.Is(err, service.ErrNoRecipeFound):
+		respondError(w, http.StatusUnprocessableEntity, "no recipe found in input")
 	case errors.Is(err, service.ErrRecipeEncrypted):
 		respondError(w, http.StatusForbidden, "not available for encrypted recipes")
 	default:
@@ -191,6 +261,42 @@ func (s *Server) handleSuggestionError(w http.ResponseWriter, err error) {
 			respondError(w, http.StatusInternalServerError, "failed to process request")
 		}
 	}
+}
+
+type requestStatusError struct {
+	code int
+	msg  string
+}
+
+func (e requestStatusError) Error() string  { return e.msg }
+func (e requestStatusError) StatusCode() int { return e.code }
+
+func parseImageUpload(r *http.Request) ([]byte, string, string, error) {
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		return nil, "", "", requestStatusError{code: http.StatusRequestEntityTooLarge, msg: "file too large (max 5MB)"}
+	}
+
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		return nil, "", "", requestStatusError{code: http.StatusBadRequest, msg: "image file is required"}
+	}
+	defer file.Close()
+
+	imageData, err := io.ReadAll(io.LimitReader(file, 5<<20+1))
+	if err != nil {
+		return nil, "", "", requestStatusError{code: http.StatusInternalServerError, msg: "failed to read image"}
+	}
+	if len(imageData) > 5<<20 {
+		return nil, "", "", requestStatusError{code: http.StatusRequestEntityTooLarge, msg: "image exceeds 5MB limit"}
+	}
+
+	_, format, err := image.Decode(bytes.NewReader(imageData))
+	if err != nil {
+		return nil, "", "", requestStatusError{code: http.StatusBadRequest, msg: "invalid image file: could not decode"}
+	}
+
+	decodedMime := "image/" + format
+	return imageData, decodedMime, r.FormValue("locale"), nil
 }
 
 // isUpstreamError checks if an error message indicates an upstream LLM failure.

@@ -406,6 +406,96 @@ Rules:
 JSON:`, lang)
 }
 
+// BuildRecipeExtractionFromImagePrompt creates a prompt for extracting a full recipe from an image.
+func BuildRecipeExtractionFromImagePrompt(locale string) string {
+	lang := "English"
+	if locale == "de" {
+		lang = "German"
+	}
+
+	return fmt.Sprintf(`Extract a complete recipe from this image (photo, screenshot, or scan).
+
+Return ONLY valid JSON using exactly one of these shapes:
+1) A recipe object
+2) {"error":"no_recipe_found"} if the image does not contain a usable recipe
+
+Recipe object schema:
+{
+  "title": "string",
+  "servings": integer (1-999),
+  "prep_time_minutes": integer or null,
+  "cook_time_minutes": integer or null,
+  "difficulty": "easy" or "medium" or "hard" or null,
+  "source_url": null,
+  "ingredients": [
+    {
+      "name": "string (max 200 chars)",
+      "amount": number or null,
+      "unit": "string or null (max 50 chars)",
+      "group_name": "string or null (max 100 chars)",
+      "scalable": true,
+      "optional": false
+    }
+  ],
+  "instructions": "Markdown with numbered steps"
+}
+
+Rules:
+1. Write title, ingredients, and instructions in %s
+2. Keep only recipe-relevant content, remove ads or unrelated text
+3. If servings are missing, choose a reasonable default
+4. If difficulty is unclear, set it to null
+5. Return JSON only
+
+JSON:`, lang)
+}
+
+// BuildRecipeExtractionFromTextPrompt creates a prompt for extracting a full recipe from webpage text.
+func BuildRecipeExtractionFromTextPrompt(pageText, locale string) string {
+	lang := "English"
+	if locale == "de" {
+		lang = "German"
+	}
+
+	return fmt.Sprintf(`Extract the primary recipe from this webpage text.
+
+Return ONLY valid JSON using exactly one of these shapes:
+1) A recipe object
+2) {"error":"no_recipe_found"} if no usable recipe is present
+
+Recipe object schema:
+{
+  "title": "string",
+  "servings": integer (1-999),
+  "prep_time_minutes": integer or null,
+  "cook_time_minutes": integer or null,
+  "difficulty": "easy" or "medium" or "hard" or null,
+  "source_url": null,
+  "ingredients": [
+    {
+      "name": "string (max 200 chars)",
+      "amount": number or null,
+      "unit": "string or null (max 50 chars)",
+      "group_name": "string or null (max 100 chars)",
+      "scalable": true,
+      "optional": false
+    }
+  ],
+  "instructions": "Markdown with numbered steps"
+}
+
+Rules:
+1. Extract only one coherent recipe (prefer the main one)
+2. Ignore comments, ads, navigation, and unrelated page fragments
+3. Write title, ingredients, and instructions in %s
+4. Return JSON only
+
+Webpage text:
+%s
+
+JSON:`, lang, pageText)
+}
+
 // BuildSpellCheckPrompt creates the prompt for spell checking.
 // language is "de" for German or "en" for English.
 func BuildSpellCheckPrompt(text string, language string) string {

@@ -55,6 +55,8 @@ func (s *Server) registerRecipeRoutes(r chi.Router) {
 			r.With(rateLimitMiddleware(s.llmLimiter)).Post("/by-ingredients", s.suggestByIngredients)
 			r.With(rateLimitMiddleware(s.llmLimiter)).Post("/save-generated", s.saveGeneratedRecipe)
 			r.With(rateLimitMiddleware(s.llmLimiter)).Post("/extract-ingredients", s.extractIngredientsFromPhoto)
+			r.With(rateLimitMiddleware(s.llmLimiter)).Post("/import-from-image", s.importRecipeFromImage)
+			r.With(rateLimitMiddleware(s.llmLimiter)).Post("/import-from-url", s.importRecipeFromURL)
 		})
 	})
 }

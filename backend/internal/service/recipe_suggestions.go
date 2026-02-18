@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/htmlutil"
 	"github.com/xela-io/xelanote/internal/llm"
 )
 
@@ -25,6 +26,8 @@ var modelTokenBudgets = map[string]int{
 	"claude": 15000,
 	"gemini": 12000,
 }
+
+var ErrNoRecipeFound = errors.New("no recipe found")
 
 // SimilarRecipeResult represents a single similar recipe found by the LLM.
 type SimilarRecipeResult struct {
@@ -50,17 +53,19 @@ type GeneratedRecipe struct {
 	PrepTimeMinutes *int                  `json:"prep_time_minutes"`
 	CookTimeMinutes *int                  `json:"cook_time_minutes"`
 	Difficulty      *string               `json:"difficulty"`
+	SourceURL       *string               `json:"source_url,omitempty"`
 	Ingredients     []GeneratedIngredient `json:"ingredients"`
 	Instructions    string                `json:"instructions"`
 }
 
 // GeneratedIngredient represents an ingredient in a generated recipe.
 type GeneratedIngredient struct {
-	Name     string   `json:"name"`
-	Amount   *float64 `json:"amount"`
-	Unit     *string  `json:"unit"`
-	Scalable bool     `json:"scalable"`
-	Optional bool     `json:"optional"`
+	Name      string   `json:"name"`
+	Amount    *float64 `json:"amount"`
+	Unit      *string  `json:"unit"`
+	GroupName *string  `json:"group_name,omitempty"`
+	Scalable  bool     `json:"scalable"`
+	Optional  bool     `json:"optional"`
 }
 
 // IngredientSuggestionResult combines matches and generated recipes.
@@ -322,6 +327,70 @@ func (s *RecipeSuggestionService) ExtractIngredientsFromPhoto(
 	return ingredients, nil
 }
 
+// ExtractRecipeFromImage uses a vision model to extract a full recipe from an image.
+func (s *RecipeSuggestionService) ExtractRecipeFromImage(
+	ctx context.Context, userID int,
+	imageData []byte, mimeType string, locale string,
+) (*GeneratedRecipe, error) {
+	locale = normalizeLocale(locale)
+
+	visionProvider, err := s.router.GetVisionProvider(ctx, userID)
+	if err != nil {
+		if errors.Is(err, llm.ErrVisionNotAvailable) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("failed to get vision provider: %w", err)
+	}
+
+	prompt := llm.BuildRecipeExtractionFromImagePrompt(locale)
+	response, err := visionProvider.GenerateWithImage(ctx, prompt, imageData, mimeType, 4000)
+	if err != nil {
+		return nil, fmt.Errorf("vision API call failed: %w", err)
+	}
+
+	recipe, err := parseExtractedRecipe(response)
+	if err != nil {
+		return nil, err
+	}
+	return recipe, nil
+}
+
+// ExtractRecipeFromURL fetches webpage text and extracts a full recipe with an LLM.
+func (s *RecipeSuggestionService) ExtractRecipeFromURL(
+	ctx context.Context, userID int, rawURL string, locale string,
+) (*GeneratedRecipe, error) {
+	locale = normalizeLocale(locale)
+
+	pageText, err := htmlutil.FetchAndStripHTML(ctx, rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	provider, err := s.router.GetAnyProvider(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	prompt := llm.BuildRecipeExtractionFromTextPrompt(pageText, locale)
+	response, err := provider.Generate(ctx, prompt, 4000)
+	if err != nil {
+		return nil, fmt.Errorf("LLM generation failed: %w", err)
+	}
+
+	recipe, err := parseExtractedRecipe(response)
+	if err != nil {
+		return nil, err
+	}
+
+	normalizedURL := strings.TrimSpace(rawURL)
+	if normalizedURL != "" {
+		recipe.SourceURL = &normalizedURL
+	}
+	validateGeneratedRecipe(recipe)
+
+	return recipe, nil
+}
+
 // SaveGeneratedRecipe saves a generated recipe as a new note with metadata and ingredients.
 func (s *RecipeSuggestionService) SaveGeneratedRecipe(
 	userID int, req SaveGeneratedRecipeRequest,
@@ -355,6 +424,7 @@ func (s *RecipeSuggestionService) SaveGeneratedRecipe(
 		PrepTimeMinutes: req.PrepTimeMinutes,
 		CookTimeMinutes: req.CookTimeMinutes,
 		Difficulty:      req.Difficulty,
+		SourceURL:       req.SourceURL,
 	}
 
 	ingredients := make([]db.RecipeIngredient, 0, len(req.Ingredients))
@@ -364,11 +434,12 @@ func (s *RecipeSuggestionService) SaveGeneratedRecipe(
 			continue
 		}
 		ingredients = append(ingredients, db.RecipeIngredient{
-			Name:     name,
-			Amount:   ing.Amount,
-			Unit:     ing.Unit,
-			Optional: ing.Optional,
-			Scalable: ing.Scalable,
+			Name:      name,
+			Amount:    ing.Amount,
+			Unit:      ing.Unit,
+			GroupName: ing.GroupName,
+			Optional:  ing.Optional,
+			Scalable:  ing.Scalable,
 		})
 	}
 
@@ -386,6 +457,7 @@ type SaveGeneratedRecipeRequest struct {
 	PrepTimeMinutes *int                  `json:"prep_time_minutes"`
 	CookTimeMinutes *int                  `json:"cook_time_minutes"`
 	Difficulty      *string               `json:"difficulty"`
+	SourceURL       *string               `json:"source_url,omitempty"`
 	Ingredients     []GeneratedIngredient `json:"ingredients"`
 	FolderPath      string                `json:"folder_path"`
 }
@@ -476,10 +548,23 @@ func validateGeneratedRecipe(r *GeneratedRecipe) {
 	if r.Servings > 999 {
 		r.Servings = 999
 	}
+	r.Title = strings.TrimSpace(r.Title)
+	r.Instructions = strings.TrimSpace(r.Instructions)
 	if r.Difficulty != nil {
 		d := *r.Difficulty
 		if d != "easy" && d != "medium" && d != "hard" {
 			r.Difficulty = nil
+		}
+	}
+	if r.SourceURL != nil {
+		trimmed := strings.TrimSpace(*r.SourceURL)
+		if trimmed == "" {
+			r.SourceURL = nil
+		} else {
+			if len(trimmed) > 2048 {
+				trimmed = trimmed[:2048]
+			}
+			r.SourceURL = &trimmed
 		}
 	}
 	for i := range r.Ingredients {
@@ -494,5 +579,37 @@ func validateGeneratedRecipe(r *GeneratedRecipe) {
 			}
 			r.Ingredients[i].Unit = &trimmed
 		}
+		if r.Ingredients[i].GroupName != nil {
+			trimmed := strings.TrimSpace(*r.Ingredients[i].GroupName)
+			if trimmed == "" {
+				r.Ingredients[i].GroupName = nil
+			} else {
+				if len(trimmed) > 100 {
+					trimmed = trimmed[:100]
+				}
+				r.Ingredients[i].GroupName = &trimmed
+			}
+		}
 	}
+}
+
+func parseExtractedRecipe(rawResponse string) (*GeneratedRecipe, error) {
+	cleaned := llm.CleanMarkdownCodeBlock(rawResponse)
+
+	var errResp struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(cleaned), &errResp); err == nil && errResp.Error == "no_recipe_found" {
+		return nil, ErrNoRecipeFound
+	}
+
+	var recipe GeneratedRecipe
+	if err := json.Unmarshal([]byte(cleaned), &recipe); err != nil {
+		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
+	}
+	validateGeneratedRecipe(&recipe)
+	if recipe.Title == "" || recipe.Instructions == "" || len(recipe.Ingredients) == 0 {
+		return nil, ErrNoRecipeFound
+	}
+	return &recipe, nil
 }

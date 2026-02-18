@@ -177,10 +177,10 @@ func (db *DB) CreateRecipeNoteWithIngredients(
 	// Create metadata
 	_, err = tx.Exec(`
 		INSERT INTO recipe_metadata (note_id, user_id, servings, prep_time_minutes,
-		    cook_time_minutes, difficulty)
-		VALUES (?, ?, ?, ?, ?, ?)
+		    cook_time_minutes, difficulty, source_url)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`, id, userID, metadata.Servings, metadata.PrepTimeMinutes,
-		metadata.CookTimeMinutes, metadata.Difficulty)
+		metadata.CookTimeMinutes, metadata.Difficulty, metadata.SourceURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create recipe metadata: %w", err)
 	}
@@ -203,9 +203,9 @@ func (db *DB) CreateRecipeNoteWithIngredients(
 			unit = &trimmed
 		}
 		_, err = tx.Exec(`INSERT INTO recipe_ingredients
-			(note_id, user_id, amount, unit, name, display_order, optional, scalable)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			id, userID, ing.Amount, unit, name, i,
+			(note_id, user_id, amount, unit, name, group_name, display_order, optional, scalable)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			id, userID, ing.Amount, unit, name, ing.GroupName, i,
 			boolToInt(ing.Optional), boolToInt(ing.Scalable))
 		if err != nil {
 			return nil, fmt.Errorf("insert ingredient %d: %w", i, err)

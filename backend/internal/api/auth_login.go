@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -64,49 +63,9 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		// Clear lockout counter on successful login
 		s.accountLockout.RecordSuccess(req.UsernameOrEmail)
 
-		// Get user info for response
-		user, err := s.authService.GetUserByUsernameOrEmail(req.UsernameOrEmail)
-		if err != nil {
-			respondError(w, http.StatusInternalServerError, "failed to retrieve user information")
+		if !s.respondLoginSuccess(w, r, req.UsernameOrEmail, accessToken, refreshToken) {
 			return
 		}
-
-		// Fetch encryption salt (or generate if missing)
-		salt, err := s.getOrGenerateUserSalt(user.ID)
-		if err != nil {
-			respondError(w, http.StatusInternalServerError, "failed to fetch encryption salt")
-			return
-		}
-
-		// Set cookies for cookie-based auth (only after successful 2FA)
-		setAccessTokenCookie(w, accessToken)
-		setRefreshTokenCookie(w, refreshToken)
-
-		// Generate and set CSRF token
-		csrfToken, err := generateCSRFToken()
-		if err != nil {
-			s.logger().Error("failed to generate CSRF token", slog.Any("error", err))
-			respondError(w, http.StatusInternalServerError, "internal server error")
-			return
-		}
-		setCSRFTokenCookie(w, csrfToken)
-
-		// Return user info and encryption salt
-		// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
-		resp := AuthResponse{
-			EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
-			User: UserResponse{
-				ID:       user.ID,
-				Username: user.Username,
-				Email:    user.Email,
-				IsAdmin:  user.IsAdmin,
-			},
-		}
-		if isDesktopClient(r) {
-			resp.AccessToken = accessToken
-			resp.RefreshToken = refreshToken
-		}
-		respondJSON(w, http.StatusOK, resp)
 		return
 	}
 
@@ -160,47 +119,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		slog.String("event", "login_success"),
 		securityIPAttr(r))
 
-	// Get user info for response
-	user, err := s.authService.GetUserByUsernameOrEmail(req.UsernameOrEmail)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, "failed to retrieve user information")
+	if !s.respondLoginSuccess(w, r, req.UsernameOrEmail, accessToken, refreshToken) {
 		return
 	}
-
-	// Fetch encryption salt (or generate if missing)
-	salt, err := s.getOrGenerateUserSalt(user.ID)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, "failed to fetch encryption salt")
-		return
-	}
-
-	// Set cookies for cookie-based auth
-	setAccessTokenCookie(w, accessToken)
-	setRefreshTokenCookie(w, refreshToken)
-
-	// Generate and set CSRF token
-	csrfToken, err := generateCSRFToken()
-	if err != nil {
-		s.logger().Error("failed to generate CSRF token", slog.Any("error", err))
-		respondError(w, http.StatusInternalServerError, "internal server error")
-		return
-	}
-	setCSRFTokenCookie(w, csrfToken)
-
-	// Return user info and encryption salt
-	// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
-	resp := AuthResponse{
-		EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
-		User: UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			IsAdmin:  user.IsAdmin,
-		},
-	}
-	if isDesktopClient(r) {
-		resp.AccessToken = accessToken
-		resp.RefreshToken = refreshToken
-	}
-	respondJSON(w, http.StatusOK, resp)
 }

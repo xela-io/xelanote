@@ -866,6 +866,11 @@
     }
   },
   "component": {
+    "canvas": {
+      "toolbar": {
+        "export_canvas": "Als .canvas exportieren"
+      }
+    },
     "move_dialog": {
       "title": "Notiz verschieben",
       "current_folder": "Aktueller Ordner",

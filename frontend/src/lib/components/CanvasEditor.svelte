@@ -10,18 +10,31 @@
     Panel,
     SvelteFlow,
   } from '@xyflow/svelte';
-  import { ArrowLeft, Download } from 'lucide-svelte';
+  import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
   import type { Note } from '$lib/api/types';
   import { uploadImage } from '$lib/api/uploads';
+  import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import CanvasContextMenu from '$lib/components/canvas/CanvasContextMenu.svelte';
+  import CanvasEditorToolbar from '$lib/components/canvas/CanvasEditorToolbar.svelte';
   import CanvasFileNode from '$lib/components/canvas/CanvasFileNode.svelte';
   import CanvasGroupNode from '$lib/components/canvas/CanvasGroupNode.svelte';
   import CanvasLinkNode from '$lib/components/canvas/CanvasLinkNode.svelte';
+  import CanvasMoreMenu from '$lib/components/canvas/CanvasMoreMenu.svelte';
   import CanvasNotePicker from '$lib/components/canvas/CanvasNotePicker.svelte';
   import CanvasTextNode from '$lib/components/canvas/CanvasTextNode.svelte';
   import CanvasToolbar from '$lib/components/canvas/CanvasToolbar.svelte';
+  import {
+    type DialogLoaderState,
+    loadMoveToFolderDialog,
+    loadShareDialog,
+    loadVersionHistoryDialog,
+    maybeLoadDialog,
+  } from '$lib/editor/dialog-loaders';
+  import { handleTitleInput as handleTitleInputAction } from '$lib/editor/editor-actions';
+  import { handleDeleteNote } from '$lib/editor/note-actions';
+  import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as auth from '$lib/stores/auth.svelte';
   import {
     canvasToFlow,
@@ -34,7 +47,16 @@
     parseCanvas,
     serializeCanvas,
   } from '$lib/stores/canvas.svelte';
+  import * as dialog from '$lib/stores/dialog.svelte';
+  import * as encryption from '$lib/stores/encryption.svelte';
+  import * as focusMode from '$lib/stores/focus-mode.svelte';
+  import * as history from '$lib/stores/history.svelte';
+  import * as network from '$lib/stores/network.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
+  import * as trash from '$lib/stores/trash.svelte';
+  import * as tree from '$lib/stores/tree.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
 
   const { noteId }: { noteId: string } = $props();
 
@@ -54,7 +76,6 @@
   let saveStatus = $state<'saved' | 'saving' | 'unsaved'>('saved');
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let lastSavedContent = '';
-  const zoom = $state(1);
 
   // Viewport state for coordinate conversion (bound to SvelteFlow)
   let viewport = $state<{ x: number; y: number; zoom: number } | undefined>(undefined);
@@ -70,6 +91,32 @@
   // Note picker state
   let notePickerOpen = $state(false);
   let pendingFileNodePosition = $state<{ x: number; y: number } | null>(null);
+
+  // More menu & dialog state
+  let showMoreMenu = $state(false);
+  let moreMenuTriggerRect = $state<DOMRect | null>(null);
+  let showMoveDialog = $state(false);
+  let showVersionHistory = $state(false);
+  let showShareDialog = $state(false);
+  let uploading = $state(false);
+  let fileInput: HTMLInputElement;
+
+  // Lazy-loaded dialog state
+  let dialogLoaders = $state<DialogLoaderState>({});
+  const setDialogLoaders = (s: DialogLoaderState) => {
+    dialogLoaders = s;
+  };
+
+  // Trigger lazy loading when dialogs are requested
+  $effect(() => {
+    maybeLoadDialog(showMoveDialog, dialogLoaders, loadMoveToFolderDialog, setDialogLoaders);
+  });
+  $effect(() => {
+    maybeLoadDialog(showVersionHistory, dialogLoaders, loadVersionHistoryDialog, setDialogLoaders);
+  });
+  $effect(() => {
+    maybeLoadDialog(showShareDialog, dialogLoaders, loadShareDialog, setDialogLoaders);
+  });
 
   // Custom node types
   const nodeTypes: NodeTypes = {
@@ -164,7 +211,7 @@
     };
   }
 
-  // Toolbar actions
+  // Toolbar actions (floating bottom toolbar)
   function handleToolbarAction(action: string) {
     const centerX = Math.random() * 400 + 100;
     const centerY = Math.random() * 300 + 100;
@@ -358,31 +405,100 @@
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  // --- Top toolbar handlers ---
+
+  function handleTitleInput(e: Event) {
+    handleTitleInputAction(e, {
+      updateTitle: notes.updateCurrentNoteTitle,
+      scheduleAutoSave: notes.scheduleAutoSave,
+    });
+  }
+
+  function handleManualSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveCanvas();
+  }
+
+  function handleUploadButtonClick() {
+    fileInput.click();
+  }
+
+  function handleFileInputChange(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
+
+    uploading = true;
+    // Place uploaded images at center of the visible canvas area
+    const rect = containerEl?.getBoundingClientRect();
+    const centerX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const centerY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+    handleImageFiles(files, centerX, centerY).finally(() => {
+      uploading = false;
+    });
+    input.value = '';
+  }
+
+  function openMoreMenu(rect: DOMRect) {
+    moreMenuTriggerRect = rect;
+    showMoreMenu = true;
+  }
+
+  async function handleDelete() {
+    await handleDeleteNote({
+      goto,
+      confirm: dialog.confirm,
+      createDeleteCommand: (snapshot) => new DeleteCommand(snapshot),
+      executeCommand: history.executeCommand,
+      undoCommand: history.undo,
+      getCurrentNote: () => notes.getCurrentNote(),
+      loadNotes: notes.loadNotes,
+      loadTree: tree.loadTree,
+      clearCurrentNote: notes.clearCurrentNote,
+      incrementTrash: trash.incrementTrashCount,
+      decrementTrash: trash.decrementTrashCount,
+      toast,
+      strings: {
+        confirmTitle: $_('dialog.confirm_title'),
+        deleteConfirmMessage: $_('dialog.delete_note_confirm'),
+        deleteConfirmText: $_('common.delete'),
+        cancelText: $_('dialog.cancel'),
+        deleteError: $_('component.editor.error_delete'),
+        noteTrashed: $_('component.editor.note_trashed'),
+        noteRestored: $_('component.editor.note_restored'),
+        restoreError: $_('component.editor.error_restore'),
+      },
+    });
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} onpaste={handlePaste} />
 
 <div class="canvas-editor">
-  <!-- Header -->
-  <div class="canvas-header">
-    <button class="canvas-header-btn" onclick={() => goto('/')} title="Back">
-      <ArrowLeft size={16} />
-    </button>
-    <h1 class="canvas-title">{noteTitle}</h1>
-    <div class="canvas-header-right">
-      <span
-        class="canvas-save-status"
-        class:saving={saveStatus === 'saving'}
-        class:unsaved={saveStatus === 'unsaved'}
-      >
-        {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'unsaved' ? 'Unsaved' : ''}
-      </span>
-      <span class="canvas-zoom">{Math.round(zoom * 100)}%</span>
-      <button class="canvas-header-btn" onclick={handleExport} title="Export .canvas">
-        <Download size={16} />
-      </button>
-    </div>
-  </div>
+  <!-- Toolbar -->
+  {#if notes.getCurrentNote()}
+    <CanvasEditorToolbar
+      note={notes.getCurrentNote()}
+      isMobile={ui.getIsMobile()}
+      {saveStatus}
+      {uploading}
+      {showMoreMenu}
+      syncing={getIsSyncing()}
+      syncProgress={getSyncProgress()}
+      pendingCount={getPendingCount()}
+      isOnline={network.getIsOnline()}
+      isEncryptionUnlocked={encryption.isEncryptionUnlocked()}
+      focusModeActive={focusMode.isActive()}
+      onTitleInput={handleTitleInput}
+      onOpenSidebar={() => ui.setSidebarOpen(true)}
+      onSave={handleManualSave}
+      onUpload={handleUploadButtonClick}
+      onShowHistory={() => (showVersionHistory = true)}
+      onToggleFocus={focusMode.toggle}
+      onOpenMoreMenu={openMoreMenu}
+    />
+  {/if}
 
   <!-- Canvas -->
   <div
@@ -442,6 +558,67 @@
   />
 </div>
 
+<!-- More Menu (rendered outside .canvas-editor for proper z-index) -->
+{#if showMoreMenu}
+  <CanvasMoreMenu
+    onExport={handleExport}
+    onShare={() => (showShareDialog = true)}
+    onMove={() => (showMoveDialog = true)}
+    onDelete={handleDelete}
+    onClose={() => (showMoreMenu = false)}
+    isEncrypted={notes.getCurrentNote()?.content_encrypted ?? false}
+    triggerRect={moreMenuTriggerRect}
+  />
+{/if}
+
+<!-- Move to folder dialog -->
+{#if showMoveDialog && notes.getCurrentNote()}
+  {#if dialogLoaders.moveToFolderDialog}
+    {@const MoveToFolderDialog = dialogLoaders.moveToFolderDialog}
+    <MoveToFolderDialog
+      noteId={notes.getCurrentNote()!.id}
+      currentFolder={notes.getCurrentNote()!.folder_path}
+      onClose={() => (showMoveDialog = false)}
+    />
+  {/if}
+{/if}
+
+<!-- Version History Dialog -->
+{#if showVersionHistory && notes.getCurrentNote() && dialogLoaders.versionHistoryDialog}
+  {@const VersionHistoryDialog = dialogLoaders.versionHistoryDialog}
+  <VersionHistoryDialog
+    noteId={notes.getCurrentNote()!.id}
+    noteTitle={notes.getCurrentNote()!.title}
+    currentVersion={notes.getCurrentNote()!.version}
+    currentContent={notes.getCurrentNote()!.content}
+    onClose={() => (showVersionHistory = false)}
+    onRestored={async () => {
+      await notes.loadNote(noteId);
+      toast.success($_('component.editor.version_restored'));
+    }}
+  />
+{/if}
+
+<!-- Share Dialog (lazy-loaded) -->
+{#if showShareDialog && notes.getCurrentNote() && dialogLoaders.shareDialog}
+  <dialogLoaders.shareDialog
+    resourceType="note"
+    resourceId={notes.getCurrentNote()!.id}
+    isEncrypted={notes.getCurrentNote()!.content_encrypted ?? false}
+    onClose={() => (showShareDialog = false)}
+  />
+{/if}
+
+<!-- Hidden file input for image upload -->
+<input
+  type="file"
+  accept="image/*"
+  multiple
+  bind:this={fileInput}
+  onchange={handleFileInputChange}
+  style="display:none"
+/>
+
 <style>
   .canvas-editor {
     display: flex;
@@ -449,71 +626,6 @@
     height: 100vh;
     height: 100dvh;
     background: var(--color-background);
-  }
-
-  .canvas-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-background);
-    height: 48px;
-    gap: 12px;
-    flex-shrink: 0;
-  }
-
-  .canvas-header-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    border-radius: 6px;
-    color: var(--color-foreground);
-    cursor: pointer;
-  }
-
-  .canvas-header-btn:hover {
-    background: var(--color-accent);
-  }
-
-  .canvas-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-foreground);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .canvas-header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .canvas-save-status {
-    font-size: 0.75rem;
-    color: var(--color-muted-foreground);
-    transition: opacity 200ms ease;
-  }
-
-  .canvas-save-status.saving {
-    color: oklch(62% 0.12 230);
-  }
-
-  .canvas-save-status.unsaved {
-    color: var(--color-warning);
-  }
-
-  .canvas-zoom {
-    font-size: 0.75rem;
-    color: var(--color-muted-foreground);
   }
 
   .canvas-flow-container {

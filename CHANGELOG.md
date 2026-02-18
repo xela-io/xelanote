@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Canvas EditorToolbar-style toolbar — replaces minimal header with full-featured toolbar matching notes editor design: editable title, save/upload/history/focus-mode buttons, responsive 3-column grid layout, and a more menu with export, share, move, and delete actions; lazy-loaded dialogs for version history, move-to-folder, and share
 - Canvas drag-and-drop image support — drop image files from the desktop onto the canvas to create image nodes at the drop position; paste images from clipboard with Ctrl+V; CanvasFileNode renders actual images with object-fit scaling and error fallback instead of placeholder icon
 - Journal E2E encryption enforcement — journal entries are now always encrypted regardless of folder settings; journal page shows lock overlay when encryption is locked with unlock button; lock icon next to note title in editor toolbar indicates encrypted notes
 - Sidebar sort dropdown — sort notes by manual order, last modified, title A-Z, or date created; persisted in localStorage; folder order remains manual

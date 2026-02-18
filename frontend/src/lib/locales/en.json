@@ -866,6 +866,11 @@
     }
   },
   "component": {
+    "canvas": {
+      "toolbar": {
+        "export_canvas": "Export as .canvas"
+      }
+    },
     "move_dialog": {
       "title": "Move note",
       "current_folder": "Current folder",

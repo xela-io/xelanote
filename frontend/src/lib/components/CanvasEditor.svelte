@@ -33,7 +33,10 @@
     maybeLoadDialog,
   } from '$lib/editor/dialog-loaders';
   import { handleTitleInput as handleTitleInputAction } from '$lib/editor/editor-actions';
-  import { handleDeleteNote } from '$lib/editor/note-actions';
+  import {
+    handleDeleteNote,
+    handleWikilinkClick as handleWikilinkAction,
+  } from '$lib/editor/note-actions';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as auth from '$lib/stores/auth.svelte';
   import {
@@ -50,6 +53,7 @@
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as focusMode from '$lib/stores/focus-mode.svelte';
+  import * as folders from '$lib/stores/folders.svelte';
   import * as history from '$lib/stores/history.svelte';
   import * as network from '$lib/stores/network.svelte';
   import * as notes from '$lib/stores/notes.svelte';
@@ -420,6 +424,43 @@
     saveCanvas();
   }
 
+  // Listen for custom events bubbling up from CanvasTextNode CodeMirror instances
+  $effect(() => {
+    const el = containerEl;
+    if (!el) return;
+    const onTextChange = () => scheduleSave();
+    const onSave = () => handleManualSave();
+    const onWikilinkClick = (e: Event) => {
+      const detail = (e as CustomEvent<{ title: string }>).detail;
+      if (detail?.title) handleCanvasWikilinkClick(detail.title);
+    };
+    el.addEventListener('canvastextchange', onTextChange);
+    el.addEventListener('canvassave', onSave);
+    el.addEventListener('wikilinkclick', onWikilinkClick);
+    return () => {
+      el.removeEventListener('canvastextchange', onTextChange);
+      el.removeEventListener('canvassave', onSave);
+      el.removeEventListener('wikilinkclick', onWikilinkClick);
+    };
+  });
+
+  function handleCanvasWikilinkClick(title: string) {
+    handleWikilinkAction(title, {
+      goto,
+      confirm: dialog.confirm,
+      getCurrentNote: () => notes.getCurrentNote(),
+      getAllNotes: () => notes.getNotes(),
+      createNote: notes.createNote,
+      loadFolders: folders.loadFolders,
+      strings: {
+        confirmTitle: $_('dialog.confirm_title'),
+        cancelText: $_('dialog.cancel'),
+        createMissingMessage: $_('dialog.create_missing_note'),
+        createMissingConfirmText: $_('common.confirm'),
+      },
+    });
+  }
+
   function handleUploadButtonClick() {
     fileInput.click();
   }
@@ -516,6 +557,7 @@
       {nodeTypes}
       fitView
       snapGrid={[20, 20]}
+      onlyRenderVisibleElements
       onnodedragstop={handleNodeDragStop}
       onconnect={handleConnect}
       onnodecontextmenu={handleNodeContextMenu}

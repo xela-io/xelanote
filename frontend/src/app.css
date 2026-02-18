@@ -1586,6 +1586,40 @@ details.completed-tasks-group[open] .chevron-icon {
   white-space: normal;
 }
 
+/* ===== Canvas Text Node: Compact CodeMirror ===== */
+.canvas-text-node .cm-editor {
+  font-size: 0.875rem;
+  height: 100%;
+}
+.canvas-text-node .cm-editor,
+.canvas-text-node .cm-editor .cm-scroller {
+  background: transparent;
+}
+.canvas-text-node .cm-editor .cm-scroller {
+  overflow: auto;
+}
+.canvas-text-node .cm-editor .cm-content {
+  padding: 0;
+}
+/* Smaller headings for compact canvas cards */
+.canvas-text-node .cm-editor .cm-line.cm-live-heading-h1 {
+  font-size: 1.4rem;
+}
+.canvas-text-node .cm-editor .cm-line.cm-live-heading-h2 {
+  font-size: 1.15rem;
+}
+.canvas-text-node .cm-editor .cm-line.cm-live-heading-h3 {
+  font-size: 1rem;
+}
+/* No active line highlight (too noisy in small cards) */
+.canvas-text-node .cm-editor .cm-activeLine {
+  background-color: transparent;
+}
+/* Hide cursor when unfocused for clean rendered preview */
+.canvas-text-node .cm-editor:not(.cm-focused) .cm-cursor {
+  display: none;
+}
+
 /* ===== CodeMirror Autocomplete Styling ===== */
 .cm-tooltip-autocomplete {
   background-color: var(--color-popover) !important;

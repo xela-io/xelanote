@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Canvas text nodes now use live preview with full markdown rendering (headings, bold, italic, lists, task checkboxes, wikilinks, code blocks) via an always-on embedded CodeMirror instance; click into card to edit raw markdown on active line, click outside for clean rendered preview
 - Use outline triangle symbols (▷/▽) for collapse toggles in live preview instead of +/−; heading toggle no longer indents the heading text
 - Replace "LP" text label with ScanEye icon for live preview mode toggle in toolbar and menu
 - Switch app font from monospace/system to Inter (self-hosted via @fontsource/inter) for consistent rendering across all devices

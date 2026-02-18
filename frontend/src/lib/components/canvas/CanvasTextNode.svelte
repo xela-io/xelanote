@@ -1,34 +1,67 @@
 <script lang="ts">
+  import type { EditorView } from '@codemirror/view';
   import { Handle, NodeResizer, Position } from '@xyflow/svelte';
+  import { untrack } from 'svelte';
+
+  import { createCanvasEditor, updateEditorContent } from '$lib/editor/codemirror';
 
   import { getCanvasBgColor, getCanvasColor } from './canvas-colors';
 
   const { data, selected } = $props<{ data: Record<string, unknown>; selected?: boolean }>();
 
-  let editing = $state(false);
-  let editText = $state('');
-  const displayText = $derived((data.text as string) || '');
+  let editorContainer: HTMLDivElement | undefined = $state();
+  let editorView: EditorView | undefined = $state();
+  let suppressExternalSync = false;
 
   const color = $derived(data.color as string | undefined);
   const borderColor = $derived(getCanvasColor(color));
   const bgColor = $derived(getCanvasBgColor(color));
 
-  function handleDoubleClick() {
-    editText = displayText;
-    editing = true;
-  }
+  // Mount CodeMirror editor
+  $effect(() => {
+    if (!editorContainer) return;
+    const initialText = untrack(() => (data.text as string) || '');
+    editorView = createCanvasEditor(editorContainer, {
+      doc: initialText,
+      onChange: (content) => {
+        suppressExternalSync = true;
+        data.text = content;
+        suppressExternalSync = false;
+        // Bubble up for auto-save
+        editorContainer?.dispatchEvent(new CustomEvent('canvastextchange', { bubbles: true }));
+      },
+      onSave: () => {
+        editorContainer?.dispatchEvent(new CustomEvent('canvassave', { bubbles: true }));
+      },
+      onWikilinkClick: (title) => {
+        editorContainer?.dispatchEvent(
+          new CustomEvent('wikilinkclick', { bubbles: true, detail: { title } })
+        );
+      },
+      onToggleTaskByLine: (lineNumber, checked) => {
+        if (!editorView) return;
+        const line = editorView.state.doc.line(lineNumber);
+        const newText = checked
+          ? line.text.replace(/\[ \]/, '[x]')
+          : line.text.replace(/\[x\]/i, '[ ]');
+        editorView.dispatch({
+          changes: { from: line.from, to: line.to, insert: newText },
+        });
+      },
+    });
+    return () => {
+      editorView?.destroy();
+      editorView = undefined;
+    };
+  });
 
-  function handleBlur() {
-    editing = false;
-    data.text = editText;
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      editing = false;
-      data.text = editText;
+  // Sync external updates (e.g. remote/sync) into the editor
+  $effect(() => {
+    const text = (data.text as string) || '';
+    if (editorView && !suppressExternalSync) {
+      updateEditorContent(editorView, text);
     }
-  }
+  });
 </script>
 
 <NodeResizer
@@ -45,21 +78,13 @@
   class:selected
   style:border-left-color={borderColor}
   style:background={bgColor ? `color-mix(in oklch, ${bgColor} 40%, var(--color-card))` : undefined}
-  ondblclick={handleDoubleClick}
 >
-  {#if editing}
-    <textarea
-      class="canvas-text-edit"
-      bind:value={editText}
-      onblur={handleBlur}
-      onkeydown={handleKeydown}
-      autofocus
-    ></textarea>
-  {:else}
-    <div class="canvas-text-content">
-      {displayText || 'Double-click to edit...'}
-    </div>
-  {/if}
+  <!-- nodrag nowheel nopan: SvelteFlow escape hatches to prevent mouse events from being captured -->
+  <div
+    class="canvas-text-editor nodrag nowheel nopan"
+    bind:this={editorContainer}
+    onkeydown={(e) => e.stopPropagation()}
+  ></div>
 </div>
 
 <Handle type="source" position={Position.Right} />
@@ -80,7 +105,7 @@
     height: 100%;
     box-shadow: 0 1px 3px color-mix(in oklch, var(--color-foreground) 8%, transparent);
     transition: box-shadow 200ms ease;
-    overflow: auto;
+    overflow: hidden;
   }
 
   .canvas-text-node:hover {
@@ -98,31 +123,8 @@
     border-left-width: 3px;
   }
 
-  .canvas-text-content {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: var(--color-foreground);
-  }
-
-  .canvas-text-content:empty::before {
-    content: 'Double-click to edit...';
-    color: var(--color-muted-foreground);
-    font-style: italic;
-  }
-
-  .canvas-text-edit {
+  .canvas-text-editor {
     width: 100%;
     height: 100%;
-    min-height: 40px;
-    background: transparent;
-    border: none;
-    outline: none;
-    resize: none;
-    font-family: inherit;
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--color-foreground);
   }
 </style>

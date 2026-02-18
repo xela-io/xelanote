@@ -2,7 +2,13 @@
 
 import { bracketMatching, HighlightStyle } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, Prec } from '@codemirror/state';
-import { drawSelection, EditorView, highlightActiveLine, keymap } from '@codemirror/view';
+import {
+  drawSelection,
+  EditorView,
+  highlightActiveLine,
+  keymap,
+  placeholder,
+} from '@codemirror/view';
 import { Decoration, type DecorationSet, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
@@ -791,6 +797,200 @@ export function insertWikiLink(view: EditorView, term: string, targetTitle: stri
  * @param term The text to find and replace
  * @param targetTitle The note title to link to
  */
+// ============================================================================
+// Canvas Editor
+// ============================================================================
+
+export interface CanvasEditorConfig {
+  doc?: string;
+  onChange?: (content: string) => void;
+  onSave?: () => void;
+  onWikilinkClick?: (title: string) => void;
+  onToggleTaskByLine?: (lineNumber: number, checked: boolean) => void;
+}
+
+export function createCanvasEditor(
+  parent: HTMLElement,
+  config: CanvasEditorConfig = {}
+): EditorView {
+  // Per-instance compartments (not shared singletons like the main editor)
+  const canvasLazyCompartment = new Compartment();
+  const canvasLivePreviewCompartment = new Compartment();
+
+  const baseExtensions: Extension[] = [
+    EditorView.lineWrapping,
+    drawSelection(),
+    bracketMatching(),
+    wikilinkPlugin,
+    colorTagPlugin,
+    taskBracketPlugin,
+    dueDatePlugin,
+    listIndentPlugin,
+    lightTheme,
+    placeholder('Type markdown here...'),
+    // High priority keymaps
+    Prec.highest(
+      keymap.of([
+        {
+          key: 'Escape',
+          run: (view) => {
+            view.contentDOM.blur();
+            return true;
+          },
+        },
+        {
+          key: 'Mod-s',
+          run: () => {
+            config.onSave?.();
+            return true;
+          },
+        },
+      ])
+    ),
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged) {
+        config.onChange?.(update.state.doc.toString());
+      }
+    }),
+    // Handle live preview widget clicks (checkboxes, wikilinks, links, headings, task groups)
+    EditorView.domEventHandlers({
+      mousedown: (event) => {
+        const target = event.target as HTMLElement;
+        const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
+        const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
+        const liveTaskGroupToggle = target.closest(
+          '.cm-live-task-group-toggle'
+        ) as HTMLElement | null;
+        const liveTaskGroupSummary = target.closest(
+          '.cm-live-task-group-summary'
+        ) as HTMLElement | null;
+        if (liveTaskCheckbox) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveHeadingToggle) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveTaskGroupToggle || liveTaskGroupSummary) {
+          event.preventDefault();
+          return true;
+        }
+        const liveWikilink = target.closest('.cm-live-preview-wikilink') as HTMLElement | null;
+        if (liveWikilink) {
+          event.preventDefault();
+          return true;
+        }
+        const liveLink = target.closest('.cm-live-preview-link') as HTMLElement | null;
+        if (liveLink) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      click: (event, view) => {
+        const target = event.target as HTMLElement;
+
+        const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
+        if (liveHeadingToggle?.dataset.section) {
+          if (toggleLivePreviewHeadingSection(view, liveHeadingToggle.dataset.section)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveTaskGroupToggle = target.closest(
+          '.cm-live-task-group-toggle'
+        ) as HTMLElement | null;
+        if (liveTaskGroupToggle?.dataset.taskGroup) {
+          if (toggleLivePreviewCompletedTaskGroup(view, liveTaskGroupToggle.dataset.taskGroup)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveTaskGroupSummary = target.closest(
+          '.cm-live-task-group-summary'
+        ) as HTMLElement | null;
+        if (liveTaskGroupSummary?.dataset.taskGroup) {
+          if (toggleLivePreviewCompletedTaskGroup(view, liveTaskGroupSummary.dataset.taskGroup)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveTaskCheckbox = target.closest('.cm-live-task-checkbox') as HTMLElement | null;
+        if (liveTaskCheckbox) {
+          const lineNumber = parseInt(liveTaskCheckbox.dataset.line ?? '', 10);
+          const checked = liveTaskCheckbox.dataset.checked === 'true';
+          if (Number.isInteger(lineNumber) && lineNumber > 0) {
+            config.onToggleTaskByLine?.(lineNumber, !checked);
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        const liveWikilink = target.closest('.cm-live-preview-wikilink') as HTMLElement | null;
+        if (liveWikilink?.dataset.title) {
+          config.onWikilinkClick?.(liveWikilink.dataset.title);
+          event.preventDefault();
+          return true;
+        }
+
+        const liveLink = target.closest('.cm-live-preview-link') as HTMLElement | null;
+        if (liveLink?.dataset.href) {
+          const href = liveLink.dataset.href;
+          if (href) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        if (target.classList.contains('cm-wikilink')) {
+          const pos = view.posAtDOM(target);
+          const line = view.state.doc.lineAt(pos);
+          const text = line.text;
+          const matches = [...text.matchAll(/\[\[([^\]|]+)(\|[^\]]+)?\]\]/g)];
+          for (const match of matches) {
+            const start = line.from + (match.index ?? 0);
+            const end = start + match[0].length;
+            if (pos >= start && pos <= end) {
+              config.onWikilinkClick?.(match[1]);
+              event.preventDefault();
+              return true;
+            }
+          }
+        }
+        return false;
+      },
+    }),
+    // Compartment for lazy extensions (initially empty)
+    canvasLazyCompartment.of([]),
+    // Live preview compartment (enabled immediately with empty persistence)
+    canvasLivePreviewCompartment.of(createLivePreviewExtension({})),
+  ];
+
+  const state = EditorState.create({
+    doc: config.doc ?? '',
+    extensions: baseExtensions,
+  });
+
+  const view = new EditorView({
+    state,
+    parent,
+  });
+
+  // Lazy load additional extensions (markdown language, history, keymaps, autocomplete)
+  loadEditorExtensions(config as EditorConfig).then((lazyExtensions) => {
+    view.dispatch({
+      effects: canvasLazyCompartment.reconfigure(lazyExtensions),
+    });
+  });
+
+  return view;
+}
+
 // ============================================================================
 // Spell Check Functions
 // ============================================================================

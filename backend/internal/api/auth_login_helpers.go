@@ -15,12 +15,18 @@ func (s *Server) respondLoginSuccess(
 ) bool {
 	user, err := s.authService.GetUserByUsernameOrEmail(usernameOrEmail)
 	if err != nil {
+		s.logger().Error("failed to load user for login response",
+			slog.String("identifier_hash", hashIdentifier(usernameOrEmail)),
+			slog.Any("error", err))
 		respondError(w, http.StatusInternalServerError, "failed to retrieve user information")
 		return false
 	}
 
 	salt, err := s.getOrGenerateUserSalt(user.ID)
 	if err != nil {
+		s.logger().Error("failed to load encryption salt for login response",
+			slog.Int("user_id", user.ID),
+			slog.Any("error", err))
 		respondError(w, http.StatusInternalServerError, "failed to fetch encryption salt")
 		return false
 	}

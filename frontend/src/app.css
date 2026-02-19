@@ -1041,10 +1041,9 @@ html {
 }
 
 .cm-editor .cm-live-preview-line.cm-live-code-fence {
-  font-family: var(--font-mono);
-  color: transparent;
+  font-size: 0;
+  line-height: 0;
   user-select: none;
-  min-height: 0.4rem;
 }
 
 .cm-editor .cm-live-preview-line.cm-live-code-line {

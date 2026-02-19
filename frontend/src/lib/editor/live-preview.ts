@@ -784,10 +784,11 @@ function buildDecorations(
           continue;
         }
 
-        if (
-          structuredLines.codeFenceLines.has(line.number) ||
-          structuredLines.codeContentLines.has(line.number)
-        ) {
+        if (structuredLines.codeFenceLines.has(line.number)) {
+          builder.add(line.from, line.from + text.length, hiddenSyntaxDecoration);
+          continue;
+        }
+        if (structuredLines.codeContentLines.has(line.number)) {
           continue;
         }
         if (structuredLines.tableLines.has(line.number)) {

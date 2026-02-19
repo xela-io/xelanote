@@ -1011,6 +1011,12 @@
       "upload_clipboard": "Bild hochgeladen, Markdown in Zwischenablage kopiert",
       "upload_fallback": "Bild hochgeladen als: {url}",
       "editor_area": "Editor-Bereich",
+      "table_insert": {
+        "title": "Tabelle einfügen",
+        "rows": "Datenzeilen",
+        "columns": "Spalten",
+        "insert": "Einfügen"
+      },
       "backlinks_title": "Backlinks ({count})",
       "empty_state": "Wähle eine Notiz aus oder erstelle eine neue",
       "version_restored": "Version wiederhergestellt",
@@ -1031,6 +1037,7 @@
         "indent": "Einrücken",
         "outdent": "Ausrücken",
         "task": "Aufgabe einfügen",
+        "table": "Tabelle einfügen",
         "more_options": "Weitere Optionen",
         "ai_enabled": "KI-Funktionen für diese Notiz aktiviert",
         "ai_disabled": "KI-Funktionen für diese Notiz deaktiviert",

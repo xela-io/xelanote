@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Live Preview: Markdown tables are now rendered as HTML tables when the cursor is outside the table block; clicking the rendered table or moving the cursor into it reveals raw markdown for editing
+- Table insert feature: toolbar button and `Mod-Shift-T` shortcut open a dialog to insert a markdown table with configurable rows and columns
+
 ### Improved
 
 - Recipe preview: ingredients header sticks to top of scroll container while reading instructions (mobile cooking UX); collapsible via tap with chevron indicator and ingredient count badge

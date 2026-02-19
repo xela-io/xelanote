@@ -135,6 +135,81 @@ class TaskCheckboxWidget extends WidgetType {
   }
 }
 
+class TableWidget extends WidgetType {
+  constructor(private readonly block: TableBlock) {
+    super();
+  }
+
+  eq(other: TableWidget): boolean {
+    if (
+      this.block.startLine !== other.block.startLine ||
+      this.block.endLine !== other.block.endLine ||
+      this.block.headerCells.length !== other.block.headerCells.length ||
+      this.block.rows.length !== other.block.rows.length
+    ) {
+      return false;
+    }
+    for (let i = 0; i < this.block.headerCells.length; i++) {
+      if (this.block.headerCells[i] !== other.block.headerCells[i]) return false;
+    }
+    for (let i = 0; i < this.block.alignments.length; i++) {
+      if (this.block.alignments[i] !== other.block.alignments[i]) return false;
+    }
+    for (let i = 0; i < this.block.rows.length; i++) {
+      const thisRow = this.block.rows[i];
+      const otherRow = other.block.rows[i];
+      if (thisRow.length !== otherRow.length) return false;
+      for (let j = 0; j < thisRow.length; j++) {
+        if (thisRow[j] !== otherRow[j]) return false;
+      }
+    }
+    return true;
+  }
+
+  toDOM(): HTMLElement {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cm-table-widget';
+    wrapper.dataset.startLine = String(this.block.startLine);
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    for (let i = 0; i < this.block.headerCells.length; i++) {
+      const th = document.createElement('th');
+      th.textContent = this.block.headerCells[i];
+      const align = this.block.alignments[i];
+      if (align) th.style.textAlign = align;
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    if (this.block.rows.length > 0) {
+      const tbody = document.createElement('tbody');
+      for (const row of this.block.rows) {
+        const tr = document.createElement('tr');
+        for (let i = 0; i < this.block.headerCells.length; i++) {
+          const td = document.createElement('td');
+          td.textContent = row[i] ?? '';
+          const align = this.block.alignments[i];
+          if (align) td.style.textAlign = align;
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+    }
+
+    wrapper.appendChild(table);
+    return wrapper;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
 function isCodeFence(text: string): boolean {
   return /^\s*```/.test(text);
 }
@@ -152,10 +227,123 @@ function isTableCandidateLine(text: string): boolean {
   return pipeCount >= 1;
 }
 
+function parseTableCells(line: string): string[] {
+  const trimmed = line.trim();
+  // Remove leading/trailing pipes
+  const inner = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
+  const withoutTrailing = inner.endsWith('|') ? inner.slice(0, -1) : inner;
+
+  // Split on unescaped pipes
+  const cells: string[] = [];
+  let current = '';
+  for (let i = 0; i < withoutTrailing.length; i++) {
+    if (
+      withoutTrailing[i] === '\\' &&
+      i + 1 < withoutTrailing.length &&
+      withoutTrailing[i + 1] === '|'
+    ) {
+      current += '|';
+      i++; // skip the pipe
+    } else if (withoutTrailing[i] === '|') {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += withoutTrailing[i];
+    }
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseAlignments(separatorLine: string): ('left' | 'center' | 'right' | null)[] {
+  const cells = parseTableCells(separatorLine);
+  return cells.map((cell) => {
+    const trimmed = cell.trim();
+    const left = trimmed.startsWith(':');
+    const right = trimmed.endsWith(':');
+    if (left && right) return 'center';
+    if (right) return 'right';
+    if (left) return 'left';
+    return null;
+  });
+}
+
+function collectTableBlocks(tableLines: Set<number>, lines: string[]): TableBlock[] {
+  const blocks: TableBlock[] = [];
+
+  // Group consecutive table lines into ranges
+  const sortedLines = [...tableLines].sort((a, b) => a - b);
+  if (sortedLines.length === 0) return blocks;
+
+  const ranges: Array<{ start: number; end: number }> = [];
+  let rangeStart = sortedLines[0];
+  let rangeEnd = sortedLines[0];
+
+  for (let i = 1; i < sortedLines.length; i++) {
+    if (sortedLines[i] === rangeEnd + 1) {
+      rangeEnd = sortedLines[i];
+    } else {
+      ranges.push({ start: rangeStart, end: rangeEnd });
+      rangeStart = sortedLines[i];
+      rangeEnd = sortedLines[i];
+    }
+  }
+  ranges.push({ start: rangeStart, end: rangeEnd });
+
+  for (const range of ranges) {
+    // Need at least 2 lines (header + separator)
+    if (range.end - range.start < 1) continue;
+
+    // Line numbers are 1-based, lines array is 0-based
+    const headerLineIdx = range.start - 1;
+    const separatorLineIdx = range.start; // second line = index start
+
+    // Validate: second line must be a separator
+    if (separatorLineIdx >= lines.length) continue;
+    if (!isTableSeparatorLine(lines[separatorLineIdx])) continue;
+
+    const headerCells = parseTableCells(lines[headerLineIdx]);
+    const alignments = parseAlignments(lines[separatorLineIdx]);
+
+    // Pad alignments if fewer than header columns
+    while (alignments.length < headerCells.length) {
+      alignments.push(null);
+    }
+
+    // Parse data rows (lines after separator)
+    const rows: string[][] = [];
+    for (let lineNo = range.start + 2; lineNo <= range.end; lineNo++) {
+      const lineIdx = lineNo - 1;
+      if (lineIdx < lines.length) {
+        rows.push(parseTableCells(lines[lineIdx]));
+      }
+    }
+
+    blocks.push({
+      startLine: range.start,
+      endLine: range.end,
+      headerCells,
+      alignments,
+      rows,
+    });
+  }
+
+  return blocks;
+}
+
+interface TableBlock {
+  startLine: number;
+  endLine: number;
+  headerCells: string[];
+  alignments: ('left' | 'center' | 'right' | null)[];
+  rows: string[][];
+}
+
 interface StructuredLines {
   codeFenceLines: Set<number>;
   codeContentLines: Set<number>;
   tableLines: Set<number>;
+  tableBlocks: TableBlock[];
 }
 
 interface LivePreviewStaticData {
@@ -402,7 +590,9 @@ function collectStructuredLines(view: EditorView): StructuredLines {
     }
   }
 
-  return { codeFenceLines, codeContentLines, tableLines };
+  const tableBlocks = collectTableBlocks(tableLines, lines);
+
+  return { codeFenceLines, codeContentLines, tableLines, tableBlocks };
 }
 
 function collectHeadingInfo(view: EditorView, collapsedSections: Set<string>): HeadingInfo {
@@ -596,6 +786,16 @@ function buildDecorations(
     const doc = view.state.doc;
     const { structuredLines, treeFeatures } = staticData;
 
+    // Build lookup map: line number → TableBlock (only for startLine of each block)
+    const tableBlockByLine = new Map<number, TableBlock>();
+    const tableBlockCoveredLines = new Set<number>();
+    for (const block of structuredLines.tableBlocks) {
+      tableBlockByLine.set(block.startLine, block);
+      for (let l = block.startLine; l <= block.endLine; l++) {
+        tableBlockCoveredLines.add(l);
+      }
+    }
+
     for (const { from, to } of view.visibleRanges) {
       let pos = from;
       while (pos <= to && pos <= doc.length) {
@@ -649,6 +849,52 @@ function buildDecorations(
             builder.add(line.from, line.to, hiddenSyntaxDecoration);
           }
           continue;
+        }
+
+        // Table block handling: if this line is the start of a table block
+        // and no line in the block is active, replace with a widget
+        const tableBlock = tableBlockByLine.get(line.number);
+        if (tableBlock) {
+          const firstLine = doc.line(tableBlock.startLine);
+          const lastLine = doc.line(tableBlock.endLine);
+          // Check if any selection range intersects the block
+          let blockIsActive = false;
+          for (const range of view.state.selection.ranges) {
+            if (range.from <= lastLine.to && range.to >= firstLine.from) {
+              blockIsActive = true;
+              break;
+            }
+          }
+          // Also check focus: unfocused editor → never active
+          if (!view.hasFocus) blockIsActive = false;
+
+          if (!blockIsActive) {
+            // First line: replace content with table widget
+            builder.add(
+              firstLine.from,
+              firstLine.to,
+              Decoration.replace({
+                widget: new TableWidget(tableBlock),
+              })
+            );
+            // Remaining lines: collapse to zero height
+            for (let l = tableBlock.startLine + 1; l <= tableBlock.endLine; l++) {
+              const hideLine = doc.line(l);
+              seenLines.add(l);
+              builder.add(
+                hideLine.from,
+                hideLine.from,
+                getLineDecoration('cm-live-collapsed-line')
+              );
+              builder.add(hideLine.from, hideLine.to, hiddenSyntaxDecoration);
+            }
+            continue;
+          }
+        } else if (tableBlockCoveredLines.has(line.number)) {
+          // This line is part of a block but not the start line.
+          // If the block's start was already processed as a widget replacement,
+          // the seenLines check above handles it. If the block is active (cursor inside),
+          // fall through to normal rendering below.
         }
 
         const headingSection = headingInfo.headingByLine.get(line.number);
@@ -791,10 +1037,6 @@ function buildDecorations(
         if (structuredLines.codeContentLines.has(line.number)) {
           continue;
         }
-        if (structuredLines.tableLines.has(line.number)) {
-          continue;
-        }
-
         if (primitives.heading) {
           const fromPos = base + primitives.heading.indentLength;
           const toPos = fromPos + primitives.heading.level + primitives.heading.spacingLength;

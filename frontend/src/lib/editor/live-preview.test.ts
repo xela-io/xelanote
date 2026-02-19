@@ -229,12 +229,124 @@ describe('live-preview', () => {
     view.destroy();
   });
 
-  it('adds table line class for markdown table rows', () => {
+  it('renders table widget when cursor is not on table', () => {
     const doc = 'Active\n| A | B |\n| --- | --- |\n| 1 | 2 |';
     const view = createView(doc, 0);
 
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).not.toBeNull();
+    // Widget should contain a rendered table
+    const table = tableWidget?.querySelector('table');
+    expect(table).not.toBeNull();
+    // Check header cells
+    const ths = tableWidget?.querySelectorAll('th');
+    expect(ths?.length).toBe(2);
+    expect(ths?.[0].textContent).toBe('A');
+    expect(ths?.[1].textContent).toBe('B');
+    // Check data cells
+    const tds = tableWidget?.querySelectorAll('td');
+    expect(tds?.length).toBe(2);
+    expect(tds?.[0].textContent).toBe('1');
+    expect(tds?.[1].textContent).toBe('2');
+
+    view.destroy();
+  });
+
+  it('shows raw markdown when cursor is on a table line', () => {
+    const doc = 'Active\n| A | B |\n| --- | --- |\n| 1 | 2 |';
+    // Put cursor on the header line
+    const headerPos = doc.indexOf('| A | B |');
+    const view = createView(doc, headerPos);
+
+    // Widget should NOT be rendered since cursor is on table
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).toBeNull();
+    // Table line class should be present
     const tableLine = view.dom.querySelector('.cm-live-table-line') as HTMLElement | null;
     expect(tableLine).not.toBeNull();
+
+    view.destroy();
+  });
+
+  it('renders correct cell count and alignment in table widget', () => {
+    const doc = 'Active\n| Left | Center | Right |\n| :--- | :---: | ---: |\n| a | b | c |';
+    const view = createView(doc, 0);
+
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).not.toBeNull();
+
+    const ths = tableWidget?.querySelectorAll('th');
+    expect(ths?.length).toBe(3);
+    expect(ths?.[0].style.textAlign).toBe('left');
+    expect(ths?.[1].style.textAlign).toBe('center');
+    expect(ths?.[2].style.textAlign).toBe('right');
+
+    const tds = tableWidget?.querySelectorAll('td');
+    expect(tds?.length).toBe(3);
+    expect(tds?.[0].style.textAlign).toBe('left');
+    expect(tds?.[1].style.textAlign).toBe('center');
+    expect(tds?.[2].style.textAlign).toBe('right');
+
+    view.destroy();
+  });
+
+  it('does not render table inside a code block', () => {
+    const doc = 'Active\n```\n| A | B |\n| --- | --- |\n| 1 | 2 |\n```';
+    const view = createView(doc, 0);
+
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).toBeNull();
+
+    view.destroy();
+  });
+
+  it('renders table with only header and separator (no data rows)', () => {
+    const doc = 'Active\n| A | B |\n| --- | --- |';
+    const view = createView(doc, 0);
+
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).not.toBeNull();
+    const ths = tableWidget?.querySelectorAll('th');
+    expect(ths?.length).toBe(2);
+    const tds = tableWidget?.querySelectorAll('td');
+    expect(tds?.length).toBe(0);
+
+    view.destroy();
+  });
+
+  it('handles escaped pipes in cells correctly', () => {
+    const doc = 'Active\n| a \\| b | c |\n| --- | --- |\n| d | e |';
+    const view = createView(doc, 0);
+
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).not.toBeNull();
+    const ths = tableWidget?.querySelectorAll('th');
+    expect(ths?.length).toBe(2);
+    expect(ths?.[0].textContent).toBe('a | b');
+    expect(ths?.[1].textContent).toBe('c');
+
+    view.destroy();
+  });
+
+  it('handles alignment mismatch (more header cols than separator)', () => {
+    const doc = 'Active\n| A | B | C |\n| --- | --- |\n| 1 | 2 | 3 |';
+    const view = createView(doc, 0);
+
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).not.toBeNull();
+    // Should still render 3 header cells even though separator has only 2
+    const ths = tableWidget?.querySelectorAll('th');
+    expect(ths?.length).toBe(3);
+
+    view.destroy();
+  });
+
+  it('does not render block without separator as table widget', () => {
+    const doc = 'Active\n| A | B |\n| 1 | 2 |';
+    const view = createView(doc, 0);
+
+    const tableWidget = view.dom.querySelector('.cm-table-widget') as HTMLElement | null;
+    expect(tableWidget).toBeNull();
 
     view.destroy();
   });

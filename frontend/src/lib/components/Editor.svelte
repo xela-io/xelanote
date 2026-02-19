@@ -78,6 +78,7 @@
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
   import { createSplitResizeController } from '$lib/editor/split-resize';
+  import { insertTable } from '$lib/editor/table-insert';
   import { taskCollapse, type TaskCollapseOptions } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable, type TaskSortableOptions } from '$lib/editor/task-sortable';
@@ -105,6 +106,7 @@
   import EditorToolbar from './editor/EditorToolbar.svelte';
   import EditorMoreMenu from './EditorMoreMenu.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
+  import TableInsertDialog from './TableInsertDialog.svelte';
   // ShareDialog is lazy-loaded via dialog-loaders.ts
   import TableOfContents from './TableOfContents.svelte';
 
@@ -149,6 +151,7 @@
   let moreMenuTriggerRect = $state<DOMRect | null>(null);
   let showAIActionsDropdown = $state(false);
   let aiActionsTriggerRect = $state<DOMRect | null>(null);
+  let showTableInsertDialog = $state(false);
   let showAITransformDialog = $state(false);
   let aiTransformState = $state<AITransformState | null>(null);
   // Find & Replace state
@@ -291,6 +294,9 @@
     },
     onColorPicker: () => {
       openColorPicker();
+    },
+    onInsertTable: () => {
+      handleInsertTable();
     },
     onBeforeNewline: (view) => handleNewlineWithTaskReorder(view),
     onFindReplace: (options) => {
@@ -743,6 +749,21 @@
     insertTask(view);
   }
 
+  function handleInsertTable() {
+    showTableInsertDialog = true;
+  }
+
+  async function handleTableInsert(rows: number, cols: number) {
+    showTableInsertDialog = false;
+    const view = await ensureEditorReady({
+      getEditorView: () => editorView,
+      setEditorMode: (mode) => ui.setEditorMode(mode),
+      tick,
+    });
+    if (!view) return;
+    insertTable(view, rows, cols);
+  }
+
   async function handleIndent() {
     const view = await ensureEditorReady({
       getEditorView: () => editorView,
@@ -990,6 +1011,7 @@
       onOpenSidebar={() => ui.setSidebarOpen(true)}
       onSetEditorMode={settings.setEditorModePreference}
       onInsertTask={handleInsertTask}
+      onInsertTable={handleInsertTable}
       onSave={handleSave}
       onUpload={handleUploadButtonClick}
       onShowHistory={() => (showVersionHistory = true)}
@@ -1223,6 +1245,13 @@
     triggerRect={aiActionsTriggerRect}
   />
 {/if}
+
+<!-- Table Insert Dialog -->
+<TableInsertDialog
+  open={showTableInsertDialog}
+  onClose={() => (showTableInsertDialog = false)}
+  onInsert={handleTableInsert}
+/>
 
 <!-- AI Transform Dialog -->
 {#if showAITransformDialog && notes.getCurrentNote() && aiTransformState}

@@ -1011,6 +1011,12 @@
       "upload_clipboard": "Image uploaded, Markdown copied to clipboard",
       "upload_fallback": "Image uploaded as: {url}",
       "editor_area": "Editor area",
+      "table_insert": {
+        "title": "Insert Table",
+        "rows": "Data rows",
+        "columns": "Columns",
+        "insert": "Insert"
+      },
       "backlinks_title": "Backlinks ({count})",
       "empty_state": "Select a note or create a new one",
       "version_restored": "Version restored",
@@ -1031,6 +1037,7 @@
         "indent": "Indent",
         "outdent": "Outdent",
         "task": "Insert task",
+        "table": "Insert table",
         "more_options": "More options",
         "ai_enabled": "AI features enabled for this note",
         "ai_disabled": "AI features disabled for this note",

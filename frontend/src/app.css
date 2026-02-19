@@ -1051,11 +1051,35 @@ html {
   background-color: var(--color-muted);
 }
 
-.cm-editor .cm-live-preview-line.cm-live-table-line {
+.cm-editor .cm-live-table-line {
   font-family: var(--font-mono);
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--color-border) 65%, transparent);
   text-underline-offset: 0.2em;
+}
+
+.cm-editor .cm-table-widget {
+  display: block;
+  overflow-x: auto;
+  margin: 0.25rem 0;
+}
+
+.cm-editor .cm-table-widget table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.cm-editor .cm-table-widget th,
+.cm-editor .cm-table-widget td {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+
+.cm-editor .cm-table-widget th {
+  font-weight: 600;
+  background-color: var(--color-muted);
 }
 
 /* Named color classes for markdown preview */

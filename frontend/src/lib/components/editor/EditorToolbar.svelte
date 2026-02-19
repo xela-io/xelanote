@@ -18,6 +18,7 @@
     RefreshCw,
     Save,
     ScanEye,
+    Table2,
     Wand2,
     WifiOff,
   } from 'lucide-svelte';
@@ -55,6 +56,7 @@
     onOpenSidebar: () => void;
     onSetEditorMode: (mode: EditorMode) => void;
     onInsertTask: () => void;
+    onInsertTable: () => void;
     onSave: () => void;
     onUpload: () => void;
     onShowHistory: () => void;
@@ -88,6 +90,7 @@
     onOpenSidebar,
     onSetEditorMode,
     onInsertTask,
+    onInsertTable,
     onSave,
     onUpload,
     onShowHistory,
@@ -280,6 +283,15 @@
                 <ListTodo size={16} />
               </button>
             {/if}
+
+            <button
+              type="button"
+              onclick={onInsertTable}
+              class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
+              aria-label={$_('component.editor.toolbar.table')}
+            >
+              <Table2 size={16} />
+            </button>
 
             <!-- Divider -->
             <div class="w-px h-6 bg-border mx-1 flex-shrink-0"></div>

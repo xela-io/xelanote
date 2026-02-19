@@ -422,6 +422,7 @@ export interface EditorConfig {
   onWikilinkClick?: (title: string) => void;
   onToggleTaskByLine?: (lineNumber: number, checked: boolean) => void;
   onColorPicker?: () => void;
+  onInsertTable?: () => void;
   onBeforeNewline?: (view: EditorView) => boolean; // Return true if handled (prevents default)
   onFindReplace?: (options?: { replace?: boolean }) => void;
   onExtensionsReady?: () => void;
@@ -542,6 +543,16 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
             return true;
           },
         },
+        {
+          key: 'Mod-Shift-t',
+          run: () => {
+            if (config.onInsertTable) {
+              config.onInsertTable();
+              return true;
+            }
+            return false;
+          },
+        },
       ])
     ),
     EditorView.updateListener.of((update) => {
@@ -564,6 +575,7 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
         const liveTaskGroupSummary = target.closest(
           '.cm-live-task-group-summary'
         ) as HTMLElement | null;
+        const liveTableWidget = target.closest('.cm-table-widget') as HTMLElement | null;
         if (liveTaskCheckbox) {
           event.preventDefault();
           return true;
@@ -577,6 +589,10 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
           return true;
         }
         if (liveTaskGroupToggle || liveTaskGroupSummary) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveTableWidget) {
           event.preventDefault();
           return true;
         }
@@ -600,6 +616,18 @@ export function createEditor(parent: HTMLElement, config: EditorConfig = {}): Ed
         if (liveTaskDragHandle) {
           event.preventDefault();
           return true;
+        }
+
+        const liveTableWidget = target.closest('.cm-table-widget') as HTMLElement | null;
+        if (liveTableWidget) {
+          const startLine = parseInt(liveTableWidget.dataset.startLine ?? '', 10);
+          if (Number.isInteger(startLine) && startLine > 0 && startLine <= view.state.doc.lines) {
+            const line = view.state.doc.line(startLine);
+            view.dispatch({ selection: { anchor: line.from } });
+            view.focus();
+            event.preventDefault();
+            return true;
+          }
         }
 
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;
@@ -883,6 +911,7 @@ export function createCanvasEditor(
         const liveTaskGroupSummary = target.closest(
           '.cm-live-task-group-summary'
         ) as HTMLElement | null;
+        const liveTableWidget = target.closest('.cm-table-widget') as HTMLElement | null;
         if (liveTaskCheckbox) {
           event.preventDefault();
           return true;
@@ -896,6 +925,10 @@ export function createCanvasEditor(
           return true;
         }
         if (liveTaskGroupToggle || liveTaskGroupSummary) {
+          event.preventDefault();
+          return true;
+        }
+        if (liveTableWidget) {
           event.preventDefault();
           return true;
         }
@@ -919,6 +952,18 @@ export function createCanvasEditor(
         if (liveTaskDragHandle) {
           event.preventDefault();
           return true;
+        }
+
+        const liveTableWidget = target.closest('.cm-table-widget') as HTMLElement | null;
+        if (liveTableWidget) {
+          const startLine = parseInt(liveTableWidget.dataset.startLine ?? '', 10);
+          if (Number.isInteger(startLine) && startLine > 0 && startLine <= view.state.doc.lines) {
+            const line = view.state.doc.line(startLine);
+            view.dispatch({ selection: { anchor: line.from } });
+            view.focus();
+            event.preventDefault();
+            return true;
+          }
         }
 
         const liveHeadingToggle = target.closest('.cm-live-heading-toggle') as HTMLElement | null;

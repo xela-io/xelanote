@@ -9,6 +9,7 @@ export interface InitEditorDeps {
   onWikilinkClick: (title: string) => void;
   onToggleTaskByLine: (lineNumber: number, checked: boolean) => void;
   onColorPicker: () => void;
+  onInsertTable?: () => void;
   onBeforeNewline: (view: EditorView) => boolean;
   onFindReplace: (options?: { replace?: boolean }) => void;
   onExtensionsReady: () => void;
@@ -25,6 +26,7 @@ export function initEditorAction(deps: InitEditorDeps) {
       onWikilinkClick: deps.onWikilinkClick,
       onToggleTaskByLine: deps.onToggleTaskByLine,
       onColorPicker: deps.onColorPicker,
+      onInsertTable: deps.onInsertTable,
       onBeforeNewline: deps.onBeforeNewline,
       onFindReplace: deps.onFindReplace,
       onExtensionsReady: deps.onExtensionsReady,

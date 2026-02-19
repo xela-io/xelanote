@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChefHat, Clock, ExternalLink, Users } from 'lucide-svelte';
+  import { ChefHat, ChevronDown, Clock, ExternalLink, Users } from 'lucide-svelte';
   import { SvelteMap } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
 
@@ -47,6 +47,8 @@
     }
     return map;
   });
+
+  let ingredientsOpen = $state(true);
 
   function difficultyLabel(d: string | null | undefined): string {
     if (!d) return '';
@@ -139,43 +141,71 @@
     </div>
   {/if}
 
-  <!-- Ingredients -->
-  {#if scaledIngredients.length > 0}
+  <!-- Cooking section: ingredients (sticky) + instructions -->
+  {#if scaledIngredients.length > 0 || content}
     <div>
-      <h2 class="text-lg font-semibold mb-3">{$_('page.recipes.ingredients')}</h2>
-      {#each [...groupedIngredients().entries()] as [groupName, ingredients] (groupName)}
-        {#if groupName}
-          <h3 class="text-sm font-medium text-muted-foreground mt-3 mb-1">{groupName}</h3>
-        {/if}
-        <ul class="space-y-1">
-          {#each ingredients as ing, ii (ii)}
-            <li class="flex gap-2 text-sm" class:opacity-60={ing.optional}>
-              <span class="font-medium w-20 text-right shrink-0">
-                {ing.display_amount}
-              </span>
-              <span class="text-muted-foreground w-12 shrink-0">
-                {ing.unit ?? ''}
-              </span>
-              <span>
-                {ing.name}
-                {#if ing.optional}
-                  <span class="text-xs text-muted-foreground">({$_('page.recipes.optional')})</span>
-                {/if}
-              </span>
-            </li>
-          {/each}
-        </ul>
-      {/each}
-    </div>
-  {/if}
+      {#if scaledIngredients.length > 0}
+        <!-- Sticky ingredients header -->
+        <button
+          onclick={() => (ingredientsOpen = !ingredientsOpen)}
+          class="sticky top-0 z-10 w-full flex items-center justify-between
+                 py-2 px-1 bg-background border-b border-border
+                 text-lg font-semibold cursor-pointer"
+          aria-expanded={ingredientsOpen}
+        >
+          <span>
+            {$_('page.recipes.ingredients')}
+            <span class="text-sm font-normal text-muted-foreground ml-1">
+              ({scaledIngredients.length})
+            </span>
+          </span>
+          <ChevronDown
+            size={20}
+            class="transition-transform duration-200 {ingredientsOpen ? 'rotate-0' : '-rotate-90'}"
+          />
+        </button>
 
-  <!-- Instructions (rendered as markdown-like text) -->
-  {#if content}
-    <div>
-      <h2 class="text-lg font-semibold mb-3">{$_('page.recipes.instructions')}</h2>
-      <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-        {content}
-      </div>
+        <!-- Collapsible ingredients list -->
+        {#if ingredientsOpen}
+          <div class="pt-2 pb-4">
+            {#each [...groupedIngredients().entries()] as [groupName, ingredients] (groupName)}
+              {#if groupName}
+                <h3 class="text-sm font-medium text-muted-foreground mt-3 mb-1">{groupName}</h3>
+              {/if}
+              <ul class="space-y-1">
+                {#each ingredients as ing, ii (ii)}
+                  <li class="flex gap-2 text-sm" class:opacity-60={ing.optional}>
+                    <span class="font-medium w-20 text-right shrink-0">
+                      {ing.display_amount}
+                    </span>
+                    <span class="text-muted-foreground w-12 shrink-0">
+                      {ing.unit ?? ''}
+                    </span>
+                    <span>
+                      {ing.name}
+                      {#if ing.optional}
+                        <span class="text-xs text-muted-foreground"
+                          >({$_('page.recipes.optional')})</span
+                        >
+                      {/if}
+                    </span>
+                  </li>
+                {/each}
+              </ul>
+            {/each}
+          </div>
+        {/if}
+      {/if}
+
+      <!-- Instructions (rendered as markdown-like text) -->
+      {#if content}
+        <div>
+          <h2 class="text-lg font-semibold mb-3">{$_('page.recipes.instructions')}</h2>
+          <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+            {content}
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

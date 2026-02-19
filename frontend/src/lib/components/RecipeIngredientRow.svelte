@@ -118,7 +118,7 @@
       <!-- Remove -->
       <button
         onclick={onremove}
-        class="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0"
+        class="remove-button p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0"
         title={$_('page.recipes.remove_ingredient')}
       >
         <Trash2 size={14} />
@@ -142,5 +142,11 @@
 
   .ingredient-row.optional {
     opacity: 0.7;
+  }
+
+  @media (hover: none) {
+    .remove-button {
+      opacity: 1;
+    }
   }
 </style>

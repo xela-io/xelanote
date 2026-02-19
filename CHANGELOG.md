@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Improved
+
+- Recipe preview: ingredients header sticks to top of scroll container while reading instructions (mobile cooking UX); collapsible via tap with chevron indicator and ingredient count badge
+- Recipe editor: ingredient remove button always visible on touch devices (no hover required)
+
 ### Fixed
 
 - Pre-push lint issues: gofmt formatting, ESLint import sorting, API doc coverage baseline update

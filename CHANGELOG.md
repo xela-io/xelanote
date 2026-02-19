@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Pre-push lint issues: gofmt formatting, ESLint import sorting, API doc coverage baseline update
+- iOS Mobile layout now uses stable viewport height (`svh`/`dvh`) and applies safe-area paddings only in standalone mode, reducing oversized bottom inset and using full screen height; mobile task deletion view-jump prevented via `overflow-anchor` stabilization on editor scroll containers
 
 ### Changed
 

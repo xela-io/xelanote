@@ -1004,7 +1004,11 @@
        CodeMirror and preview each scroll internally — required for Chrome PWA
        standalone mode where wheel events don't chain from .cm-scroller to
        an outer overflow-auto container. -->
-  <div class="flex-1 {ui.getIsMobile() ? 'overflow-auto' : 'flex flex-col min-h-0'}">
+  <div
+    class="editor-scroll-container flex-1 {ui.getIsMobile()
+      ? 'overflow-auto'
+      : 'flex flex-col min-h-0'}"
+  >
     {#if notes.getIsLoading() && !notes.getCurrentNote()}
       <div
         class="flex-1 flex items-center justify-center text-muted-foreground h-full"

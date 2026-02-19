@@ -161,6 +161,9 @@ export function initStandaloneDetection(): void {
   isStandalone =
     (window.navigator as { standalone?: boolean }).standalone === true ||
     window.matchMedia('(display-mode: standalone)').matches;
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.toggle('is-standalone', isStandalone);
+  }
 }
 
 export function getIsKeyboardOpen() {

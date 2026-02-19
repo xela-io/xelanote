@@ -445,7 +445,8 @@ Rules:
 2. Keep only recipe-relevant content, remove ads or unrelated text
 3. If servings are missing, choose a reasonable default
 4. If difficulty is unclear, set it to null
-5. Return JSON only
+5. Use metric units for ingredients whenever possible (ml, l, g, kg)
+6. Return JSON only
 
 JSON:`, lang)
 }
@@ -488,12 +489,40 @@ Rules:
 1. Extract only one coherent recipe (prefer the main one)
 2. Ignore comments, ads, navigation, and unrelated page fragments
 3. Write title, ingredients, and instructions in %s
-4. Return JSON only
+4. Use metric units for ingredients whenever possible (ml, l, g, kg)
+5. Return JSON only
 
 Webpage text:
 %s
 
 JSON:`, lang, pageText)
+}
+
+// BuildRecipeMainImageSelectionPrompt asks the LLM to pick the most suitable recipe hero images.
+func BuildRecipeMainImageSelectionPrompt(pageURL string, candidates []string) string {
+	var sb strings.Builder
+	sb.WriteString("Select up to 3 main recipe images from the candidate list.\n")
+	sb.WriteString("Prefer final plated dish photos and clear process images. Avoid logos, icons, ads, and avatars.\n\n")
+	sb.WriteString(fmt.Sprintf("Page URL: %s\n\n", pageURL))
+	sb.WriteString("Candidates:\n")
+	for i, c := range candidates {
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, c))
+	}
+
+	sb.WriteString(`
+Return ONLY valid JSON in this shape:
+{"selected_indexes":[1,2,3]}
+
+Rules:
+1. Use 1-based indexes from the candidate list
+2. Maximum 3 indexes
+3. No duplicates
+4. Return {"selected_indexes":[]} if no good image exists
+5. JSON only
+
+JSON:`)
+
+	return sb.String()
 }
 
 // BuildSpellCheckPrompt creates the prompt for spell checking.

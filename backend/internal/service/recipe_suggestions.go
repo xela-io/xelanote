@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"sort"
 	"strings"
 
@@ -352,6 +353,7 @@ func (s *RecipeSuggestionService) ExtractRecipeFromImage(
 	if err != nil {
 		return nil, err
 	}
+	convertRecipeToMetricUnits(recipe)
 	return recipe, nil
 }
 
@@ -381,6 +383,7 @@ func (s *RecipeSuggestionService) ExtractRecipeFromURL(
 	if err != nil {
 		return nil, err
 	}
+	convertRecipeToMetricUnits(recipe)
 
 	normalizedURL := strings.TrimSpace(rawURL)
 	if normalizedURL != "" {
@@ -389,6 +392,37 @@ func (s *RecipeSuggestionService) ExtractRecipeFromURL(
 	validateGeneratedRecipe(recipe)
 
 	return recipe, nil
+}
+
+// SelectMainRecipeImages uses an LLM to choose the best recipe images from URL candidates.
+// Falls back to the first items if no provider is available or parsing fails.
+func (s *RecipeSuggestionService) SelectMainRecipeImages(
+	ctx context.Context, userID int, pageURL string, candidates []string, limit int,
+) []string {
+	if limit < 1 {
+		return []string{}
+	}
+	if len(candidates) <= limit {
+		return candidates
+	}
+
+	provider, err := s.router.GetAnyProvider(ctx, userID)
+	if err != nil {
+		return candidates[:limit]
+	}
+
+	prompt := llm.BuildRecipeMainImageSelectionPrompt(pageURL, candidates)
+	response, err := provider.Generate(ctx, prompt, 400)
+	if err != nil {
+		s.logger.Warn("recipe image selection LLM call failed", slog.String("error", err.Error()))
+		return candidates[:limit]
+	}
+
+	selected := parseSelectedImageCandidates(response, candidates, limit)
+	if len(selected) == 0 {
+		return candidates[:limit]
+	}
+	return selected
 }
 
 // SaveGeneratedRecipe saves a generated recipe as a new note with metadata and ingredients.
@@ -612,4 +646,156 @@ func parseExtractedRecipe(rawResponse string) (*GeneratedRecipe, error) {
 		return nil, ErrNoRecipeFound
 	}
 	return &recipe, nil
+}
+
+func parseSelectedImageCandidates(rawResponse string, candidates []string, limit int) []string {
+	var parsed struct {
+		SelectedIndexes []int `json:"selected_indexes"`
+	}
+	if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(rawResponse)), &parsed); err != nil {
+		return []string{}
+	}
+
+	selected := make([]string, 0, limit)
+	seen := make(map[int]bool)
+	for _, idx := range parsed.SelectedIndexes {
+		if idx < 1 || idx > len(candidates) {
+			continue
+		}
+		if seen[idx] {
+			continue
+		}
+		seen[idx] = true
+		selected = append(selected, candidates[idx-1])
+		if len(selected) >= limit {
+			break
+		}
+	}
+	return selected
+}
+
+func convertRecipeToMetricUnits(recipe *GeneratedRecipe) {
+	for i := range recipe.Ingredients {
+		convertIngredientToMetricUnits(&recipe.Ingredients[i])
+	}
+}
+
+func convertIngredientToMetricUnits(ingredient *GeneratedIngredient) {
+	if ingredient.Unit == nil {
+		return
+	}
+
+	normalizedUnit := normalizeUnit(*ingredient.Unit)
+	if normalizedUnit == "" {
+		return
+	}
+
+	amount, convertedUnit, ok := convertToMetricAmount(ingredient.Amount, normalizedUnit)
+	if !ok {
+		return
+	}
+
+	ingredient.Amount = amount
+	ingredient.Unit = &convertedUnit
+}
+
+func normalizeUnit(unit string) string {
+	u := strings.ToLower(strings.TrimSpace(unit))
+	if u == "" {
+		return ""
+	}
+
+	replacer := strings.NewReplacer(".", "", "-", " ")
+	u = replacer.Replace(u)
+	u = strings.Join(strings.Fields(u), " ")
+
+	aliases := map[string]string{
+		"c":            "cup",
+		"cup":          "cup",
+		"cups":         "cup",
+		"tbsp":         "tbsp",
+		"tbsps":        "tbsp",
+		"tablespoon":   "tbsp",
+		"tablespoons":  "tbsp",
+		"tsp":          "tsp",
+		"tsps":         "tsp",
+		"teaspoon":     "tsp",
+		"teaspoons":    "tsp",
+		"fl oz":        "fl oz",
+		"fluid ounce":  "fl oz",
+		"fluid ounces": "fl oz",
+		"oz":           "oz",
+		"ounce":        "oz",
+		"ounces":       "oz",
+		"lb":           "lb",
+		"lbs":          "lb",
+		"pound":        "lb",
+		"pounds":       "lb",
+		"pt":           "pint",
+		"pint":         "pint",
+		"pints":        "pint",
+		"qt":           "quart",
+		"quart":        "quart",
+		"quarts":       "quart",
+		"gal":          "gallon",
+		"gallon":       "gallon",
+		"gallons":      "gallon",
+	}
+
+	if canonical, ok := aliases[u]; ok {
+		return canonical
+	}
+	return ""
+}
+
+func convertToMetricAmount(amount *float64, normalizedUnit string) (*float64, string, bool) {
+	if amount == nil {
+		return nil, "", false
+	}
+
+	converted := *amount
+	unit := ""
+
+	switch normalizedUnit {
+	case "cup":
+		converted = converted * 236.588
+		unit = "ml"
+	case "tbsp":
+		converted = converted * 14.7868
+		unit = "ml"
+	case "tsp":
+		converted = converted * 4.92892
+		unit = "ml"
+	case "fl oz":
+		converted = converted * 29.5735
+		unit = "ml"
+	case "pint":
+		converted = converted * 473.176
+		unit = "ml"
+	case "quart":
+		converted = converted * 946.353
+		unit = "ml"
+	case "gallon":
+		converted = converted * 3785.41
+		unit = "ml"
+	case "oz":
+		converted = converted * 28.3495
+		unit = "g"
+	case "lb":
+		converted = converted * 453.592
+		unit = "g"
+	default:
+		return nil, "", false
+	}
+
+	if unit == "ml" && converted >= 1000 {
+		converted = converted / 1000
+		unit = "l"
+	} else if unit == "g" && converted >= 1000 {
+		converted = converted / 1000
+		unit = "kg"
+	}
+
+	converted = math.Round(converted*100) / 100
+	return &converted, unit, true
 }

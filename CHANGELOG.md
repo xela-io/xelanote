@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- KI-Rezeptimport erweitert: Beim Import per URL werden automatisch bis zu 3 Hauptbilder aus der Quellseite übernommen (KI-basierte Auswahl mit Fallback), lokal als Upload gespeichert und direkt am Rezept angehängt
 - Backend unit tests for Authorization header parsing (`parseBearerToken` / `hasBearerAuthorizationHeader`) including case-insensitive scheme handling and malformed-header rejection
 
 - Canvas sidebar-to-canvas drag-and-drop — drag notes from the sidebar tree directly onto the canvas to create file nodes at the drop position; supports both UnifiedTree and legacy NoteItem drag sources with text/plain fallback parsing

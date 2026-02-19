@@ -158,3 +158,84 @@ func TestParseExtractedRecipe_NoRecipeFoundSentinel(t *testing.T) {
 		t.Fatalf("expected ErrNoRecipeFound, got: %v", err)
 	}
 }
+
+func TestNormalizeUnit(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{in: " Cups ", want: "cup"},
+		{in: "tbsp", want: "tbsp"},
+		{in: "fluid ounces", want: "fl oz"},
+		{in: "lbs", want: "lb"},
+		{in: "unknown", want: ""},
+	}
+
+	for _, tc := range cases {
+		if got := normalizeUnit(tc.in); got != tc.want {
+			t.Fatalf("normalizeUnit(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestConvertRecipeToMetricUnits(t *testing.T) {
+	cupAmount := 1.0
+	poundAmount := 2.0
+	unknownAmount := 3.0
+
+	recipe := &GeneratedRecipe{
+		Ingredients: []GeneratedIngredient{
+			{Name: "Milk", Amount: &cupAmount, Unit: ptrString("cups")},
+			{Name: "Flour", Amount: &poundAmount, Unit: ptrString("lb")},
+			{Name: "Pepper", Amount: &unknownAmount, Unit: ptrString("pinch")},
+			{Name: "Salt", Amount: nil, Unit: ptrString("tbsp")},
+		},
+	}
+
+	convertRecipeToMetricUnits(recipe)
+
+	if recipe.Ingredients[0].Amount == nil || *recipe.Ingredients[0].Amount != 236.59 {
+		t.Fatalf("expected cups -> 236.59 ml, got %+v", recipe.Ingredients[0].Amount)
+	}
+	if recipe.Ingredients[0].Unit == nil || *recipe.Ingredients[0].Unit != "ml" {
+		t.Fatalf("expected cups unit to become ml, got %+v", recipe.Ingredients[0].Unit)
+	}
+
+	if recipe.Ingredients[1].Amount == nil || *recipe.Ingredients[1].Amount != 907.18 {
+		t.Fatalf("expected lb -> 907.18 g, got %+v", recipe.Ingredients[1].Amount)
+	}
+	if recipe.Ingredients[1].Unit == nil || *recipe.Ingredients[1].Unit != "g" {
+		t.Fatalf("expected lb unit to become g, got %+v", recipe.Ingredients[1].Unit)
+	}
+
+	if recipe.Ingredients[2].Amount == nil || *recipe.Ingredients[2].Amount != 3.0 {
+		t.Fatalf("expected unknown unit amount unchanged, got %+v", recipe.Ingredients[2].Amount)
+	}
+	if recipe.Ingredients[2].Unit == nil || *recipe.Ingredients[2].Unit != "pinch" {
+		t.Fatalf("expected unknown unit unchanged, got %+v", recipe.Ingredients[2].Unit)
+	}
+
+	if recipe.Ingredients[3].Unit == nil || *recipe.Ingredients[3].Unit != "tbsp" {
+		t.Fatalf("expected nil amount to keep original unit, got %+v", recipe.Ingredients[3].Unit)
+	}
+}
+
+func ptrString(v string) *string {
+	return &v
+}
+
+func TestParseSelectedImageCandidates(t *testing.T) {
+	candidates := []string{
+		"https://example.com/a.jpg",
+		"https://example.com/b.jpg",
+		"https://example.com/c.jpg",
+	}
+
+	got := parseSelectedImageCandidates(`{"selected_indexes":[2,2,4,1]}`, candidates, 3)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 selected images, got %d: %#v", len(got), got)
+	}
+	if got[0] != candidates[1] || got[1] != candidates[0] {
+		t.Fatalf("unexpected selection order: %#v", got)
+	}
+}

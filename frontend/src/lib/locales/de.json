@@ -686,6 +686,12 @@
         "info_note": "Der Export enthält alle Notizen mit Ordnerstruktur. Der Import unterstützt einzelne .md Dateien oder ganze Ordner."
       },
       "ai": {
+        "provider_title": "Aktiver KI-Provider",
+        "provider_description": "Wähle aus, welcher Provider für KI-Funktionen genutzt werden soll.",
+        "provider_auto": "Auto (Fallback-Reihenfolge)",
+        "provider_claude": "Claude",
+        "provider_gemini": "Gemini",
+        "provider_chatgpt": "ChatGPT",
         "claude_title": "Claude API Key",
         "claude_description": "Verbinde deinen eigenen Claude API Key für erweiterte KI-Funktionen.",
         "claude_key_hint": "Dein API Key wird verschlüsselt gespeichert (sk-ant-...)",
@@ -698,6 +704,12 @@
         "gemini_key_invalid_format": "Ungültiges Gemini API Key Format (muss mit AIza beginnen)",
         "delete_gemini_key_title": "Gemini API Key löschen",
         "delete_gemini_key_confirm": "Möchtest du deinen Gemini API Key wirklich löschen?",
+        "openai_title": "ChatGPT API Key",
+        "openai_description": "Verbinde deinen OpenAI API Key für ChatGPT.",
+        "openai_key_hint": "Dein API Key wird verschlüsselt gespeichert (sk-...)",
+        "openai_key_invalid_format": "Ungültiges OpenAI API Key Format (muss mit sk- beginnen)",
+        "delete_openai_key_title": "ChatGPT API Key löschen",
+        "delete_openai_key_confirm": "Möchtest du deinen ChatGPT API Key wirklich löschen?",
         "api_key_label": "API Key",
         "api_key_required": "API Key ist erforderlich",
         "api_key_configured": "API Key konfiguriert",
@@ -713,7 +725,7 @@
         "feature_tagging": "Intelligente Tag-Vorschläge",
         "feature_linking": "Link-Erkennung zwischen Notizen",
         "privacy_title": "Datenschutz-Hinweis",
-        "privacy_notice": "Bei Nutzung der KI-APIs (Claude oder Gemini) werden Notiz-Inhalte an externe Server gesendet. Ein API Key ist für KI-Funktionen erforderlich."
+        "privacy_notice": "Bei Nutzung der KI-APIs (Claude, Gemini oder ChatGPT) werden Notiz-Inhalte an externe Server gesendet. Ein API Key ist für KI-Funktionen erforderlich."
       },
       "appearance": {
         "language": "Sprache",
@@ -1198,10 +1210,10 @@
     "replace": "Ersetzen",
     "checking": "Prüfe...",
     "error": "Prüfung fehlgeschlagen",
-    "api_key_required": "Bitte füge einen Claude oder Gemini API Key in Einstellungen → KI hinzu"
+    "api_key_required": "Bitte füge einen Claude, Gemini oder ChatGPT API Key in Einstellungen → KI hinzu"
   },
   "ai": {
-    "provider_required": "Bitte füge einen Claude oder Gemini API Key in Einstellungen → KI hinzu",
+    "provider_required": "Bitte füge einen Claude, Gemini oder ChatGPT API Key in Einstellungen → KI hinzu",
     "not_enabled_for_note": "KI-Funktionen sind für diese Notiz deaktiviert"
   },
   "ai_action": {

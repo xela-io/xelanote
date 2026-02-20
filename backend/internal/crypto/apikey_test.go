@@ -90,6 +90,20 @@ func TestValidateGeminiAPIKey(t *testing.T) {
 	}
 }
 
+func TestValidateOpenAIAPIKey(t *testing.T) {
+	t.Parallel()
+
+	if err := ValidateOpenAIAPIKey("sk-test-12345678901234567890"); err != nil {
+		t.Fatalf("expected valid, got %v", err)
+	}
+	if err := ValidateOpenAIAPIKey("short"); err == nil {
+		t.Fatalf("expected error for short key")
+	}
+	if err := ValidateOpenAIAPIKey("pk-test-12345678901234567890"); err == nil {
+		t.Fatalf("expected error for prefix")
+	}
+}
+
 func TestMaskAPIKey(t *testing.T) {
 	t.Parallel()
 

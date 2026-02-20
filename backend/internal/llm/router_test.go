@@ -74,6 +74,18 @@ func setGeminiKey(t *testing.T, database *db.DB, userID int, apiKey string) {
 	}
 }
 
+func setOpenAIKey(t *testing.T, database *db.DB, userID int, apiKey string) {
+	t.Helper()
+
+	encrypted, err := crypto.EncryptAPIKey(apiKey)
+	if err != nil {
+		t.Fatalf("failed to encrypt api key: %v", err)
+	}
+	if err := database.SetOpenAIAPIKey(userID, encrypted); err != nil {
+		t.Fatalf("failed to set openai api key: %v", err)
+	}
+}
+
 func TestGetProviderForNote_NotAIEnabled(t *testing.T) {
 	t.Parallel()
 
@@ -159,6 +171,30 @@ func TestGetAnyProvider_ClaudePreferred(t *testing.T) {
 	}
 	if provider.Name() != string(ProviderTypeClaude) {
 		t.Fatalf("expected claude provider, got %s", provider.Name())
+	}
+}
+
+func TestGetAnyProvider_UsesSelectedProvider(t *testing.T) {
+	t.Parallel()
+
+	database, userID := setupRouterTestDB(t)
+	defer database.Close()
+
+	setClaudeKey(t, database, userID, "sk-ant-test-claude-key-1234567890")
+	setGeminiKey(t, database, userID, "AIza-test-gemini-key-1234567890")
+	setOpenAIKey(t, database, userID, "sk-test-openai-key-1234567890")
+
+	if err := database.SetActiveAIProvider(userID, "chatgpt"); err != nil {
+		t.Fatalf("failed to set active provider: %v", err)
+	}
+
+	router := NewProviderRouter(database)
+	provider, err := router.GetAnyProvider(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("expected provider, got %v", err)
+	}
+	if provider.Name() != string(ProviderTypeChatGPT) {
+		t.Fatalf("expected chatgpt provider, got %s", provider.Name())
 	}
 }
 

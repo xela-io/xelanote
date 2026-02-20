@@ -54,3 +54,16 @@ func (s *UserService) UpdateSecurityPreferences(userID int, securityLevel *strin
 	// Return updated preferences
 	return s.db.GetUserPreferences(userID)
 }
+
+// GetActiveAIProvider returns the selected AI provider for a user.
+func (s *UserService) GetActiveAIProvider(userID int) (string, error) {
+	return s.db.GetActiveAIProvider(userID)
+}
+
+// SetActiveAIProvider sets the selected AI provider for a user.
+func (s *UserService) SetActiveAIProvider(userID int, provider string) error {
+	if !isValidAIProvider(provider) {
+		return ErrInvalidAIProvider
+	}
+	return s.db.SetActiveAIProvider(userID, provider)
+}

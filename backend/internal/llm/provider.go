@@ -29,6 +29,8 @@ const (
 	ProviderTypeClaude ProviderType = "claude"
 	// ProviderTypeGemini represents the Google Gemini API provider.
 	ProviderTypeGemini ProviderType = "gemini"
+	// ProviderTypeChatGPT represents the OpenAI ChatGPT API provider.
+	ProviderTypeChatGPT ProviderType = "chatgpt"
 )
 
 // VisionProvider extends Provider with image understanding capabilities.
@@ -44,6 +46,8 @@ type VisionProvider interface {
 var (
 	_ Provider       = (*ClaudeClient)(nil)
 	_ Provider       = (*GeminiClient)(nil)
+	_ Provider       = (*ChatGPTClient)(nil)
 	_ VisionProvider = (*ClaudeClient)(nil)
 	_ VisionProvider = (*GeminiClient)(nil)
+	_ VisionProvider = (*ChatGPTClient)(nil)
 )

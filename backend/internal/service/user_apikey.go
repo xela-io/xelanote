@@ -82,3 +82,42 @@ func getGeminiAPIKeyImpl(database *db.DB, userID int) (string, error) {
 
 	return apiKey, nil
 }
+
+// setOpenAIAPIKeyImpl validates, encrypts, and stores an OpenAI API key.
+// This is separated to avoid import cycle issues with the crypto package.
+func setOpenAIAPIKeyImpl(database *db.DB, userID int, apiKey string) error {
+	// Validate API key format
+	if err := crypto.ValidateOpenAIAPIKey(apiKey); err != nil {
+		return ErrInvalidOpenAIAPIKey
+	}
+
+	// Encrypt the API key
+	encryptedKey, err := crypto.EncryptAPIKey(apiKey)
+	if err != nil {
+		return err
+	}
+
+	// Store encrypted key
+	return database.SetOpenAIAPIKey(userID, encryptedKey)
+}
+
+// getOpenAIAPIKeyImpl retrieves and decrypts the OpenAI API key.
+// This is separated to avoid import cycle issues with the crypto package.
+func getOpenAIAPIKeyImpl(database *db.DB, userID int) (string, error) {
+	// Get encrypted key from database
+	encryptedKey, err := database.GetOpenAIAPIKey(userID)
+	if err != nil {
+		if err == db.ErrNotFound {
+			return "", ErrNoOpenAIAPIKey
+		}
+		return "", err
+	}
+
+	// Decrypt the API key
+	apiKey, err := crypto.DecryptAPIKey(encryptedKey)
+	if err != nil {
+		return "", err
+	}
+
+	return apiKey, nil
+}

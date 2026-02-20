@@ -16,6 +16,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		       COALESCE(encrypt_titles, 0),
 		       COALESCE(security_level, 'balanced'),
 		       COALESCE(auto_lock_timeout, 15),
+		       COALESCE(active_ai_provider, 'auto'),
 		       recovery_key_hash, recovery_key_salt,
 		       created_at, updated_at
 		FROM user_preferences
@@ -23,7 +24,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 	`, userID).Scan(
 		&prefs.ID, &prefs.UserID, &prefs.Theme, &prefs.EditorMode,
 		&keywordsEnabled, &encryptTitles,
-		&prefs.SecurityLevel, &prefs.AutoLockTimeout,
+		&prefs.SecurityLevel, &prefs.AutoLockTimeout, &prefs.ActiveAIProvider,
 		&prefs.RecoveryKeyHash, &prefs.RecoveryKeySalt,
 		&prefs.CreatedAt, &prefs.UpdatedAt,
 	)
@@ -71,16 +72,17 @@ func (db *DB) GetOrCreateUserPreferences(userID int) (*UserPreferences, bool, er
 		return nil, false, err
 	}
 	return &UserPreferences{
-		ID:              prefsID,
-		UserID:          userID,
-		Theme:           "default-dark",
-		EditorMode:      "split",
-		KeywordsEnabled: false,
-		EncryptTitles:   false,
-		SecurityLevel:   "balanced",
-		AutoLockTimeout: 15,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		ID:               prefsID,
+		UserID:           userID,
+		Theme:            "default-dark",
+		EditorMode:       "split",
+		KeywordsEnabled:  false,
+		EncryptTitles:    false,
+		SecurityLevel:    "balanced",
+		AutoLockTimeout:  15,
+		ActiveAIProvider: "auto",
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}, true, nil
 }
 

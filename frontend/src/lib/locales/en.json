@@ -686,6 +686,12 @@
         "info_note": "Export includes all notes with folder structure. Import supports individual .md files or entire folders."
       },
       "ai": {
+        "provider_title": "Active AI Provider",
+        "provider_description": "Choose which provider should be used for AI features.",
+        "provider_auto": "Auto (fallback order)",
+        "provider_claude": "Claude",
+        "provider_gemini": "Gemini",
+        "provider_chatgpt": "ChatGPT",
         "claude_title": "Claude API Key",
         "claude_description": "Connect your own Claude API key for advanced AI features.",
         "claude_key_hint": "Your API key is stored encrypted (sk-ant-...)",
@@ -698,6 +704,12 @@
         "gemini_key_invalid_format": "Invalid Gemini API key format (must start with AIza)",
         "delete_gemini_key_title": "Delete Gemini API Key",
         "delete_gemini_key_confirm": "Are you sure you want to delete your Gemini API key?",
+        "openai_title": "ChatGPT API Key",
+        "openai_description": "Connect your OpenAI API key for ChatGPT.",
+        "openai_key_hint": "Your API key is stored encrypted (sk-...)",
+        "openai_key_invalid_format": "Invalid OpenAI API key format (must start with sk-)",
+        "delete_openai_key_title": "Delete ChatGPT API Key",
+        "delete_openai_key_confirm": "Are you sure you want to delete your ChatGPT API key?",
         "api_key_label": "API Key",
         "api_key_required": "API key is required",
         "api_key_configured": "API key configured",
@@ -713,7 +725,7 @@
         "feature_tagging": "Intelligent tag suggestions",
         "feature_linking": "Link detection between notes",
         "privacy_title": "Privacy Notice",
-        "privacy_notice": "When using AI APIs (Claude or Gemini), note contents are sent to external servers. An API key is required for AI features."
+        "privacy_notice": "When using AI APIs (Claude, Gemini, or ChatGPT), note contents are sent to external servers. An API key is required for AI features."
       },
       "appearance": {
         "language": "Language",
@@ -1198,10 +1210,10 @@
     "replace": "Replace",
     "checking": "Checking...",
     "error": "Check failed",
-    "api_key_required": "Please add a Claude or Gemini API key in Settings → AI"
+    "api_key_required": "Please add a Claude, Gemini, or ChatGPT API key in Settings → AI"
   },
   "ai": {
-    "provider_required": "Please add a Claude or Gemini API key in Settings → AI",
+    "provider_required": "Please add a Claude, Gemini, or ChatGPT API key in Settings → AI",
     "not_enabled_for_note": "AI features are disabled for this note"
   },
   "ai_action": {

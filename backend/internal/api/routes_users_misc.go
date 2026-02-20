@@ -12,6 +12,8 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 		r.Put("/preferences", s.updatePreferences)
 		r.Put("/preferences/encryption", s.updateEncryptionPreferences)
 		r.Put("/preferences/security", s.updateSecurityPreferences)
+		r.Get("/ai-provider", s.getAIProviderPreference)
+		r.Put("/ai-provider", s.setAIProviderPreference)
 		// Sensitive operations are rate-limited to prevent abuse
 		r.With(rateLimitMiddleware(s.emailChangeLimiter)).Put("/email", s.changeEmail)
 		r.With(rateLimitMiddleware(s.passwordChangeLimiter)).Put("/password", s.changePassword)
@@ -63,6 +65,25 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 		r.Put("/gemini-api-key", s.handleSetAPIKey(geminiKey))
 		r.Delete("/gemini-api-key", s.handleDeleteAPIKey(geminiKey))
 		r.Get("/gemini-api-key/status", s.handleGetAPIKeyStatus(geminiKey))
+
+		openAIKey := apiKeyProvider{
+			name:      "openai",
+			setKey:    s.userService.SetOpenAIAPIKey,
+			deleteKey: s.userService.DeleteOpenAIAPIKey,
+			getKeyStatus: func(uid int) (*apiKeyStatusResponse, error) {
+				status, err := s.userService.GetOpenAIAPIKeyStatus(uid)
+				if err != nil {
+					return nil, err
+				}
+				return mapOpenAIAPIKeyStatus(status), nil
+			},
+			invalidateCache: s.summarizeService.InvalidateChatGPTClient,
+			validationErr:   service.ErrInvalidOpenAIAPIKey,
+			invalidKeyMsg:   "invalid OpenAI API key format (must start with sk-)",
+		}
+		r.Put("/openai-api-key", s.handleSetAPIKey(openAIKey))
+		r.Delete("/openai-api-key", s.handleDeleteAPIKey(openAIKey))
+		r.Get("/openai-api-key/status", s.handleGetAPIKeyStatus(openAIKey))
 	})
 }
 

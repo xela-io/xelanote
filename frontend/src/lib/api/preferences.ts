@@ -1,10 +1,12 @@
 import { request } from './client';
 import { listNotes } from './notes';
 import type {
+  AIProvider,
   ClaudeAPIKeyStatus,
   GeminiAPIKeyStatus,
   Note,
   NoteVersion,
+  OpenAIAPIKeyStatus,
   UpdateEncryptionPreferencesRequest,
   UpdatePreferencesRequest,
   UpdateSecurityPreferencesRequest,
@@ -106,6 +108,37 @@ export async function setGeminiAPIKey(apiKey: string): Promise<{ message: string
 export async function deleteGeminiAPIKey(): Promise<{ message: string }> {
   return request('/users/gemini-api-key', {
     method: 'DELETE',
+  });
+}
+
+// OpenAI/ChatGPT API Key management (BYOK - Bring Your Own Key)
+export async function getOpenAIAPIKeyStatus(): Promise<OpenAIAPIKeyStatus> {
+  return request('/users/openai-api-key/status');
+}
+
+export async function setOpenAIAPIKey(apiKey: string): Promise<{ message: string }> {
+  return request('/users/openai-api-key', {
+    method: 'PUT',
+    body: JSON.stringify({ api_key: apiKey }),
+  });
+}
+
+export async function deleteOpenAIAPIKey(): Promise<{ message: string }> {
+  return request('/users/openai-api-key', {
+    method: 'DELETE',
+  });
+}
+
+export async function getAIProviderPreference(): Promise<{ provider: AIProvider }> {
+  return request('/users/ai-provider');
+}
+
+export async function setAIProviderPreference(
+  provider: AIProvider
+): Promise<{ provider: AIProvider }> {
+  return request('/users/ai-provider', {
+    method: 'PUT',
+    body: JSON.stringify({ provider }),
   });
 }
 

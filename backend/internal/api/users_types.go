@@ -15,14 +15,15 @@ type webAuthnCredentialInfo struct {
 }
 
 type preferencesResponse struct {
-	Theme           string                   `json:"theme"`
-	EditorMode      string                   `json:"editor_mode"`
-	KeywordsEnabled bool                     `json:"keywords_enabled"`
-	EncryptTitles   bool                     `json:"encrypt_titles"`
-	SecurityLevel   string                   `json:"security_level"`
-	AutoLockTimeout int                      `json:"auto_lock_timeout"`
-	Credentials     []webAuthnCredentialInfo `json:"webauthn_credentials"`
-	Created         bool                     `json:"created"`
+	Theme            string                   `json:"theme"`
+	EditorMode       string                   `json:"editor_mode"`
+	KeywordsEnabled  bool                     `json:"keywords_enabled"`
+	EncryptTitles    bool                     `json:"encrypt_titles"`
+	SecurityLevel    string                   `json:"security_level"`
+	AutoLockTimeout  int                      `json:"auto_lock_timeout"`
+	ActiveAIProvider string                   `json:"active_ai_provider"`
+	Credentials      []webAuthnCredentialInfo `json:"webauthn_credentials"`
+	Created          bool                     `json:"created"`
 }
 
 type updatePreferencesRequest struct {
@@ -38,6 +39,10 @@ type updateEncryptionPreferencesRequest struct {
 type updateSecurityPreferencesRequest struct {
 	SecurityLevel   *string `json:"security_level"`
 	AutoLockTimeout *int    `json:"auto_lock_timeout"`
+}
+
+type updateAIProviderRequest struct {
+	Provider string `json:"provider"`
 }
 
 type addWebAuthnCredentialRequest struct {
@@ -106,6 +111,17 @@ func mapClaudeAPIKeyStatus(status *service.ClaudeAPIKeyStatus) *apiKeyStatusResp
 }
 
 func mapGeminiAPIKeyStatus(status *service.GeminiAPIKeyStatus) *apiKeyStatusResponse {
+	if status == nil {
+		return &apiKeyStatusResponse{HasKey: false}
+	}
+	return &apiKeyStatusResponse{
+		HasKey:    status.HasKey,
+		UpdatedAt: status.UpdatedAt,
+		MaskedKey: status.MaskedKey,
+	}
+}
+
+func mapOpenAIAPIKeyStatus(status *service.OpenAIAPIKeyStatus) *apiKeyStatusResponse {
 	if status == nil {
 		return &apiKeyStatusResponse{HasKey: false}
 	}

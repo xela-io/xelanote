@@ -152,6 +152,20 @@
     isDeleting: false,
   });
 
+  // OpenAI/ChatGPT API Key state (BYOK)
+  let openAIApiKeyStatus = $state<api.OpenAIAPIKeyStatus | null>(null);
+  let isLoadingOpenAIKeyStatus = $state(false);
+  const openAIKeyForm = $state<ApiKeyFormState>({
+    apiKey: '',
+    showKey: false,
+    error: '',
+    isSaving: false,
+    isDeleting: false,
+  });
+
+  let activeAIProvider = $state<api.AIProvider>('auto');
+  let isSavingAIProvider = $state(false);
+
   // Reactive Tauri detection (handles timing issues with preload script)
   let isTauriApp = $state(false);
 
@@ -208,6 +222,8 @@
     loadMigrationStats();
     loadClaudeApiKeyStatus();
     loadGeminiApiKeyStatus();
+    loadOpenAIApiKeyStatus();
+    loadAIProviderPreference();
     features.loadJournalFeature();
     features.loadRecipeFeature();
     features.loadCanvasFeature();
@@ -219,6 +235,10 @@
 
   const updateGeminiKeyForm = (next: Partial<ApiKeyFormState>) => {
     Object.assign(geminiKeyForm, next);
+  };
+
+  const updateOpenAIKeyForm = (next: Partial<ApiKeyFormState>) => {
+    Object.assign(openAIKeyForm, next);
   };
 
   async function loadClaudeApiKeyStatus() {
@@ -245,6 +265,29 @@
       },
       errorContext: 'Gemini',
     });
+  }
+
+  async function loadOpenAIApiKeyStatus() {
+    await loadApiKeyStatus({
+      getStatus: () => api.getOpenAIAPIKeyStatus(),
+      setStatus: (status) => {
+        openAIApiKeyStatus = status;
+      },
+      setLoading: (value) => {
+        isLoadingOpenAIKeyStatus = value;
+      },
+      errorContext: 'OpenAI',
+    });
+  }
+
+  async function loadAIProviderPreference() {
+    try {
+      const res = await api.getAIProviderPreference();
+      activeAIProvider = res.provider;
+    } catch (err) {
+      console.error('Failed to load AI provider preference:', err);
+      activeAIProvider = 'auto';
+    }
   }
 
   async function handleSaveClaudeApiKey(e: Event) {
@@ -311,6 +354,52 @@
       deleteKey: () => api.deleteGeminiAPIKey(),
       reloadStatus: loadGeminiApiKeyStatus,
     });
+  }
+
+  async function handleSaveOpenAIApiKey(e: Event) {
+    await saveApiKey(e, {
+      form: openAIKeyForm,
+      setForm: updateOpenAIKeyForm,
+      validate: (value) => {
+        if (!value) return $_('page.settings.ai.api_key_required');
+        if (!value.startsWith('sk-')) {
+          return $_('page.settings.ai.openai_key_invalid_format');
+        }
+        return null;
+      },
+      save: (value) => api.setOpenAIAPIKey(value),
+      reloadStatus: loadOpenAIApiKeyStatus,
+      saveError: $_('page.settings.ai.api_key_save_failed'),
+    });
+  }
+
+  async function handleDeleteOpenAIApiKey() {
+    await deleteApiKey({
+      confirm: () =>
+        dialog.confirm({
+          title: $_('page.settings.ai.delete_openai_key_title'),
+          message: $_('page.settings.ai.delete_openai_key_confirm'),
+          confirmText: $_('common.delete'),
+          cancelText: $_('common.cancel'),
+          variant: 'danger',
+        }),
+      setForm: updateOpenAIKeyForm,
+      deleteKey: () => api.deleteOpenAIAPIKey(),
+      reloadStatus: loadOpenAIApiKeyStatus,
+    });
+  }
+
+  async function handleAIProviderChange(provider: api.AIProvider) {
+    if (isSavingAIProvider || provider === activeAIProvider) return;
+    isSavingAIProvider = true;
+    try {
+      await api.setAIProviderPreference(provider);
+      activeAIProvider = provider;
+    } catch (err) {
+      console.error('Failed to save AI provider preference:', err);
+    } finally {
+      isSavingAIProvider = false;
+    }
   }
 
   async function loadMigrationStats() {
@@ -993,6 +1082,14 @@
         {geminiKeyForm}
         {handleSaveGeminiApiKey}
         {handleDeleteGeminiApiKey}
+        {openAIApiKeyStatus}
+        {isLoadingOpenAIKeyStatus}
+        {openAIKeyForm}
+        {handleSaveOpenAIApiKey}
+        {handleDeleteOpenAIApiKey}
+        {activeAIProvider}
+        {isSavingAIProvider}
+        {handleAIProviderChange}
       />
     {:else if activeTab === 'data'}
       <div class="space-y-8">

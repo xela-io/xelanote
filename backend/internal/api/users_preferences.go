@@ -30,14 +30,15 @@ func (s *Server) getPreferences(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{
-		Theme:           prefs.Theme,
-		EditorMode:      prefs.EditorMode,
-		KeywordsEnabled: prefs.KeywordsEnabled,
-		EncryptTitles:   prefs.EncryptTitles,
-		SecurityLevel:   prefs.SecurityLevel,
-		AutoLockTimeout: prefs.AutoLockTimeout,
-		Credentials:     convertWebAuthnCredentials(credentials),
-		Created:         created,
+		Theme:            prefs.Theme,
+		EditorMode:       prefs.EditorMode,
+		KeywordsEnabled:  prefs.KeywordsEnabled,
+		EncryptTitles:    prefs.EncryptTitles,
+		SecurityLevel:    prefs.SecurityLevel,
+		AutoLockTimeout:  prefs.AutoLockTimeout,
+		ActiveAIProvider: prefs.ActiveAIProvider,
+		Credentials:      convertWebAuthnCredentials(credentials),
+		Created:          created,
 	})
 }
 
@@ -77,13 +78,59 @@ func (s *Server) updatePreferences(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{
-		Theme:           prefs.Theme,
-		EditorMode:      prefs.EditorMode,
-		KeywordsEnabled: prefs.KeywordsEnabled,
-		EncryptTitles:   prefs.EncryptTitles,
-		SecurityLevel:   prefs.SecurityLevel,
-		AutoLockTimeout: prefs.AutoLockTimeout,
-		Credentials:     convertWebAuthnCredentials(credentials),
-		Created:         false,
+		Theme:            prefs.Theme,
+		EditorMode:       prefs.EditorMode,
+		KeywordsEnabled:  prefs.KeywordsEnabled,
+		EncryptTitles:    prefs.EncryptTitles,
+		SecurityLevel:    prefs.SecurityLevel,
+		AutoLockTimeout:  prefs.AutoLockTimeout,
+		ActiveAIProvider: prefs.ActiveAIProvider,
+		Credentials:      convertWebAuthnCredentials(credentials),
+		Created:          false,
 	})
+}
+
+// getAIProviderPreference returns the currently selected AI provider.
+func (s *Server) getAIProviderPreference(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	provider, err := s.userService.GetActiveAIProvider(userID)
+	if err != nil {
+		s.logger().Error("failed to get AI provider preference", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to get AI provider preference")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"provider": provider})
+}
+
+// setAIProviderPreference updates the selected AI provider.
+func (s *Server) setAIProviderPreference(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req updateAIProviderRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if err := s.userService.SetActiveAIProvider(userID, req.Provider); err != nil {
+		if err == service.ErrInvalidAIProvider {
+			respondError(w, http.StatusBadRequest, "invalid AI provider")
+			return
+		}
+		s.logger().Error("failed to update AI provider preference", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to update AI provider preference")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"provider": req.Provider})
 }

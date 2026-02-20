@@ -158,6 +158,21 @@ func ValidateGeminiAPIKey(apiKey string) error {
 	return nil
 }
 
+// ValidateOpenAIAPIKey performs basic validation of an OpenAI API key format.
+// OpenAI API keys generally start with "sk-".
+func ValidateOpenAIAPIKey(apiKey string) error {
+	if len(apiKey) < 20 {
+		return errors.New("API key too short")
+	}
+
+	// OpenAI API keys should start with "sk-"
+	if len(apiKey) >= 3 && apiKey[:3] != "sk-" {
+		return errors.New("invalid OpenAI API key format (should start with sk-)")
+	}
+
+	return nil
+}
+
 // MaskAPIKey returns a masked version of the API key for display.
 // Shows first 10 and last 4 characters.
 func MaskAPIKey(apiKey string) string {

@@ -17,6 +17,8 @@ var (
 	ErrClaudeNotConfigured = errors.New("Claude API key not configured")
 	// ErrGeminiNotConfigured is returned when Gemini is requested but no API key is configured.
 	ErrGeminiNotConfigured = errors.New("Gemini API key not configured")
+	// ErrChatGPTNotConfigured is returned when ChatGPT is requested but no API key is configured.
+	ErrChatGPTNotConfigured = errors.New("ChatGPT API key not configured")
 	// ErrNoteNotAIEnabled is returned when trying to use AI features for a note that doesn't have AI enabled.
 	ErrNoteNotAIEnabled = errors.New("AI features not enabled for this note")
 	// ErrVisionNotAvailable is returned when no vision-capable LLM provider is available.
@@ -26,18 +28,20 @@ var (
 // ProviderRouter routes LLM requests to the appropriate provider based on context.
 // It manages provider instances and decides which provider to use for each request.
 type ProviderRouter struct {
-	db            *db.DB
-	claudeClients map[int]*ClaudeClient // userID -> ClaudeClient
-	geminiClients map[int]*GeminiClient // userID -> GeminiClient
-	mu            sync.RWMutex
+	db             *db.DB
+	claudeClients  map[int]*ClaudeClient  // userID -> ClaudeClient
+	geminiClients  map[int]*GeminiClient  // userID -> GeminiClient
+	chatgptClients map[int]*ChatGPTClient // userID -> ChatGPTClient
+	mu             sync.RWMutex
 }
 
 // NewProviderRouter creates a new provider router.
 func NewProviderRouter(database *db.DB) *ProviderRouter {
 	return &ProviderRouter{
-		db:            database,
-		claudeClients: make(map[int]*ClaudeClient),
-		geminiClients: make(map[int]*GeminiClient),
+		db:             database,
+		claudeClients:  make(map[int]*ClaudeClient),
+		geminiClients:  make(map[int]*GeminiClient),
+		chatgptClients: make(map[int]*ChatGPTClient),
 	}
 }
 
@@ -60,14 +64,11 @@ func (r *ProviderRouter) GetProviderForNote(ctx context.Context, userID int, not
 		return nil, ErrNoteNotAIEnabled
 	}
 
-	// Claude preferred
-	if claude, err := r.getClaudeClient(userID); err == nil {
-		return claude, nil
-	}
-
-	// Fallback: Gemini
-	if gemini, err := r.getGeminiClient(userID); err == nil {
-		return gemini, nil
+	for _, providerType := range r.providerOrder(userID) {
+		provider, err := r.getProviderByType(userID, providerType)
+		if err == nil {
+			return provider, nil
+		}
 	}
 
 	return nil, ErrNoProviderAvailable
@@ -76,14 +77,11 @@ func (r *ProviderRouter) GetProviderForNote(ctx context.Context, userID int, not
 // GetAnyProvider returns any configured provider for the user (Claude preferred).
 // This is used for features that don't require a specific note (e.g., spell-check).
 func (r *ProviderRouter) GetAnyProvider(ctx context.Context, userID int) (Provider, error) {
-	// Claude preferred
-	if claude, err := r.getClaudeClient(userID); err == nil {
-		return claude, nil
-	}
-
-	// Fallback: Gemini
-	if gemini, err := r.getGeminiClient(userID); err == nil {
-		return gemini, nil
+	for _, providerType := range r.providerOrder(userID) {
+		provider, err := r.getProviderByType(userID, providerType)
+		if err == nil {
+			return provider, nil
+		}
 	}
 
 	return nil, ErrNoProviderAvailable
@@ -99,6 +97,12 @@ func (r *ProviderRouter) GetClaudeProvider(ctx context.Context, userID int) (Pro
 // Returns ErrGeminiNotConfigured if the user hasn't set up their API key.
 func (r *ProviderRouter) GetGeminiProvider(ctx context.Context, userID int) (Provider, error) {
 	return r.getGeminiClient(userID)
+}
+
+// GetChatGPTProvider returns the ChatGPT provider for a user if configured.
+// Returns ErrChatGPTNotConfigured if the user hasn't set up their API key.
+func (r *ProviderRouter) GetChatGPTProvider(ctx context.Context, userID int) (Provider, error) {
+	return r.getChatGPTClient(userID)
 }
 
 // getClaudeClient returns or creates a Claude client for the given user.
@@ -201,6 +205,50 @@ func (r *ProviderRouter) InvalidateGeminiClient(userID int) {
 	delete(r.geminiClients, userID)
 }
 
+// getChatGPTClient returns or creates a ChatGPT client for the given user.
+// Clients are cached per user to avoid repeated decryption.
+func (r *ProviderRouter) getChatGPTClient(userID int) (*ChatGPTClient, error) {
+	r.mu.RLock()
+	client, exists := r.chatgptClients[userID]
+	r.mu.RUnlock()
+
+	if exists {
+		return client, nil
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if client, exists := r.chatgptClients[userID]; exists {
+		return client, nil
+	}
+
+	encryptedKey, err := r.db.GetOpenAIAPIKey(userID)
+	if err != nil {
+		if err == db.ErrNotFound {
+			return nil, ErrChatGPTNotConfigured
+		}
+		return nil, fmt.Errorf("failed to get API key: %w", err)
+	}
+
+	apiKey, err := crypto.DecryptAPIKey(encryptedKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt API key: %w", err)
+	}
+
+	client = NewChatGPTClient(apiKey)
+	r.chatgptClients[userID] = client
+	return client, nil
+}
+
+// InvalidateChatGPTClient removes the cached ChatGPT client for a user.
+// Should be called when the user updates or deletes their API key.
+func (r *ProviderRouter) InvalidateChatGPTClient(userID int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.chatgptClients, userID)
+}
+
 // SummarizeNote generates a summary for a note, using the appropriate provider.
 func (r *ProviderRouter) SummarizeNote(ctx context.Context, userID int, noteID string, content string) (string, error) {
 	provider, err := r.GetProviderForNote(ctx, userID, noteID)
@@ -236,17 +284,23 @@ func (r *ProviderRouter) HasGeminiConfigured(userID int) bool {
 	return err == nil
 }
 
+// HasChatGPTConfigured checks if a user has ChatGPT API configured.
+func (r *ProviderRouter) HasChatGPTConfigured(userID int) bool {
+	_, err := r.getChatGPTClient(userID)
+	return err == nil
+}
+
 // GetVisionProvider returns a vision-capable provider for the user.
 // Both Claude and Gemini implement VisionProvider, so this returns whichever is configured.
 func (r *ProviderRouter) GetVisionProvider(ctx context.Context, userID int) (VisionProvider, error) {
-	// Claude preferred
-	if claude, err := r.getClaudeClient(userID); err == nil {
-		return claude, nil
-	}
-
-	// Fallback: Gemini
-	if gemini, err := r.getGeminiClient(userID); err == nil {
-		return gemini, nil
+	for _, providerType := range r.providerOrder(userID) {
+		provider, err := r.getProviderByType(userID, providerType)
+		if err != nil {
+			continue
+		}
+		if vision, ok := provider.(VisionProvider); ok {
+			return vision, nil
+		}
 	}
 
 	return nil, ErrVisionNotAvailable
@@ -254,14 +308,15 @@ func (r *ProviderRouter) GetVisionProvider(ctx context.Context, userID int) (Vis
 
 // HasAnyProviderConfigured checks if a user has any LLM provider configured.
 func (r *ProviderRouter) HasAnyProviderConfigured(userID int) bool {
-	return r.HasClaudeConfigured(userID) || r.HasGeminiConfigured(userID)
+	return r.HasClaudeConfigured(userID) || r.HasGeminiConfigured(userID) || r.HasChatGPTConfigured(userID)
 }
 
 // GetProviderStatus returns status information about available providers for a user.
 func (r *ProviderRouter) GetProviderStatus(ctx context.Context, userID int) *ProviderStatusInfo {
 	status := &ProviderStatusInfo{
-		ClaudeConfigured: false,
-		GeminiConfigured: false,
+		ClaudeConfigured:  false,
+		GeminiConfigured:  false,
+		ChatGPTConfigured: false,
 	}
 
 	if client, err := r.getClaudeClient(userID); err == nil {
@@ -276,15 +331,55 @@ func (r *ProviderRouter) GetProviderStatus(ctx context.Context, userID int) *Pro
 		status.GeminiAvailable = client.IsAvailable(ctx)
 	}
 
+	if client, err := r.getChatGPTClient(userID); err == nil {
+		status.ChatGPTConfigured = true
+		status.ChatGPTModel = client.Model()
+		status.ChatGPTAvailable = client.IsAvailable(ctx)
+	}
+
 	return status
 }
 
 // ProviderStatusInfo contains status information about LLM providers.
 type ProviderStatusInfo struct {
-	ClaudeConfigured bool   `json:"claude_configured"`
-	ClaudeAvailable  bool   `json:"claude_available,omitempty"`
-	ClaudeModel      string `json:"claude_model,omitempty"`
-	GeminiConfigured bool   `json:"gemini_configured"`
-	GeminiAvailable  bool   `json:"gemini_available,omitempty"`
-	GeminiModel      string `json:"gemini_model,omitempty"`
+	ClaudeConfigured  bool   `json:"claude_configured"`
+	ClaudeAvailable   bool   `json:"claude_available,omitempty"`
+	ClaudeModel       string `json:"claude_model,omitempty"`
+	GeminiConfigured  bool   `json:"gemini_configured"`
+	GeminiAvailable   bool   `json:"gemini_available,omitempty"`
+	GeminiModel       string `json:"gemini_model,omitempty"`
+	ChatGPTConfigured bool   `json:"chatgpt_configured"`
+	ChatGPTAvailable  bool   `json:"chatgpt_available,omitempty"`
+	ChatGPTModel      string `json:"chatgpt_model,omitempty"`
+}
+
+func (r *ProviderRouter) providerOrder(userID int) []ProviderType {
+	preferred, err := r.db.GetActiveAIProvider(userID)
+	if err != nil || preferred == "" || preferred == "auto" {
+		return []ProviderType{ProviderTypeClaude, ProviderTypeGemini, ProviderTypeChatGPT}
+	}
+
+	switch preferred {
+	case string(ProviderTypeClaude):
+		return []ProviderType{ProviderTypeClaude}
+	case string(ProviderTypeGemini):
+		return []ProviderType{ProviderTypeGemini}
+	case string(ProviderTypeChatGPT):
+		return []ProviderType{ProviderTypeChatGPT}
+	default:
+		return []ProviderType{ProviderTypeClaude, ProviderTypeGemini, ProviderTypeChatGPT}
+	}
+}
+
+func (r *ProviderRouter) getProviderByType(userID int, providerType ProviderType) (Provider, error) {
+	switch providerType {
+	case ProviderTypeClaude:
+		return r.getClaudeClient(userID)
+	case ProviderTypeGemini:
+		return r.getGeminiClient(userID)
+	case ProviderTypeChatGPT:
+		return r.getChatGPTClient(userID)
+	default:
+		return nil, ErrNoProviderAvailable
+	}
 }

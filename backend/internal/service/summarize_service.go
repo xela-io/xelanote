@@ -275,3 +275,14 @@ func (s *SummarizeService) InvalidateGeminiClient(userID int) {
 func (s *SummarizeService) HasGeminiConfigured(userID int) bool {
 	return s.router.HasGeminiConfigured(userID)
 }
+
+// InvalidateChatGPTClient invalidates the cached ChatGPT client for a user.
+// Should be called when the user updates or deletes their API key.
+func (s *SummarizeService) InvalidateChatGPTClient(userID int) {
+	s.router.InvalidateChatGPTClient(userID)
+}
+
+// HasChatGPTConfigured checks if a user has ChatGPT API configured.
+func (s *SummarizeService) HasChatGPTConfigured(userID int) bool {
+	return s.router.HasChatGPTConfigured(userID)
+}

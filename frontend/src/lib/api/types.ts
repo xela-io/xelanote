@@ -341,9 +341,12 @@ export interface UserPreferences {
   encrypt_titles: boolean;
   security_level: 'paranoid' | 'balanced' | 'convenient';
   auto_lock_timeout: number; // minutes (0 = never)
+  active_ai_provider: AIProvider;
   webauthn_credentials: WebAuthnCredentialInfo[];
   created: boolean;
 }
+
+export type AIProvider = 'auto' | 'claude' | 'gemini' | 'chatgpt';
 
 export interface UpdatePreferencesRequest {
   theme: string;
@@ -370,6 +373,12 @@ export interface GeminiAPIKeyStatus {
   has_key: boolean;
   updated_at?: string;
   masked_key?: string; // e.g., "AIzaSy...xxxx"
+}
+
+export interface OpenAIAPIKeyStatus {
+  has_key: boolean;
+  updated_at?: string;
+  masked_key?: string; // e.g., "sk-proj...xxxx"
 }
 
 export interface AdminStats {

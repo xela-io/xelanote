@@ -216,3 +216,108 @@ func (db *DB) GetGeminiAPIKeyUpdatedAt(userID int) (*string, error) {
 
 	return &updatedAt.String, nil
 }
+
+// --- OpenAI API Key Management (BYOK) ---
+
+// SetOpenAIAPIKey stores the encrypted OpenAI API key for a user.
+// The key should be encrypted with AES-256-GCM before calling this function.
+func (db *DB) SetOpenAIAPIKey(userID int, encryptedKey string) error {
+	now := time.Now().Format(time.RFC3339)
+
+	result, err := db.Exec(`
+		UPDATE user_preferences
+		SET encrypted_openai_api_key = ?, openai_api_key_updated_at = ?, updated_at = ?
+		WHERE user_id = ?
+	`, encryptedKey, now, now, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := rowsAffectedCount(result, "")
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		_, err = db.Exec(`
+			INSERT INTO user_preferences (user_id, theme, editor_mode, encrypted_openai_api_key, openai_api_key_updated_at, created_at, updated_at)
+			VALUES (?, 'default-dark', 'split', ?, ?, ?, ?)
+		`, userID, encryptedKey, now, now, now)
+		return err
+	}
+
+	return nil
+}
+
+// GetOpenAIAPIKey retrieves the encrypted OpenAI API key for a user.
+// Returns ErrNotFound if no key is stored.
+func (db *DB) GetOpenAIAPIKey(userID int) (string, error) {
+	var encryptedKey sql.NullString
+	err := db.QueryRow(`
+		SELECT encrypted_openai_api_key
+		FROM user_preferences
+		WHERE user_id = ?
+	`, userID).Scan(&encryptedKey)
+
+	if err == sql.ErrNoRows {
+		return "", ErrNotFound
+	}
+	if err != nil {
+		return "", err
+	}
+	if !encryptedKey.Valid || encryptedKey.String == "" {
+		return "", ErrNotFound
+	}
+
+	return encryptedKey.String, nil
+}
+
+// DeleteOpenAIAPIKey removes the OpenAI API key for a user.
+func (db *DB) DeleteOpenAIAPIKey(userID int) error {
+	now := time.Now().Format(time.RFC3339)
+
+	_, err := db.Exec(`
+		UPDATE user_preferences
+		SET encrypted_openai_api_key = NULL, openai_api_key_updated_at = NULL, updated_at = ?
+		WHERE user_id = ?
+	`, now, userID)
+	return err
+}
+
+// HasOpenAIAPIKey checks if a user has an OpenAI API key stored.
+func (db *DB) HasOpenAIAPIKey(userID int) (bool, error) {
+	var count int
+	err := db.QueryRow(`
+		SELECT COUNT(*)
+		FROM user_preferences
+		WHERE user_id = ? AND encrypted_openai_api_key IS NOT NULL AND encrypted_openai_api_key != ''
+	`, userID).Scan(&count)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+// GetOpenAIAPIKeyUpdatedAt retrieves the timestamp when the OpenAI API key was last updated.
+// Returns nil if no key is stored.
+func (db *DB) GetOpenAIAPIKeyUpdatedAt(userID int) (*string, error) {
+	var updatedAt sql.NullString
+	err := db.QueryRow(`
+		SELECT openai_api_key_updated_at
+		FROM user_preferences
+		WHERE user_id = ?
+	`, userID).Scan(&updatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !updatedAt.Valid {
+		return nil, nil
+	}
+
+	return &updatedAt.String, nil
+}

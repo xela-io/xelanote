@@ -167,3 +167,85 @@ func maskGeminiAPIKey(apiKey string) string {
 	}
 	return apiKey[:7] + "..." + apiKey[len(apiKey)-4:]
 }
+
+// --- OpenAI API Key Management (BYOK) ---
+
+// Validation errors for OpenAI API Key
+var (
+	ErrInvalidOpenAIAPIKey = errors.New("invalid OpenAI API key format")
+	ErrNoOpenAIAPIKey      = errors.New("no OpenAI API key configured")
+)
+
+// SetOpenAIAPIKey validates, encrypts, and stores an OpenAI API key for a user.
+// The key is encrypted with AES-256-GCM before storage.
+func (s *UserService) SetOpenAIAPIKey(userID int, apiKey string) error {
+	return setOpenAIAPIKeyImpl(s.db, userID, apiKey)
+}
+
+// GetOpenAIAPIKey retrieves and decrypts the OpenAI API key for a user.
+// Returns ErrNoOpenAIAPIKey if no key is stored.
+func (s *UserService) GetOpenAIAPIKey(userID int) (string, error) {
+	return getOpenAIAPIKeyImpl(s.db, userID)
+}
+
+// DeleteOpenAIAPIKey removes the OpenAI API key for a user.
+func (s *UserService) DeleteOpenAIAPIKey(userID int) error {
+	return s.db.DeleteOpenAIAPIKey(userID)
+}
+
+// HasOpenAIAPIKey checks if a user has an OpenAI API key stored.
+func (s *UserService) HasOpenAIAPIKey(userID int) (bool, error) {
+	return s.db.HasOpenAIAPIKey(userID)
+}
+
+// GetOpenAIAPIKeyStatus returns status information about the stored API key.
+// Does NOT return the actual key, only metadata.
+func (s *UserService) GetOpenAIAPIKeyStatus(userID int) (*OpenAIAPIKeyStatus, error) {
+	hasKey, err := s.db.HasOpenAIAPIKey(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !hasKey {
+		return &OpenAIAPIKeyStatus{
+			HasKey:    false,
+			UpdatedAt: nil,
+			MaskedKey: nil,
+		}, nil
+	}
+
+	updatedAt, err := s.db.GetOpenAIAPIKeyUpdatedAt(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get masked key (decrypt and mask)
+	decryptedKey, err := getOpenAIAPIKeyImpl(s.db, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	masked := maskOpenAIAPIKey(decryptedKey)
+
+	return &OpenAIAPIKeyStatus{
+		HasKey:    true,
+		UpdatedAt: updatedAt,
+		MaskedKey: &masked,
+	}, nil
+}
+
+// OpenAIAPIKeyStatus represents the status of a user's OpenAI API key.
+type OpenAIAPIKeyStatus struct {
+	HasKey    bool    `json:"has_key"`
+	UpdatedAt *string `json:"updated_at,omitempty"`
+	MaskedKey *string `json:"masked_key,omitempty"` // e.g., "sk-proj-...xxxx"
+}
+
+// maskOpenAIAPIKey returns a masked version of the API key for display.
+// Shows first 7 and last 4 characters.
+func maskOpenAIAPIKey(apiKey string) string {
+	if len(apiKey) <= 11 {
+		return "****"
+	}
+	return apiKey[:7] + "..." + apiKey[len(apiKey)-4:]
+}

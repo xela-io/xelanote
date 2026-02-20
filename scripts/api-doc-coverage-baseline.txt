@@ -6,6 +6,7 @@ DELETE /api/recipes/collections/:param/shares/:param
 DELETE /api/shared/collections/:param/items/:param
 DELETE /api/users/api-key
 DELETE /api/users/gemini-api-key
+DELETE /api/users/openai-api-key
 GET /api/2fa/fido2/credentials
 GET /api/features
 GET /api/features/:param
@@ -27,8 +28,12 @@ GET /api/recipes/collections/:param/shares
 GET /api/shared/collections
 GET /api/shared/collections/:param/items
 GET /api/shared/recipes
+GET /api/users/ai-models
+GET /api/users/ai-models/available
+GET /api/users/ai-provider
 GET /api/users/api-key/status
 GET /api/users/gemini-api-key/status
+GET /api/users/openai-api-key/status
 POST /api/2fa/fido2/register/begin
 POST /api/2fa/fido2/register/finish
 POST /api/auth/fido2/begin
@@ -62,5 +67,8 @@ PUT /api/recipes/:param/ingredients
 PUT /api/recipes/:param/metadata
 PUT /api/recipes/collections/:param
 PUT /api/recipes/collections/:param/shares/:param
+PUT /api/users/ai-models
+PUT /api/users/ai-provider
 PUT /api/users/api-key
 PUT /api/users/gemini-api-key
+PUT /api/users/openai-api-key

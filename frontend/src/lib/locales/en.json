@@ -647,7 +647,13 @@
       "loading": "Loading editor...",
       "load_error": "Editor could not be loaded. Please reload the page.",
       "reload": "Reload",
-      "no_id": "No note ID specified"
+      "no_id": "No note ID specified",
+      "workspace": {
+        "linked_mentions": "Linked mentions",
+        "unlinked_mentions": "Unlinked mentions",
+        "no_backlinks": "No backlinks found.",
+        "unlinked_mentions_empty": "No unlinked mentions found."
+      }
     },
     "time": {
       "just_now": "just now",

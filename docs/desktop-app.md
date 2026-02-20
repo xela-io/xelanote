@@ -15,8 +15,14 @@ Die xelanote Desktop-App bietet eine native Anwendung mit verbesserter Sicherhei
 ```bash
 cd frontend
 
-# Development
+# Browser-Entwicklung gegen lokales Backend (Standard)
+npm run dev:local
+
+# Development (lokales Backend auf :8080)
 npm run electron:dev
+
+# Development gegen Production-Server (empfohlen für Login/CAPTCHA-Tests)
+npm run electron:dev:prod
 
 # Production Build (Linux)
 npm run electron:build:linux
@@ -118,15 +124,24 @@ session.defaultSession.webRequest.onBeforeSendHeaders(
 );
 ```
 
-### CAPTCHA Bypass
+Für lokale Electron-Entwicklung gegen Production wird stattdessen ein
+Same-Origin-Proxy verwendet (`VITE_API_BASE_URL=/api`,
+`VITE_API_PROXY_TARGET=https://xelanote.com`). Das vermeidet CORS-Probleme im
+Renderer bei aktiviertem `webSecurity`.
 
-Desktop-Apps senden `X-Client-Type: desktop` Header, das Backend überspringt
-dann die CAPTCHA-Validierung (da Desktop-Apps installierte Software sind).
+### CAPTCHA (Pflicht)
+
+CAPTCHA bleibt für Login und Registrierung auch in Desktop-Apps verpflichtend.
+Es gibt keinen Desktop-Bypass mehr.
 
 ## Known Issues
 
 - `--no-sandbox` Flag erforderlich auf einigen Linux-Systemen
 - GPU-Beschleunigung deaktiviert für Kompatibilität
+- `Port 5173 is already in use` beim Start:
+  - Prozess finden: `lsof -i :5173`
+  - Prozess beenden: `kill <PID>`
+  - Alternative: `pkill -f "vite dev --port 5173"`
 
 ## TODO
 

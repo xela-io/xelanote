@@ -159,7 +159,11 @@ Full API documentation: `docs/api.md`.
 
 - `make init`: install frontend/backend dependencies and hooks
 - `make run-backend`: run Go backend on `:8080`
-- `make run-frontend`: run Vite dev server on `:5173`
+- `make run-frontend`: run Vite dev server on `:5173` (forced local mode, no Prod proxy vars)
+- `cd frontend && npm run dev:local`: browser dev against local backend (`http://localhost:8080`)
+- `cd frontend && npm run dev:prod`: browser dev against production backend (`https://xelanote.com`) via local `/api` proxy
+- `cd frontend && npm run electron:dev`: Electron desktop app in dev (against local backend)
+- `cd frontend && npm run electron:dev:prod`: Electron desktop app in dev (against `https://xelanote.com` via local `/api` proxy)
 - `make test`: backend tests
 - `make test-frontend`: frontend unit tests
 - `make test-e2e`: Playwright tests

@@ -148,7 +148,7 @@ Für aktive Entwicklung laufen Frontend und Backend **separat**:
 
    ```bash
    cd frontend
-   npm run dev
+   npm run dev:local
    ```
 
    Oder mit Make:
@@ -2193,7 +2193,7 @@ make lint            # Lint Go code
 
 # Frontend
 make run-frontend    # Start Frontend Dev Server
-cd frontend && npm run dev    # Same
+cd frontend && npm run dev:local    # Same
 cd frontend && npm run build  # Build for production
 
 # Combined

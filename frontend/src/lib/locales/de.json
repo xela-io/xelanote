@@ -647,7 +647,13 @@
       "loading": "Editor wird geladen...",
       "load_error": "Editor konnte nicht geladen werden. Bitte Seite neu laden.",
       "reload": "Neu laden",
-      "no_id": "Keine Notiz-ID angegeben"
+      "no_id": "Keine Notiz-ID angegeben",
+      "workspace": {
+        "linked_mentions": "Verlinkte Erwähnungen",
+        "unlinked_mentions": "Unverlinkte Erwähnungen",
+        "no_backlinks": "Keine Backlinks gefunden.",
+        "unlinked_mentions_empty": "Keine unverlinkten Erwähnungen gefunden."
+      }
     },
     "time": {
       "just_now": "gerade eben",

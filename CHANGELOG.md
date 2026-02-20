@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Development docs and scripts now distinguish `dev:local` vs `dev:prod` flows for browser and Electron, and workspace/backlink UI locale labels were added for German and English.
 - Navigation: moved logout action from the sidebar into Settings -> Account for improved reliability on narrow sidebars.
 - Canvas feature is now enabled by default for all users (previously required manual activation in settings)
 - Backend API refactoring: note creation flow split into dedicated validation/creation/post-processing helpers; login success response flow centralized; direct `api -> db` note-type validation dependency removed in favor of service-layer validation

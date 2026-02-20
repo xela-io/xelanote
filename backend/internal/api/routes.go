@@ -1,7 +1,7 @@
 package api
 
 import (
-	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,11 +24,8 @@ func (s *Server) setupRoutes() {
 		s.registerProtectedRoutes(r)
 	})
 
-	// Health check (public)
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
+	// Health check (public) — verifies DB connectivity and disk space
+	r.Get("/health", s.handleHealth)
 
 	// CAPTCHA page for iframe embedding (used by desktop apps)
 	// Served with custom security headers to allow iframe embedding
@@ -65,12 +62,13 @@ func (s *Server) registerPublicRoutes(r chi.Router) {
 }
 
 func (s *Server) registerProtectedRoutes(r chi.Router) {
-	// Protected routes (authentication required)
+	// Standard API routes: auth + CSRF + request timeout.
+	// middleware.Timeout cancels the request context after 60s and returns 504.
+	// Handlers should check ctx.Done() to respect the deadline (e.g. LLM calls).
 	r.Group(func(r chi.Router) {
-		// Apply auth middleware to all routes in this group
 		r.Use(s.authMiddleware)
-		// Apply CSRF protection to state-changing requests
 		r.Use(s.csrfMiddleware)
+		r.Use(middleware.Timeout(60 * time.Second))
 
 		// Auth endpoints
 		r.Get("/auth/me", s.me)
@@ -102,5 +100,13 @@ func (s *Server) registerProtectedRoutes(r chi.Router) {
 
 		s.registerProtectedResourceRoutes(r)
 		s.registerProtectedUtilityRoutes(r)
+	})
+
+	// Long-lived connections: auth required but NO timeout middleware.
+	// middleware.Timeout buffers responses, which breaks SSE streaming and WebSocket upgrades.
+	r.Group(func(r chi.Router) {
+		r.Use(s.authMiddleware)
+		r.With(rateLimitMiddleware(s.llmLimiter)).Get("/notes/{id}/summarize/stream", s.summarizeNoteStream)
+		r.Get("/ws", s.handleWebSocket)
 	})
 }

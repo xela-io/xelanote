@@ -84,6 +84,7 @@ func NewServer(cfg ServerConfig) *Server {
 		// Account lockout: 10 global attempts (5 per-IP), 30s initial lockout (doubles each time), 30min max
 		// In test mode, use 1000 attempts to effectively disable lockout
 		accountLockout: NewAccountLockout(limits.lockoutAttempts, 30*time.Second, 30*time.Minute, cfg.Logger),
+		dbPing:         cfg.DBPing,
 	}
 	s.setupRoutes()
 	return s

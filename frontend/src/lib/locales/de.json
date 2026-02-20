@@ -1268,6 +1268,19 @@
       "missing_prompt": "Bitte gib eine Anweisung ein"
     }
   },
+  "error_page": {
+    "title": "Etwas ist schiefgelaufen",
+    "not_found": "Seite nicht gefunden",
+    "not_found_description": "Die angeforderte Seite existiert nicht oder wurde verschoben.",
+    "internal_error": "Interner Fehler",
+    "internal_error_description": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.",
+    "back_home": "Zur Startseite",
+    "try_again": "Erneut versuchen",
+    "error_id": "Fehler-ID: {errorId}",
+    "component_crashed": "Dieser Bereich ist abgestürzt",
+    "retry": "Erneut versuchen",
+    "reload_page": "Seite neu laden"
+  },
   "sharing": {
     "title": "Notiz teilen",
     "search_placeholder": "Nach Benutzername oder E-Mail suchen...",

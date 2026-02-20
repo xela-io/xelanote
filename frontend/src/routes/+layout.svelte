@@ -529,7 +529,23 @@
         enabled: () => ui.getIsMobile() && !ui.getSidebarOpen(),
       }}
     >
-      <Sidebar />
+      <svelte:boundary>
+        <Sidebar />
+        {#snippet failed(_error, reset)}
+          <div
+            class="w-64 shrink-0 border-r border-border bg-sidebar flex items-center justify-center p-4"
+          >
+            <div class="text-center text-sm text-muted-foreground">
+              <p class="mb-2">{$_('error_page.component_crashed')}</p>
+              <button
+                onclick={reset}
+                class="px-3 py-1.5 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90"
+                >{$_('error_page.retry')}</button
+              >
+            </div>
+          </div>
+        {/snippet}
+      </svelte:boundary>
 
       <main
         id="main-content"

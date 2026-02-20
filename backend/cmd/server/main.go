@@ -83,6 +83,13 @@ func main() {
 		log.Printf("Cleaned up %d old activity logs", cleaned)
 	}
 
+	// Cleanup expired and revoked refresh tokens at startup
+	if cleaned, err := database.CleanupExpiredRefreshTokens(); err != nil {
+		log.Printf("Refresh token cleanup failed: %v", err)
+	} else if cleaned > 0 {
+		log.Printf("Cleaned up %d expired/revoked refresh tokens", cleaned)
+	}
+
 	// Backfill due dates for existing notes (one-time after migration 042)
 	if backfilled, err := database.BackfillDueDates(); err != nil {
 		log.Printf("Due dates backfill failed: %v", err)
@@ -147,6 +154,7 @@ func main() {
 		RecipeSuggestSvc: recipeSuggestionService,
 		CanvasService:    canvasService,
 		TelemetrySvc:     telemetryService,
+		DBPing:           database.Ping,
 		JobManager:       jobManager,
 		WSManager:        wsManager,
 		Logger:           logger,

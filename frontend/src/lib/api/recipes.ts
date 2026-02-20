@@ -1,4 +1,4 @@
-import { request } from './client';
+import { AI_REQUEST_TIMEOUT_MS, request } from './client';
 import type {
   CollectionShare,
   GeneratedIngredient,
@@ -328,6 +328,7 @@ export async function findSimilarRecipes(
       collection_id: collectionId || undefined,
       locale,
     }),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
   return result.results || [];
 }
@@ -347,6 +348,7 @@ export async function suggestByIngredients(
       collection_id: collectionId || undefined,
       locale,
     }),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 }
 
@@ -383,6 +385,7 @@ export async function extractIngredientsFromPhoto(file: File, locale: string): P
     {
       method: 'POST',
       body: formData,
+      _timeout: AI_REQUEST_TIMEOUT_MS,
     }
   );
   return result.ingredients || [];
@@ -399,6 +402,7 @@ export async function importRecipeFromImage(file: File, locale: string): Promise
   return request<GeneratedRecipe>('/recipes/suggestions/import-from-image', {
     method: 'POST',
     body: formData,
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 }
 
@@ -409,5 +413,6 @@ export async function importRecipeFromURL(url: string, locale: string): Promise<
   return request<GeneratedRecipe>('/recipes/suggestions/import-from-url', {
     method: 'POST',
     body: JSON.stringify({ url, locale }),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 }

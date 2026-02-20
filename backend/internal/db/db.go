@@ -31,9 +31,10 @@ type Tx struct {
 }
 
 // BeginTx starts a new transaction and returns a Tx wrapper.
+// The context is used for cancellation/timeout propagation.
 // The caller must call Commit() or Rollback() on the returned Tx.
-func (db *DB) BeginTx() (*Tx, error) {
-	tx, err := db.Begin()
+func (db *DB) BeginTx(ctx context.Context) (*Tx, error) {
+	tx, err := db.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -124,7 +125,7 @@ func (db *DB) Optimize() {
 	}
 }
 
-// StartOptimizeScheduler runs PRAGMA optimize at the given interval (e.g. 24h).
+// StartOptimizeScheduler runs PRAGMA optimize and maintenance tasks at the given interval (e.g. 24h).
 // Returns a cancel function to stop the scheduler.
 func (db *DB) StartOptimizeScheduler(interval time.Duration) context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -137,6 +138,11 @@ func (db *DB) StartOptimizeScheduler(interval time.Duration) context.CancelFunc 
 				return
 			case <-ticker.C:
 				db.Optimize()
+				if cleaned, err := db.CleanupExpiredRefreshTokens(); err != nil {
+					log.Printf("Scheduled refresh token cleanup failed: %v", err)
+				} else if cleaned > 0 {
+					log.Printf("Scheduled cleanup: removed %d expired/revoked refresh tokens", cleaned)
+				}
 			}
 		}
 	}()
@@ -267,21 +273,65 @@ func (db *DB) runMigrations() error {
 			return fmt.Errorf("failed to read migration %s: %w", migrationFile, err)
 		}
 
-		// Execute migration
-		if _, err := db.Exec(string(content)); err != nil {
-			return fmt.Errorf("migration %s failed: %w", migrationFile, err)
-		}
-
-		// Mark as applied
-		_, err = db.Exec("INSERT INTO migrations (name) VALUES (?)", migrationFile)
-		if err != nil {
-			return fmt.Errorf("failed to mark migration %s as applied: %w", migrationFile, err)
+		// Execute migration (transactionally if possible)
+		if err := db.executeMigration(migrationFile, string(content)); err != nil {
+			return err
 		}
 
 		fmt.Printf("Applied migration: %s\n", migrationFile)
 	}
 
 	return nil
+}
+
+// executeMigration runs a single migration and marks it as applied.
+// Self-transactional migrations (containing their own BEGIN TRANSACTION) are
+// executed directly. All other migrations are wrapped in a transaction together
+// with the "mark as applied" INSERT for atomicity.
+func (db *DB) executeMigration(name, content string) error {
+	if isSelfTransactional(content) {
+		// Migration manages its own transaction — execute unwrapped
+		if _, err := db.Exec(content); err != nil {
+			return fmt.Errorf("migration %s failed: %w", name, err)
+		}
+		if _, err := db.Exec("INSERT INTO migrations (name) VALUES (?)", name); err != nil {
+			return fmt.Errorf("failed to mark migration %s as applied: %w", name, err)
+		}
+		return nil
+	}
+
+	// Wrap migration + mark-as-applied in a single transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction for migration %s: %w", name, err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(content); err != nil {
+		return fmt.Errorf("migration %s failed: %w", name, err)
+	}
+	if _, err := tx.Exec("INSERT INTO migrations (name) VALUES (?)", name); err != nil {
+		return fmt.Errorf("failed to mark migration %s as applied: %w", name, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit migration %s: %w", name, err)
+	}
+	return nil
+}
+
+// isSelfTransactional returns true if the SQL content contains its own
+// BEGIN TRANSACTION / BEGIN statement (not inside a trigger definition).
+// This detects migrations like 025_virtual_root.sql that manage their own
+// transaction boundaries.
+func isSelfTransactional(sql string) bool {
+	for _, line := range strings.Split(sql, "\n") {
+		trimmed := strings.TrimSpace(strings.ToUpper(line))
+		if trimmed == "BEGIN TRANSACTION;" || trimmed == "BEGIN;" {
+			return true
+		}
+	}
+	return false
 }
 
 func registerEncryptedDriver(key string) {

@@ -170,6 +170,10 @@ export function getSortMode(): SortMode {
   return sortMode;
 }
 
+export function isManualSortMode(): boolean {
+  return sortMode === 'manual';
+}
+
 export function setSortMode(mode: SortMode): void {
   sortMode = mode;
   try {

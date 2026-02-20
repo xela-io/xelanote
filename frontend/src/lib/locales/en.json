@@ -1268,6 +1268,19 @@
       "missing_prompt": "Please enter an instruction"
     }
   },
+  "error_page": {
+    "title": "Something went wrong",
+    "not_found": "Page not found",
+    "not_found_description": "The requested page does not exist or has been moved.",
+    "internal_error": "Internal error",
+    "internal_error_description": "An unexpected error occurred. Please try again.",
+    "back_home": "Back to home",
+    "try_again": "Try again",
+    "error_id": "Error ID: {errorId}",
+    "component_crashed": "This section has crashed",
+    "retry": "Try again",
+    "reload_page": "Reload page"
+  },
   "sharing": {
     "title": "Share Note",
     "search_placeholder": "Search by username or email...",

@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from '../config';
-import { getCSRFToken, request } from './client';
+import { AI_REQUEST_TIMEOUT_MS, getCSRFToken, request } from './client';
 import type {
   AIAction,
   AIEnabledResponse,
@@ -65,6 +65,7 @@ export async function summarizeNote(
   return request(`/notes/${noteId}/summarize`, {
     method: 'POST',
     body: JSON.stringify(body),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 }
 
@@ -252,6 +253,7 @@ export async function suggestTags(
   const response = await request<SuggestTagsResponse>(`/notes/${noteId}/suggest-tags`, {
     method: 'POST',
     body: JSON.stringify(body),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
   return response.suggestions || [];
 }
@@ -283,6 +285,7 @@ export async function suggestLinks(
   const response = await request<SuggestLinksResponse>(`/notes/${noteId}/suggest-links`, {
     method: 'POST',
     body: JSON.stringify(body),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
   return response.suggestions || [];
 }
@@ -299,6 +302,7 @@ export async function spellCheck(
   const response = await request<SpellCheckResponse>('/llm/spell-check', {
     method: 'POST',
     body: JSON.stringify({ text, language }),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
   return response.issues || [];
 }
@@ -387,6 +391,7 @@ export async function formatMarkdown(
   const response = await request<FormatMarkdownResponse>(`/notes/${noteId}/format-markdown`, {
     method: 'POST',
     body: JSON.stringify(body),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 
   return response.formatted_content;
@@ -430,6 +435,7 @@ export async function aiTransform(
   const response = await request<AITransformResponse>(`/notes/${noteId}/ai-transform`, {
     method: 'POST',
     body: JSON.stringify(body),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 
   return response.transformed_content;

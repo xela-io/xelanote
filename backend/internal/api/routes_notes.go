@@ -21,8 +21,9 @@ func (s *Server) registerNotesRoutes(r chi.Router) {
 		r.Put("/{id}/ai-enabled", s.updateNoteAIEnabled)
 
 		// LLM endpoints (rate-limited with shared limiter)
+		// NOTE: GET /{id}/summarize/stream (SSE) is registered separately
+		// in registerNotesStreamingRoutes without timeout middleware.
 		r.With(rateLimitMiddleware(s.llmLimiter)).Post("/{id}/summarize", s.summarizeNote)
-		r.With(rateLimitMiddleware(s.llmLimiter)).Get("/{id}/summarize/stream", s.summarizeNoteStream)
 		r.With(rateLimitMiddleware(s.llmLimiter)).Post("/{id}/summarize/prepare", s.prepareSummarizeStream)
 		r.With(rateLimitMiddleware(s.llmLimiter)).Post("/{id}/suggest-tags", s.suggestTags)
 		r.With(rateLimitMiddleware(s.llmLimiter)).Post("/{id}/suggest-links", s.suggestLinks)
@@ -126,4 +127,10 @@ func (s *Server) registerSnippetsRoutes(r chi.Router) {
 		r.Put("/{id}", s.updateSnippet)
 		r.Delete("/{id}", s.deleteSnippet)
 	})
+}
+
+// registerNotesStreamingRoutes registers SSE endpoints that must NOT have
+// a timeout middleware (they are long-lived server-sent event streams).
+func (s *Server) registerNotesStreamingRoutes(r chi.Router) {
+	r.With(rateLimitMiddleware(s.llmLimiter)).Get("/notes/{id}/summarize/stream", s.summarizeNoteStream)
 }

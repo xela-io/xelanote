@@ -9,6 +9,13 @@ import (
 	"net/http"
 )
 
+const (
+	// maxErrorResponseSize limits how much of an error response body we read (1 MB).
+	maxErrorResponseSize = 1 << 20
+	// maxResponseSize limits the size of a successful JSON response body (4 MB).
+	maxResponseSize = 4 << 20
+)
+
 func doJSONRequest(ctx context.Context, client *http.Client, method, url string, headers map[string]string, reqBody any, respBody any, parseError func([]byte) error, provider string) error {
 	var body io.Reader
 	if reqBody != nil {
@@ -34,7 +41,7 @@ func doJSONRequest(ctx context.Context, client *http.Client, method, url string,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(resp.Body)
+		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, maxErrorResponseSize))
 		if err != nil {
 			return fmt.Errorf("failed to read error response: %w", err)
 		}
@@ -49,7 +56,7 @@ func doJSONRequest(ctx context.Context, client *http.Client, method, url string,
 	if respBody == nil {
 		return nil
 	}
-	if err := json.NewDecoder(resp.Body).Decode(respBody); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseSize)).Decode(respBody); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
 	return nil

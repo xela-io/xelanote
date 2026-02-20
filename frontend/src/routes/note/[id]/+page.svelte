@@ -150,11 +150,83 @@
       </div>
     </div>
   {:else if isCanvas && CanvasEditorComponent}
-    <CanvasEditorComponent {noteId} />
+    <svelte:boundary>
+      <CanvasEditorComponent {noteId} />
+      {#snippet failed(error, reset)}
+        {@const msg = error instanceof Error ? error.message : ''}
+        <div class="flex items-center justify-center h-screen-safe">
+          <div class="text-center text-destructive">
+            <AlertCircle class="w-8 h-8 mx-auto mb-2" />
+            <p class="mb-1 font-medium">{$_('error_page.component_crashed')}</p>
+            {#if msg}<p class="mb-4 text-sm text-muted-foreground">{msg}</p>{/if}
+            <div class="flex items-center justify-center gap-2">
+              <button
+                onclick={reset}
+                class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm"
+                >{$_('error_page.retry')}</button
+              >
+              <button
+                onclick={() => window.location.reload()}
+                class="px-4 py-2 border border-border rounded hover:bg-muted text-sm"
+                >{$_('error_page.reload_page')}</button
+              >
+            </div>
+          </div>
+        </div>
+      {/snippet}
+    </svelte:boundary>
   {:else if isRecipe && RecipeEditorComponent}
-    <RecipeEditorComponent {noteId} />
+    <svelte:boundary>
+      <RecipeEditorComponent {noteId} />
+      {#snippet failed(error, reset)}
+        {@const msg = error instanceof Error ? error.message : ''}
+        <div class="flex items-center justify-center h-screen-safe">
+          <div class="text-center text-destructive">
+            <AlertCircle class="w-8 h-8 mx-auto mb-2" />
+            <p class="mb-1 font-medium">{$_('error_page.component_crashed')}</p>
+            {#if msg}<p class="mb-4 text-sm text-muted-foreground">{msg}</p>{/if}
+            <div class="flex items-center justify-center gap-2">
+              <button
+                onclick={reset}
+                class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm"
+                >{$_('error_page.retry')}</button
+              >
+              <button
+                onclick={() => window.location.reload()}
+                class="px-4 py-2 border border-border rounded hover:bg-muted text-sm"
+                >{$_('error_page.reload_page')}</button
+              >
+            </div>
+          </div>
+        </div>
+      {/snippet}
+    </svelte:boundary>
   {:else if EditorComponent}
-    <EditorComponent {noteId} />
+    <svelte:boundary>
+      <EditorComponent {noteId} />
+      {#snippet failed(error, reset)}
+        {@const msg = error instanceof Error ? error.message : ''}
+        <div class="flex items-center justify-center h-screen-safe">
+          <div class="text-center text-destructive">
+            <AlertCircle class="w-8 h-8 mx-auto mb-2" />
+            <p class="mb-1 font-medium">{$_('error_page.component_crashed')}</p>
+            {#if msg}<p class="mb-4 text-sm text-muted-foreground">{msg}</p>{/if}
+            <div class="flex items-center justify-center gap-2">
+              <button
+                onclick={reset}
+                class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm"
+                >{$_('error_page.retry')}</button
+              >
+              <button
+                onclick={() => window.location.reload()}
+                class="px-4 py-2 border border-border rounded hover:bg-muted text-sm"
+                >{$_('error_page.reload_page')}</button
+              >
+            </div>
+          </div>
+        </div>
+      {/snippet}
+    </svelte:boundary>
   {/if}
 {:else}
   <div class="flex items-center justify-center h-full text-muted-foreground">

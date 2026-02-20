@@ -129,9 +129,9 @@ func (s *Server) registerGraphRoutes(r chi.Router) {
 	r.Get("/graph", s.getGlobalGraph)
 }
 
-func (s *Server) registerWebsocketRoutes(r chi.Router) {
-	// WebSocket endpoint (token from query param, not header)
-	r.Get("/ws", s.handleWebSocket)
+func (s *Server) registerWebsocketRoutes(_ chi.Router) {
+	// WebSocket is registered in the streaming group of registerProtectedRoutes()
+	// (without middleware.Timeout, which would break the WS upgrade).
 }
 
 func (s *Server) registerAdminRoutes(r chi.Router) {

@@ -11,6 +11,7 @@ interface SidebarDndDeps {
   findParentOfNodeById: (type: 'folder' | 'note', id: string | number) => FolderTreeNode | null;
   getFolderChildren: (parent: FolderTreeNode) => FolderTreeNode[];
   getNoteChildren: (parent: FolderTreeNode) => NoteTreeNode[];
+  getSortMode: () => 'manual' | 'updated' | 'title' | 'created';
   alert: (opts: { title: string; message: string; variant: 'danger' | 'warning' }) => Promise<void>;
   strings: {
     errorTitle: string;
@@ -94,6 +95,7 @@ export async function handleTouchDrop(
   deps: SidebarDndDeps,
   translate: (key: string) => string
 ) {
+  const manualSortMode = deps.getSortMode() === 'manual';
   const validation = validateDrop(
     {
       type: dragData.type,
@@ -132,7 +134,7 @@ export async function handleTouchDrop(
       return;
     }
 
-    if (position === 'before' || position === 'after') {
+    if ((position === 'before' || position === 'after') && manualSortMode) {
       if (dragData.type === 'folder' && targetData.type === 'folder') {
         const reordered = await handleTouchFolderReorder(
           Number(dragData.id),

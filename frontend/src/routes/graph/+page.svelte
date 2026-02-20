@@ -28,7 +28,23 @@
 
   <main class="flex-1 overflow-hidden">
     {#if GraphComponent}
-      <GraphComponent />
+      <svelte:boundary>
+        <GraphComponent />
+        {#snippet failed(error, reset)}
+          {@const msg = error instanceof Error ? error.message : ''}
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center text-muted-foreground">
+              <p class="mb-2">{$_('error_page.component_crashed')}</p>
+              {#if msg}<p class="mb-4 text-sm">{msg}</p>{/if}
+              <button
+                onclick={reset}
+                class="px-4 py-2 bg-primary text-primary-foreground rounded text-sm hover:bg-primary/90"
+                >{$_('error_page.retry')}</button
+              >
+            </div>
+          </div>
+        {/snippet}
+      </svelte:boundary>
     {:else}
       <GraphSkeleton />
     {/if}

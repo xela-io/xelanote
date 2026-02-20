@@ -196,9 +196,17 @@ export function getCSRFToken(): string | null {
 
 // --- Offline Write Mode: Extended request options ---
 
+/** Default timeout for API requests (30 seconds). */
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+
+/** Extended timeout for AI/LLM calls that involve server-side model inference. */
+export const AI_REQUEST_TIMEOUT_MS = 60_000;
+
 interface ExtendedRequestInit extends RequestInit {
   _offlineContext?: OfflineNoteContext;
   _offlineAllowed?: boolean; // Set by notes.svelte.ts after Paranoid/Encryption checks
+  /** Per-request timeout in milliseconds. Defaults to DEFAULT_REQUEST_TIMEOUT_MS (30s). */
+  _timeout?: number;
 }
 
 // Callbacks for offline sync events (set by sync-manager)
@@ -468,14 +476,24 @@ export async function request<T>(
   }
 
   // SEC-006: Always include credentials to send HttpOnly cookies
+  const timeoutMs = options._timeout ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   let response: Response;
   try {
     response = await fetch(`${getApiBaseUrl()}${path}`, {
       ...options,
       headers,
       credentials: 'include',
+      signal: controller.signal,
     });
   } catch (fetchError) {
+    clearTimeout(timeoutId);
+    // AbortError = request timeout
+    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      throw new ApiError('Request timed out', 0);
+    }
     // TypeError = network unreachable (despite navigator.onLine === true)
     if (fetchError instanceof TypeError && isMutation && isNoteRoute(path)) {
       // Gating check: _offlineAllowed must be true (set by notes.svelte.ts)
@@ -487,6 +505,7 @@ export async function request<T>(
     }
     throw fetchError;
   }
+  clearTimeout(timeoutId);
 
   // If 401 Unauthorized, try refresh once via central mutex.
   // Important for web cookie auth where no access token exists in memory.

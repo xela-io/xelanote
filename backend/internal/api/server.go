@@ -70,6 +70,8 @@ type Server struct {
 	telemetryService   *service.TelemetryService
 	perfMetricsLimiter *RateLimiter
 	analyticsLimiter   *RateLimiter
+	// Health check dependency probe
+	dbPing func() error
 }
 
 // ServerConfig bundles dependencies for constructing a Server.
@@ -93,6 +95,7 @@ type ServerConfig struct {
 	RecipeSuggestSvc *service.RecipeSuggestionService
 	CanvasService    *service.CanvasService
 	TelemetrySvc     *service.TelemetryService
+	DBPing           func() error
 	JobManager       *jobs.JobManager
 	WSManager        *websocket.Manager
 	Logger           *slog.Logger

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -143,7 +144,7 @@ func (s *UserService) ChangePasswordWithDEKRewrap(
 	}
 
 	// Start atomic transaction for password + DEK updates
-	tx, err := s.db.BeginTx()
+	tx, err := s.db.BeginTx(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}

@@ -37,6 +37,8 @@
 
   // Tree-internal drag & drop (reorder/move) is disabled in virtual mode and on mobile.
   const treeDragEnabled = $derived(!isVirtualized && !ui.getIsMobile());
+  // Reordering should only be active in manual sort mode.
+  const manualSortMode = $derived(tree.isManualSortMode());
   // External note drag (e.g. to Canvas) should still work on desktop in virtual mode.
   const noteExternalDragEnabled = $derived(!ui.getIsMobile());
 
@@ -305,6 +307,13 @@
 
     // Determine drop position based on mouse position
     if (node.type === 'folder') {
+      if (!manualSortMode) {
+        // In auto sort modes, allow moving into folders but not before/after reordering.
+        dropPosition = 'into';
+        isDragOver = true;
+        return;
+      }
+
       // For folders: top 25% = before, bottom 25% = after, middle 50% = into
       if (mouseY < height * 0.25) {
         dropPosition = 'before';
@@ -317,6 +326,13 @@
         isDragOver = true;
       }
     } else {
+      if (!manualSortMode) {
+        // In auto sort modes, dropping on notes is not used for ordering.
+        dropPosition = null;
+        isDragOver = false;
+        return;
+      }
+
       // For notes: top 50% = before, bottom 50% = after
       if (mouseY < height * 0.5) {
         dropPosition = 'before';
@@ -351,6 +367,7 @@
       // Handle folder reordering (before/after) - only for sibling folders
       if (
         (currentDropPosition === 'before' || currentDropPosition === 'after') &&
+        manualSortMode &&
         dragData.type === 'folder' &&
         node.type === 'folder'
       ) {
@@ -362,6 +379,7 @@
       // Handle note reordering or cross-folder move (note dropped before/after another note)
       if (
         (currentDropPosition === 'before' || currentDropPosition === 'after') &&
+        manualSortMode &&
         dragData.type === 'note' &&
         node.type === 'note'
       ) {

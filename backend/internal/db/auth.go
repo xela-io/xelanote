@@ -255,12 +255,19 @@ func (db *DB) DeleteRefreshToken(token string) error {
 	return err
 }
 
-// CleanupExpiredRefreshTokens removes all expired tokens from the database
-// This should be called periodically (e.g., daily cron job)
-func (db *DB) CleanupExpiredRefreshTokens() error {
+// CleanupExpiredRefreshTokens removes expired and old revoked tokens from the database.
+// Returns the number of deleted rows.
+func (db *DB) CleanupExpiredRefreshTokens() (int64, error) {
 	now := time.Now().Format(time.RFC3339)
-	_, err := db.Exec(`DELETE FROM refresh_tokens WHERE expires_at < ?`, now)
-	return err
+	res, err := db.Exec(`
+		DELETE FROM refresh_tokens
+		WHERE expires_at < ?
+		   OR (revoked_at IS NOT NULL AND revoked_at < datetime('now', '-7 days'))
+	`, now)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
 func hashRefreshToken(token string) string {

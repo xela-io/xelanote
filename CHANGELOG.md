@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improved
 
+- Resilience: Added robust frontend error handling with route-level error pages, client error IDs, and component boundaries for sidebar, graph, and note editors (retry/reload fallback UI).
+- API reliability: Introduced request timeouts in the frontend API client (default and AI-specific) and aligned backend routing so streaming endpoints (SSE/WebSocket) are excluded from timeout middleware.
+- Sidebar tree drag-and-drop now respects sort mode: before/after reordering is limited to manual sort, while automatic sort modes avoid invalid reorder interactions.
 - Recipe preview: ingredients header sticks to top of scroll container while reading instructions (mobile cooking UX); collapsible via tap with chevron indicator and ingredient count badge
 - Recipe editor: ingredient remove button always visible on touch devices (no hover required)
 

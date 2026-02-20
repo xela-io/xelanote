@@ -77,8 +77,10 @@
   // would leave currentNote stale because CanvasEditor never triggered loadNote.
   $effect(() => {
     if (!noteId || !auth.isAuthenticated()) return;
+    const noteError = notes.getError();
     const currentNote = notes.getCurrentNote();
     if (currentNote?.id === noteId) return;
+    if (noteError === 'NOT_FOUND') return;
     notes.loadNote(noteId);
   });
 

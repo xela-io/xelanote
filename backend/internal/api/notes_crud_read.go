@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -87,6 +88,10 @@ func (s *Server) getNote(w http.ResponseWriter, r *http.Request) {
 
 	note, err := s.noteService.GetNote(userID, id)
 	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			respondError(w, http.StatusNotFound, "note not found")
+			return
+		}
 		s.respondInternalErr(w, "failed to get note", err)
 		return
 	}

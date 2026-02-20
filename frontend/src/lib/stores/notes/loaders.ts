@@ -1,4 +1,4 @@
-import type { Backlink, Note } from '$lib/api';
+import { ApiError, type Backlink, type Note } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
@@ -288,7 +288,11 @@ export async function loadNote(deps: LoadNoteDeps) {
       deps.setBacklinks([]);
     }
   } catch (err) {
-    deps.setError(err instanceof Error ? err.message : deps.defaultErrorMessage);
+    if (err instanceof ApiError && err.status === 404) {
+      deps.setError('NOT_FOUND');
+    } else {
+      deps.setError(err instanceof Error ? err.message : deps.defaultErrorMessage);
+    }
     deps.setCurrentNote(null);
   } finally {
     deps.setIsLoading(false);

@@ -275,6 +275,7 @@
     // Avoid retry loops while vault is locked. After unlock, this effect reruns
     // and loads the note automatically.
     if (!encryptionUnlocked && noteError === 'ENCRYPTION_LOCKED') return;
+    if (noteError === 'NOT_FOUND') return;
 
     notes.loadNote(noteId);
   });

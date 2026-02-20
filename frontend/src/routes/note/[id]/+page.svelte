@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertCircle, Loader2 } from 'lucide-svelte';
+  import { AlertCircle, Link, Loader2 } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -9,6 +9,7 @@
   import * as journal from '$lib/stores/journal.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as tree from '$lib/stores/tree.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   // Get note ID from URL params
@@ -29,9 +30,11 @@
   // Without this guard, navigating away from a canvas would keep isCanvas=true
   // because currentNote is updated asynchronously by loadNote.
   const currentNote = $derived(notes.getCurrentNote());
+  const backlinks = $derived(notes.getBacklinks());
   const noteLoaded = $derived(currentNote?.id === noteId);
   const isRecipe = $derived(noteLoaded && currentNote?.note_type === 'recipe');
   const isCanvas = $derived(noteLoaded && currentNote?.note_type === 'canvas');
+  const useCanvasDesktopWorkspace = $derived(isCanvas && !ui.getIsMobile());
 
   // Auto-cleanup: delete empty journal notes when navigating away
   let didAutoDelete = false;
@@ -65,6 +68,19 @@
     if (!noteId) {
       goto('/');
     }
+  });
+
+  // If a note cannot be loaded (404), route away from the broken URL to stop retry loops.
+  // Prefer another available note; otherwise fall back to home.
+  $effect(() => {
+    if (!noteId) return;
+    if (notes.getError() !== 'NOT_FOUND') return;
+    const fallback = notes.getNotes().find((n) => n.id !== noteId && !n.is_deleted);
+    if (fallback) {
+      goto(`/note/${fallback.id}`, { replaceState: true });
+      return;
+    }
+    goto('/', { replaceState: true });
   });
 
   // Sync tree selection from URL so sidebar highlights the correct note after refresh
@@ -150,31 +166,87 @@
       </div>
     </div>
   {:else if isCanvas && CanvasEditorComponent}
-    <svelte:boundary>
-      <CanvasEditorComponent {noteId} />
-      {#snippet failed(error, reset)}
-        {@const msg = error instanceof Error ? error.message : ''}
-        <div class="flex items-center justify-center h-screen-safe">
-          <div class="text-center text-destructive">
-            <AlertCircle class="w-8 h-8 mx-auto mb-2" />
-            <p class="mb-1 font-medium">{$_('error_page.component_crashed')}</p>
-            {#if msg}<p class="mb-4 text-sm text-muted-foreground">{msg}</p>{/if}
-            <div class="flex items-center justify-center gap-2">
-              <button
-                onclick={reset}
-                class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm"
-                >{$_('error_page.retry')}</button
-              >
-              <button
-                onclick={() => window.location.reload()}
-                class="px-4 py-2 border border-border rounded hover:bg-muted text-sm"
-                >{$_('error_page.reload_page')}</button
-              >
+    {#if useCanvasDesktopWorkspace}
+      <div class="canvas-workspace">
+        <div class="canvas-workspace-main">
+          <svelte:boundary>
+            <CanvasEditorComponent {noteId} />
+            {#snippet failed(error, reset)}
+              {@const msg = error instanceof Error ? error.message : ''}
+              <div class="flex items-center justify-center h-screen-safe">
+                <div class="text-center text-destructive">
+                  <AlertCircle class="w-8 h-8 mx-auto mb-2" />
+                  <p class="mb-1 font-medium">{$_('error_page.component_crashed')}</p>
+                  {#if msg}<p class="mb-4 text-sm text-muted-foreground">{msg}</p>{/if}
+                  <div class="flex items-center justify-center gap-2">
+                    <button
+                      onclick={reset}
+                      class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm"
+                      >{$_('error_page.retry')}</button
+                    >
+                    <button
+                      onclick={() => window.location.reload()}
+                      class="px-4 py-2 border border-border rounded hover:bg-muted text-sm"
+                      >{$_('error_page.reload_page')}</button
+                    >
+                  </div>
+                </div>
+              </div>
+            {/snippet}
+          </svelte:boundary>
+        </div>
+        <aside class="canvas-workspace-sidebar">
+          <section class="canvas-workspace-panel">
+            <h2 class="canvas-workspace-heading">
+              <Link size={14} />
+              {$_('page.note.workspace.linked_mentions')}
+            </h2>
+            {#if backlinks.length > 0}
+              <div class="canvas-workspace-links">
+                {#each backlinks as backlink (backlink.id)}
+                  <a href="/note/{backlink.id}" class="canvas-workspace-link">{backlink.title}</a>
+                {/each}
+              </div>
+            {:else}
+              <p class="canvas-workspace-empty">{$_('page.note.workspace.no_backlinks')}</p>
+            {/if}
+          </section>
+
+          <section class="canvas-workspace-panel">
+            <h2 class="canvas-workspace-heading">{$_('page.note.workspace.unlinked_mentions')}</h2>
+            <p class="canvas-workspace-empty">
+              {$_('page.note.workspace.unlinked_mentions_empty')}
+            </p>
+          </section>
+        </aside>
+      </div>
+    {:else}
+      <svelte:boundary>
+        <CanvasEditorComponent {noteId} />
+        {#snippet failed(error, reset)}
+          {@const msg = error instanceof Error ? error.message : ''}
+          <div class="flex items-center justify-center h-screen-safe">
+            <div class="text-center text-destructive">
+              <AlertCircle class="w-8 h-8 mx-auto mb-2" />
+              <p class="mb-1 font-medium">{$_('error_page.component_crashed')}</p>
+              {#if msg}<p class="mb-4 text-sm text-muted-foreground">{msg}</p>{/if}
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  onclick={reset}
+                  class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm"
+                  >{$_('error_page.retry')}</button
+                >
+                <button
+                  onclick={() => window.location.reload()}
+                  class="px-4 py-2 border border-border rounded hover:bg-muted text-sm"
+                  >{$_('error_page.reload_page')}</button
+                >
+              </div>
             </div>
           </div>
-        </div>
-      {/snippet}
-    </svelte:boundary>
+        {/snippet}
+      </svelte:boundary>
+    {/if}
   {:else if isRecipe && RecipeEditorComponent}
     <svelte:boundary>
       <RecipeEditorComponent {noteId} />
@@ -233,3 +305,73 @@
     {$_('page.note.no_id')}
   </div>
 {/if}
+
+<style>
+  .canvas-workspace {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--color-background);
+  }
+
+  .canvas-workspace-main {
+    flex: 1;
+    min-width: 0;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .canvas-workspace-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    background: color-mix(in oklch, var(--color-sidebar-background) 88%, var(--color-background));
+    padding: 12px;
+  }
+
+  .canvas-workspace-panel {
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in oklch, var(--color-card) 92%, transparent);
+  }
+
+  .canvas-workspace-panel + .canvas-workspace-panel {
+    margin-top: 12px;
+  }
+
+  .canvas-workspace-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 10px;
+    color: var(--color-foreground);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .canvas-workspace-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .canvas-workspace-link {
+    display: block;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: var(--color-foreground);
+    background: color-mix(in oklch, var(--color-accent) 70%, transparent);
+  }
+
+  .canvas-workspace-link:hover {
+    background: color-mix(in oklch, var(--color-accent) 88%, transparent);
+  }
+
+  .canvas-workspace-empty {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+  }
+</style>

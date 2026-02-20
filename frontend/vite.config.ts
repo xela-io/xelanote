@@ -153,7 +153,7 @@ export default defineConfig({
     strictPort: false, // Allow fallback ports for web dev
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8080',
         changeOrigin: true,
         ws: true,
       },

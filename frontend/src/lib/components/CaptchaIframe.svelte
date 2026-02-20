@@ -83,9 +83,9 @@
 <iframe
   bind:this={iframeRef}
   src={iframeUrl}
-  sandbox="allow-scripts allow-same-origin allow-popups"
   title="CAPTCHA verification"
   class="captcha-iframe"
+  scrolling="no"
 ></iframe>
 
 <style>

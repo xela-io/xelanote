@@ -26,7 +26,6 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 
 	// Verify CAPTCHA token only on first login step (without 2FA code)
 	// When 2FA code is provided, user already passed CAPTCHA in the first step
-	// SEC-002: All clients must provide valid CAPTCHA tokens (no desktop bypass)
 	// Verify() returns nil when CAPTCHA is disabled, so a single call suffices.
 	if req.TOTPCode == "" && req.BackupCode == "" {
 		if err := s.turnstileService.Verify(r.Context(), req.CaptchaToken, clientIP); err != nil {

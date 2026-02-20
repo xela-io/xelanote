@@ -31,7 +31,6 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// SEC-002: All clients must provide valid CAPTCHA tokens (no desktop bypass)
 	// Verify() returns nil when CAPTCHA is disabled, so a single call suffices.
 	clientIP := getClientIPSafe(r)
 	if err := s.turnstileService.Verify(r.Context(), req.CaptchaToken, clientIP); err != nil {

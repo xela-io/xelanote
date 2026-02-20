@@ -11,6 +11,8 @@
   },
   "scripts": {
     "dev": "vite dev",
+    "dev:local": "vite dev --port 5173 --strictPort",
+    "dev:prod": "VITE_API_BASE_URL=/api VITE_API_PROXY_TARGET=https://xelanote.com vite dev --port 5173 --strictPort",
     "build": "vite build",
     "analyze": "ANALYZE=true vite build",
     "preview": "vite preview",
@@ -28,7 +30,8 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:icon": "tauri icon",
-    "electron:dev": "concurrently -k \"vite dev --port 5173 --strictPort\" \"sleep 2 && NODE_ENV=development electron-vite dev --ignoreConfigWarning\"",
+    "electron:dev": "TMPBASE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}; mkdir -p \"$TMPBASE/xelanote-tmp\" && TMPDIR=\"$TMPBASE/xelanote-tmp\" TMP=\"$TMPBASE/xelanote-tmp\" TEMP=\"$TMPBASE/xelanote-tmp\" concurrently -k \"vite dev --port 5173 --strictPort\" \"sleep 2 && NODE_ENV=development electron-vite dev --ignoreConfigWarning\"",
+    "electron:dev:prod": "TMPBASE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}; mkdir -p \"$TMPBASE/xelanote-tmp\" && TMPDIR=\"$TMPBASE/xelanote-tmp\" TMP=\"$TMPBASE/xelanote-tmp\" TEMP=\"$TMPBASE/xelanote-tmp\" VITE_API_BASE_URL=/api VITE_API_PROXY_TARGET=https://xelanote.com concurrently -k \"vite dev --port 5173 --strictPort\" \"sleep 2 && NODE_ENV=development electron-vite dev --ignoreConfigWarning\"",
     "electron:build": "npm run build && electron-vite build && electron-builder",
     "electron:build:linux": "npm run build && electron-vite build && electron-builder --linux",
     "electron:preview": "electron-vite preview"

@@ -114,7 +114,6 @@
       if (config.captcha_iframe_url) {
         captchaIframeUrl = config.captcha_iframe_url;
       }
-
       if (captchaEnabled && captchaSiteKey && !isDesktop()) {
         loadTurnstileScript();
       }
@@ -549,7 +548,7 @@
           <div class="form-group captcha-container">
             {#if isDesktop() && captchaIframeUrl}
               <CaptchaIframe
-                iframeUrl="{getServerUrl()}{captchaIframeUrl}"
+                iframeUrl={`${getServerUrl()}${captchaIframeUrl}`}
                 onToken={(token) => (captchaToken = token)}
                 onExpired={() => (captchaToken = null)}
                 onError={() => {
@@ -557,7 +556,7 @@
                   errorMessage = $_('page.login.captcha_error');
                 }}
               />
-            {:else if !isDesktop()}
+            {:else}
               <div id="captcha-container" use:captchaMount></div>
             {/if}
           </div>

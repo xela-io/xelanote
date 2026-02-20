@@ -6,6 +6,7 @@
  */
 
 import { app, BrowserWindow, net, protocol, session } from 'electron';
+import { mkdirSync } from 'fs';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 
@@ -15,6 +16,11 @@ import { createMainWindow } from './windows/main-window';
 // Linux compatibility - handle GPU/Wayland issues and shared memory problems
 // Electron 33+ has known issues with GPU process on some systems
 if (process.platform === 'linux') {
+  // Cloudflare Turnstile may attempt Private Access Token flows that can
+  // crash the Electron renderer on some Linux setups (bad IPC message).
+  // Disable these browser features so Turnstile falls back to regular challenge mode.
+  app.commandLine.appendSwitch('disable-features', 'PrivateStateTokens,TrustTokens');
+
   // Completely disable GPU acceleration
   app.disableHardwareAcceleration();
 
@@ -23,11 +29,22 @@ if (process.platform === 'linux') {
   app.commandLine.appendSwitch('disable-gpu-compositing');
   app.commandLine.appendSwitch('disable-software-rasterizer');
 
-  // Use home directory instead of /tmp for shared memory
+  // Use runtime tmp from environment (set by npm script) when available.
+  // This avoids putting Chromium shared-memory files onto synced/network
+  // folders (e.g. Nextcloud), which can break Turnstile on Linux.
   const userDataPath = app.getPath('userData');
+  const runtimeTmpPath = process.env.TMPDIR || `${userDataPath}/tmp`;
+  try {
+    mkdirSync(runtimeTmpPath, { recursive: true });
+    process.env.TMPDIR = runtimeTmpPath;
+    process.env.TMP = runtimeTmpPath;
+    process.env.TEMP = runtimeTmpPath;
+    app.setPath('temp', runtimeTmpPath);
+  } catch (err) {
+    console.warn('[Main] Failed to prepare runtime tmp dir:', err);
+  }
   app.commandLine.appendSwitch('disk-cache-dir', `${userDataPath}/cache`);
-
-  // Disable dev shm usage
+  // Fallback for systems with broken /dev/shm permissions.
   app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
@@ -68,6 +85,18 @@ if (!isDev) {
 app.whenReady().then(async () => {
   console.log('[Main] Electron app is ready');
 
+  // Dev CORS bridge for production API testing:
+  // keep renderer webSecurity enabled and strip Origin only for xelanote hosts.
+  if (isDev) {
+    session.defaultSession.webRequest.onBeforeSendHeaders(
+      { urls: ['https://xelanote.com/*', 'https://www.xelanote.com/*'] },
+      (details, callback) => {
+        delete details.requestHeaders.Origin;
+        callback({ requestHeaders: details.requestHeaders });
+      }
+    );
+  }
+
   // In production, register the protocol handler that serves files from the build directory
   if (!isDev) {
     const buildPath = join(app.getAppPath(), 'build');
@@ -93,10 +122,11 @@ app.whenReady().then(async () => {
   }
 
   // Set Content Security Policy
-  // In development, allow localhost dev server and Vite's HMR
+  // In development, do not override response CSP headers.
+  // This is required for remote iframe content such as /captcha, which
+  // needs its own CSP to load Cloudflare Turnstile scripts.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    // Skip CSP modification for dev server responses - let SvelteKit handle its own CSP
-    if (isDev && details.url.startsWith('http://localhost:')) {
+    if (isDev) {
       callback({ responseHeaders: details.responseHeaders });
       return;
     }

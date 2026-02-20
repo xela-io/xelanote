@@ -32,9 +32,10 @@ export function createMainWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      // Disable web security in development to allow cross-origin requests
-      // This allows the app loaded from localhost:5173 to access xelanote.com API
-      webSecurity: !isDev,
+      // Keep webSecurity enabled in dev as well.
+      // Cross-origin requests to xelanote.com are handled in the main process
+      // via header rewriting (see main.ts onBeforeSendHeaders).
+      webSecurity: true,
       allowRunningInsecureContent: false,
     },
   });

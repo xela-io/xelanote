@@ -25,7 +25,7 @@ run-backend:
 
 # Run frontend dev server
 run-frontend:
-	cd frontend && npm run dev
+	cd frontend && env -u VITE_API_BASE_URL -u VITE_API_PROXY_TARGET npm run dev:local
 
 # Run tests
 test:

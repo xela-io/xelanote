@@ -57,6 +57,24 @@ type updateAIModelsRequest struct {
 	ChatGPTModel string `json:"chatgpt_model"`
 }
 
+type aiAvailableModelsResponse struct {
+	Currency          string                 `json:"currency"`
+	PricingUnit       string                 `json:"pricing_unit"`
+	CatalogVersion    string                 `json:"catalog_version"`
+	ClaudeConfigured  bool                   `json:"claude_configured"`
+	ClaudeModels      []aiAvailableModelItem `json:"claude_models"`
+	GeminiConfigured  bool                   `json:"gemini_configured"`
+	GeminiModels      []aiAvailableModelItem `json:"gemini_models"`
+	ChatGPTConfigured bool                   `json:"chatgpt_configured"`
+	ChatGPTModels     []aiAvailableModelItem `json:"chatgpt_models"`
+}
+
+type aiAvailableModelItem struct {
+	ID              string  `json:"id"`
+	InputCostPer1M  float64 `json:"input_cost_per_1m"`
+	OutputCostPer1M float64 `json:"output_cost_per_1m"`
+}
+
 type addWebAuthnCredentialRequest struct {
 	CredentialID string `json:"credential_id"`
 	DeviceName   string `json:"device_name"`

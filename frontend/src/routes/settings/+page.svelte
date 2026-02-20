@@ -170,6 +170,8 @@
     gemini_model: '',
     chatgpt_model: '',
   });
+  let availableAIModels = $state<api.AIAvailableModelsResponse | null>(null);
+  let isLoadingAvailableAIModels = $state(false);
   let isSavingAIModels = $state(false);
 
   // Reactive Tauri detection (handles timing issues with preload script)
@@ -231,6 +233,7 @@
     loadOpenAIApiKeyStatus();
     loadAIProviderPreference();
     loadAIModelPreferences();
+    loadAvailableAIModels();
     features.loadJournalFeature();
     features.loadRecipeFeature();
     features.loadCanvasFeature();
@@ -417,6 +420,18 @@
       aiModels.chatgpt_model = models.chatgpt_model || '';
     } catch (err) {
       console.error('Failed to load AI model preferences:', err);
+    }
+  }
+
+  async function loadAvailableAIModels() {
+    isLoadingAvailableAIModels = true;
+    try {
+      availableAIModels = await api.getAvailableAIModels();
+    } catch (err) {
+      console.error('Failed to load available AI models:', err);
+      availableAIModels = null;
+    } finally {
+      isLoadingAvailableAIModels = false;
     }
   }
 
@@ -1127,6 +1142,8 @@
         {isSavingAIProvider}
         {handleAIProviderChange}
         {aiModels}
+        {availableAIModels}
+        {isLoadingAvailableAIModels}
         {isSavingAIModels}
         {handleSaveAIModels}
       />

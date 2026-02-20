@@ -354,6 +354,24 @@ export interface AIModelPreferences {
   chatgpt_model: string;
 }
 
+export interface AIAvailableModelItem {
+  id: string;
+  input_cost_per_1m: number;
+  output_cost_per_1m: number;
+}
+
+export interface AIAvailableModelsResponse {
+  currency: string;
+  pricing_unit: string;
+  catalog_version: string;
+  claude_configured: boolean;
+  claude_models: AIAvailableModelItem[];
+  gemini_configured: boolean;
+  gemini_models: AIAvailableModelItem[];
+  chatgpt_configured: boolean;
+  chatgpt_models: AIAvailableModelItem[];
+}
+
 export interface UpdatePreferencesRequest {
   theme: string;
   editor_mode: 'edit' | 'preview' | 'split' | 'live';

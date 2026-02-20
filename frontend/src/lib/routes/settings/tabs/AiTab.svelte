@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n';
 
   import type {
+    AIAvailableModelItem,
+    AIAvailableModelsResponse,
     AIModelPreferences,
     AIProvider,
     ClaudeAPIKeyStatus,
@@ -33,8 +35,18 @@
   export let isSavingAIProvider: boolean;
   export let handleAIProviderChange: (provider: AIProvider) => void;
   export let aiModels: AIModelPreferences;
+  export let availableAIModels: AIAvailableModelsResponse | null;
+  export let isLoadingAvailableAIModels: boolean;
   export let isSavingAIModels: boolean;
   export let handleSaveAIModels: (e: Event) => void;
+
+  function includesModel(options: AIAvailableModelItem[], value: string): boolean {
+    return options.some((m) => m.id === value);
+  }
+
+  function formatPrice(input: number, output: number): string {
+    return `$${input.toFixed(2)} / $${output.toFixed(2)}`;
+  }
 </script>
 
 <div class="space-y-8">
@@ -69,48 +81,98 @@
         <label for="claude-model" class="block text-sm font-medium text-foreground mb-1">
           {$_('page.settings.ai.provider_claude')}
         </label>
-        <input
+        <select
           id="claude-model"
-          type="text"
           bind:value={aiModels.claude_model}
-          disabled={isSavingAIModels}
+          disabled={isSavingAIModels || isLoadingAvailableAIModels}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
           focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-          placeholder="claude-3-haiku-20240307"
-        />
+        >
+          <option value="">{$_('page.settings.ai.model_default')}</option>
+          {#if aiModels.claude_model && availableAIModels && !includesModel(availableAIModels.claude_models, aiModels.claude_model)}
+            <option value={aiModels.claude_model}>
+              {$_('page.settings.ai.model_custom_current', {
+                values: { model: aiModels.claude_model },
+              })}
+            </option>
+          {/if}
+          {#if availableAIModels}
+            {#each availableAIModels.claude_models as model (model.id)}
+              <option value={model.id}>
+                {model.id} ({formatPrice(model.input_cost_per_1m, model.output_cost_per_1m)} USD)
+              </option>
+            {/each}
+          {/if}
+        </select>
       </div>
 
       <div>
         <label for="gemini-model" class="block text-sm font-medium text-foreground mb-1">
           {$_('page.settings.ai.provider_gemini')}
         </label>
-        <input
+        <select
           id="gemini-model"
-          type="text"
           bind:value={aiModels.gemini_model}
-          disabled={isSavingAIModels}
+          disabled={isSavingAIModels || isLoadingAvailableAIModels}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
           focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-          placeholder="gemini-2.5-flash"
-        />
+        >
+          <option value="">{$_('page.settings.ai.model_default')}</option>
+          {#if aiModels.gemini_model && availableAIModels && !includesModel(availableAIModels.gemini_models, aiModels.gemini_model)}
+            <option value={aiModels.gemini_model}>
+              {$_('page.settings.ai.model_custom_current', {
+                values: { model: aiModels.gemini_model },
+              })}
+            </option>
+          {/if}
+          {#if availableAIModels}
+            {#each availableAIModels.gemini_models as model (model.id)}
+              <option value={model.id}>
+                {model.id} ({formatPrice(model.input_cost_per_1m, model.output_cost_per_1m)} USD)
+              </option>
+            {/each}
+          {/if}
+        </select>
       </div>
 
       <div>
         <label for="chatgpt-model" class="block text-sm font-medium text-foreground mb-1">
           {$_('page.settings.ai.provider_chatgpt')}
         </label>
-        <input
+        <select
           id="chatgpt-model"
-          type="text"
           bind:value={aiModels.chatgpt_model}
-          disabled={isSavingAIModels}
+          disabled={isSavingAIModels || isLoadingAvailableAIModels}
           class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
           focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-          placeholder="gpt-4o-mini"
-        />
+        >
+          <option value="">{$_('page.settings.ai.model_default')}</option>
+          {#if aiModels.chatgpt_model && availableAIModels && !includesModel(availableAIModels.chatgpt_models, aiModels.chatgpt_model)}
+            <option value={aiModels.chatgpt_model}>
+              {$_('page.settings.ai.model_custom_current', {
+                values: { model: aiModels.chatgpt_model },
+              })}
+            </option>
+          {/if}
+          {#if availableAIModels}
+            {#each availableAIModels.chatgpt_models as model (model.id)}
+              <option value={model.id}>
+                {model.id} ({formatPrice(model.input_cost_per_1m, model.output_cost_per_1m)} USD)
+              </option>
+            {/each}
+          {/if}
+        </select>
       </div>
 
-      <p class="text-xs text-muted-foreground">{$_('page.settings.ai.models_hint')}</p>
+      {#if availableAIModels}
+        <p class="text-xs text-muted-foreground">
+          {$_('page.settings.ai.models_hint')} ({$_('page.settings.ai.model_price_estimate', {
+            values: { date: availableAIModels.catalog_version },
+          })})
+        </p>
+      {:else}
+        <p class="text-xs text-muted-foreground">{$_('page.settings.ai.models_hint')}</p>
+      {/if}
 
       <button
         type="submit"

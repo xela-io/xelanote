@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/llm"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -193,5 +194,42 @@ func (s *Server) setAIModels(w http.ResponseWriter, r *http.Request) {
 		ClaudeModel:  req.ClaudeModel,
 		GeminiModel:  req.GeminiModel,
 		ChatGPTModel: req.ChatGPTModel,
+	})
+}
+
+// getAvailableAIModels returns selectable models and estimated pricing metadata.
+func (s *Server) getAvailableAIModels(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	claudeConfigured, _ := s.userService.HasClaudeAPIKey(userID)
+	geminiConfigured, _ := s.userService.HasGeminiAPIKey(userID)
+	chatgptConfigured, _ := s.userService.HasOpenAIAPIKey(userID)
+
+	mapCatalog := func(entries []llm.ModelCatalogEntry) []aiAvailableModelItem {
+		items := make([]aiAvailableModelItem, 0, len(entries))
+		for _, e := range entries {
+			items = append(items, aiAvailableModelItem{
+				ID:              e.ID,
+				InputCostPer1M:  e.InputCostPer1M,
+				OutputCostPer1M: e.OutputCostPer1M,
+			})
+		}
+		return items
+	}
+
+	respondJSON(w, http.StatusOK, aiAvailableModelsResponse{
+		Currency:          "USD",
+		PricingUnit:       "per_1m_tokens",
+		CatalogVersion:    llm.CatalogVersion,
+		ClaudeConfigured:  claudeConfigured,
+		ClaudeModels:      mapCatalog(llm.ClaudeModelCatalog()),
+		GeminiConfigured:  geminiConfigured,
+		GeminiModels:      mapCatalog(llm.GeminiModelCatalog()),
+		ChatGPTConfigured: chatgptConfigured,
+		ChatGPTModels:     mapCatalog(llm.ChatGPTModelCatalog()),
 	})
 }

@@ -1,6 +1,7 @@
 import { request } from './client';
 import { listNotes } from './notes';
 import type {
+  AIAvailableModelsResponse,
   AIModelPreferences,
   AIProvider,
   ClaudeAPIKeyStatus,
@@ -152,6 +153,10 @@ export async function setAIModelPreferences(data: AIModelPreferences): Promise<A
     method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+export async function getAvailableAIModels(): Promise<AIAvailableModelsResponse> {
+  return request('/users/ai-models/available');
 }
 
 export async function changeEmail(newEmail: string, currentPassword: string): Promise<void> {

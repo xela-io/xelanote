@@ -16,6 +16,7 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 		r.Put("/ai-provider", s.setAIProviderPreference)
 		r.Get("/ai-models", s.getAIModels)
 		r.Put("/ai-models", s.setAIModels)
+		r.Get("/ai-models/available", s.getAvailableAIModels)
 		// Sensitive operations are rate-limited to prevent abuse
 		r.With(rateLimitMiddleware(s.emailChangeLimiter)).Put("/email", s.changeEmail)
 		r.With(rateLimitMiddleware(s.passwordChangeLimiter)).Put("/password", s.changePassword)

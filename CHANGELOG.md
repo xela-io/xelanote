@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared recipes/notes can now be opened reliably from shared lists: note loading now falls back to shared endpoint access when owner-only note lookup returns not found
 - Live Preview: code fence markers (```) are now properly hidden when the cursor is not on the line, consistent with headings and blockquotes
 - Live Preview: Inhaltsverzeichnis (TOC) is now shown in live mode (right-aligned like preview), and TOC clicks now jump to the matching heading in the live editor
+- Live Preview: non-code lines now use the regular sans font to avoid a monospace look
 - Pre-push lint issues: gofmt formatting, ESLint import sorting, API doc coverage baseline update
 - iOS Mobile layout now uses stable viewport height (`svh`/`dvh`) and applies safe-area paddings only in standalone mode, reducing oversized bottom inset and using full screen height; mobile task deletion view-jump prevented via `overflow-anchor` stabilization on editor scroll containers
 - iOS PWA viewport fallback: added `-webkit-fill-available` to safe screen-height utilities and `html/body` so older iOS Safari versions use full available app height reliably

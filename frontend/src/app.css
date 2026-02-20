@@ -786,6 +786,10 @@ html {
   line-height: var(--live-preview-line-height);
 }
 
+.cm-editor .cm-live-preview-line {
+  font-family: var(--font-sans);
+}
+
 .cm-editor .cm-live-preview-link,
 .cm-editor .cm-live-preview-wikilink {
   color: var(--color-primary);

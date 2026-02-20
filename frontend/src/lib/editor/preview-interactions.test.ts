@@ -1,6 +1,7 @@
+import type { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { handlePreviewClick } from './preview-interactions';
+import { handleLiveTocClick, handlePreviewClick } from './preview-interactions';
 
 function createTaskPreviewItem(attrs: { index: number; line?: number; checked?: boolean }) {
   const preview = document.createElement('div');
@@ -90,5 +91,60 @@ describe('handlePreviewClick', () => {
 
     expect(onToggleTask).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(true);
+  });
+});
+
+describe('handleLiveTocClick', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('scrolls CodeMirror editor to the matching heading slug', () => {
+    const dispatch = vi.fn();
+    const focus = vi.fn();
+    const liveEditorView = {
+      state: {
+        doc: {
+          lines: 4,
+          line: (lineNumber: number) => ({ from: (lineNumber - 1) * 10 }),
+        },
+      },
+      dispatch,
+      focus,
+    } as unknown as EditorView;
+
+    const handled = handleLiveTocClick(
+      'intro-1',
+      ['# Intro', '## Intro', '### Details', 'Text'].join('\n'),
+      liveEditorView
+    );
+
+    expect(handled).toBe(true);
+    expect(dispatch).toHaveBeenCalledWith({
+      selection: { anchor: 10 },
+      scrollIntoView: true,
+    });
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns false when no matching heading slug exists', () => {
+    const dispatch = vi.fn();
+    const focus = vi.fn();
+    const liveEditorView = {
+      state: {
+        doc: {
+          lines: 2,
+          line: (lineNumber: number) => ({ from: (lineNumber - 1) * 10 }),
+        },
+      },
+      dispatch,
+      focus,
+    } as unknown as EditorView;
+
+    const handled = handleLiveTocClick('missing-heading', '# Intro\n## Details', liveEditorView);
+
+    expect(handled).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(focus).not.toHaveBeenCalled();
   });
 });

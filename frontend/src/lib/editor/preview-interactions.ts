@@ -1,3 +1,5 @@
+import type { EditorView } from '@codemirror/view';
+
 interface PreviewInteractionOptions {
   featureTaskLists: boolean;
   getLastTaskClickTime: () => number;
@@ -96,12 +98,68 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
   }
 }
 
-export function handleTocClick(slug: string) {
+function slugifyHeading(text: string, slugCounts: Map<string, number>): string {
+  let slug = text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-');
+  const count = slugCounts.get(slug) || 0;
+  slugCounts.set(slug, count + 1);
+  if (count > 0) {
+    slug = `${slug}-${count}`;
+  }
+  return slug;
+}
+
+function findHeadingLineBySlug(content: string, slug: string): number | null {
+  const lines = content.split('\n');
+  const slugCounts = new Map<string, number>();
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(/^(#{1,6})\s+(.+)$/);
+    if (!match) continue;
+    const currentSlug = slugifyHeading(match[2].trim(), slugCounts);
+    if (currentSlug === slug) {
+      return i + 1;
+    }
+  }
+  return null;
+}
+
+export function handleLiveTocClick(
+  slug: string,
+  content: string,
+  liveEditorView: EditorView
+): boolean {
+  const lineNumber = findHeadingLineBySlug(content, slug);
+  if (!lineNumber || lineNumber > liveEditorView.state.doc.lines) {
+    return false;
+  }
+
+  const line = liveEditorView.state.doc.line(lineNumber);
+  liveEditorView.dispatch({
+    selection: { anchor: line.from },
+    scrollIntoView: true,
+  });
+  liveEditorView.focus();
+  return true;
+}
+
+interface TocClickOptions {
+  content?: string;
+  liveEditorView?: EditorView;
+}
+
+export function handleTocClick(slug: string, options: TocClickOptions = {}) {
   const previewContainer = document.querySelector('.markdown-preview');
   if (previewContainer) {
     const heading = previewContainer.querySelector(`#${CSS.escape(slug)}`);
     if (heading) {
       heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
     }
+  }
+
+  if (options.content && options.liveEditorView) {
+    handleLiveTocClick(slug, options.content, options.liveEditorView);
   }
 }

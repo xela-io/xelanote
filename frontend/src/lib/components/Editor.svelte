@@ -597,6 +597,14 @@
     });
   }
 
+  function handleTocClickLocal(slug: string) {
+    const noteContent = notes.getCurrentNote()?.content;
+    handleTocClick(slug, {
+      content: noteContent,
+      liveEditorView: ui.getEditorMode() === 'live' ? editorView : undefined,
+    });
+  }
+
   /**
    * Handle Enter key in task lists.
    * Currently defers to default CodeMirror behavior for all cases.
@@ -1063,7 +1071,15 @@
       </div>
 
       <!-- Editor / Preview area — flex-1 so it fills remaining height -->
-      <div class="flex min-h-0 {ui.getIsMobile() ? '' : 'flex-1'}" bind:this={splitContainerRef}>
+      <div
+        class="relative flex min-h-0 {ui.getIsMobile() ? '' : 'flex-1'}"
+        bind:this={splitContainerRef}
+      >
+        {#if ui.getEditorMode() === 'live' && headings.length > 0}
+          <div class="absolute inset-x-0 top-0 z-20 pointer-events-none">
+            <TableOfContents {headings} onHeadingClick={handleTocClickLocal} />
+          </div>
+        {/if}
         <!-- Editor -->
         {#if ui.getEditorMode() === 'edit' || ui.getEditorMode() === 'split' || ui.getEditorMode() === 'live'}
           <div
@@ -1111,7 +1127,7 @@
           >
             <!-- Floating Table of Contents -->
             {#if headings.length > 0}
-              <TableOfContents {headings} onHeadingClick={handleTocClick} />
+              <TableOfContents {headings} onHeadingClick={handleTocClickLocal} />
             {/if}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->

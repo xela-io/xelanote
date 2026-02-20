@@ -1,6 +1,10 @@
 package service
 
-import "github.com/xela-io/xelanote/internal/db"
+import (
+	"strings"
+
+	"github.com/xela-io/xelanote/internal/db"
+)
 
 // GetOrCreatePreferences retrieves user preferences, creating defaults if needed
 // Returns preferences and a boolean indicating if the row was newly created
@@ -66,4 +70,43 @@ func (s *UserService) SetActiveAIProvider(userID int, provider string) error {
 		return ErrInvalidAIProvider
 	}
 	return s.db.SetActiveAIProvider(userID, provider)
+}
+
+// GetAIModelPreferences returns saved model overrides for all providers.
+func (s *UserService) GetAIModelPreferences(userID int) (*db.AIModelPreferences, error) {
+	return s.db.GetAIModelPreferences(userID)
+}
+
+// SetAIModelPreferences saves model overrides for all providers.
+// Empty values are valid and reset to provider defaults.
+func (s *UserService) SetAIModelPreferences(userID int, models *db.AIModelPreferences) error {
+	models.ClaudeModel = strings.TrimSpace(models.ClaudeModel)
+	models.GeminiModel = strings.TrimSpace(models.GeminiModel)
+	models.ChatGPTModel = strings.TrimSpace(models.ChatGPTModel)
+
+	if !isValidModelString(models.ClaudeModel) || !isValidModelString(models.GeminiModel) || !isValidModelString(models.ChatGPTModel) {
+		return ErrInvalidAIModel
+	}
+	return s.db.SetAIModelPreferences(userID, models)
+}
+
+func isValidModelString(model string) bool {
+	if model == "" {
+		return true
+	}
+	if len(model) > 100 {
+		return false
+	}
+	for _, r := range model {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			continue
+		}
+		switch r {
+		case '-', '_', '.', ':':
+			continue
+		default:
+			return false
+		}
+	}
+	return true
 }

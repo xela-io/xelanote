@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import type {
+    AIModelPreferences,
     AIProvider,
     ClaudeAPIKeyStatus,
     GeminiAPIKeyStatus,
@@ -31,6 +32,9 @@
   export let activeAIProvider: AIProvider;
   export let isSavingAIProvider: boolean;
   export let handleAIProviderChange: (provider: AIProvider) => void;
+  export let aiModels: AIModelPreferences;
+  export let isSavingAIModels: boolean;
+  export let handleSaveAIModels: (e: Event) => void;
 </script>
 
 <div class="space-y-8">
@@ -54,6 +58,74 @@
     {#if isSavingAIProvider}
       <div class="text-xs text-muted-foreground mt-2">{$_('common.saving')}</div>
     {/if}
+  </div>
+
+  <div>
+    <h3 class="text-lg font-medium text-foreground mb-2">{$_('page.settings.ai.models_title')}</h3>
+    <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.models_description')}</p>
+
+    <form onsubmit={handleSaveAIModels} class="space-y-4">
+      <div>
+        <label for="claude-model" class="block text-sm font-medium text-foreground mb-1">
+          {$_('page.settings.ai.provider_claude')}
+        </label>
+        <input
+          id="claude-model"
+          type="text"
+          bind:value={aiModels.claude_model}
+          disabled={isSavingAIModels}
+          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
+          focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          placeholder="claude-3-haiku-20240307"
+        />
+      </div>
+
+      <div>
+        <label for="gemini-model" class="block text-sm font-medium text-foreground mb-1">
+          {$_('page.settings.ai.provider_gemini')}
+        </label>
+        <input
+          id="gemini-model"
+          type="text"
+          bind:value={aiModels.gemini_model}
+          disabled={isSavingAIModels}
+          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
+          focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          placeholder="gemini-2.5-flash"
+        />
+      </div>
+
+      <div>
+        <label for="chatgpt-model" class="block text-sm font-medium text-foreground mb-1">
+          {$_('page.settings.ai.provider_chatgpt')}
+        </label>
+        <input
+          id="chatgpt-model"
+          type="text"
+          bind:value={aiModels.chatgpt_model}
+          disabled={isSavingAIModels}
+          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
+          focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          placeholder="gpt-4o-mini"
+        />
+      </div>
+
+      <p class="text-xs text-muted-foreground">{$_('page.settings.ai.models_hint')}</p>
+
+      <button
+        type="submit"
+        disabled={isSavingAIModels}
+        class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
+        font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {#if isSavingAIModels}
+          <Loader2 size={16} class="animate-spin" />
+          {$_('common.saving')}
+        {:else}
+          {$_('page.settings.ai.save_models_button')}
+        {/if}
+      </button>
+    </form>
   </div>
 
   <!-- Claude API Key (BYOK) -->

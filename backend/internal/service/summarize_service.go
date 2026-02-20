@@ -286,3 +286,8 @@ func (s *SummarizeService) InvalidateChatGPTClient(userID int) {
 func (s *SummarizeService) HasChatGPTConfigured(userID int) bool {
 	return s.router.HasChatGPTConfigured(userID)
 }
+
+// InvalidateAllAIClients invalidates all cached AI clients for a user.
+func (s *SummarizeService) InvalidateAllAIClients(userID int) {
+	s.router.InvalidateAllClients(userID)
+}

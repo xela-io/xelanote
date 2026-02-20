@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - AI settings: Added ChatGPT (OpenAI) API key integration and a selectable active AI provider (`auto`, `claude`, `gemini`, `chatgpt`) with backend persistence.
+- AI settings: Added per-provider model configuration in Settings → AI (Claude/Gemini/ChatGPT), persisted per user and applied by backend provider routing.
 - Live Preview: Markdown tables are now rendered as HTML tables when the cursor is outside the table block; clicking the rendered table or moving the cursor into it reveals raw markdown for editing
 - Table insert feature: toolbar button and `Mod-Shift-T` shortcut open a dialog to insert a markdown table with configurable rows and columns
 

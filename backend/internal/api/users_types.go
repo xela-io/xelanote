@@ -45,6 +45,18 @@ type updateAIProviderRequest struct {
 	Provider string `json:"provider"`
 }
 
+type aiModelsResponse struct {
+	ClaudeModel  string `json:"claude_model"`
+	GeminiModel  string `json:"gemini_model"`
+	ChatGPTModel string `json:"chatgpt_model"`
+}
+
+type updateAIModelsRequest struct {
+	ClaudeModel  string `json:"claude_model"`
+	GeminiModel  string `json:"gemini_model"`
+	ChatGPTModel string `json:"chatgpt_model"`
+}
+
 type addWebAuthnCredentialRequest struct {
 	CredentialID string `json:"credential_id"`
 	DeviceName   string `json:"device_name"`

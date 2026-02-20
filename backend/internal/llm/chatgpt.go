@@ -94,6 +94,28 @@ func NewChatGPTClient(apiKey string) *ChatGPTClient {
 	}
 }
 
+// NewChatGPTClientWithConfig creates a new ChatGPT client with explicit configuration.
+func NewChatGPTClientWithConfig(apiKey, model string, timeout time.Duration, maxTokens int) *ChatGPTClient {
+	if model == "" {
+		model = ChatGPTDefaultModel
+	}
+	if timeout == 0 {
+		timeout = ChatGPTDefaultTimeout
+	}
+	if maxTokens == 0 {
+		maxTokens = ChatGPTDefaultMaxTokens
+	}
+
+	return &ChatGPTClient{
+		apiKey: apiKey,
+		model:  model,
+		httpClient: &http.Client{
+			Timeout: timeout,
+		},
+		maxTokens: maxTokens,
+	}
+}
+
 // Summarize generates a summary for the given text content using ChatGPT.
 func (c *ChatGPTClient) Summarize(ctx context.Context, content string) (string, error) {
 	if content == "" {

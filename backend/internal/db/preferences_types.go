@@ -11,8 +11,11 @@ type UserPreferences struct {
 	SecurityLevel    string  `json:"security_level"`    // NEW: paranoid | balanced | convenient
 	AutoLockTimeout  int     `json:"auto_lock_timeout"` // NEW: minutes (0 = never)
 	ActiveAIProvider string  `json:"active_ai_provider"`
-	RecoveryKeyHash  *string `json:"-"` // Not exposed in JSON for security
-	RecoveryKeySalt  []byte  `json:"-"` // Not exposed in JSON for security
+	ClaudeModel      string  `json:"claude_model"` // empty = provider default
+	GeminiModel      string  `json:"gemini_model"` // empty = provider default
+	OpenAIModel      string  `json:"openai_model"` // empty = provider default
+	RecoveryKeyHash  *string `json:"-"`            // Not exposed in JSON for security
+	RecoveryKeySalt  []byte  `json:"-"`            // Not exposed in JSON for security
 	CreatedAt        string  `json:"created_at"`
 	UpdatedAt        string  `json:"updated_at"`
 }

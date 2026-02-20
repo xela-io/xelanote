@@ -17,6 +17,9 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		       COALESCE(security_level, 'balanced'),
 		       COALESCE(auto_lock_timeout, 15),
 		       COALESCE(active_ai_provider, 'auto'),
+		       COALESCE(claude_model, ''),
+		       COALESCE(gemini_model, ''),
+		       COALESCE(openai_model, ''),
 		       recovery_key_hash, recovery_key_salt,
 		       created_at, updated_at
 		FROM user_preferences
@@ -25,6 +28,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		&prefs.ID, &prefs.UserID, &prefs.Theme, &prefs.EditorMode,
 		&keywordsEnabled, &encryptTitles,
 		&prefs.SecurityLevel, &prefs.AutoLockTimeout, &prefs.ActiveAIProvider,
+		&prefs.ClaudeModel, &prefs.GeminiModel, &prefs.OpenAIModel,
 		&prefs.RecoveryKeyHash, &prefs.RecoveryKeySalt,
 		&prefs.CreatedAt, &prefs.UpdatedAt,
 	)
@@ -81,6 +85,9 @@ func (db *DB) GetOrCreateUserPreferences(userID int) (*UserPreferences, bool, er
 		SecurityLevel:    "balanced",
 		AutoLockTimeout:  15,
 		ActiveAIProvider: "auto",
+		ClaudeModel:      "",
+		GeminiModel:      "",
+		OpenAIModel:      "",
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}, true, nil

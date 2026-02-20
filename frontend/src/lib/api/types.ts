@@ -348,6 +348,12 @@ export interface UserPreferences {
 
 export type AIProvider = 'auto' | 'claude' | 'gemini' | 'chatgpt';
 
+export interface AIModelPreferences {
+  claude_model: string;
+  gemini_model: string;
+  chatgpt_model: string;
+}
+
 export interface UpdatePreferencesRequest {
   theme: string;
   editor_mode: 'edit' | 'preview' | 'split' | 'live';

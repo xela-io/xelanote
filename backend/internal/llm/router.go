@@ -140,8 +140,13 @@ func (r *ProviderRouter) getClaudeClient(userID int) (*ClaudeClient, error) {
 		return nil, fmt.Errorf("failed to decrypt API key: %w", err)
 	}
 
+	model := ClaudeDefaultModel
+	if prefs, err := r.db.GetAIModelPreferences(userID); err == nil && prefs.ClaudeModel != "" {
+		model = prefs.ClaudeModel
+	}
+
 	// Create and cache the client
-	client = NewClaudeClient(apiKey)
+	client = NewClaudeClientWithConfig(apiKey, model, ClaudeDefaultTimeout, ClaudeDefaultMaxTokens)
 	r.claudeClients[userID] = client
 
 	return client, nil
@@ -190,8 +195,13 @@ func (r *ProviderRouter) getGeminiClient(userID int) (*GeminiClient, error) {
 		return nil, fmt.Errorf("failed to decrypt API key: %w", err)
 	}
 
+	model := GeminiDefaultModel
+	if prefs, err := r.db.GetAIModelPreferences(userID); err == nil && prefs.GeminiModel != "" {
+		model = prefs.GeminiModel
+	}
+
 	// Create and cache the client
-	client = NewGeminiClient(apiKey)
+	client = NewGeminiClientWithConfig(apiKey, model, GeminiDefaultTimeout, GeminiDefaultMaxTokens)
 	r.geminiClients[userID] = client
 
 	return client, nil
@@ -236,7 +246,12 @@ func (r *ProviderRouter) getChatGPTClient(userID int) (*ChatGPTClient, error) {
 		return nil, fmt.Errorf("failed to decrypt API key: %w", err)
 	}
 
-	client = NewChatGPTClient(apiKey)
+	model := ChatGPTDefaultModel
+	if prefs, err := r.db.GetAIModelPreferences(userID); err == nil && prefs.ChatGPTModel != "" {
+		model = prefs.ChatGPTModel
+	}
+
+	client = NewChatGPTClientWithConfig(apiKey, model, ChatGPTDefaultTimeout, ChatGPTDefaultMaxTokens)
 	r.chatgptClients[userID] = client
 	return client, nil
 }
@@ -246,6 +261,15 @@ func (r *ProviderRouter) getChatGPTClient(userID int) (*ChatGPTClient, error) {
 func (r *ProviderRouter) InvalidateChatGPTClient(userID int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	delete(r.chatgptClients, userID)
+}
+
+// InvalidateAllClients removes all cached providers for a user.
+func (r *ProviderRouter) InvalidateAllClients(userID int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.claudeClients, userID)
+	delete(r.geminiClients, userID)
 	delete(r.chatgptClients, userID)
 }
 

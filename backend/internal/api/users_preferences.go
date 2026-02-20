@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -133,4 +134,64 @@ func (s *Server) setAIProviderPreference(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondJSON(w, http.StatusOK, map[string]string{"provider": req.Provider})
+}
+
+// getAIModels returns model preferences for all AI providers.
+func (s *Server) getAIModels(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	models, err := s.userService.GetAIModelPreferences(userID)
+	if err != nil {
+		s.logger().Error("failed to get AI model preferences", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to get AI model preferences")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, aiModelsResponse{
+		ClaudeModel:  models.ClaudeModel,
+		GeminiModel:  models.GeminiModel,
+		ChatGPTModel: models.ChatGPTModel,
+	})
+}
+
+// setAIModels updates model preferences for all AI providers.
+func (s *Server) setAIModels(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req updateAIModelsRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	err := s.userService.SetAIModelPreferences(userID, &db.AIModelPreferences{
+		ClaudeModel:  req.ClaudeModel,
+		GeminiModel:  req.GeminiModel,
+		ChatGPTModel: req.ChatGPTModel,
+	})
+	if err != nil {
+		if err == service.ErrInvalidAIModel {
+			respondError(w, http.StatusBadRequest, "invalid AI model")
+			return
+		}
+		s.logger().Error("failed to update AI model preferences", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to update AI model preferences")
+		return
+	}
+
+	s.summarizeService.InvalidateAllAIClients(userID)
+
+	respondJSON(w, http.StatusOK, aiModelsResponse{
+		ClaudeModel:  req.ClaudeModel,
+		GeminiModel:  req.GeminiModel,
+		ChatGPTModel: req.ChatGPTModel,
+	})
 }

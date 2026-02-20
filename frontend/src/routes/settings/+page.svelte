@@ -165,6 +165,12 @@
 
   let activeAIProvider = $state<api.AIProvider>('auto');
   let isSavingAIProvider = $state(false);
+  const aiModels = $state<api.AIModelPreferences>({
+    claude_model: '',
+    gemini_model: '',
+    chatgpt_model: '',
+  });
+  let isSavingAIModels = $state(false);
 
   // Reactive Tauri detection (handles timing issues with preload script)
   let isTauriApp = $state(false);
@@ -224,6 +230,7 @@
     loadGeminiApiKeyStatus();
     loadOpenAIApiKeyStatus();
     loadAIProviderPreference();
+    loadAIModelPreferences();
     features.loadJournalFeature();
     features.loadRecipeFeature();
     features.loadCanvasFeature();
@@ -399,6 +406,35 @@
       console.error('Failed to save AI provider preference:', err);
     } finally {
       isSavingAIProvider = false;
+    }
+  }
+
+  async function loadAIModelPreferences() {
+    try {
+      const models = await api.getAIModelPreferences();
+      aiModels.claude_model = models.claude_model || '';
+      aiModels.gemini_model = models.gemini_model || '';
+      aiModels.chatgpt_model = models.chatgpt_model || '';
+    } catch (err) {
+      console.error('Failed to load AI model preferences:', err);
+    }
+  }
+
+  async function handleSaveAIModels(e: Event) {
+    e.preventDefault();
+    if (isSavingAIModels) return;
+
+    isSavingAIModels = true;
+    try {
+      await api.setAIModelPreferences({
+        claude_model: aiModels.claude_model.trim(),
+        gemini_model: aiModels.gemini_model.trim(),
+        chatgpt_model: aiModels.chatgpt_model.trim(),
+      });
+    } catch (err) {
+      console.error('Failed to save AI model preferences:', err);
+    } finally {
+      isSavingAIModels = false;
     }
   }
 
@@ -1090,6 +1126,9 @@
         {activeAIProvider}
         {isSavingAIProvider}
         {handleAIProviderChange}
+        {aiModels}
+        {isSavingAIModels}
+        {handleSaveAIModels}
       />
     {:else if activeTab === 'data'}
       <div class="space-y-8">

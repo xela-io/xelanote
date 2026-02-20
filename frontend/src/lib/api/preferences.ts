@@ -1,6 +1,7 @@
 import { request } from './client';
 import { listNotes } from './notes';
 import type {
+  AIModelPreferences,
   AIProvider,
   ClaudeAPIKeyStatus,
   GeminiAPIKeyStatus,
@@ -139,6 +140,17 @@ export async function setAIProviderPreference(
   return request('/users/ai-provider', {
     method: 'PUT',
     body: JSON.stringify({ provider }),
+  });
+}
+
+export async function getAIModelPreferences(): Promise<AIModelPreferences> {
+  return request('/users/ai-models');
+}
+
+export async function setAIModelPreferences(data: AIModelPreferences): Promise<AIModelPreferences> {
+  return request('/users/ai-models', {
+    method: 'PUT',
+    body: JSON.stringify(data),
   });
 }
 

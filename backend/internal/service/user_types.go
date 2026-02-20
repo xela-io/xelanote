@@ -15,6 +15,7 @@ var (
 	ErrInvalidTheme      = errors.New("invalid theme")
 	ErrInvalidEditorMode = errors.New("invalid editor mode")
 	ErrInvalidAIProvider = errors.New("invalid AI provider")
+	ErrInvalidAIModel    = errors.New("invalid AI model")
 	ErrInvalidPassword   = errors.New("invalid password")
 	ErrEmailInUse        = errors.New("email already in use")
 	ErrPasswordTooShort  = errors.New("password must be at least 8 characters")

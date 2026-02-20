@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Live Preview: Markdown tables are now rendered as HTML tables when the cursor is outside the table block; clicking the rendered table or moving the cursor into it reveals raw markdown for editing
 - Table insert feature: toolbar button and `Mod-Shift-T` shortcut open a dialog to insert a markdown table with configurable rows and columns
 
+### Security
+
+- LLM HTTP client: added response body size limits (1 MB error, 4 MB success) to prevent memory exhaustion from oversized provider responses
+- Refresh token cleanup: expired and revoked tokens are now purged at startup and daily, preventing unbounded table growth
+- Health check: `/health` endpoint now verifies database connectivity and available disk space (minimum 100 MB), returning 503 on failure
+
 ### Improved
 
 - Recipe preview: ingredients header sticks to top of scroll container while reading instructions (mobile cooking UX); collapsible via tap with chevron indicator and ingredient count badge
@@ -24,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Shared recipes/notes can now be opened reliably from shared lists: note loading now falls back to shared endpoint access when owner-only note lookup returns not found
 - Live Preview: code fence markers (```) are now properly hidden when the cursor is not on the line, consistent with headings and blockquotes
 - Pre-push lint issues: gofmt formatting, ESLint import sorting, API doc coverage baseline update
 - iOS Mobile layout now uses stable viewport height (`svh`/`dvh`) and applies safe-area paddings only in standalone mode, reducing oversized bottom inset and using full screen height; mobile task deletion view-jump prevented via `overflow-anchor` stabilization on editor scroll containers

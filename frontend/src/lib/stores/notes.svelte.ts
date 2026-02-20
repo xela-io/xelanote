@@ -179,7 +179,21 @@ export async function loadNote(id: string) {
     id,
     isOnline: () => navigator.onLine,
     getLocalNotes: () => notes,
-    getNote: (noteId) => api.getNote(noteId),
+    getNote: async (noteId) => {
+      try {
+        return await api.getNote(noteId);
+      } catch (err) {
+        // Shared notes/recipes are loaded via /shared/{id}, not /notes/{id}.
+        if (err instanceof ApiError && err.status === 404) {
+          const shared = await api.getSharedNote(noteId);
+          return {
+            ...shared,
+            is_shared: true,
+          };
+        }
+        throw err;
+      }
+    },
     getBacklinks: (noteId) => api.getBacklinks(noteId),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),

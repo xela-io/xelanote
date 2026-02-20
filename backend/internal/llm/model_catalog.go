@@ -21,8 +21,11 @@ func ClaudeModelCatalog() []ModelCatalogEntry {
 
 func GeminiModelCatalog() []ModelCatalogEntry {
 	return []ModelCatalogEntry{
+		{ID: "gemini-3-flash-preview", InputCostPer1M: 0.5, OutputCostPer1M: 3.0},
 		{ID: "gemini-2.5-flash", InputCostPer1M: 0.3, OutputCostPer1M: 2.5},
 		{ID: "gemini-2.5-pro", InputCostPer1M: 1.25, OutputCostPer1M: 10.0},
+		{ID: "gemini-2.0-flash", InputCostPer1M: 0.1, OutputCostPer1M: 0.4},
+		{ID: "gemini-2.0-flash-lite", InputCostPer1M: 0.075, OutputCostPer1M: 0.3},
 	}
 }
 

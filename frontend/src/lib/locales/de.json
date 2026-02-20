@@ -732,7 +732,14 @@
         "feature_tagging": "Intelligente Tag-Vorschläge",
         "feature_linking": "Link-Erkennung zwischen Notizen",
         "privacy_title": "Datenschutz-Hinweis",
-        "privacy_notice": "Bei Nutzung der KI-APIs (Claude, Gemini oder ChatGPT) werden Notiz-Inhalte an externe Server gesendet. Ein API Key ist für KI-Funktionen erforderlich."
+        "privacy_notice": "Bei Nutzung der KI-APIs (Claude, Gemini oder ChatGPT) werden Notiz-Inhalte an externe Server gesendet. Ein API Key ist für KI-Funktionen erforderlich.",
+        "dietary_title": "Ernährungspräferenz",
+        "dietary_description": "Beeinflusst Rezeptvorschläge der KI. Ähnliche Rezepte und generierte Ideen werden auf deine Ernährungsweise abgestimmt.",
+        "dietary_none": "Keine Einschränkung",
+        "dietary_vegetarian": "Vegetarisch",
+        "dietary_vegan": "Vegan",
+        "dietary_pescatarian": "Pescetarisch",
+        "dietary_flexitarian": "Flexitarisch"
       },
       "appearance": {
         "language": "Sprache",

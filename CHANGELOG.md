@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- AI settings: Dietary preference dropdown (none, vegetarian, vegan, pescatarian, flexitarian) in Settings → AI, persisted per user via dedicated `GET/PUT /users/dietary-preference` endpoints. AI recipe suggestions (similar recipes, ingredient matches, generated ideas) automatically incorporate the preference into LLM prompts.
 - AI settings: Added ChatGPT (OpenAI) API key integration and a selectable active AI provider (`auto`, `claude`, `gemini`, `chatgpt`) with backend persistence.
 - AI settings: Added per-provider model configuration in Settings → AI (Claude/Gemini/ChatGPT), persisted per user and applied by backend provider routing.
 - AI settings: Model selectors now use dropdowns with estimated per-model costs (USD per 1M in/out tokens) from a backend catalog endpoint.

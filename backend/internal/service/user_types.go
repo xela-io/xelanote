@@ -12,14 +12,15 @@ type WebAuthnCredential = db.WebAuthnCredential
 
 // Validation errors
 var (
-	ErrInvalidTheme      = errors.New("invalid theme")
-	ErrInvalidEditorMode = errors.New("invalid editor mode")
-	ErrInvalidAIProvider = errors.New("invalid AI provider")
-	ErrInvalidAIModel    = errors.New("invalid AI model")
-	ErrInvalidPassword   = errors.New("invalid password")
-	ErrEmailInUse        = errors.New("email already in use")
-	ErrPasswordTooShort  = errors.New("password must be at least 8 characters")
-	ErrInvalidEmail      = errors.New("invalid email format")
+	ErrInvalidTheme             = errors.New("invalid theme")
+	ErrInvalidEditorMode        = errors.New("invalid editor mode")
+	ErrInvalidAIProvider        = errors.New("invalid AI provider")
+	ErrInvalidAIModel           = errors.New("invalid AI model")
+	ErrInvalidDietaryPreference = errors.New("invalid dietary preference")
+	ErrInvalidPassword          = errors.New("invalid password")
+	ErrEmailInUse               = errors.New("email already in use")
+	ErrPasswordTooShort         = errors.New("password must be at least 8 characters")
+	ErrInvalidEmail             = errors.New("invalid email format")
 )
 
 // Valid theme IDs (must match frontend themes/index.ts)
@@ -63,6 +64,14 @@ var validAIProviders = map[string]bool{
 	"chatgpt": true,
 }
 
+var validDietaryPreferences = map[string]bool{
+	"none":        true,
+	"vegetarian":  true,
+	"vegan":       true,
+	"pescatarian": true,
+	"flexitarian": true,
+}
+
 // UserService handles user-related business logic
 type UserService struct {
 	db *db.DB
@@ -87,6 +96,10 @@ func isValidEditorMode(mode string) bool {
 
 func isValidAIProvider(provider string) bool {
 	return validAIProviders[provider]
+}
+
+func isValidDietaryPreference(pref string) bool {
+	return validDietaryPreferences[pref]
 }
 
 // isValidEmail validates an email address using Go's net/mail package.

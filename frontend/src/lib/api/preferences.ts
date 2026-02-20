@@ -5,6 +5,7 @@ import type {
   AIModelPreferences,
   AIProvider,
   ClaudeAPIKeyStatus,
+  DietaryPreference,
   GeminiAPIKeyStatus,
   Note,
   NoteVersion,
@@ -157,6 +158,19 @@ export async function setAIModelPreferences(data: AIModelPreferences): Promise<A
 
 export async function getAvailableAIModels(): Promise<AIAvailableModelsResponse> {
   return request('/users/ai-models/available');
+}
+
+export async function getDietaryPreference(): Promise<{ dietary_preference: DietaryPreference }> {
+  return request('/users/dietary-preference');
+}
+
+export async function setDietaryPreference(
+  preference: DietaryPreference
+): Promise<{ dietary_preference: DietaryPreference }> {
+  return request('/users/dietary-preference', {
+    method: 'PUT',
+    body: JSON.stringify({ dietary_preference: preference }),
+  });
 }
 
 export async function changeEmail(newEmail: string, currentPassword: string): Promise<void> {

@@ -342,11 +342,14 @@ export interface UserPreferences {
   security_level: 'paranoid' | 'balanced' | 'convenient';
   auto_lock_timeout: number; // minutes (0 = never)
   active_ai_provider: AIProvider;
+  dietary_preference: DietaryPreference;
   webauthn_credentials: WebAuthnCredentialInfo[];
   created: boolean;
 }
 
 export type AIProvider = 'auto' | 'claude' | 'gemini' | 'chatgpt';
+
+export type DietaryPreference = 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'flexitarian';
 
 export interface AIModelPreferences {
   claude_model: string;

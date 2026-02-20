@@ -20,6 +20,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		       COALESCE(claude_model, ''),
 		       COALESCE(gemini_model, ''),
 		       COALESCE(openai_model, ''),
+		       COALESCE(dietary_preference, 'none'),
 		       recovery_key_hash, recovery_key_salt,
 		       created_at, updated_at
 		FROM user_preferences
@@ -29,6 +30,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		&keywordsEnabled, &encryptTitles,
 		&prefs.SecurityLevel, &prefs.AutoLockTimeout, &prefs.ActiveAIProvider,
 		&prefs.ClaudeModel, &prefs.GeminiModel, &prefs.OpenAIModel,
+		&prefs.DietaryPreference,
 		&prefs.RecoveryKeyHash, &prefs.RecoveryKeySalt,
 		&prefs.CreatedAt, &prefs.UpdatedAt,
 	)
@@ -76,20 +78,21 @@ func (db *DB) GetOrCreateUserPreferences(userID int) (*UserPreferences, bool, er
 		return nil, false, err
 	}
 	return &UserPreferences{
-		ID:               prefsID,
-		UserID:           userID,
-		Theme:            "default-dark",
-		EditorMode:       "split",
-		KeywordsEnabled:  false,
-		EncryptTitles:    false,
-		SecurityLevel:    "balanced",
-		AutoLockTimeout:  15,
-		ActiveAIProvider: "auto",
-		ClaudeModel:      "",
-		GeminiModel:      "",
-		OpenAIModel:      "",
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		ID:                prefsID,
+		UserID:            userID,
+		Theme:             "default-dark",
+		EditorMode:        "split",
+		KeywordsEnabled:   false,
+		EncryptTitles:     false,
+		SecurityLevel:     "balanced",
+		AutoLockTimeout:   15,
+		ActiveAIProvider:  "auto",
+		ClaudeModel:       "",
+		GeminiModel:       "",
+		OpenAIModel:       "",
+		DietaryPreference: "none",
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}, true, nil
 }
 

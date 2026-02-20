@@ -165,6 +165,8 @@
 
   let activeAIProvider = $state<api.AIProvider>('auto');
   let isSavingAIProvider = $state(false);
+  let dietaryPreference = $state<api.DietaryPreference>('none');
+  let isSavingDietaryPreference = $state(false);
   const aiModels = $state<api.AIModelPreferences>({
     claude_model: '',
     gemini_model: '',
@@ -232,6 +234,7 @@
     loadGeminiApiKeyStatus();
     loadOpenAIApiKeyStatus();
     loadAIProviderPreference();
+    loadDietaryPreference();
     loadAIModelPreferences();
     loadAvailableAIModels();
     features.loadJournalFeature();
@@ -297,6 +300,29 @@
     } catch (err) {
       console.error('Failed to load AI provider preference:', err);
       activeAIProvider = 'auto';
+    }
+  }
+
+  async function loadDietaryPreference() {
+    try {
+      const res = await api.getDietaryPreference();
+      dietaryPreference = res.dietary_preference;
+    } catch (err) {
+      console.error('Failed to load dietary preference:', err);
+      dietaryPreference = 'none';
+    }
+  }
+
+  async function handleDietaryPreferenceChange(pref: api.DietaryPreference) {
+    if (isSavingDietaryPreference || pref === dietaryPreference) return;
+    isSavingDietaryPreference = true;
+    try {
+      await api.setDietaryPreference(pref);
+      dietaryPreference = pref;
+    } catch (err) {
+      console.error('Failed to save dietary preference:', err);
+    } finally {
+      isSavingDietaryPreference = false;
     }
   }
 
@@ -1141,6 +1167,9 @@
         {activeAIProvider}
         {isSavingAIProvider}
         {handleAIProviderChange}
+        {dietaryPreference}
+        {isSavingDietaryPreference}
+        {handleDietaryPreferenceChange}
         {aiModels}
         {availableAIModels}
         {isLoadingAvailableAIModels}

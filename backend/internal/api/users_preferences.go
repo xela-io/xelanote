@@ -32,15 +32,16 @@ func (s *Server) getPreferences(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{
-		Theme:            prefs.Theme,
-		EditorMode:       prefs.EditorMode,
-		KeywordsEnabled:  prefs.KeywordsEnabled,
-		EncryptTitles:    prefs.EncryptTitles,
-		SecurityLevel:    prefs.SecurityLevel,
-		AutoLockTimeout:  prefs.AutoLockTimeout,
-		ActiveAIProvider: prefs.ActiveAIProvider,
-		Credentials:      convertWebAuthnCredentials(credentials),
-		Created:          created,
+		Theme:             prefs.Theme,
+		EditorMode:        prefs.EditorMode,
+		KeywordsEnabled:   prefs.KeywordsEnabled,
+		EncryptTitles:     prefs.EncryptTitles,
+		SecurityLevel:     prefs.SecurityLevel,
+		AutoLockTimeout:   prefs.AutoLockTimeout,
+		ActiveAIProvider:  prefs.ActiveAIProvider,
+		DietaryPreference: prefs.DietaryPreference,
+		Credentials:       convertWebAuthnCredentials(credentials),
+		Created:           created,
 	})
 }
 
@@ -80,15 +81,16 @@ func (s *Server) updatePreferences(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, preferencesResponse{
-		Theme:            prefs.Theme,
-		EditorMode:       prefs.EditorMode,
-		KeywordsEnabled:  prefs.KeywordsEnabled,
-		EncryptTitles:    prefs.EncryptTitles,
-		SecurityLevel:    prefs.SecurityLevel,
-		AutoLockTimeout:  prefs.AutoLockTimeout,
-		ActiveAIProvider: prefs.ActiveAIProvider,
-		Credentials:      convertWebAuthnCredentials(credentials),
-		Created:          false,
+		Theme:             prefs.Theme,
+		EditorMode:        prefs.EditorMode,
+		KeywordsEnabled:   prefs.KeywordsEnabled,
+		EncryptTitles:     prefs.EncryptTitles,
+		SecurityLevel:     prefs.SecurityLevel,
+		AutoLockTimeout:   prefs.AutoLockTimeout,
+		ActiveAIProvider:  prefs.ActiveAIProvider,
+		DietaryPreference: prefs.DietaryPreference,
+		Credentials:       convertWebAuthnCredentials(credentials),
+		Created:           false,
 	})
 }
 
@@ -195,6 +197,51 @@ func (s *Server) setAIModels(w http.ResponseWriter, r *http.Request) {
 		GeminiModel:  req.GeminiModel,
 		ChatGPTModel: req.ChatGPTModel,
 	})
+}
+
+// getDietaryPreference returns the dietary preference for the user.
+func (s *Server) getDietaryPreference(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	pref, err := s.userService.GetDietaryPreference(userID)
+	if err != nil {
+		s.logger().Error("failed to get dietary preference", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to get dietary preference")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, dietaryPreferenceResponse{DietaryPreference: pref})
+}
+
+// setDietaryPreference updates the dietary preference for the user.
+func (s *Server) setDietaryPreference(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req updateDietaryPreferenceRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if err := s.userService.SetDietaryPreference(userID, req.DietaryPreference); err != nil {
+		if err == service.ErrInvalidDietaryPreference {
+			respondError(w, http.StatusBadRequest, "invalid dietary preference")
+			return
+		}
+		s.logger().Error("failed to update dietary preference", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to update dietary preference")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, dietaryPreferenceResponse{DietaryPreference: req.DietaryPreference})
 }
 
 // getAvailableAIModels returns selectable models and estimated pricing metadata.

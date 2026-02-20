@@ -732,7 +732,14 @@
         "feature_tagging": "Intelligent tag suggestions",
         "feature_linking": "Link detection between notes",
         "privacy_title": "Privacy Notice",
-        "privacy_notice": "When using AI APIs (Claude, Gemini, or ChatGPT), note contents are sent to external servers. An API key is required for AI features."
+        "privacy_notice": "When using AI APIs (Claude, Gemini, or ChatGPT), note contents are sent to external servers. An API key is required for AI features.",
+        "dietary_title": "Dietary Preference",
+        "dietary_description": "Influences AI recipe suggestions. Similar recipes and generated ideas will be tailored to your dietary preference.",
+        "dietary_none": "No restriction",
+        "dietary_vegetarian": "Vegetarian",
+        "dietary_vegan": "Vegan",
+        "dietary_pescatarian": "Pescatarian",
+        "dietary_flexitarian": "Flexitarian"
       },
       "appearance": {
         "language": "Language",

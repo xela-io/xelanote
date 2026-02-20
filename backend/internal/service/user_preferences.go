@@ -72,6 +72,20 @@ func (s *UserService) SetActiveAIProvider(userID int, provider string) error {
 	return s.db.SetActiveAIProvider(userID, provider)
 }
 
+// GetDietaryPreference returns the dietary preference for a user.
+func (s *UserService) GetDietaryPreference(userID int) (string, error) {
+	return s.db.GetDietaryPreference(userID)
+}
+
+// SetDietaryPreference sets the dietary preference for a user.
+func (s *UserService) SetDietaryPreference(userID int, pref string) error {
+	pref = strings.TrimSpace(strings.ToLower(pref))
+	if !isValidDietaryPreference(pref) {
+		return ErrInvalidDietaryPreference
+	}
+	return s.db.SetDietaryPreference(userID, pref)
+}
+
 // GetAIModelPreferences returns saved model overrides for all providers.
 func (s *UserService) GetAIModelPreferences(userID int) (*db.AIModelPreferences, error) {
 	return s.db.GetAIModelPreferences(userID)

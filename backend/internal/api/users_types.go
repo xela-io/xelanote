@@ -15,15 +15,16 @@ type webAuthnCredentialInfo struct {
 }
 
 type preferencesResponse struct {
-	Theme            string                   `json:"theme"`
-	EditorMode       string                   `json:"editor_mode"`
-	KeywordsEnabled  bool                     `json:"keywords_enabled"`
-	EncryptTitles    bool                     `json:"encrypt_titles"`
-	SecurityLevel    string                   `json:"security_level"`
-	AutoLockTimeout  int                      `json:"auto_lock_timeout"`
-	ActiveAIProvider string                   `json:"active_ai_provider"`
-	Credentials      []webAuthnCredentialInfo `json:"webauthn_credentials"`
-	Created          bool                     `json:"created"`
+	Theme             string                   `json:"theme"`
+	EditorMode        string                   `json:"editor_mode"`
+	KeywordsEnabled   bool                     `json:"keywords_enabled"`
+	EncryptTitles     bool                     `json:"encrypt_titles"`
+	SecurityLevel     string                   `json:"security_level"`
+	AutoLockTimeout   int                      `json:"auto_lock_timeout"`
+	ActiveAIProvider  string                   `json:"active_ai_provider"`
+	DietaryPreference string                   `json:"dietary_preference"`
+	Credentials       []webAuthnCredentialInfo `json:"webauthn_credentials"`
+	Created           bool                     `json:"created"`
 }
 
 type updatePreferencesRequest struct {
@@ -43,6 +44,14 @@ type updateSecurityPreferencesRequest struct {
 
 type updateAIProviderRequest struct {
 	Provider string `json:"provider"`
+}
+
+type dietaryPreferenceResponse struct {
+	DietaryPreference string `json:"dietary_preference"`
+}
+
+type updateDietaryPreferenceRequest struct {
+	DietaryPreference string `json:"dietary_preference"`
 }
 
 type aiModelsResponse struct {

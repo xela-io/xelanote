@@ -245,6 +245,7 @@ func (db *DB) runMigrations() error {
 		"048_canvas_support.sql",
 		"049_chatgpt_and_ai_provider.sql",
 		"050_ai_model_preferences.sql",
+		"051_dietary_preference.sql",
 	}
 
 	for _, migrationFile := range migrations {

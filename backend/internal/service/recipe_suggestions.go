@@ -174,7 +174,14 @@ func (s *RecipeSuggestionService) FindSimilarRecipes(
 		}
 	}
 
-	prompt := llm.BuildSimilarRecipePrompt(current, promptCandidates, locale)
+	// Load dietary preference (graceful fallback to "none")
+	dietaryPref, err := s.db.GetDietaryPreference(userID)
+	if err != nil {
+		s.logger.Warn("failed to load dietary preference, using default", slog.String("error", err.Error()))
+		dietaryPref = "none"
+	}
+
+	prompt := llm.BuildSimilarRecipePrompt(current, promptCandidates, locale, dietaryPref)
 
 	response, err := provider.Generate(ctx, prompt, 2000)
 	if err != nil {
@@ -226,6 +233,13 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 		return nil, fmt.Errorf("failed to get recipe summaries: %w", err)
 	}
 
+	// Load dietary preference (graceful fallback to "none")
+	dietaryPref, err := s.db.GetDietaryPreference(userID)
+	if err != nil {
+		s.logger.Warn("failed to load dietary preference, using default", slog.String("error", err.Error()))
+		dietaryPref = "none"
+	}
+
 	result := &IngredientSuggestionResult{
 		Matches:   []IngredientMatchResult{},
 		Generated: []GeneratedRecipe{},
@@ -249,7 +263,7 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 			}
 		}
 
-		matchPrompt := llm.BuildIngredientMatchPrompt(ingredients, promptRecipes, locale)
+		matchPrompt := llm.BuildIngredientMatchPrompt(ingredients, promptRecipes, locale, dietaryPref)
 		matchResp, err := provider.Generate(ctx, matchPrompt, 2000)
 		if err != nil {
 			s.logger.Warn("ingredient match LLM call failed", slog.String("error", err.Error()))
@@ -278,7 +292,7 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 		existingTitles = append(existingTitles, sm.Title)
 	}
 
-	genPrompt := llm.BuildRecipeGenerationPrompt(ingredients, existingTitles, locale)
+	genPrompt := llm.BuildRecipeGenerationPrompt(ingredients, existingTitles, locale, dietaryPref)
 	genResp, err := provider.Generate(ctx, genPrompt, 4000)
 	if err != nil {
 		s.logger.Warn("recipe generation LLM call failed", slog.String("error", err.Error()))

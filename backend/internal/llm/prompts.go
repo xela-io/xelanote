@@ -244,7 +244,7 @@ type RecipeContext struct {
 }
 
 // BuildSimilarRecipePrompt creates the prompt for finding similar recipes.
-func BuildSimilarRecipePrompt(current RecipeContext, candidates []RecipeContext, locale string) string {
+func BuildSimilarRecipePrompt(current RecipeContext, candidates []RecipeContext, locale string, dietaryPreference string) string {
 	lang := "English"
 	if locale == "de" {
 		lang = "German"
@@ -281,6 +281,10 @@ func BuildSimilarRecipePrompt(current RecipeContext, candidates []RecipeContext,
 		}
 	}
 
+	if dietaryPreference != "" && dietaryPreference != "none" {
+		sb.WriteString(fmt.Sprintf("\nUser's dietary preference: %s. Prioritize recipes that are compatible with this dietary preference. If no compatible recipes exist, return the best alternatives and note any incompatibilities in the reason field.\n", dietaryPreference))
+	}
+
 	sb.WriteString(fmt.Sprintf(`
 Rules:
 1. Return ONLY a valid JSON array, no other text
@@ -296,7 +300,7 @@ JSON:`, lang))
 }
 
 // BuildIngredientMatchPrompt creates the prompt for finding recipes matching given ingredients.
-func BuildIngredientMatchPrompt(ingredients []string, recipes []RecipeContext, locale string) string {
+func BuildIngredientMatchPrompt(ingredients []string, recipes []RecipeContext, locale string, dietaryPreference string) string {
 	lang := "English"
 	if locale == "de" {
 		lang = "German"
@@ -312,6 +316,10 @@ func BuildIngredientMatchPrompt(ingredients []string, recipes []RecipeContext, l
 		if len(r.IngredientNames) > 0 {
 			sb.WriteString(fmt.Sprintf("ingredients: %s\n", strings.Join(r.IngredientNames, ", ")))
 		}
+	}
+
+	if dietaryPreference != "" && dietaryPreference != "none" {
+		sb.WriteString(fmt.Sprintf("\nThe user follows a %s diet. Rank compatible recipes higher. If few compatible matches exist, still include the best alternatives.\n", dietaryPreference))
 	}
 
 	sb.WriteString(fmt.Sprintf(`
@@ -330,7 +338,7 @@ JSON:`, lang))
 }
 
 // BuildRecipeGenerationPrompt creates the prompt for generating new recipe ideas.
-func BuildRecipeGenerationPrompt(ingredients []string, existingTitles []string, locale string) string {
+func BuildRecipeGenerationPrompt(ingredients []string, existingTitles []string, locale string, dietaryPreference string) string {
 	lang := "English"
 	langInstruction := "Write the recipes in English."
 	if locale == "de" {
@@ -348,6 +356,10 @@ func BuildRecipeGenerationPrompt(ingredients []string, existingTitles []string, 
 			sb.WriteString(fmt.Sprintf("- %s\n", t))
 		}
 		sb.WriteString("\n")
+	}
+
+	if dietaryPreference != "" && dietaryPreference != "none" {
+		sb.WriteString(fmt.Sprintf("IMPORTANT: The user follows a %s diet. All generated recipes MUST be compatible with this dietary preference.\n\n", dietaryPreference))
 	}
 
 	sb.WriteString(fmt.Sprintf(`%s

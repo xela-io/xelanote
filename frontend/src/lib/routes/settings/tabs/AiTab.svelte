@@ -8,6 +8,7 @@
     AIModelPreferences,
     AIProvider,
     ClaudeAPIKeyStatus,
+    DietaryPreference,
     GeminiAPIKeyStatus,
     OpenAIAPIKeyStatus,
   } from '$lib/api';
@@ -34,6 +35,9 @@
   export let activeAIProvider: AIProvider;
   export let isSavingAIProvider: boolean;
   export let handleAIProviderChange: (provider: AIProvider) => void;
+  export let dietaryPreference: DietaryPreference;
+  export let isSavingDietaryPreference: boolean;
+  export let handleDietaryPreferenceChange: (pref: DietaryPreference) => void;
   export let aiModels: AIModelPreferences;
   export let availableAIModels: AIAvailableModelsResponse | null;
   export let isLoadingAvailableAIModels: boolean;
@@ -68,6 +72,30 @@
       <option value="chatgpt">{$_('page.settings.ai.provider_chatgpt')}</option>
     </select>
     {#if isSavingAIProvider}
+      <div class="text-xs text-muted-foreground mt-2">{$_('common.saving')}</div>
+    {/if}
+  </div>
+
+  <div>
+    <h3 class="text-lg font-medium text-foreground mb-2">
+      {$_('page.settings.ai.dietary_title')}
+    </h3>
+    <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.dietary_description')}</p>
+    <select
+      value={dietaryPreference}
+      disabled={isSavingDietaryPreference}
+      onchange={(e) =>
+        handleDietaryPreferenceChange((e.target as HTMLSelectElement).value as DietaryPreference)}
+      class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
+      focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+    >
+      <option value="none">{$_('page.settings.ai.dietary_none')}</option>
+      <option value="vegetarian">{$_('page.settings.ai.dietary_vegetarian')}</option>
+      <option value="vegan">{$_('page.settings.ai.dietary_vegan')}</option>
+      <option value="pescatarian">{$_('page.settings.ai.dietary_pescatarian')}</option>
+      <option value="flexitarian">{$_('page.settings.ai.dietary_flexitarian')}</option>
+    </select>
+    {#if isSavingDietaryPreference}
       <div class="text-xs text-muted-foreground mt-2">{$_('common.saving')}</div>
     {/if}
   </div>

@@ -18,8 +18,9 @@ describe('live-preview spike (regex vs tree)', () => {
   });
 
   it('benchmarks extraction speed on large markdown corpus', () => {
-    const doc = generateLargeMarkdownDoc(4000);
-    const result = benchmarkExtraction(doc, 120);
+    // Keep this fast enough for CI/pre-push hooks.
+    const doc = generateLargeMarkdownDoc(2000);
+    const result = benchmarkExtraction(doc, 40);
 
     // Output is part of the spike report and can be compared over time.
     console.log(

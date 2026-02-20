@@ -115,6 +115,8 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
 - [Users](#users)
   - [GET /api/users/preferences](#get-apiuserspreferences)
   - [PUT /api/users/preferences](#put-apiuserspreferences)
+  - [GET /api/users/dietary-preference](#get-apiusersdietary-preference)
+  - [PUT /api/users/dietary-preference](#put-apiusersdietary-preference)
   - [PUT /api/users/email](#put-apiusersemail)
   - [PUT /api/users/password](#put-apiuserspassword)
   - [PUT /api/users/preferences/encryption](#put-apiuserspreferencesencryption)
@@ -3802,6 +3804,86 @@ Content-Type: application/json
 ```http
 400 Bad Request - "invalid theme" oder "invalid editor mode"
 401 Unauthorized - User nicht authentifiziert
+500 Internal Server Error - Fehler beim Speichern
+```
+
+---
+
+### GET /api/users/dietary-preference
+
+Gibt die gespeicherte Ernaehrungspraeferenz des Benutzers zurueck.
+
+#### Request
+
+```http
+GET /api/users/dietary-preference
+Authorization: Bearer <access_token>
+```
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "dietary_preference": "none"
+}
+```
+
+| Feld | Beschreibung |
+|------|--------------|
+| `dietary_preference` | "none", "vegetarian", "vegan", "pescatarian" oder "flexitarian" |
+
+#### Errors
+
+```http
+401 Unauthorized - Keine gueltige Authentifizierung
+500 Internal Server Error - Fehler beim Laden
+```
+
+---
+
+### PUT /api/users/dietary-preference
+
+Aktualisiert die Ernaehrungspraeferenz des Benutzers.
+
+#### Request
+
+```http
+PUT /api/users/dietary-preference
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "dietary_preference": "vegan"
+}
+```
+
+| Parameter | Typ | Pflicht | Beschreibung |
+|-----------|-----|---------|--------------|
+| `dietary_preference` | string | Ja | "none", "vegetarian", "vegan", "pescatarian" oder "flexitarian" |
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "dietary_preference": "vegan"
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - "invalid request body" oder "invalid dietary preference"
+401 Unauthorized - Keine gueltige Authentifizierung
 500 Internal Server Error - Fehler beim Speichern
 ```
 

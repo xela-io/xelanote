@@ -691,6 +691,25 @@
     });
   }
 
+  async function handleSettingsLogout() {
+    const confirmed = await dialog.confirm({
+      title: $_('dialog.confirm_title'),
+      message: $_('page.sidebar.confirm_logout'),
+      confirmText: $_('common.logout'),
+      cancelText: $_('dialog.cancel'),
+    });
+
+    if (!confirmed) return;
+
+    try {
+      autoLock.stopAutoLock();
+      await auth.logoutAsync();
+      window.location.href = '/login';
+    } catch {
+      window.location.href = '/login';
+    }
+  }
+
   // Server URL handlers (Tauri only)
   function validateServerUrl(url: string): boolean {
     try {
@@ -1146,6 +1165,7 @@
         bind:showDisableDialog
         {handleRegenerateBackupCodes}
         {formatDate}
+        {handleSettingsLogout}
       />
     {:else if activeTab === 'ai'}
       <AiTab

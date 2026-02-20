@@ -17,13 +17,13 @@ export interface SidebarActionsDeps {
     cancelText: string;
   }) => Promise<boolean>;
   alert: (opts: { title: string; message: string; variant: 'danger' }) => Promise<void>;
-  stopAutoLock: () => void;
-  logout: () => Promise<void>;
+  stopAutoLock?: () => void;
+  logout?: () => Promise<void>;
   strings: {
-    confirmTitle: string;
-    confirmLogout: string;
-    logout: string;
-    cancel: string;
+    confirmTitle?: string;
+    confirmLogout?: string;
+    logout?: string;
+    cancel?: string;
     errorTitle: string;
     createFolderError: (error: string) => string;
   };
@@ -58,6 +58,18 @@ export async function handleCreateFolderConfirm(path: string, deps: SidebarActio
 }
 
 export async function handleLogout(deps: SidebarActionsDeps) {
+  if (!deps.stopAutoLock || !deps.logout) {
+    throw new Error('Missing logout dependencies');
+  }
+  if (
+    !deps.strings.confirmTitle ||
+    !deps.strings.confirmLogout ||
+    !deps.strings.logout ||
+    !deps.strings.cancel
+  ) {
+    throw new Error('Missing logout strings');
+  }
+
   const confirmed = await deps.confirm({
     title: deps.strings.confirmTitle,
     message: deps.strings.confirmLogout,

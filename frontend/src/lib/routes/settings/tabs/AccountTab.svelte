@@ -5,6 +5,7 @@
     Key,
     Loader2,
     Lock,
+    LogOut,
     Shield,
     ShieldOff,
     Trash2,
@@ -28,6 +29,7 @@
   export let showDisableDialog: boolean;
   export let handleRegenerateBackupCodes: () => void;
   export let formatDate: (date: string) => string;
+  export let handleSettingsLogout: () => void;
 </script>
 
 <div class="space-y-8">
@@ -258,4 +260,16 @@
       })}
     </div>
   {/if}
+
+  <div class="p-6 rounded-lg border border-destructive/40 bg-destructive/5">
+    <h3 class="text-lg font-medium text-foreground mb-1">{$_('common.logout')}</h3>
+    <p class="text-sm text-muted-foreground mb-4">{$_('page.sidebar.confirm_logout')}</p>
+    <button
+      onclick={handleSettingsLogout}
+      class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-destructive text-destructive font-medium hover:bg-destructive/10 transition-colors"
+    >
+      <LogOut size={16} />
+      {$_('common.logout')}
+    </button>
+  </div>
 </div>

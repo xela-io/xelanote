@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Navigation: moved logout action from the sidebar into Settings -> Account for improved reliability on narrow sidebars.
 - Canvas feature is now enabled by default for all users (previously required manual activation in settings)
 - Backend API refactoring: note creation flow split into dedicated validation/creation/post-processing helpers; login success response flow centralized; direct `api -> db` note-type validation dependency removed in favor of service-layer validation
 - Security hardening in auth middleware: Bearer authorization parsing is now centralized and reused consistently by both auth and CSRF middleware

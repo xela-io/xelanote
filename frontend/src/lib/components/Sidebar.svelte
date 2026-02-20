@@ -7,7 +7,6 @@
     ChevronRight,
     FilePlus,
     FolderPlus,
-    LogOut,
     MessageSquareWarning,
     Network,
     Search,
@@ -26,7 +25,6 @@
   import {
     handleCreateFolderConfirm as handleCreateFolderConfirmAction,
     handleCreateNoteConfirm as handleCreateNoteConfirmAction,
-    handleLogout as handleLogoutAction,
   } from '$lib/components/sidebar/sidebar-actions';
   import {
     handleDropZoneDragLeave as handleDropZoneDragLeaveAction,
@@ -43,7 +41,6 @@
     handleSidebarResizeStart,
   } from '$lib/components/sidebar/sidebar-resize';
   import * as auth from '$lib/stores/auth.svelte';
-  import * as autoLock from '$lib/stores/auto-lock.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as errorReporter from '$lib/stores/error-reporter.svelte';
   import * as features from '$lib/stores/features.svelte';
@@ -222,6 +219,7 @@
         reorderFolders: tree.reorderFolders,
         reorderNotes: tree.reorderNotes,
         findParentOfNodeById: tree.findParentOfNodeById,
+        getSortMode: tree.getSortMode,
         getFolderChildren: (parent: tree.FolderTreeNode) =>
           parent.children.filter((c): c is tree.FolderTreeNode => c.type === 'folder'),
         getNoteChildren: (parent: tree.FolderTreeNode) =>
@@ -256,6 +254,7 @@
         reorderFolders: tree.reorderFolders,
         reorderNotes: tree.reorderNotes,
         findParentOfNodeById: tree.findParentOfNodeById,
+        getSortMode: tree.getSortMode,
         getFolderChildren: (parent: tree.FolderTreeNode) =>
           parent.children.filter((c): c is tree.FolderTreeNode => c.type === 'folder'),
         getNoteChildren: (parent: tree.FolderTreeNode) =>
@@ -284,13 +283,7 @@
     goto,
     confirm: dialog.confirm,
     alert: dialog.alert,
-    stopAutoLock: autoLock.stopAutoLock,
-    logout: auth.logoutAsync,
     strings: {
-      confirmTitle: $_('dialog.confirm_title'),
-      confirmLogout: $_('page.sidebar.confirm_logout'),
-      logout: $_('common.logout'),
-      cancel: $_('dialog.cancel'),
       errorTitle: $_('common.error'),
       createFolderError: (error: string) =>
         $_('page.sidebar.error_creating_folder', { values: { error } }),
@@ -307,10 +300,6 @@
 
   function handleCreateFolderConfirm(path: string) {
     handleCreateFolderConfirmAction(path, sidebarActionDeps);
-  }
-
-  async function handleLogout() {
-    await handleLogoutAction(sidebarActionDeps);
   }
 </script>
 
@@ -536,14 +525,14 @@
 
       <!-- Footer: Controls -->
       <div class="border-t border-sidebar-border shrink-0 pb-safe">
-        <!-- Controls - compact row -->
-        <div class="px-2 py-2 flex items-center gap-1">
+        <!-- Controls - wrap to avoid horizontal overflow on narrow sidebars -->
+        <div class="px-2 py-2 flex items-center gap-1 flex-wrap">
           <button
             onclick={() => {
               ui.toggleQuickSwitcher();
               ui.closeSidebarOnMobile();
             }}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
             title="{$_('page.sidebar.search')} (Ctrl+P)"
             aria-label={$_('page.sidebar.search')}
           >
@@ -555,20 +544,22 @@
                 goto('/graph');
                 ui.closeSidebarOnMobile();
               }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
               title="{$_('page.sidebar.graph')} (Ctrl+G)"
               aria-label={$_('page.sidebar.graph')}
             >
               <Network size={smallIconSize} />
             </button>
           {/if}
-          <ThemeSelector />
+          <div class="shrink-0">
+            <ThemeSelector />
+          </div>
           <button
             onclick={() => {
               goto('/settings');
               ui.closeSidebarOnMobile();
             }}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
             title={$_('page.sidebar.settings')}
             aria-label={$_('page.sidebar.settings')}
           >
@@ -580,7 +571,7 @@
                 goto('/admin');
                 ui.closeSidebarOnMobile();
               }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
               title={$_('page.sidebar.admin')}
               aria-label={$_('page.sidebar.admin')}
             >
@@ -592,22 +583,13 @@
               onclick={() => {
                 showFeedbackDialog = true;
               }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
               title={$_('feedback.sidebar_button')}
               aria-label={$_('feedback.sidebar_button')}
             >
               <MessageSquareWarning size={smallIconSize} />
             </button>
           {/if}
-          <div class="flex-1"></div>
-          <button
-            onclick={handleLogout}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 hover:text-red-500 text-sidebar-foreground toolbar-btn"
-            title={$_('common.logout')}
-            aria-label={$_('common.logout')}
-          >
-            <LogOut size={smallIconSize} />
-          </button>
         </div>
       </div>
     {/if}
@@ -668,16 +650,18 @@
               </div>
             {/if}
           </div>
-          <button
-            onclick={() => ui.toggleSidebar()}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
-            title={$_('page.sidebar.collapse_sidebar')}
-            aria-label={$_('page.sidebar.collapse_sidebar')}
-          >
-            <ChevronLeft size={mainIconSize} />
-          </button>
         </div>
       </div>
+
+      <!-- Keep collapse action always reachable, even on very narrow sidebar widths -->
+      <button
+        onclick={() => ui.toggleSidebar()}
+        class="absolute top-1/2 right-1 z-20 -translate-y-1/2 p-1.5 rounded-full hover:bg-sidebar-accent/50 text-sidebar-foreground border border-sidebar-border bg-sidebar-background/90 backdrop-blur-sm shadow-sm"
+        title={$_('page.sidebar.collapse_sidebar')}
+        aria-label={$_('page.sidebar.collapse_sidebar')}
+      >
+        <ChevronLeft size={mainIconSize} />
+      </button>
 
       <!-- Notes Tree (main content - maximized space) -->
       <div
@@ -786,11 +770,11 @@
 
       <!-- Footer: Controls -->
       <div class="border-t border-sidebar-border shrink-0 pb-safe">
-        <!-- Controls - compact row -->
-        <div class="px-2 py-2 flex items-center gap-0.5">
+        <!-- Controls - wrap to avoid horizontal overflow on narrow sidebars -->
+        <div class="px-2 py-2 flex items-center gap-0.5 flex-wrap">
           <button
             onclick={() => ui.toggleQuickSwitcher()}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
             title="{$_('page.sidebar.search')} (Ctrl+P)"
             aria-label={$_('page.sidebar.search')}
           >
@@ -799,17 +783,19 @@
           {#if features.getGraphFeatureEnabled()}
             <button
               onclick={() => goto('/graph')}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
               title="{$_('page.sidebar.graph')} (Ctrl+G)"
               aria-label={$_('page.sidebar.graph')}
             >
               <Network size={smallIconSize} />
             </button>
           {/if}
-          <ThemeSelector />
+          <div class="shrink-0">
+            <ThemeSelector />
+          </div>
           <button
             onclick={() => goto('/settings')}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
             title={$_('page.sidebar.settings')}
             aria-label={$_('page.sidebar.settings')}
           >
@@ -818,7 +804,7 @@
           {#if auth.isAdmin()}
             <button
               onclick={() => goto('/admin')}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
               title={$_('page.sidebar.admin')}
               aria-label={$_('page.sidebar.admin')}
             >
@@ -830,22 +816,13 @@
               onclick={() => {
                 showFeedbackDialog = true;
               }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground"
+              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
               title={$_('feedback.sidebar_button')}
               aria-label={$_('feedback.sidebar_button')}
             >
               <MessageSquareWarning size={smallIconSize} />
             </button>
           {/if}
-          <div class="flex-1"></div>
-          <button
-            onclick={handleLogout}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 hover:text-red-500 text-sidebar-foreground"
-            title={$_('common.logout')}
-            aria-label={$_('common.logout')}
-          >
-            <LogOut size={smallIconSize} />
-          </button>
         </div>
       </div>
 
@@ -862,7 +839,7 @@
       ></div>
     {:else}
       <!-- Collapsed sidebar -->
-      <div class="flex flex-col items-center h-full py-3 gap-1.5">
+      <div class="flex flex-col items-center h-full min-h-0 overflow-y-auto py-3 gap-1.5">
         <!-- Top actions -->
         <button
           onclick={() => ui.toggleSidebar()}
@@ -981,14 +958,6 @@
             <MessageSquareWarning size={smallIconSize} />
           </button>
         {/if}
-        <button
-          onclick={handleLogout}
-          class="p-2 rounded hover:bg-sidebar-accent/50 hover:text-red-500 text-sidebar-foreground"
-          title={$_('common.logout')}
-          aria-label={$_('common.logout')}
-        >
-          <LogOut size={smallIconSize} />
-        </button>
       </div>
     {/if}
   {/if}

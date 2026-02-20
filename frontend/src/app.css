@@ -70,11 +70,12 @@ html {
   overscroll-behavior-y: contain;
 }
 
-/* Avoid viewport jumps on mobile when list/task lines are removed in editor. */
+/* Keep scroll anchoring enabled on mobile so deleting task/list lines
+   doesn't shift the viewport unexpectedly. */
 @media (max-width: 767px) {
   .cm-scroller,
   .editor-scroll-container {
-    overflow-anchor: none;
+    overflow-anchor: auto;
   }
 }
 

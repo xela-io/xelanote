@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Shared recipes/notes can now be opened reliably from shared lists: note loading now falls back to shared endpoint access when owner-only note lookup returns not found
+- Mobile editor: re-enabled scroll anchoring (`overflow-anchor: auto`) for editor scrollers so deleting todo/list items no longer causes viewport jumps
 - Live Preview: code fence markers (```) are now properly hidden when the cursor is not on the line, consistent with headings and blockquotes
 - Live Preview: Inhaltsverzeichnis (TOC) is now shown in live mode (right-aligned like preview), and TOC clicks now jump to the matching heading in the live editor
 - Live Preview: non-code lines now use the regular sans font to avoid a monospace look

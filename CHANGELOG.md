@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Dependency lockfiles refreshed for frontend tooling updates; repository root `package-lock.json` package name now matches the project name (`xelanote`).
 - Development docs and scripts now distinguish `dev:local` vs `dev:prod` flows for browser and Electron, and workspace/backlink UI locale labels were added for German and English.
 - Navigation: moved logout action from the sidebar into Settings -> Account for improved reliability on narrow sidebars.
 - Canvas feature is now enabled by default for all users (previously required manual activation in settings)

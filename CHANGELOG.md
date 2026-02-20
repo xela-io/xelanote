@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Live Preview: Inhaltsverzeichnis (TOC) is now shown in live mode (right-aligned like preview), and TOC clicks now jump to the matching heading in the live editor
 - Pre-push lint issues: gofmt formatting, ESLint import sorting, API doc coverage baseline update
 - iOS Mobile layout now uses stable viewport height (`svh`/`dvh`) and applies safe-area paddings only in standalone mode, reducing oversized bottom inset and using full screen height; mobile task deletion view-jump prevented via `overflow-anchor` stabilization on editor scroll containers
+- iOS PWA viewport fallback: added `-webkit-fill-available` to safe screen-height utilities and `html/body` so older iOS Safari versions use full available app height reliably
 
 ### Changed
 

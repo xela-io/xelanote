@@ -10,14 +10,22 @@
 @layer utilities {
   .h-screen-safe {
     height: 100vh; /* Fallback for older browsers */
+    height: -webkit-fill-available; /* iOS Safari fallback before svh/dvh support */
     height: 100svh; /* Stable viewport (prevents iOS toolbar jumps) */
     height: 100dvh; /* Modern browsers */
   }
   .min-h-screen-safe {
     min-height: 100vh;
+    min-height: -webkit-fill-available;
     min-height: 100svh;
     min-height: 100dvh;
   }
+}
+
+/* Required by -webkit-fill-available on iOS */
+html,
+body {
+  height: -webkit-fill-available;
 }
 
 /* Safe-area insets only for standalone/fullscreen web app mode */

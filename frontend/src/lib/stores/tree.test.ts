@@ -337,16 +337,13 @@ describe('tree store - getFlattenedTree()', () => {
     const flatTree1 = tree.getFlattenedTree();
     const length1 = flatTree1.length;
 
-    // Toggle should invalidate cache
+    // Toggle should update the cache (granular update modifies in-place)
     tree.toggleExpanded('/Folder');
 
     const flatTree2 = tree.getFlattenedTree();
     const length2 = flatTree2.length;
 
-    // Different reference (cache invalidated)
-    expect(flatTree1).not.toBe(flatTree2);
-
-    // Different length (expanded shows more items)
+    // Expanded folder shows more items (the note inside it)
     expect(length2).toBeGreaterThan(length1);
   });
 

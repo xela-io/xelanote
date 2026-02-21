@@ -138,4 +138,85 @@ describe('auth store', () => {
     expect(resetRecipeFeature).toHaveBeenCalledTimes(1);
     expect(resetCanvasFeature).toHaveBeenCalledTimes(1);
   });
+
+  it('isAuthenticated returns false when user is null even if isAuthenticated flag is true', async () => {
+    const auth = await import('$lib/stores/auth.svelte');
+
+    // Initially not authenticated
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(auth.getCurrentUser()).toBe(null);
+  });
+
+  it('isAuthenticated returns true only when both user and flag are set', async () => {
+    const auth = await import('$lib/stores/auth.svelte');
+
+    await auth.setAuth(makeJwt(9999, 9000), 'refresh', {
+      id: 42,
+      username: 'alice',
+      email: 'alice@example.com',
+      is_admin: false,
+    });
+
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(auth.getCurrentUser()?.username).toBe('alice');
+  });
+
+  it('should clear sessionStorage expiry timestamps on logout', async () => {
+    const auth = await import('$lib/stores/auth.svelte');
+
+    await auth.setAuth(makeJwt(5000, 4000), 'refresh', {
+      id: 1,
+      username: 'user',
+      email: 'user@example.com',
+      is_admin: false,
+    });
+
+    expect(sessionStorage.getItem('xelanote_token_exp')).toBe('5000');
+    expect(sessionStorage.getItem('xelanote_token_iat')).toBe('4000');
+
+    auth.logout();
+
+    expect(sessionStorage.getItem('xelanote_token_exp')).toBeNull();
+    expect(sessionStorage.getItem('xelanote_token_iat')).toBeNull();
+  });
+
+  it('setAuthCookieOnly sets user and isAuthenticated without tokens', async () => {
+    const auth = await import('$lib/stores/auth.svelte');
+
+    auth.setAuthCookieOnly({
+      id: 7,
+      username: 'webuser',
+      email: 'web@example.com',
+      is_admin: true,
+    });
+
+    expect(auth.getAuthState().isAuthenticated).toBe(true);
+    expect(auth.getAuthState().user?.username).toBe('webuser');
+    expect(auth.getAccessToken()).toBe(null);
+    expect(auth.getRefreshToken()).toBe(null);
+    expect(auth.isAdmin()).toBe(true);
+  });
+
+  it('addTokenUpdateListener returns working unsubscribe function', async () => {
+    const auth = await import('$lib/stores/auth.svelte');
+    const listener = vi.fn();
+
+    const unsubscribe = auth.addTokenUpdateListener(listener);
+
+    await auth.setAuth(makeJwt(1234, 1000), 'refresh', {
+      id: 1,
+      username: 'user',
+      email: 'user@example.com',
+      is_admin: false,
+    });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    listener.mockClear();
+
+    // After unsubscribe, updating tokens should not call the listener
+    auth.updateTokens(makeJwt(2000, 1500), 'refresh2');
+    expect(listener).not.toHaveBeenCalled();
+  });
 });

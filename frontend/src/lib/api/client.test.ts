@@ -224,4 +224,64 @@ describe('api client', () => {
       configurable: true,
     });
   });
+
+  it('throws ApiError with status and message for non-ok responses', async () => {
+    const { ApiError, request } = await import('$lib/api/client');
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: async () => ({ error: 'Validation failed' }),
+    } as Response);
+
+    await expect(request('/notes', { method: 'POST' })).rejects.toThrow('Validation failed');
+    await expect(request('/notes', { method: 'POST' })).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('handles non-JSON error responses gracefully', async () => {
+    const { ApiError, request } = await import('$lib/api/client');
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new SyntaxError('Unexpected token');
+      },
+    } as Response);
+
+    try {
+      await request('/notes', { method: 'GET' });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as InstanceType<typeof ApiError>).status).toBe(500);
+      expect((err as InstanceType<typeof ApiError>).message).toBe('Unknown error');
+    }
+  });
+
+  it('propagates network errors (TypeError) when online', async () => {
+    const { request } = await import('$lib/api/client');
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(request('/notes', { method: 'GET' })).rejects.toThrow('Failed to fetch');
+  });
+
+  it('does not add CSRF token header for GET requests', async () => {
+    document.cookie = 'csrf_token=should-not-appear';
+
+    const { request } = await import('$lib/api/client');
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [] }),
+    } as Response);
+
+    await request('/notes', { method: 'GET' });
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(options.headers);
+    expect(headers.get('X-CSRF-Token')).toBeNull();
+  });
 });

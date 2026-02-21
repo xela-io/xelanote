@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"net/mail"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -46,30 +47,34 @@ var ErrRegistrationDisabled = errors.New("registration is currently disabled")
 // ErrRefreshTokenReuseDetected signals attempted reuse of a rotated/revoked refresh token.
 var ErrRefreshTokenReuseDetected = errors.New("refresh token reuse detected")
 
+func validationErr(msg string) *ValidationError {
+	return &ValidationError{Message: msg}
+}
+
 func validateRegistrationInput(username, email, password string) (string, string, error) {
 	username = strings.TrimSpace(username)
 	email = strings.TrimSpace(email)
 
 	if username == "" {
-		return "", "", errors.New("username is required")
+		return "", "", validationErr("username is required")
 	}
 	if len(username) > MaxUsernameLength {
-		return "", "", errors.New("username too long")
+		return "", "", validationErr("username too long")
 	}
 	if email == "" {
-		return "", "", errors.New("email is required")
+		return "", "", validationErr("email is required")
 	}
 	if len(email) > MaxEmailLength {
-		return "", "", errors.New("email too long")
+		return "", "", validationErr("email too long")
 	}
 	if len(password) < 8 {
-		return "", "", errors.New("password must be at least 8 characters")
+		return "", "", validationErr("password must be at least 8 characters")
 	}
 	if len(password) > MaxPasswordLength {
-		return "", "", errors.New("password too long")
+		return "", "", validationErr("password too long")
 	}
-	if !strings.Contains(email, "@") {
-		return "", "", errors.New("invalid email format")
+	if _, err := mail.ParseAddress(email); err != nil {
+		return "", "", validationErr("invalid email format")
 	}
 
 	return username, email, nil
@@ -84,7 +89,7 @@ func (s *AuthService) createUser(username, email, password string, forceAdmin bo
 	user, err := s.db.CreateUser(username, email, string(passwordHash))
 	if err != nil {
 		if err == db.ErrDuplicate {
-			return nil, errors.New("unable to complete registration")
+			return nil, validationErr("unable to complete registration")
 		}
 		return nil, err
 	}

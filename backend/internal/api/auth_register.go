@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -53,11 +54,11 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 			}
 			user, err = s.authService.BootstrapAdmin(r.Context(), req.Username, req.Email, req.Password)
 			if err != nil {
-				respondError(w, http.StatusBadRequest, err.Error())
+				respondRegistrationError(s, w, err)
 				return
 			}
 		} else {
-			respondError(w, http.StatusBadRequest, err.Error())
+			respondRegistrationError(s, w, err)
 			return
 		}
 	}
@@ -117,4 +118,15 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		resp.RefreshToken = refreshToken
 	}
 	respondJSON(w, http.StatusCreated, resp)
+}
+
+// respondRegistrationError returns validation errors as 400 with the original
+// message, and internal errors (DB, bcrypt) as 500 with a generic message.
+func respondRegistrationError(s *Server, w http.ResponseWriter, err error) {
+	var ve *service.ValidationError
+	if errors.As(err, &ve) {
+		respondError(w, http.StatusBadRequest, ve.Message)
+		return
+	}
+	s.respondInternalErr(w, "registration failed", err)
 }

@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactored
 
+- Frontend: Split `codemirror.ts` (1134 lines) into 5 modules under `codemirror/` — decoration plugins, theme, extension loader, utilities, plus slimmed orchestrator with shared event handlers (F-03)
 - Frontend: Split `markdown.ts` (914 lines) into 8-module plugin architecture under `markdown/` — color, wikilink, due-date, image, HTML sanitizer, task processor, extractors, plus thin orchestrator (F-16)
 - API layer: Split `recipe_suggestions.go` (474 lines) into 4 focused files — core handlers, save/import, image processing, URL import (F-13)
 - DB layer: Added `fmt.Errorf` error wrapping across 8 core DB files (auth, settings, activity, admin, 2FA, API keys) — all raw `return err` returns now include operation context for debugging

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -20,80 +21,86 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
 	if req.Username == "" || req.Email == "" || req.Password == "" {
 		respondError(w, http.StatusBadRequest, "username, email, and password are required")
 		return
 	}
-
-	// Validate username format (only for new registrations, existing users are grandfathered)
 	if err := validateUsername(req.Username); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Verify() returns nil when CAPTCHA is disabled, so a single call suffices.
 	clientIP := getClientIPSafe(r)
 	if err := s.turnstileService.Verify(r.Context(), req.CaptchaToken, clientIP); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Register user
-	user, err := s.authService.Register(r.Context(), req.Username, req.Email, req.Password)
-	if err != nil {
-		if err == service.ErrRegistrationDisabled {
-			bootstrapSecret := os.Getenv("XELANOTE_BOOTSTRAP_TOKEN")
-			if bootstrapSecret == "" {
-				respondError(w, http.StatusForbidden, "registration is disabled")
-				return
-			}
-			if subtle.ConstantTimeCompare([]byte(req.BootstrapToken), []byte(bootstrapSecret)) != 1 {
-				respondError(w, http.StatusForbidden, "invalid bootstrap token")
-				return
-			}
-			user, err = s.authService.BootstrapAdmin(r.Context(), req.Username, req.Email, req.Password)
-			if err != nil {
-				respondRegistrationError(s, w, err)
-				return
-			}
-		} else {
-			respondRegistrationError(s, w, err)
-			return
-		}
+	user, ok := s.registerOrBootstrapUser(w, r, req)
+	if !ok {
+		return
 	}
 
-	// Generate encryption salt for E2E encryption
-	salt := make([]byte, 16) // 128-bit salt
+	s.respondRegistrationSuccess(w, r, user, req)
+}
+
+// registerOrBootstrapUser tries Register, falling back to BootstrapAdmin when
+// registration is disabled and a valid bootstrap token is provided.
+func (s *Server) registerOrBootstrapUser(w http.ResponseWriter, r *http.Request, req RegisterRequest) (*db.User, bool) {
+	user, err := s.authService.Register(r.Context(), req.Username, req.Email, req.Password)
+	if err == nil {
+		return user, true
+	}
+
+	if err != service.ErrRegistrationDisabled {
+		respondRegistrationError(s, w, err)
+		return nil, false
+	}
+
+	bootstrapSecret := os.Getenv("XELANOTE_BOOTSTRAP_TOKEN")
+	if bootstrapSecret == "" {
+		respondError(w, http.StatusForbidden, "registration is disabled")
+		return nil, false
+	}
+	if subtle.ConstantTimeCompare([]byte(req.BootstrapToken), []byte(bootstrapSecret)) != 1 {
+		respondError(w, http.StatusForbidden, "invalid bootstrap token")
+		return nil, false
+	}
+
+	user, err = s.authService.BootstrapAdmin(r.Context(), req.Username, req.Email, req.Password)
+	if err != nil {
+		respondRegistrationError(s, w, err)
+		return nil, false
+	}
+	return user, true
+}
+
+// respondRegistrationSuccess handles the post-registration flow: generate salt,
+// auto-login, set cookies, and return the response.
+func (s *Server) respondRegistrationSuccess(w http.ResponseWriter, r *http.Request, user *db.User, req RegisterRequest) {
+	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to generate encryption salt")
 		return
 	}
-
 	if err := s.authService.SetUserEncryptionSalt(user.ID, salt); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to store encryption salt")
 		return
 	}
 
-	// Auto-login after successful registration
 	accessToken, refreshToken, requiresTwoFactor, _, err := s.authService.Login(r.Context(), req.Username, req.Password)
 	if err != nil {
-		// Registration succeeded but login failed (should not happen)
 		respondError(w, http.StatusInternalServerError, "registration succeeded but login failed")
 		return
 	}
-
-	// New users never have 2FA enabled, but check just in case
 	if requiresTwoFactor {
 		respondError(w, http.StatusInternalServerError, "unexpected 2FA requirement for new user")
 		return
 	}
 
-	// Set cookies for cookie-based auth
 	setAccessTokenCookie(w, accessToken)
 	setRefreshTokenCookie(w, refreshToken)
 
-	// Generate and set CSRF token
 	csrfToken, err := generateCSRFToken()
 	if err != nil {
 		s.logger().Error("failed to generate CSRF token", slog.Any("error", err))
@@ -102,8 +109,6 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	}
 	setCSRFTokenCookie(w, csrfToken)
 
-	// Return user info and encryption salt
-	// SEC-001: Tokens only in body for desktop clients (OS keyring storage)
 	resp := AuthResponse{
 		EncryptionSalt: base64.StdEncoding.EncodeToString(salt),
 		User: UserResponse{

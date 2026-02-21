@@ -13,7 +13,6 @@ import (
 )
 
 func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
-	// Extract user ID from context
 	userID, ok := getUserID(r)
 	if !ok {
 		respondError(w, http.StatusUnauthorized, "user not authenticated")
@@ -22,13 +21,11 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
-	// Check If-Match header for optimistic locking
 	ifMatch := r.Header.Get("If-Match")
 	if ifMatch == "" {
 		respondError(w, http.StatusBadRequest, "If-Match header required")
 		return
 	}
-
 	version, ok2 := s.resolveETagVersion(w, userID, id, ifMatch)
 	if !ok2 {
 		return
@@ -39,100 +36,23 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
 	if err := validateNoteFields(req.Title, req.Content, req.FolderPath); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
 	if req.FolderPath == "" {
 		req.FolderPath = "/"
 	}
 
-	var note *service.Note
-	var err error
-
-	// Check if this is an encrypted note update
-	if req.EncryptedContent != "" && req.WrappedDEK != "" {
-		// Validate all encryption fields
-		if err := ValidateEncryptedNoteRequest(req.EncryptedContent, req.WrappedDEK, req.EncryptionMetadata, req.EncryptedTitle); err != nil {
-			respondError(w, http.StatusBadRequest, fmt.Sprintf("encryption validation failed: %v", err))
-			return
-		}
-
-		// Decode Base64 encrypted content (already validated)
-		encryptedBlob, err := base64.StdEncoding.DecodeString(req.EncryptedContent)
-		if err != nil {
-			respondError(w, http.StatusBadRequest, "invalid encrypted content")
-			return
-		}
-
-		note, err = s.noteService.UpdateEncryptedNote(
-			userID,
-			id,
-			req.Title,
-			req.EncryptedTitle,
-			req.TitleEncrypted,
-			encryptedBlob,
-			req.WrappedDEK,
-			req.EncryptionMetadata,
-			req.FolderPath,
-			req.Keywords,
-			version,
-		)
-		if err != nil {
-			if errors.Is(err, service.ErrNotFound) {
-				respondError(w, http.StatusNotFound, "note not found")
-				return
-			}
-			if errors.Is(err, service.ErrVersionMismatch) {
-				respondError(w, http.StatusConflict, "version mismatch - note was modified")
-				return
-			}
-			s.respondInternalErr(w, "failed to update encrypted note", err)
-			return
-		}
-	} else {
-		// Update plaintext note (legacy support)
-		note, err = s.noteService.UpdateNote(userID, id, req.Title, req.Content, req.FolderPath, version)
-		if err != nil {
-			if errors.Is(err, service.ErrNotFound) {
-				respondError(w, http.StatusNotFound, "note not found")
-				return
-			}
-			if errors.Is(err, service.ErrVersionMismatch) {
-				respondError(w, http.StatusConflict, "version mismatch - note was modified")
-				return
-			}
-			s.respondInternalErr(w, "failed to update note", err)
-			return
-		}
+	note, ok := s.executeNoteUpdate(w, userID, id, req, version)
+	if !ok {
+		return
 	}
 
-	// Process client-provided links for encrypted notes
-	if len(req.Links) > 0 {
-		linkTitles, ok := validateClientLinks(w, req.Links)
-		if !ok {
-			return
-		}
-		if err := s.noteService.UpdateLinksFromClient(userID, id, linkTitles); err != nil {
-			s.logger().Error("failed to update links from client", "err", err, "note_id", id)
-		}
+	if !s.applyNoteUpdateSideEffects(w, userID, id, req) {
+		return
 	}
 
-	// Process client-provided due dates for encrypted notes
-	if len(req.DueDates) > 0 {
-		if err := s.noteService.SetNoteDueDates(id, userID, convertClientDueDates(req.DueDates)); err != nil {
-			s.logger().Error("failed to set due dates from client", "err", err, "note_id", id)
-		}
-	}
-
-	// Invalidate graph cache after link updates
-	if s.graphService != nil {
-		s.graphService.InvalidateGraphCache(userID)
-	}
-
-	// Broadcast update to WebSocket clients
 	payload, err := json.Marshal(note)
 	if err != nil {
 		s.respondInternalErr(w, "failed to encode note update", err)
@@ -145,4 +65,71 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("ETag", generateETag(note.ID, note.Version))
 	respondJSON(w, http.StatusOK, note)
+}
+
+// executeNoteUpdate handles encrypted vs plaintext update branching.
+func (s *Server) executeNoteUpdate(w http.ResponseWriter, userID int, id string, req NoteRequest, version int) (*service.Note, bool) {
+	if req.EncryptedContent != "" && req.WrappedDEK != "" {
+		if err := ValidateEncryptedNoteRequest(req.EncryptedContent, req.WrappedDEK, req.EncryptionMetadata, req.EncryptedTitle); err != nil {
+			respondError(w, http.StatusBadRequest, fmt.Sprintf("encryption validation failed: %v", err))
+			return nil, false
+		}
+		encryptedBlob, err := base64.StdEncoding.DecodeString(req.EncryptedContent)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid encrypted content")
+			return nil, false
+		}
+		note, err := s.noteService.UpdateEncryptedNote(
+			userID, id, req.Title, req.EncryptedTitle, req.TitleEncrypted,
+			encryptedBlob, req.WrappedDEK, req.EncryptionMetadata,
+			req.FolderPath, req.Keywords, version,
+		)
+		if err != nil {
+			respondNoteUpdateError(s, w, err, "failed to update encrypted note")
+			return nil, false
+		}
+		return note, true
+	}
+
+	note, err := s.noteService.UpdateNote(userID, id, req.Title, req.Content, req.FolderPath, version)
+	if err != nil {
+		respondNoteUpdateError(s, w, err, "failed to update note")
+		return nil, false
+	}
+	return note, true
+}
+
+func respondNoteUpdateError(s *Server, w http.ResponseWriter, err error, logMsg string) {
+	if errors.Is(err, service.ErrNotFound) {
+		respondError(w, http.StatusNotFound, "note not found")
+		return
+	}
+	if errors.Is(err, service.ErrVersionMismatch) {
+		respondError(w, http.StatusConflict, "version mismatch - note was modified")
+		return
+	}
+	s.respondInternalErr(w, logMsg, err)
+}
+
+// applyNoteUpdateSideEffects processes links, due dates, and graph cache after an update.
+// Returns false if link validation failed (response already written).
+func (s *Server) applyNoteUpdateSideEffects(w http.ResponseWriter, userID int, id string, req NoteRequest) bool {
+	if len(req.Links) > 0 {
+		linkTitles, ok := validateClientLinks(w, req.Links)
+		if !ok {
+			return false
+		}
+		if err := s.noteService.UpdateLinksFromClient(userID, id, linkTitles); err != nil {
+			s.logger().Error("failed to update links from client", "err", err, "note_id", id)
+		}
+	}
+	if len(req.DueDates) > 0 {
+		if err := s.noteService.SetNoteDueDates(id, userID, convertClientDueDates(req.DueDates)); err != nil {
+			s.logger().Error("failed to set due dates from client", "err", err, "note_id", id)
+		}
+	}
+	if s.graphService != nil {
+		s.graphService.InvalidateGraphCache(userID)
+	}
+	return true
 }

@@ -340,6 +340,12 @@ Diese Regeln sollten in `docs/conventions.md` ergaenzt und vom Team gelebt werde
 | C-04 | `FilteredSearch` (137→16): `buildFilteredSearchQuery` + 5 Filter-Helpers + `scanNoteRows` shared | Erledigt | `3474a99` |
 | A-02 Phase 1 | `service.User` Type-Alias fuer `db.User` — 0 Layer-Violations in Baseline | Erledigt | `a049911` |
 
+### Sprint 2 Test-Coverage (Session 2026-02-21, Fortsetzung)
+
+| Finding | Was | Status | Details |
+|---------|-----|--------|---------|
+| T-01 | API-Handler-Tests fuer Folders, Templates, Snippets, Tags, Versions | Erledigt | 3 neue Test-Files, 49 Tests: `folders_handlers_test.go` (12), `templates_handlers_test.go` (17), `tags_versions_handlers_test.go` (20) |
+
 ### Bekannte Bugs (entdeckt in Tests)
 
 | Bug | Status | Ref |

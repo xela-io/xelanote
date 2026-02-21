@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Service layer: Added comprehensive test suites for encryption, user account, trash operations, admin service, FIDO2/WebAuthn, and two-factor authentication (6 new test files, ~90 subtests)
 - API layer: Added handler-level integration tests for auth flow (register, login, refresh, logout, /me), notes CRUD (create, read, list, update, delete), trash operations (list, count, restore, permanent delete, empty), and admin endpoints (stats, users, settings) — 4 new test files with shared test helpers
 - API layer: Added NoteService domain integration tests for journal (lookup, calendar, entries, duplicate date), search (FTS5, cross-user isolation, quick-search with folder filter), encryption (create/decrypt/batch re-encrypt DEKs), backlinks (wikilink resolution), and sharing (share/unshare, role updates, cross-user access, encrypted note blocking) — 4 new test files
+- API layer: Added handler tests for folders (CRUD, nested, move, rename, cross-user isolation), templates (CRUD, validation, cross-user isolation), snippets (CRUD, validation, cross-user isolation), tags (set/get/delete, replace, cross-user isolation), and versions (list, get, compare, restore, ETag/If-Match) — 3 new test files, 49 tests
 
 ### Removed
 

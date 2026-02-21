@@ -3,6 +3,7 @@ package api
 import (
 	"io"
 	"log/slog"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/jobs"
@@ -70,6 +71,8 @@ type Server struct {
 	telemetryService   *service.TelemetryService
 	perfMetricsLimiter *RateLimiter
 	analyticsLimiter   *RateLimiter
+	// Per-user upload mutex to prevent TOCTOU race on quota checks
+	uploadMu sync.Map // map[int]*sync.Mutex
 	// Health check dependency probe
 	dbPing func() error
 }
@@ -95,6 +98,7 @@ type ServerConfig struct {
 	RecipeSuggestSvc *service.RecipeSuggestionService
 	CanvasService    *service.CanvasService
 	TelemetrySvc     *service.TelemetryService
+	LockoutDB        LockoutStore // F2-06: DB for persistent lockout state (optional)
 	DBPing           func() error
 	JobManager       *jobs.JobManager
 	WSManager        *websocket.Manager

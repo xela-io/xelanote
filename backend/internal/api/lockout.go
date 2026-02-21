@@ -4,9 +4,24 @@ import (
 	"log/slog"
 	"sync"
 	"time"
+
+	"github.com/xela-io/xelanote/internal/service"
 )
 
+// LockoutStore abstracts the DB methods used for persistent lockout state.
+// Satisfied by *db.DB. Defined here so the API layer doesn't import db directly.
+type LockoutStore interface {
+	UpsertLockout(rec service.LockoutRecord) error
+	DeleteLockout(identifierHash string) error
+	LoadActiveLockouts() ([]service.LockoutRecord, error)
+}
+
 const ipLockoutThreshold = 5
+
+// maxExponentShift caps the bit-shift exponent in exponential backoff to prevent
+// integer overflow. With baseLockout=30s and int64, overflow occurs at shift≈29.
+// Capping at 20 allows up to ~30s * 2^20 ≈ 364 days before the maxLockout cap applies.
+const maxExponentShift = 20
 
 // AccountLockout tracks failed login attempts per account identifier (username/email)
 // with hybrid IP-based and global lockout. Per-IP lockout triggers at ipLockoutThreshold
@@ -20,6 +35,7 @@ type AccountLockout struct {
 	cleanupEvery time.Duration // How often to clean up expired entries
 	logger       *slog.Logger  // Logger for security events
 	nowFn        func() time.Time
+	database     LockoutStore // Optional: persists lockout state across restarts (F2-06)
 }
 
 type lockoutEntry struct {
@@ -52,6 +68,60 @@ func NewAccountLockout(maxAttempts int, baseLockout, maxLockout time.Duration, l
 	go al.cleanupLoop()
 
 	return al
+}
+
+// SetDB enables persistent lockout storage (F2-06).
+// Must be called before any lockout operations. Loads existing state from DB.
+func (al *AccountLockout) SetDB(database LockoutStore) {
+	al.mu.Lock()
+	defer al.mu.Unlock()
+
+	al.database = database
+	al.loadFromDB()
+}
+
+// loadFromDB restores lockout state from the database on startup.
+// Must be called while holding al.mu.
+func (al *AccountLockout) loadFromDB() {
+	if al.database == nil {
+		return
+	}
+
+	records, err := al.database.LoadActiveLockouts()
+	if err != nil {
+		if al.logger != nil {
+			al.logger.Warn("failed to load lockout state from DB", slog.String("error", err.Error()))
+		}
+		return
+	}
+
+	for _, rec := range records {
+		entry, exists := al.attempts[rec.IdentifierHash]
+		if !exists {
+			entry = &lockoutEntry{
+				ipAttempts: make(map[string]*ipLockoutEntry),
+			}
+			al.attempts[rec.IdentifierHash] = entry
+		}
+
+		if rec.IP == "" {
+			// Global entry
+			entry.failedAttempts = rec.FailedAttempts
+			entry.lockedUntil = rec.LockedUntil
+			entry.lastAttempt = rec.LastAttempt
+		} else {
+			// Per-IP entry
+			entry.ipAttempts[rec.IP] = &ipLockoutEntry{
+				failedAttempts: rec.FailedAttempts,
+				lockedUntil:    rec.LockedUntil,
+				lastAttempt:    rec.LastAttempt,
+			}
+		}
+	}
+
+	if al.logger != nil && len(records) > 0 {
+		al.logger.Info("restored lockout state from DB", slog.Int("records", len(records)))
+	}
 }
 
 func (al *AccountLockout) now() time.Time {
@@ -136,11 +206,7 @@ func (al *AccountLockout) RecordFailure(identifier, ip string) (bool, time.Durat
 	// Check global lockout first (higher priority)
 	if entry.failedAttempts >= al.maxAttempts {
 		excessAttempts := entry.failedAttempts - al.maxAttempts
-		lockoutDuration := al.baseLockout * (1 << excessAttempts)
-
-		if lockoutDuration > al.maxLockout {
-			lockoutDuration = al.maxLockout
-		}
+		lockoutDuration := safeLockoutDuration(al.baseLockout, excessAttempts, al.maxLockout)
 
 		entry.lockedUntil = now.Add(lockoutDuration)
 
@@ -152,17 +218,14 @@ func (al *AccountLockout) RecordFailure(identifier, ip string) (bool, time.Durat
 				slog.Duration("lockout_duration", lockoutDuration))
 		}
 
+		al.persistEntry(identifier, "", entry.failedAttempts, entry.lockedUntil, entry.lastAttempt)
 		return true, lockoutDuration
 	}
 
 	// Check per-IP lockout
 	if ipEntry.failedAttempts >= ipLockoutThreshold {
 		excessAttempts := ipEntry.failedAttempts - ipLockoutThreshold
-		lockoutDuration := al.baseLockout * (1 << excessAttempts)
-
-		if lockoutDuration > al.maxLockout {
-			lockoutDuration = al.maxLockout
-		}
+		lockoutDuration := safeLockoutDuration(al.baseLockout, excessAttempts, al.maxLockout)
 
 		ipEntry.lockedUntil = now.Add(lockoutDuration)
 
@@ -175,10 +238,28 @@ func (al *AccountLockout) RecordFailure(identifier, ip string) (bool, time.Durat
 				slog.Duration("lockout_duration", lockoutDuration))
 		}
 
+		al.persistEntry(identifier, ip, ipEntry.failedAttempts, ipEntry.lockedUntil, ipEntry.lastAttempt)
 		return true, lockoutDuration
 	}
 
 	return false, 0
+}
+
+// persistEntry writes a lockout entry to the database (best-effort, non-blocking).
+func (al *AccountLockout) persistEntry(identifier, ip string, failedAttempts int, lockedUntil, lastAttempt time.Time) {
+	if al.database == nil {
+		return
+	}
+	err := al.database.UpsertLockout(service.LockoutRecord{
+		IdentifierHash: hashIdentifier(identifier),
+		IP:             ip,
+		FailedAttempts: failedAttempts,
+		LockedUntil:    lockedUntil,
+		LastAttempt:    lastAttempt,
+	})
+	if err != nil && al.logger != nil {
+		al.logger.Warn("failed to persist lockout to DB", slog.String("error", err.Error()))
+	}
 }
 
 // RecordSuccess clears the failure counter for an account after successful login.
@@ -187,6 +268,13 @@ func (al *AccountLockout) RecordSuccess(identifier string) {
 	defer al.mu.Unlock()
 
 	delete(al.attempts, identifier)
+
+	// Persist: remove from DB
+	if al.database != nil {
+		if err := al.database.DeleteLockout(hashIdentifier(identifier)); err != nil && al.logger != nil {
+			al.logger.Warn("failed to delete lockout from DB", slog.String("error", err.Error()))
+		}
+	}
 }
 
 // GetRemainingAttempts returns how many global attempts remain before lockout.
@@ -204,6 +292,20 @@ func (al *AccountLockout) GetRemainingAttempts(identifier string) int {
 		return 0
 	}
 	return remaining
+}
+
+// safeLockoutDuration calculates exponential backoff duration without integer overflow.
+// Caps the shift exponent at maxExponentShift before computing baseLockout * 2^excessAttempts,
+// then clamps the result to maxLockout.
+func safeLockoutDuration(baseLockout time.Duration, excessAttempts int, maxLockout time.Duration) time.Duration {
+	if excessAttempts > maxExponentShift {
+		excessAttempts = maxExponentShift
+	}
+	lockoutDuration := baseLockout * (1 << excessAttempts)
+	if lockoutDuration > maxLockout {
+		lockoutDuration = maxLockout
+	}
+	return lockoutDuration
 }
 
 // cleanupLoop periodically removes expired lockout entries to prevent memory leaks.

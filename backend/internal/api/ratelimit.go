@@ -9,6 +9,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// maxRateLimitClients is the hard cap on tracked clients per limiter to prevent
+// memory exhaustion during DDoS with many distinct IPs (F-15).
+const maxRateLimitClients = 10000
+
 // RateLimiter provides per-IP rate limiting using token bucket algorithm.
 type RateLimiter struct {
 	mu              sync.RWMutex
@@ -52,6 +56,10 @@ func (rl *RateLimiter) Allow(key string) bool {
 
 	client, exists := rl.clients[key]
 	if !exists {
+		// F-15: Evict oldest entry if at capacity to prevent memory exhaustion
+		if len(rl.clients) >= maxRateLimitClients {
+			rl.evictOldest()
+		}
 		client = &clientLimiter{
 			limiter:  rate.NewLimiter(rl.limit, rl.burst),
 			lastSeen: time.Now(),
@@ -62,6 +70,26 @@ func (rl *RateLimiter) Allow(key string) bool {
 	}
 
 	return client.limiter.Allow()
+}
+
+// evictOldest removes the least recently seen client entry.
+// Must be called while holding rl.mu.
+func (rl *RateLimiter) evictOldest() {
+	var oldestKey string
+	var oldestTime time.Time
+	first := true
+
+	for key, client := range rl.clients {
+		if first || client.lastSeen.Before(oldestTime) {
+			oldestKey = key
+			oldestTime = client.lastSeen
+			first = false
+		}
+	}
+
+	if !first {
+		delete(rl.clients, oldestKey)
+	}
 }
 
 // cleanup removes stale entries from the clients map.

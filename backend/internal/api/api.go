@@ -86,6 +86,10 @@ func NewServer(cfg ServerConfig) *Server {
 		accountLockout: NewAccountLockout(limits.lockoutAttempts, 30*time.Second, 30*time.Minute, cfg.Logger),
 		dbPing:         cfg.DBPing,
 	}
+	// F2-06: Enable persistent lockout state if DB is available
+	if cfg.LockoutDB != nil {
+		s.accountLockout.SetDB(cfg.LockoutDB)
+	}
 	s.setupRoutes()
 	return s
 }

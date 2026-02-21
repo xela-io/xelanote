@@ -342,6 +342,67 @@ func TestCleanupRemovesExpiredIPEntries(t *testing.T) {
 	}
 }
 
+func TestSafeLockoutDuration(t *testing.T) {
+	baseLockout := 30 * time.Second
+	maxLockout := 30 * time.Minute
+
+	tests := []struct {
+		name           string
+		excessAttempts int
+		wantPositive   bool
+		wantCapped     bool
+	}{
+		{"zero excess", 0, true, false},
+		{"small excess", 3, true, false},
+		{"capped by maxLockout", 10, true, true},
+		{"near overflow boundary", 29, true, true},
+		{"at overflow boundary", 30, true, true},
+		{"well past overflow", 64, true, true},
+		{"extreme value", 1000, true, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := safeLockoutDuration(baseLockout, tt.excessAttempts, maxLockout)
+			if tt.wantPositive && d <= 0 {
+				t.Errorf("safeLockoutDuration(%d) = %v, want positive duration", tt.excessAttempts, d)
+			}
+			if tt.wantCapped && d != maxLockout {
+				t.Errorf("safeLockoutDuration(%d) = %v, want capped at %v", tt.excessAttempts, d, maxLockout)
+			}
+		})
+	}
+}
+
+func TestAccountLockout_OverflowProtection(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	clock := &fakeClock{now: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}
+	lockout := NewAccountLockout(5, 30*time.Second, 30*time.Minute, logger)
+	lockout.nowFn = clock.Now
+
+	identifier := "overflow@example.com"
+	ip := "127.0.0.1"
+
+	// Simulate 50 failed attempts (well past overflow boundary of ~29 excess)
+	for i := 0; i < 50; i++ {
+		_, duration := lockout.RecordFailure(identifier, ip)
+		if duration < 0 {
+			t.Fatalf("Lockout duration became negative after %d attempts: %v", i+1, duration)
+		}
+		// Advance past lockout to allow next attempt
+		clock.Advance(31 * time.Minute)
+	}
+
+	// After many attempts, lockout should still work (capped at maxLockout)
+	locked, duration := lockout.RecordFailure(identifier, ip)
+	if !locked {
+		t.Error("Account should still be locked after 51 failures")
+	}
+	if duration != 30*time.Minute {
+		t.Errorf("Lockout duration should be capped at 30min, got %v", duration)
+	}
+}
+
 func TestAccountLockout_CooldownResetsCounters(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	clock := &fakeClock{now: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}

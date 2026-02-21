@@ -3,7 +3,7 @@
 # Stage 1: Build Frontend
 # F2-05: Digest-pinned base images. Update quarterly: docker pull <image>, then
 # update the digest with: docker inspect --format='{{index .RepoDigests 0}}' <image>
-FROM node:22-alpine@sha256:c17e937e8e79dc0a5630221cfb8bbef536def6ea5b0c6dfc3779c1d41eb2637a AS frontend-builder
+FROM node:22-alpine@sha256:e4bf2a82ad0a4037d28035ae71529873c069b13eb0455466ae0bc13363826e34 AS frontend-builder
 
 WORKDIR /frontend
 
@@ -14,7 +14,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM golang:1.25-alpine@sha256:ef18ee7117463ac1055f789b7e25a0c9ddfb60e3bfbfb35aafe2fddefa036be3 AS backend-builder
+FROM golang:1.25-alpine@sha256:f6751d823c26342f9506c03797d2527668d095b0a15f1862cddb4d927a7a4ced AS backend-builder
 
 # For SQLCipher support: replace "gcc musl-dev" with "gcc musl-dev sqlcipher-dev",
 # change build tags to "fts5 sqlite_crypt", and add "sqlcipher" to runtime stage.
@@ -39,7 +39,7 @@ RUN CGO_ENABLED=1 go build -tags "fts5" \
   -o /xelanote ./cmd/server
 
 # Stage 3: Runtime
-FROM alpine:3.20@sha256:4edbd2beb5f78b1014028f4fbb99f3237d9561100b6881aabbf5acce2c4f9454
+FROM alpine:3.20@sha256:a4f4213abb84c497377b8544c81b3564f313746700372ec4fe84653e4fb03805
 
 RUN apk add --no-cache ca-certificates tzdata sqlite
 

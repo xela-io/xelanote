@@ -345,6 +345,7 @@ Diese Regeln sollten in `docs/conventions.md` ergaenzt und vom Team gelebt werde
 | Finding | Was | Status | Details |
 |---------|-----|--------|---------|
 | T-01 | API-Handler-Tests fuer Folders, Templates, Snippets, Tags, Versions | Erledigt | 3 neue Test-Files, 49 Tests: `folders_handlers_test.go` (12), `templates_handlers_test.go` (17), `tags_versions_handlers_test.go` (20) |
+| T-02 | Service-Tests fuer Sharing und Graph | Erledigt | Sharing: 11 neue Tests + 10 Subtests (happy-path + permissions). Graph: 6 Tests (CRUD, caching, isolation). Admin: bereits abgedeckt |
 
 ### Bekannte Bugs (entdeckt in Tests)
 

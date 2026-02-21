@@ -2,11 +2,14 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
+	"github.com/xela-io/xelanote/internal/cache"
 	"github.com/xela-io/xelanote/internal/db"
 )
 
@@ -16,10 +19,16 @@ var (
 	ErrSelfDeletion = errors.New("cannot delete yourself")
 )
 
+// Cache key prefixes for admin stats.
+const (
+	adminStatsCachePrefix = "cache:admin:stats:"
+)
+
 // AdminService handles admin-related operations
 type AdminService struct {
 	db      *db.DB
 	dataDir string
+	cache   *cache.Cache
 }
 
 // NewAdminService creates a new AdminService
@@ -27,11 +36,24 @@ func NewAdminService(database *db.DB, dataDir string) *AdminService {
 	return &AdminService{
 		db:      database,
 		dataDir: dataDir,
+		cache:   cache.NewCache(5 * time.Minute), // 5 minute TTL for admin stats
+	}
+}
+
+// Close releases background resources held by the service.
+func (s *AdminService) Close() {
+	if s.cache != nil {
+		s.cache.Close()
 	}
 }
 
 // GetSystemStats returns basic system statistics
 func (s *AdminService) GetSystemStats() (*db.SystemStats, error) {
+	const cacheKey = adminStatsCachePrefix + "system"
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.(*db.SystemStats), nil
+	}
+
 	stats, err := s.db.GetSystemStats()
 	if err != nil {
 		return nil, err
@@ -40,11 +62,17 @@ func (s *AdminService) GetSystemStats() (*db.SystemStats, error) {
 	// Calculate storage from uploads directory
 	stats.StorageUsedMB = s.calculateTotalStorageMB()
 
+	s.cache.Set(cacheKey, stats)
 	return stats, nil
 }
 
 // GetDetailedStats returns detailed statistics with time series
 func (s *AdminService) GetDetailedStats() (*db.DetailedStats, error) {
+	const cacheKey = adminStatsCachePrefix + "detailed"
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.(*db.DetailedStats), nil
+	}
+
 	detailed, err := s.db.GetDetailedStats(30) // Last 30 days
 	if err != nil {
 		return nil, err
@@ -53,26 +81,39 @@ func (s *AdminService) GetDetailedStats() (*db.DetailedStats, error) {
 	// Add storage to stats
 	detailed.Stats.StorageUsedMB = s.calculateTotalStorageMB()
 
+	s.cache.Set(cacheKey, detailed)
 	return detailed, nil
 }
 
 // GetAllUsers returns all users with their stats
 func (s *AdminService) GetAllUsers() ([]db.AdminUser, error) {
+	const cacheKey = adminStatsCachePrefix + "allusers"
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.([]db.AdminUser), nil
+	}
+
 	users, err := s.db.GetAllUsersWithStats()
 	if err != nil {
 		return nil, err
 	}
 
-	// Calculate storage for each user
+	// Calculate storage for all users in one pass
+	storageMap := s.calculateAllUserStorageMB()
 	for i := range users {
-		users[i].StorageMB = s.calculateUserStorageMB(users[i].ID)
+		users[i].StorageMB = storageMap[users[i].ID]
 	}
 
+	s.cache.Set(cacheKey, users)
 	return users, nil
 }
 
 // GetUserDetails returns detailed stats for a single user
 func (s *AdminService) GetUserDetails(userID int) (*db.AdminUser, error) {
+	cacheKey := fmt.Sprintf("%suser:%d", adminStatsCachePrefix, userID)
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.(*db.AdminUser), nil
+	}
+
 	user, err := s.db.GetUserStats(userID)
 	if err != nil {
 		return nil, err
@@ -80,6 +121,7 @@ func (s *AdminService) GetUserDetails(userID int) (*db.AdminUser, error) {
 
 	user.StorageMB = s.calculateUserStorageMB(userID)
 
+	s.cache.Set(cacheKey, user)
 	return user, nil
 }
 
@@ -91,7 +133,12 @@ func (s *AdminService) SetUserAdmin(adminID, targetUserID int, isAdmin bool) err
 		return ErrSelfDemotion
 	}
 
-	return s.db.SetUserAdmin(targetUserID, isAdmin)
+	if err := s.db.SetUserAdmin(targetUserID, isAdmin); err != nil {
+		return err
+	}
+
+	s.invalidateStatsCache()
+	return nil
 }
 
 // DeleteUser deletes a user and all their data
@@ -106,7 +153,12 @@ func (s *AdminService) DeleteUser(adminID, targetUserID int) error {
 	uploadDir := filepath.Join(s.dataDir, "uploads", strconv.Itoa(targetUserID))
 	os.RemoveAll(uploadDir) // Ignore errors - directory might not exist
 
-	return s.db.DeleteUserByAdmin(targetUserID)
+	if err := s.db.DeleteUserByAdmin(targetUserID); err != nil {
+		return err
+	}
+
+	s.invalidateStatsCache()
+	return nil
 }
 
 // IsUserAdmin checks if a user is an admin
@@ -116,7 +168,18 @@ func (s *AdminService) IsUserAdmin(userID int) (bool, error) {
 
 // CountUsers returns the total number of users
 func (s *AdminService) CountUsers() (int, error) {
-	return s.db.CountUsers()
+	const cacheKey = adminStatsCachePrefix + "usercount"
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.(int), nil
+	}
+
+	count, err := s.db.CountUsers()
+	if err != nil {
+		return 0, err
+	}
+
+	s.cache.Set(cacheKey, count)
+	return count, nil
 }
 
 // GetRecentUsers returns recently created users
@@ -150,7 +213,7 @@ func (s *AdminService) GetUserStorageMB(userID int) float64 {
 	return s.calculateUserStorageMB(userID)
 }
 
-// calculateUserStorageMB calculates storage used by a specific user
+// calculateUserStorageMB calculates storage used by a specific user.
 func (s *AdminService) calculateUserStorageMB(userID int) float64 {
 	uploadDir := filepath.Join(s.dataDir, "uploads", strconv.Itoa(userID))
 	var totalSize int64
@@ -171,12 +234,78 @@ func (s *AdminService) calculateUserStorageMB(userID int) float64 {
 	return float64(totalSize) / (1024 * 1024) // Convert to MB
 }
 
+// calculateAllUserStorageMB traverses the uploads directory once and returns
+// storage usage per user ID. This avoids N separate WalkDir calls.
+func (s *AdminService) calculateAllUserStorageMB() map[int]float64 {
+	result := make(map[int]float64)
+	uploadsDir := filepath.Join(s.dataDir, "uploads")
+
+	entries, err := os.ReadDir(uploadsDir)
+	if err != nil {
+		return result // uploads dir may not exist
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		userID, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue // skip non-numeric directories
+		}
+		var totalSize int64
+		userDir := filepath.Join(uploadsDir, entry.Name())
+		filepath.WalkDir(userDir, func(_ string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if !d.IsDir() {
+				info, err := d.Info()
+				if err == nil {
+					totalSize += info.Size()
+				}
+			}
+			return nil
+		})
+		result[userID] = float64(totalSize) / (1024 * 1024)
+	}
+
+	return result
+}
+
 // GetActiveUsersCount returns count of users active in last 30 days
 func (s *AdminService) GetActiveUsersCount() (int, error) {
-	return s.db.GetActiveUsersLast30Days()
+	const cacheKey = adminStatsCachePrefix + "activeusers"
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.(int), nil
+	}
+
+	count, err := s.db.GetActiveUsersLast30Days()
+	if err != nil {
+		return 0, err
+	}
+
+	s.cache.Set(cacheKey, count)
+	return count, nil
 }
 
 // GetNotesCreatedToday returns count of notes created today
 func (s *AdminService) GetNotesCreatedToday() (int, error) {
-	return s.db.GetNotesCreatedToday()
+	const cacheKey = adminStatsCachePrefix + "notestoday"
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.(int), nil
+	}
+
+	count, err := s.db.GetNotesCreatedToday()
+	if err != nil {
+		return 0, err
+	}
+
+	s.cache.Set(cacheKey, count)
+	return count, nil
+}
+
+// invalidateStatsCache clears all cached admin statistics.
+func (s *AdminService) invalidateStatsCache() {
+	s.cache.DeleteByPrefix(adminStatsCachePrefix)
 }

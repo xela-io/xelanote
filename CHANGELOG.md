@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Style: gofmt fix for uploads_thumbnail.go (import order and alignment)
 - DX: Fixed prettier (13 files), eslint (9 errors), and svelte-check (12 type errors) across frontend
+- CI: Synced `frontend/package-lock.json` with `package.json` so `npm ci --ignore-scripts` succeeds in Docker quality gates
 - Docs: schema.sql header clarified as initial-only schema with migration reference (F-11)
 - DX: Documented `make build -j2` parallel build tip in Makefile (F-18)
 - Tests: Added HTTP-level path-traversal and user-isolation tests for upload handler (F-08)

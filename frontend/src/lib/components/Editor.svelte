@@ -1061,6 +1061,8 @@
             {#if headings.length > 0}
               <TableOfContents {headings} onHeadingClick={handleTocClickLocal} />
             {/if}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- Intentional: Click handler delegates to interactive elements (wikilinks, checkboxes) in rendered markdown. These elements are natively interactive in the HTML output. -->
             <div
               class="markdown-preview"

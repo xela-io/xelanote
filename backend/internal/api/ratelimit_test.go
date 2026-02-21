@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -246,5 +247,47 @@ func TestRateLimitMiddleware_BlocksExcessiveRequests(t *testing.T) {
 	// Handler should have been called only twice
 	if callCount != 2 {
 		t.Errorf("Handler should have been called 2 times, was called %d times", callCount)
+	}
+}
+
+func TestRateLimiter_EvictionAtCapacity(t *testing.T) {
+	rl := NewRateLimiter(5, time.Hour, 5)
+	defer rl.Stop()
+
+	// Add more clients than maxRateLimitClients
+	for i := 0; i < maxRateLimitClients+1; i++ {
+		rl.Allow(fmt.Sprintf("ip:%d", i))
+	}
+
+	if count := rl.ClientCount(); count > maxRateLimitClients {
+		t.Errorf("expected at most %d clients, got %d", maxRateLimitClients, count)
+	}
+}
+
+func TestRateLimiter_EvictOldest(t *testing.T) {
+	rl := NewRateLimiter(5, time.Hour, 5)
+	defer rl.Stop()
+
+	// Add first client (will be the oldest)
+	rl.Allow("ip:first")
+	time.Sleep(time.Millisecond)
+
+	// Add second client (more recent)
+	rl.Allow("ip:second")
+
+	// Fill remaining capacity
+	for i := 0; i < maxRateLimitClients-2; i++ {
+		rl.Allow(fmt.Sprintf("ip:fill:%d", i))
+	}
+
+	// Trigger eviction by adding one more beyond capacity
+	rl.Allow("ip:trigger")
+
+	// "ip:first" should have been evicted (it was the oldest).
+	// Requesting it again creates a fresh bucket with full burst available.
+	for i := 0; i < 5; i++ {
+		if !rl.Allow("ip:first") {
+			t.Errorf("ip:first should have full burst after eviction, blocked at request %d", i+1)
+		}
 	}
 }

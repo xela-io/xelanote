@@ -1,9 +1,10 @@
-.PHONY: all build run test clean frontend backend docker dev dev-full fmt fmt-check lint lint-frontend lint-backend lint-md typecheck typecheck-frontend typecheck-backend lint-golangci check-policy quality demo-db
+.PHONY: all build run test test-coverage clean frontend backend docker dev dev-full fmt fmt-check lint lint-frontend lint-backend lint-md typecheck typecheck-frontend typecheck-backend lint-golangci check-policy quality demo-db
 
 # Default target
 all: build
 
 # Build everything
+# Tip: use 'make build -j2' for parallel frontend+backend builds
 build: frontend backend
 
 # Build frontend
@@ -31,6 +32,16 @@ run-frontend:
 test:
 	@mkdir -p .cache/go-build .cache/go-mod
 	cd backend && GOCACHE=$(CURDIR)/.cache/go-build GOMODCACHE=$(CURDIR)/.cache/go-mod go test -tags "fts5 sqlite_crypt" -v ./...
+
+# Run tests with coverage reports
+test-coverage:
+	@echo "=== Backend Coverage ==="
+	@mkdir -p .cache/go-build .cache/go-mod
+	cd backend && GOCACHE=$(CURDIR)/.cache/go-build GOMODCACHE=$(CURDIR)/.cache/go-mod go test -tags "fts5 sqlite_crypt" -coverprofile=coverage.out -covermode=atomic ./...
+	cd backend && go tool cover -func=coverage.out | tail -1
+	@echo ""
+	@echo "=== Frontend Coverage ==="
+	cd frontend && npm run test:coverage
 
 # Run frontend unit tests
 test-frontend:

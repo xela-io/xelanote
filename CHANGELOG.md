@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Upload directory permissions tightened from 0755 to 0750 (F-14)
+- Activity-log page parameter capped at 100 to prevent excessive DB offsets (F-12)
+
 ### Improved
 
+- Docs: schema.sql header clarified as initial-only schema with migration reference (F-11)
+- DX: Documented `make build -j2` parallel build tip in Makefile (F-18)
+- Tests: Added HTTP-level path-traversal and user-isolation tests for upload handler (F-08)
+- Tests: Added rate-limiter eviction-at-capacity and evict-oldest tests (F-09)
+- Tests: Added CORS origin validation tests for dev mode, production, and preflight (F-10)
 - CI: Backend and frontend test runs now generate code coverage reports, uploaded as artifacts to GitHub Actions with per-PR summaries
 - DX: Added `make test-coverage` target for local coverage reporting (backend + frontend)
 - Docs: Unified JWT_SECRET minimum length to 64 characters across all documentation (was inconsistently 32 in some places)

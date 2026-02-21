@@ -269,7 +269,7 @@ func (s *Server) getActivityLogs(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	page := 1
 	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 && p <= 100 {
 			page = p
 		}
 	}
@@ -348,7 +348,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	changedKeys, err := s.settingsService.UpdateSettings(map[string]string(req))
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update settings", err)
 		return
 	}
 

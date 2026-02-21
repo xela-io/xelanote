@@ -1,5 +1,5 @@
--- xelanote MVP Database Schema
--- SQLite with FTS5 and WAL Mode
+-- xelanote initial database schema (applied once on first run)
+-- Ongoing changes are handled by migrations in internal/db/migrations/
 
 -- Enable foreign keys
 PRAGMA foreign_keys = ON;
@@ -38,7 +38,8 @@ END;
 
 CREATE TRIGGER IF NOT EXISTS notes_au AFTER UPDATE ON notes BEGIN
     INSERT INTO notes_fts(notes_fts, rowid, title, content)
-    VALUES('delete', OLD.note_rowid, OLD.title, OLD.content);
+    SELECT 'delete', OLD.note_rowid, OLD.title, OLD.content
+    WHERE OLD.is_deleted = 0;
     INSERT INTO notes_fts(rowid, title, content)
     SELECT NEW.note_rowid, NEW.title, NEW.content WHERE NEW.is_deleted = 0;
 END;

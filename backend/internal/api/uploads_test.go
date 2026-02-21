@@ -1,13 +1,19 @@
+//go:build fts5
+
 package api
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/auth"
 )
 
@@ -358,5 +364,129 @@ func BenchmarkServeUpload(b *testing.B) {
 		expiresStr := strconv.FormatInt(expires, 10)
 		parsedExpires, _ := strconv.ParseInt(expiresStr, 10, 64)
 		_ = parsedExpires
+	}
+}
+
+// TestServeUpload_PathTraversal verifies that path traversal filenames are rejected
+// even when injected directly into chi route params (bypassing chi's URL normalization).
+func TestServeUpload_PathTraversal(t *testing.T) {
+	ts := newTestServer(t)
+	ts.dataDir = t.TempDir()
+
+	tests := []struct {
+		name       string
+		filename   string
+		wantStatus int
+	}{
+		{"parent dir traversal", "../etc/passwd", http.StatusBadRequest},
+		{"double parent traversal", "../../etc/shadow", http.StatusBadRequest},
+		{"dot-dot bypasses Base but caught by prefix check", "..", http.StatusForbidden},
+		{"single dot", ".", http.StatusBadRequest},
+		{"subdir with slash", "foo/bar.png", http.StatusBadRequest},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userID := 42
+
+			// Generate valid signature so authentication succeeds —
+			// we are testing the path validation, not auth.
+			sig, expires, err := auth.GenerateUploadSignature(userID, tt.filename, ts.jwtSecret)
+			if err != nil {
+				t.Fatalf("failed to generate signature: %v", err)
+			}
+
+			url := fmt.Sprintf("/api/uploads/%d/file?signature=%s&expires=%d", userID, sig, expires)
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+
+			// Inject chi route params directly to simulate worst case
+			// (what if chi somehow passes a malicious value through).
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("user_id", strconv.Itoa(userID))
+			rctx.URLParams.Add("filename", tt.filename)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			rec := httptest.NewRecorder()
+			ts.serveUpload(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Errorf("filename %q: expected status %d, got %d (body: %s)",
+					tt.filename, tt.wantStatus, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+// TestServeUpload_ValidFilename verifies that a legitimate UUID filename passes
+// validation and results in 404 (file not found) rather than a security error.
+func TestServeUpload_ValidFilename(t *testing.T) {
+	ts := newTestServer(t)
+	ts.dataDir = t.TempDir()
+
+	userID := 42
+	filename := "a1b2c3d4-e5f6-7890-abcd-ef1234567890.png"
+	sig, expires, err := auth.GenerateUploadSignature(userID, filename, ts.jwtSecret)
+	if err != nil {
+		t.Fatalf("failed to generate signature: %v", err)
+	}
+
+	// Create the user upload dir so the prefix check can succeed
+	userUploadDir := filepath.Join(ts.dataDir, UploadDir, strconv.Itoa(userID))
+	if err := os.MkdirAll(userUploadDir, 0750); err != nil {
+		t.Fatalf("failed to create upload dir: %v", err)
+	}
+
+	url := fmt.Sprintf("/api/uploads/%d/%s?signature=%s&expires=%d", userID, filename, sig, expires)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("user_id", strconv.Itoa(userID))
+	rctx.URLParams.Add("filename", filename)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+	ts.serveUpload(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for valid filename (file doesn't exist), got %d (body: %s)",
+			rec.Code, rec.Body.String())
+	}
+}
+
+// TestServeUpload_UserIsolation verifies that user B cannot access user A's files
+// via cookie-based authentication.
+func TestServeUpload_UserIsolation(t *testing.T) {
+	ts := newTestServer(t)
+	ts.dataDir = t.TempDir()
+
+	userA := ts.createUser(t, "userA", "a@test.com", "password123")
+	userB := ts.createUser(t, "userB", "b@test.com", "password123")
+
+	// Create a file in user A's upload directory
+	userADir := filepath.Join(ts.dataDir, UploadDir, strconv.Itoa(userA.ID))
+	if err := os.MkdirAll(userADir, 0750); err != nil {
+		t.Fatalf("failed to create upload dir: %v", err)
+	}
+	filename := "secret.png"
+	if err := os.WriteFile(filepath.Join(userADir, filename), []byte("secret data"), 0644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
+	// User B tries to access user A's file via cookie auth (no signed URL)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/uploads/%d/%s", userA.ID, filename), nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("user_id", strconv.Itoa(userA.ID))
+	rctx.URLParams.Add("filename", filename)
+	ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+	// Inject user B's ID as the authenticated user (simulates JWT middleware)
+	ctx = context.WithValue(ctx, userIDKey, userB.ID)
+	req = req.WithContext(ctx)
+
+	rec := httptest.NewRecorder()
+	ts.serveUpload(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for cross-user access, got %d (body: %s)",
+			rec.Code, rec.Body.String())
 	}
 }

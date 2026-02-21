@@ -11,10 +11,17 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/auth"
 )
+
+// getUserUploadMu returns a per-user mutex for serializing upload quota checks.
+func (s *Server) getUserUploadMu(userID int) *sync.Mutex {
+	mu, _ := s.uploadMu.LoadOrStore(userID, &sync.Mutex{})
+	return mu.(*sync.Mutex)
+}
 
 const (
 	MaxUploadSize = 10 << 20 // 10MB
@@ -77,40 +84,49 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 	// Create user upload directory
 	userUploadDir := filepath.Join(s.dataDir, UploadDir, fmt.Sprintf("%d", userID))
-	if err := os.MkdirAll(userUploadDir, 0755); err != nil {
+	if err := os.MkdirAll(userUploadDir, 0750); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to create upload directory")
 		return
 	}
 
-	// Pre-write quota check using header size to prevent TOCTOU race condition
-	// This blocks concurrent uploads that would exceed quota before writing to disk
+	// Acquire per-user mutex to prevent TOCTOU race condition on quota checks.
+	// This serializes concurrent uploads for the same user so that the quota
+	// check and file write are atomic with respect to each other.
+	uploadMu := s.getUserUploadMu(userID)
+	uploadMu.Lock()
+
 	maxStorageMB, err := s.settingsService.GetMaxStorageMBPerUser()
 	if err != nil {
+		uploadMu.Unlock()
 		respondError(w, http.StatusInternalServerError, "failed to check storage limit")
 		return
 	}
 
+	// Pre-write quota check using header size
 	if maxStorageMB > 0 && header.Size > 0 {
 		currentUsageMB := s.adminService.GetUserStorageMB(userID)
 		fileSizeMB := float64(header.Size) / (1024 * 1024)
 
 		if currentUsageMB+fileSizeMB > float64(maxStorageMB) {
+			uploadMu.Unlock()
 			respondError(w, http.StatusForbidden, "storage limit would be exceeded")
 			return
 		}
 	}
 
-	// Save file
+	// Save file (still under lock)
 	filePath := filepath.Join(userUploadDir, filename)
 	dst, err := os.Create(filePath)
 	if err != nil {
+		uploadMu.Unlock()
 		respondError(w, http.StatusInternalServerError, "failed to save file")
 		return
 	}
-	defer dst.Close()
 
 	reader := io.MultiReader(bytes.NewReader(head[:n]), file)
 	if _, err := io.Copy(dst, reader); err != nil {
+		dst.Close()
+		uploadMu.Unlock()
 		respondError(w, http.StatusInternalServerError, "failed to write file")
 		return
 	}
@@ -120,14 +136,17 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 	// Post-write quota check as safety net for chunked uploads where header.Size may be 0
 	if maxStorageMB > 0 {
-		// GetUserStorageMB walks the upload dir - includes the just-written file
 		usedMB := s.adminService.GetUserStorageMB(userID)
 		if usedMB > float64(maxStorageMB) {
 			os.Remove(filePath)
+			uploadMu.Unlock()
 			respondError(w, http.StatusForbidden, "storage limit exceeded")
 			return
 		}
 	}
+
+	// Release lock after file is written and quota is verified
+	uploadMu.Unlock()
 
 	// SEC-L04: Generate signed URL for secure access (7 days expiry)
 	signature, expires, err := auth.GenerateUploadSignature(userID, filename, s.jwtSecret)

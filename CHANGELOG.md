@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Service layer: Added sharing service tests for note sharing (share, unshare, get shares, update role, access check, shared note CRUD, editor vs viewer permissions) and folder sharing (share, unshare, update role, list shared folders, user search) — 11 new test functions, 10 subtests
 - Service layer: Added graph service tests (global graph empty/with notes, caching, cache invalidation, filtered graph, cross-user isolation) — 6 tests
 - DB layer: Added tests for tags (CRUD, set/replace/clear note tags, user isolation), snippets (CRUD, ACL checks, user isolation), and activity logs (log, filter, pagination, cleanup, distinct actions, user agent truncation) — 3 new test files, 32 tests
+- Frontend stores: Added tests for sharing (load all/notes/folders, error handling, clear functions, count helpers — 16 tests), tree-operations (CRUD, optimistic UI, rollback on error, granular color updates — 20 tests), journal (calendar navigation, year cache, streaks, openJournalForDate, resetState — 37 tests), and recipes (pure scaling functions, CRUD, collections, sharing, images, WebSocket handlers, reset — 54 tests) — 4 new test files, 127 tests
+- Frontend components: Added tests for CanvasToolbar (click handlers, drag MIME data, accessibility — 8 tests), EditorToolbar (title input, save/upload/history/autosave buttons, mobile vs desktop layout, AI actions visibility, focus mode — 20 tests), EditorStatusBar (toggle button, aria-expanded, mobile behavior — 4 tests), and QuickSwitcher (dialog open/close, combobox input, command registration, debounced search, keyboard navigation, filter button — 11 tests) — 4 new test files, 43 tests
 
 ### Removed
 

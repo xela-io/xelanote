@@ -348,6 +348,18 @@ Diese Regeln sollten in `docs/conventions.md` ergaenzt und vom Team gelebt werde
 | T-02 | Service-Tests fuer Sharing und Graph | Erledigt | Sharing: 11 neue Tests + 10 Subtests (happy-path + permissions). Graph: 6 Tests (CRUD, caching, isolation). Admin: bereits abgedeckt |
 | T-03 | DB-Layer-Tests fuer Tags, Snippets, Activity | Erledigt | `tags_test.go` (10), `snippets_test.go` (10), `activity_test.go` (12) — 32 Tests gesamt |
 
+### Sprint 2 Frontend Store Tests (Session 2026-02-21, Fortsetzung)
+
+| Finding | Was | Status | Details |
+|---------|-----|--------|---------|
+| T-04 | Frontend Store Tests: sharing, tree-operations, journal, recipes | Erledigt | `sharing.test.ts` (16), `tree-operations.test.ts` (20), `journal.test.ts` (37), `recipes.test.ts` (54) — 127 Tests gesamt |
+
+### Sprint 2 Frontend Component Tests (Session 2026-02-21, Fortsetzung)
+
+| Finding | Was | Status | Details |
+|---------|-----|--------|---------|
+| T-05 (Teilmenge) | Frontend-Komponenten-Tests: CanvasToolbar, EditorToolbar, EditorStatusBar, QuickSwitcher | Erledigt | `CanvasToolbar.test.ts` (8), `EditorToolbar.test.ts` (20), `EditorStatusBar.test.ts` (4), `QuickSwitcher.test.ts` (11) — 43 Tests gesamt |
+
 ### Bekannte Bugs (entdeckt in Tests)
 
 | Bug | Status | Ref |

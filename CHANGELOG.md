@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Improved
+
+- CI: Backend and frontend test runs now generate code coverage reports, uploaded as artifacts to GitHub Actions with per-PR summaries
+- DX: Added `make test-coverage` target for local coverage reporting (backend + frontend)
+- Docs: Unified JWT_SECRET minimum length to 64 characters across all documentation (was inconsistently 32 in some places)
+- Docs: Clarified Docker build tag differences (FTS5 only vs FTS5+SQLCipher locally) in deployment documentation
+
+### Fixed
+
+- FTS5: Fixed `notes_au` trigger that unconditionally deleted OLD from FTS index, causing "database disk image is malformed" when restoring soft-deleted notes (migration 052)
+- Encryption: Fixed `BatchUpdateWrappedDEKs` deadlock with `MaxOpenConns=1` by using the transaction for ownership/encryption checks instead of a separate DB query
+
+### Refactored
+
+- DB layer: Added `fmt.Errorf` error wrapping across 8 core DB files (auth, settings, activity, admin, 2FA, API keys) — all raw `return err` returns now include operation context for debugging
+- Service layer: Extracted duplicated note-limit checks (7 identical blocks across 5 files) into a single `checkNoteLimit()` method on NoteService
+- DB layer: Extracted shared graph node/edge scanning logic from `GetGlobalGraph` and `GetFilteredGraph` into `scanGraphNodes`, `scanFilteredEdges`, and `buildGraphData` helpers (eliminated ~60 lines of duplication)
+- Service layer: Extracted `validateCanvasNodes` and `validateCanvasEdges` from 107-line `ValidateCanvasContent` function
+
+### Tests
+
+- Service layer: Added comprehensive test suites for encryption, user account, trash operations, admin service, FIDO2/WebAuthn, and two-factor authentication (6 new test files, ~90 subtests)
+- API layer: Added handler-level integration tests for auth flow (register, login, refresh, logout, /me), notes CRUD (create, read, list, update, delete), trash operations (list, count, restore, permanent delete, empty), and admin endpoints (stats, users, settings) — 4 new test files with shared test helpers
+- API layer: Added NoteService domain integration tests for journal (lookup, calendar, entries, duplicate date), search (FTS5, cross-user isolation, quick-search with folder filter), encryption (create/decrypt/batch re-encrypt DEKs), backlinks (wikilink resolution), and sharing (share/unshare, role updates, cross-user access, encrypted note blocking) — 4 new test files
+
+### Removed
+
+- Dead code: Removed 6 unreferenced Svelte components (ChangelogDialog, FormatMarkdownDialog, RecoveryKeySetup, Section, SidebarButton, SidebarItem)
+- Repo hygiene: Removed spike files (`live-preview-spike.ts`, `live-preview-spike.test.ts`), stale log files, and `frontend/build-old/` directory
+
 ### Added
 
 - AI settings: Dietary preference dropdown (none, vegetarian, vegan, pescatarian, flexitarian) in Settings → AI, persisted per user via dedicated `GET/PUT /users/dietary-preference` endpoints. AI recipe suggestions (similar recipes, ingredient matches, generated ideas) automatically incorporate the preference into LLM prompts.
@@ -19,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Lockout overflow fix: exponential backoff in `AccountLockout` now uses `safeLockoutDuration()` with capped bit-shift exponent (`maxExponentShift=20`) to prevent int64 overflow that produced negative durations, bypassing the lockout cap after ~39 failed attempts
+- CSP hardening: removed bare `ws: wss:` from `connect-src` (allowed WebSocket to any host); CSP Level 3 `'self'` covers same-origin WebSocket. Added `object-src 'none'` as defense-in-depth against plugin exploitation
+- Refresh token error: replaced `err.Error()` with generic "invalid or expired refresh token" message to prevent leaking internal details like "refresh token reuse detected"
+- JWT issuer validation: added `jwt.WithIssuer("xelanote")` to token parser, rejecting tokens from other issuers sharing the same secret
+- Security audit #2 (re-audit): comprehensive 6-agent parallel code review identifying 1 critical (first-user admin race), 2 high (upload quota TOCTOU, 2FA state race), 4 medium, 2 low findings; verified 65 security controls as passing — documented in `docs/security_audit_findings.md`
 - LLM HTTP client: added response body size limits (1 MB error, 4 MB success) to prevent memory exhaustion from oversized provider responses
 - Refresh token cleanup: expired and revoked tokens are now purged at startup and daily, preventing unbounded table growth
 - Health check: `/health` endpoint now verifies database connectivity and available disk space (minimum 100 MB), returning 503 on failure

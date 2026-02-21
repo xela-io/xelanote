@@ -230,8 +230,20 @@ func (db *DB) CreateRecipeNoteWithIngredients(
 }
 
 // ListRecipes returns all recipe notes for a user (owner-only).
-func (db *DB) ListRecipes(userID int) ([]Note, error) {
-	rows, err := db.Query(`
+func (db *DB) ListRecipes(userID int, fields string) ([]Note, error) {
+	var query string
+	if fields == "slim" {
+		query = `
+		SELECT id, title, '', folder_path, version, display_order, color,
+		       created_at, updated_at,
+		       NULL, content_encrypted, encrypted_title, title_encrypted,
+		       wrapped_dek, encryption_version, encryption_metadata,
+		       note_type, journal_date, ai_enabled
+		FROM notes
+		WHERE user_id = ? AND note_type = 'recipe' AND is_deleted = 0
+		ORDER BY updated_at DESC`
+	} else {
+		query = `
 		SELECT id, title, content, folder_path, version, display_order, color,
 		       created_at, updated_at,
 		       encrypted_content, content_encrypted, encrypted_title, title_encrypted,
@@ -239,8 +251,9 @@ func (db *DB) ListRecipes(userID int) ([]Note, error) {
 		       note_type, journal_date, ai_enabled
 		FROM notes
 		WHERE user_id = ? AND note_type = 'recipe' AND is_deleted = 0
-		ORDER BY updated_at DESC
-	`, userID)
+		ORDER BY updated_at DESC`
+	}
+	rows, err := db.Query(query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)
 	}

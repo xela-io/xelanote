@@ -142,7 +142,7 @@ func TestListRecipes_OwnerOnly(t *testing.T) {
 		t.Fatalf("CreateRecipeNote failed: %v", err)
 	}
 
-	recipes, err := db.ListRecipes(user1)
+	recipes, err := db.ListRecipes(user1, "")
 	if err != nil {
 		t.Fatalf("ListRecipes failed: %v", err)
 	}

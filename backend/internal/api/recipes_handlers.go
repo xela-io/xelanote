@@ -18,7 +18,8 @@ func (s *Server) listRecipes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipes, err := s.recipeService.ListRecipes(userID)
+	fields := r.URL.Query().Get("fields")
+	recipes, err := s.recipeService.ListRecipes(userID, fields)
 	if err != nil {
 		s.respondInternalErr(w, "failed to list recipes", err)
 		return
@@ -99,7 +100,7 @@ func (s *Server) updateRecipeMetadata(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "forbidden")
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update recipe", err)
 		return
 	}
 
@@ -141,7 +142,7 @@ func (s *Server) setRecipeIngredients(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "forbidden")
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update ingredients", err)
 		return
 	}
 

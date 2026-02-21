@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ETag: `resolveETagVersion` now returns 404 instead of 500 for nonexistent notes by mapping `ErrNotFound` correctly
 - Performance: Keyword insertion now uses batch INSERT instead of per-keyword loop (1 query instead of N)
 - Performance: Admin user listing now calculates storage for all users in one filesystem pass instead of N separate walks
+- Performance: Recipe list endpoint supports `?fields=slim` to omit content/encrypted_content from responses
 
 ### Refactored
 

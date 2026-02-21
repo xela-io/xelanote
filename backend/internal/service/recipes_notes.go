@@ -84,8 +84,8 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 }
 
 // ListRecipes returns all recipe notes for the owner.
-func (s *RecipeService) ListRecipes(userID int) ([]db.Note, error) {
-	return s.db.ListRecipes(userID)
+func (s *RecipeService) ListRecipes(userID int, fields string) ([]db.Note, error) {
+	return s.db.ListRecipes(userID, fields)
 }
 
 // GetRecipeDetail returns the full recipe detail for a note.

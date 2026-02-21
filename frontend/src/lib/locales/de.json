@@ -4,7 +4,9 @@
     "close_dialog": "Dialog schließen",
     "notifications": "Benachrichtigungen",
     "close_notification": "Benachrichtigung schließen",
-    "sidebar": "Seitenleiste"
+    "sidebar": "Seitenleiste",
+    "notes_tree": "Notizenbaum",
+    "resize_sidebar": "Seitenleiste vergrößern/verkleinern"
   },
   "dialog": {
     "confirm_title": "Bestätigung",
@@ -923,7 +925,8 @@
       },
       "toolbar": {
         "export_canvas": "Als .canvas exportieren"
-      }
+      },
+      "canvas_area": "Canvas-Bearbeitungsbereich"
     },
     "move_dialog": {
       "title": "Notiz verschieben",
@@ -1043,6 +1046,8 @@
       "upload_clipboard": "Bild hochgeladen, Markdown in Zwischenablage kopiert",
       "upload_fallback": "Bild hochgeladen als: {url}",
       "editor_area": "Editor-Bereich",
+      "preview_area": "Vorschau-Bereich",
+      "split_resize_handle": "Editor-Teilung anpassen",
       "table_insert": {
         "title": "Tabelle einfügen",
         "rows": "Datenzeilen",
@@ -1082,7 +1087,9 @@
         "share": "Notiz teilen",
         "export_note": "Als Markdown exportieren",
         "decrypt_note": "Notiz entschlüsseln",
-        "encrypt_note": "Notiz verschlüsseln"
+        "encrypt_note": "Notiz verschlüsseln",
+        "open_menu": "Menü öffnen",
+        "editor_toolbar": "Editor-Werkzeugleiste"
       },
       "encryption_toggle": {
         "decrypt_confirm_title": "Notiz entschlüsseln?",

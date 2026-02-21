@@ -169,14 +169,14 @@
     <div class="flex items-center gap-1 sm:contents">
       <div class="flex items-center justify-center gap-1 min-w-0 flex-1">
         <div class="toolbar-scroll-wrapper">
-          <div class="toolbar-buttons flex items-center gap-1" use:scrollFade>
+          <div class="toolbar-buttons flex items-center gap-1" role="toolbar" aria-label={$_('component.editor.toolbar.editor_toolbar')} use:scrollFade>
             <!-- Sidebar toggle - always visible on mobile -->
             {#if isMobile}
               <button
                 type="button"
                 onclick={onOpenSidebar}
                 class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                aria-label="Menu"
+                aria-label={$_('component.editor.toolbar.open_menu')}
               >
                 <Menu size={16} />
               </button>
@@ -242,6 +242,7 @@
       <button
         onclick={handleMoreMenuClick}
         class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn sm:justify-self-end"
+        aria-label={$_('component.editor.toolbar.more_options')}
         aria-expanded={showMoreMenu}
         aria-haspopup="menu"
         title={$_('component.editor.toolbar.more_options')}

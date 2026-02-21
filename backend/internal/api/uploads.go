@@ -148,6 +148,9 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 	// Release lock after file is written and quota is verified
 	uploadMu.Unlock()
 
+	// Generate thumbnail for image types (non-fatal)
+	thumbFilename := generateThumbnail(filePath, contentType)
+
 	// SEC-L04: Generate signed URL for secure access (7 days expiry)
 	signature, expires, err := auth.GenerateUploadSignature(userID, filename, s.jwtSecret)
 	if err != nil {
@@ -164,10 +167,21 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 		url = fmt.Sprintf("%s?signature=%s&expires=%d", url, signature, expires)
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{
+	resp := map[string]string{
 		"url":      url,
 		"filename": header.Filename,
-	})
+	}
+
+	if thumbFilename != "" {
+		thumbURL := thumbnailURL(userID, thumbFilename)
+		thumbSig, thumbExp, thumbErr := auth.GenerateUploadSignature(userID, thumbFilename, s.jwtSecret)
+		if thumbErr == nil && thumbSig != "" {
+			thumbURL = fmt.Sprintf("%s?signature=%s&expires=%d", thumbURL, thumbSig, thumbExp)
+		}
+		resp["thumbnail_url"] = thumbURL
+	}
+
+	respondJSON(w, http.StatusOK, resp)
 }
 
 // serveUpload serves uploaded files with user isolation (SEC-002)

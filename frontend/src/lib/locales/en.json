@@ -4,7 +4,9 @@
     "close_dialog": "Close dialog",
     "notifications": "Notifications",
     "close_notification": "Close notification",
-    "sidebar": "Sidebar"
+    "sidebar": "Sidebar",
+    "notes_tree": "Notes tree",
+    "resize_sidebar": "Resize sidebar"
   },
   "dialog": {
     "confirm_title": "Confirmation",
@@ -923,7 +925,8 @@
       },
       "toolbar": {
         "export_canvas": "Export as .canvas"
-      }
+      },
+      "canvas_area": "Canvas editing area"
     },
     "move_dialog": {
       "title": "Move note",
@@ -1043,6 +1046,8 @@
       "upload_clipboard": "Image uploaded, Markdown copied to clipboard",
       "upload_fallback": "Image uploaded as: {url}",
       "editor_area": "Editor area",
+      "preview_area": "Preview area",
+      "split_resize_handle": "Resize editor split",
       "table_insert": {
         "title": "Insert Table",
         "rows": "Data rows",
@@ -1082,7 +1087,9 @@
         "share": "Share note",
         "export_note": "Export as Markdown",
         "decrypt_note": "Decrypt note",
-        "encrypt_note": "Encrypt note"
+        "encrypt_note": "Encrypt note",
+        "open_menu": "Open menu",
+        "editor_toolbar": "Editor toolbar"
       },
       "encryption_toggle": {
         "decrypt_confirm_title": "Decrypt note?",

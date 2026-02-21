@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChefHat, Clock, Loader2, Lock, Plus, Sparkles, Upload } from 'lucide-svelte';
   import { ArrowLeft, Edit, Eye, Pencil, Trash2, Users, Users as UsersIcon } from 'lucide-svelte';
+  import type { ComponentType } from 'svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -8,9 +9,7 @@
   import type { RecipeCollection } from '$lib/api';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
-  import RecipeImportDialog from '$lib/components/RecipeImportDialog.svelte';
-  import RecipeSuggestionDialog from '$lib/components/RecipeSuggestionDialog.svelte';
-  import ShareDialog from '$lib/components/ShareDialog.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
   import * as features from '$lib/stores/features.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
 
@@ -23,6 +22,32 @@
   let sharingCollectionId = $state<number | null>(null);
   let showIngredientSuggestions = $state(false);
   let showImportDialog = $state(false);
+
+  // Lazy-loaded dialog components (only imported when user triggers them)
+  let SuggestionDialog = $state<ComponentType | null>(null);
+  let ImportDialog = $state<ComponentType | null>(null);
+  let ShareDialogComponent = $state<ComponentType | null>(null);
+
+  async function ensureSuggestionDialog() {
+    if (!SuggestionDialog) {
+      const mod = await import('$lib/components/RecipeSuggestionDialog.svelte');
+      SuggestionDialog = loadSvelteComponentFromModule(mod, 'RecipeSuggestionDialog');
+    }
+  }
+
+  async function ensureImportDialog() {
+    if (!ImportDialog) {
+      const mod = await import('$lib/components/RecipeImportDialog.svelte');
+      ImportDialog = loadSvelteComponentFromModule(mod, 'RecipeImportDialog');
+    }
+  }
+
+  async function ensureShareDialog() {
+    if (!ShareDialogComponent) {
+      const mod = await import('$lib/components/ShareDialog.svelte');
+      ShareDialogComponent = loadSvelteComponentFromModule(mod, 'ShareDialog');
+    }
+  }
 
   const recipeList = $derived(recipes.getRecipes());
   const loading = $derived(recipes.getRecipesLoading());
@@ -119,7 +144,8 @@
     recipes.selectCollection(id);
   }
 
-  function handleShareCollection(collectionId: number) {
+  async function handleShareCollection(collectionId: number) {
+    await ensureShareDialog();
     sharingCollectionId = collectionId;
   }
 </script>
@@ -134,14 +160,20 @@
     <h1 class="text-xl font-bold">{$_('page.recipes.title')}</h1>
     <div class="flex items-center gap-2">
       <button
-        onclick={() => (showIngredientSuggestions = true)}
+        onclick={async () => {
+          await ensureSuggestionDialog();
+          showIngredientSuggestions = true;
+        }}
         class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-accent transition-colors"
       >
         <Sparkles size={16} />
         {$_('page.recipes.suggestions.what_can_i_cook')}
       </button>
       <button
-        onclick={() => (showImportDialog = true)}
+        onclick={async () => {
+          await ensureImportDialog();
+          showImportDialog = true;
+        }}
         class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-accent transition-colors"
       >
         <Upload size={16} />
@@ -430,19 +462,26 @@
   onSave={handleSaveCollection}
 />
 
-{#if sharingCollectionId !== null}
-  <ShareDialog
+{#if sharingCollectionId !== null && ShareDialogComponent}
+  <ShareDialogComponent
     resourceType="collection"
     resourceId={sharingCollectionId}
     onClose={() => (sharingCollectionId = null)}
   />
 {/if}
 
-<RecipeSuggestionDialog
-  open={showIngredientSuggestions}
-  mode="ingredients"
-  collectionId={selectedCollectionId}
-  onClose={() => (showIngredientSuggestions = false)}
-/>
+{#if SuggestionDialog}
+  <SuggestionDialog
+    open={showIngredientSuggestions}
+    mode="ingredients"
+    collectionId={selectedCollectionId}
+    onClose={() => (showIngredientSuggestions = false)}
+  />
+{/if}
 
-<RecipeImportDialog open={showImportDialog} onClose={() => (showImportDialog = false)} />
+{#if ImportDialog}
+  <ImportDialog
+    open={showImportDialog}
+    onClose={() => (showImportDialog = false)}
+  />
+{/if}

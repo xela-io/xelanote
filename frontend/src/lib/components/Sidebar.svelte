@@ -1,8 +1,6 @@
 <script lang="ts">
   import {
-    ArrowUpDown,
     CalendarClock,
-    Check,
     ChevronLeft,
     ChevronRight,
     FilePlus,
@@ -56,9 +54,10 @@
   import CreateNoteDialog from './CreateNoteDialog.svelte';
   import FeedbackDialog from './FeedbackDialog.svelte';
   import JournalButton from './JournalButton.svelte';
-  import Logo from './Logo.svelte';
   import RecipeButton from './RecipeButton.svelte';
+  import SidebarFooter from './sidebar/SidebarFooter.svelte';
   import ThemeSelector from './ThemeSelector.svelte';
+  import SidebarHeader from './sidebar/SidebarHeader.svelte';
   import UnifiedTree from './UnifiedTree.svelte';
   import VirtualizedTree from './VirtualizedTree.svelte';
 
@@ -341,77 +340,26 @@
       <!-- Safe area spacer for iOS PWA standalone mode -->
       <div class="pt-safe shrink-0"></div>
       <!-- Header with creation buttons -->
-      <div
-        class="flex items-center justify-between px-4 py-2.5 border-b border-sidebar-border shrink-0"
-      >
-        <a
-          href="/"
-          onclick={() => ui.closeSidebarOnMobile()}
-          class="hover:opacity-80 transition-opacity"
-        >
-          <Logo size="md" />
-        </a>
-        <div class="flex items-center gap-0.5">
-          <button
-            onclick={handleCreateNote}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors toolbar-btn"
-            title={$_('page.sidebar.new_note')}
-            aria-label={$_('page.sidebar.new_note')}
-          >
-            <FilePlus size={mainIconSize} />
-          </button>
-          <button
-            onclick={handleCreateFolder}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors toolbar-btn"
-            title={$_('page.sidebar.new_folder')}
-            aria-label={$_('page.sidebar.new_folder')}
-          >
-            <FolderPlus size={mainIconSize} />
-          </button>
-          <div class="relative" bind:this={sortDropdownRef}>
-            <button
-              onclick={() => (showSortDropdown = !showSortDropdown)}
-              class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors toolbar-btn"
-              class:bg-sidebar-accent={showSortDropdown}
-              title={$_('page.sidebar.sort_notes')}
-              aria-label={$_('page.sidebar.sort_notes')}
-            >
-              <ArrowUpDown size={mainIconSize} />
-            </button>
-            {#if showSortDropdown}
-              <div
-                class="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg z-50 py-1"
-              >
-                {#each sortOptions as opt (opt.mode)}
-                  <button
-                    onclick={() => handleSortSelect(opt.mode)}
-                    class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent transition-colors"
-                  >
-                    <span class="w-4 flex-shrink-0">
-                      {#if tree.getSortMode() === opt.mode}
-                        <Check size={14} />
-                      {/if}
-                    </span>
-                    <span>{$_(opt.labelKey)}</span>
-                  </button>
-                {/each}
-              </div>
-            {/if}
-          </div>
-          <button
-            onclick={() => ui.setSidebarOpen(false)}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn"
-            title={$_('page.sidebar.close_drawer')}
-            aria-label={$_('page.sidebar.close_drawer')}
-          >
-            <ChevronLeft size={mainIconSize} />
-          </button>
-        </div>
-      </div>
+      <SidebarHeader
+        isMobile={true}
+        {mainIconSize}
+        {showSortDropdown}
+        currentSortMode={tree.getSortMode()}
+        {sortOptions}
+        {sortDropdownRef}
+        onCreateNote={handleCreateNote}
+        onCreateFolder={handleCreateFolder}
+        onToggleSortDropdown={() => (showSortDropdown = !showSortDropdown)}
+        onSortSelect={handleSortSelect}
+        onCloseSidebar={() => ui.setSidebarOpen(false)}
+        onBindSortDropdownRef={(el) => (sortDropdownRef = el)}
+        onLogoClick={() => ui.closeSidebarOnMobile()}
+      />
 
       <!-- Notes Tree (main content - maximized space) -->
-      <div
+      <nav
         class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2 thin-scrollbar"
+        aria-label={$_('accessibility.notes_tree')}
         use:touchdrag={{
           holdDuration: 300,
           enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
@@ -421,7 +369,7 @@
         }}
       >
         {#if tree.getIsLoading()}
-          <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.loading')}</div>
+          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">{$_('common.loading')}</div>
         {:else if tree.getTreeData()}
           <!-- Drop zone for moving folders/notes to top level -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -454,60 +402,14 @@
           <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.no_data')}</div>
         {/if}
 
-        <!-- Due Dates, Shared, Trash as virtual folders at bottom of tree -->
-        <div class="mt-2 pt-2 border-t border-sidebar-border mx-1 space-y-0.5">
-          <button
-            onclick={() => {
-              goto('/due-dates');
-              ui.closeSidebarOnMobile();
-            }}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-            title={$_('page.due_dates.title')}
-            aria-label={$_('page.due_dates.title')}
-          >
-            <CalendarClock size={16} class="text-muted-foreground flex-shrink-0" />
-            <span class="flex-1 truncate">{$_('page.due_dates.title')}</span>
-          </button>
-          <button
-            onclick={() => {
-              goto('/shared');
-              ui.closeSidebarOnMobile();
-            }}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-            title={$_('sharing.shared_with_me')}
-            aria-label={$_('sharing.shared_with_me')}
-          >
-            <Users size={16} class="text-muted-foreground flex-shrink-0" />
-            <span class="flex-1 truncate">{$_('sharing.shared_with_me')}</span>
-            {#if sharing.getTotalSharedCount() > 0}
-              <span
-                class="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 min-w-[18px] h-4 rounded-full flex items-center justify-center"
-              >
-                {sharing.getTotalSharedCount()}
-              </span>
-            {/if}
-          </button>
-          <button
-            onclick={() => {
-              goto('/trash');
-              ui.closeSidebarOnMobile();
-            }}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-            title={$_('page.sidebar.trash')}
-            aria-label={$_('page.sidebar.trash')}
-          >
-            <Trash2 size={16} class="text-muted-foreground flex-shrink-0" />
-            <span class="flex-1 truncate">{$_('page.sidebar.trash')}</span>
-            {#if trash.getTrashCount() > 0}
-              <span
-                class="bg-destructive text-destructive-foreground text-[10px] font-medium px-1.5 min-w-[18px] h-4 rounded-full flex items-center justify-center"
-              >
-                {trash.getTrashCount()}
-              </span>
-            {/if}
-          </button>
-        </div>
-      </div>
+        <!-- Due Dates, Shared, Trash + Controls -->
+        <SidebarFooter
+          isMobile={true}
+          {smallIconSize}
+          onShowFeedback={() => (showFeedbackDialog = true)}
+          onNavigate={() => ui.closeSidebarOnMobile()}
+        />
+      </nav>
 
       <!-- Journal Button (if enabled) - Mobile -->
       {#if journalEnabled}
@@ -522,136 +424,24 @@
           <RecipeButton />
         </div>
       {/if}
-
-      <!-- Footer: Controls -->
-      <div class="border-t border-sidebar-border shrink-0 pb-safe">
-        <!-- Controls - wrap to avoid horizontal overflow on narrow sidebars -->
-        <div class="px-2 py-2 flex items-center gap-1 flex-wrap">
-          <button
-            onclick={() => {
-              ui.toggleQuickSwitcher();
-              ui.closeSidebarOnMobile();
-            }}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
-            title="{$_('page.sidebar.search')} (Ctrl+P)"
-            aria-label={$_('page.sidebar.search')}
-          >
-            <Search size={smallIconSize} />
-          </button>
-          {#if features.getGraphFeatureEnabled()}
-            <button
-              onclick={() => {
-                goto('/graph');
-                ui.closeSidebarOnMobile();
-              }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
-              title="{$_('page.sidebar.graph')} (Ctrl+G)"
-              aria-label={$_('page.sidebar.graph')}
-            >
-              <Network size={smallIconSize} />
-            </button>
-          {/if}
-          <div class="shrink-0">
-            <ThemeSelector />
-          </div>
-          <button
-            onclick={() => {
-              goto('/settings');
-              ui.closeSidebarOnMobile();
-            }}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
-            title={$_('page.sidebar.settings')}
-            aria-label={$_('page.sidebar.settings')}
-          >
-            <Settings size={smallIconSize} />
-          </button>
-          {#if auth.isAdmin()}
-            <button
-              onclick={() => {
-                goto('/admin');
-                ui.closeSidebarOnMobile();
-              }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
-              title={$_('page.sidebar.admin')}
-              aria-label={$_('page.sidebar.admin')}
-            >
-              <Shield size={smallIconSize} />
-            </button>
-          {/if}
-          {#if errorReporter.getServiceAvailable()}
-            <button
-              onclick={() => {
-                showFeedbackDialog = true;
-              }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground toolbar-btn shrink-0"
-              title={$_('feedback.sidebar_button')}
-              aria-label={$_('feedback.sidebar_button')}
-            >
-              <MessageSquareWarning size={smallIconSize} />
-            </button>
-          {/if}
-        </div>
-      </div>
     {/if}
   {:else}
     <!-- Desktop: Normal sidebar behavior -->
     {#if ui.getSidebarOpen()}
       <!-- Header with creation buttons -->
-      <div
-        class="flex items-center justify-between px-4 py-2.5 border-b border-sidebar-border shrink-0"
-      >
-        <a href="/" class="hover:opacity-80 transition-opacity">
-          <Logo size="md" />
-        </a>
-        <div class="flex items-center gap-0.5">
-          <button
-            onclick={handleCreateNote}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
-            title={$_('page.sidebar.new_note')}
-            aria-label={$_('page.sidebar.new_note')}
-          >
-            <FilePlus size={mainIconSize} />
-          </button>
-          <button
-            onclick={handleCreateFolder}
-            class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
-            title={$_('page.sidebar.new_folder')}
-            aria-label={$_('page.sidebar.new_folder')}
-          >
-            <FolderPlus size={mainIconSize} />
-          </button>
-          <div class="relative" bind:this={sortDropdownRef}>
-            <button
-              onclick={() => (showSortDropdown = !showSortDropdown)}
-              class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
-              class:bg-sidebar-accent={showSortDropdown}
-              title={$_('page.sidebar.sort_notes')}
-              aria-label={$_('page.sidebar.sort_notes')}
-            >
-              <ArrowUpDown size={mainIconSize} />
-            </button>
-            {#if showSortDropdown}
-              <div
-                class="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg z-50 py-1"
-              >
-                {#each sortOptions as opt (opt.mode)}
-                  <button
-                    onclick={() => handleSortSelect(opt.mode)}
-                    class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent transition-colors"
-                  >
-                    <span class="w-4 flex-shrink-0">
-                      {#if tree.getSortMode() === opt.mode}
-                        <Check size={14} />
-                      {/if}
-                    </span>
-                    <span>{$_(opt.labelKey)}</span>
-                  </button>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        </div>
-      </div>
+      <SidebarHeader
+        isMobile={false}
+        {mainIconSize}
+        {showSortDropdown}
+        currentSortMode={tree.getSortMode()}
+        {sortOptions}
+        {sortDropdownRef}
+        onCreateNote={handleCreateNote}
+        onCreateFolder={handleCreateFolder}
+        onToggleSortDropdown={() => (showSortDropdown = !showSortDropdown)}
+        onSortSelect={handleSortSelect}
+        onBindSortDropdownRef={(el) => (sortDropdownRef = el)}
+      />
 
       <!-- Keep collapse action always reachable, even on very narrow sidebar widths -->
       <button
@@ -664,8 +454,9 @@
       </button>
 
       <!-- Notes Tree (main content - maximized space) -->
-      <div
+      <nav
         class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-2 py-2 thin-scrollbar"
+        aria-label={$_('accessibility.notes_tree')}
         use:touchdrag={{
           holdDuration: 300,
           enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
@@ -675,7 +466,7 @@
         }}
       >
         {#if tree.getIsLoading()}
-          <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.loading')}</div>
+          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">{$_('common.loading')}</div>
         {:else if tree.getTreeData()}
           <!-- Drop zone for moving folders/notes to top level -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -708,51 +499,13 @@
           <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.no_data')}</div>
         {/if}
 
-        <!-- Due Dates, Shared, Trash as virtual folders at bottom of tree -->
-        <div class="mt-2 pt-2 border-t border-sidebar-border mx-1 space-y-0.5">
-          <button
-            onclick={() => goto('/due-dates')}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-            title={$_('page.due_dates.title')}
-            aria-label={$_('page.due_dates.title')}
-          >
-            <CalendarClock size={16} class="text-muted-foreground flex-shrink-0" />
-            <span class="flex-1 truncate">{$_('page.due_dates.title')}</span>
-          </button>
-          <button
-            onclick={() => goto('/shared')}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-            title={$_('sharing.shared_with_me')}
-            aria-label={$_('sharing.shared_with_me')}
-          >
-            <Users size={16} class="text-muted-foreground flex-shrink-0" />
-            <span class="flex-1 truncate">{$_('sharing.shared_with_me')}</span>
-            {#if sharing.getTotalSharedCount() > 0}
-              <span
-                class="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 min-w-[18px] h-4 rounded-full flex items-center justify-center"
-              >
-                {sharing.getTotalSharedCount()}
-              </span>
-            {/if}
-          </button>
-          <button
-            onclick={() => goto('/trash')}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors"
-            title={$_('page.sidebar.trash')}
-            aria-label={$_('page.sidebar.trash')}
-          >
-            <Trash2 size={16} class="text-muted-foreground flex-shrink-0" />
-            <span class="flex-1 truncate">{$_('page.sidebar.trash')}</span>
-            {#if trash.getTrashCount() > 0}
-              <span
-                class="bg-destructive text-destructive-foreground text-[10px] font-medium px-1.5 min-w-[18px] h-4 rounded-full flex items-center justify-center"
-              >
-                {trash.getTrashCount()}
-              </span>
-            {/if}
-          </button>
-        </div>
-      </div>
+        <!-- Due Dates, Shared, Trash + Controls -->
+        <SidebarFooter
+          isMobile={false}
+          {smallIconSize}
+          onShowFeedback={() => (showFeedbackDialog = true)}
+        />
+      </nav>
 
       <!-- Journal Button (if enabled) - Desktop -->
       {#if journalEnabled}
@@ -768,69 +521,14 @@
         </div>
       {/if}
 
-      <!-- Footer: Controls -->
-      <div class="border-t border-sidebar-border shrink-0 pb-safe">
-        <!-- Controls - wrap to avoid horizontal overflow on narrow sidebars -->
-        <div class="px-2 py-2 flex items-center gap-0.5 flex-wrap">
-          <button
-            onclick={() => ui.toggleQuickSwitcher()}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
-            title="{$_('page.sidebar.search')} (Ctrl+P)"
-            aria-label={$_('page.sidebar.search')}
-          >
-            <Search size={smallIconSize} />
-          </button>
-          {#if features.getGraphFeatureEnabled()}
-            <button
-              onclick={() => goto('/graph')}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
-              title="{$_('page.sidebar.graph')} (Ctrl+G)"
-              aria-label={$_('page.sidebar.graph')}
-            >
-              <Network size={smallIconSize} />
-            </button>
-          {/if}
-          <div class="shrink-0">
-            <ThemeSelector />
-          </div>
-          <button
-            onclick={() => goto('/settings')}
-            class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
-            title={$_('page.sidebar.settings')}
-            aria-label={$_('page.sidebar.settings')}
-          >
-            <Settings size={smallIconSize} />
-          </button>
-          {#if auth.isAdmin()}
-            <button
-              onclick={() => goto('/admin')}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
-              title={$_('page.sidebar.admin')}
-              aria-label={$_('page.sidebar.admin')}
-            >
-              <Shield size={smallIconSize} />
-            </button>
-          {/if}
-          {#if errorReporter.getServiceAvailable()}
-            <button
-              onclick={() => {
-                showFeedbackDialog = true;
-              }}
-              class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground shrink-0"
-              title={$_('feedback.sidebar_button')}
-              aria-label={$_('feedback.sidebar_button')}
-            >
-              <MessageSquareWarning size={smallIconSize} />
-            </button>
-          {/if}
-        </div>
-      </div>
-
       <!-- Resize handle -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="resize-handle"
         class:active={isResizing}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={$_('accessibility.resize_sidebar')}
         onpointerdown={handleResizeStart}
         onpointermove={handleResizeMove}
         onpointerup={handleResizeEnd}
@@ -839,7 +537,7 @@
       ></div>
     {:else}
       <!-- Collapsed sidebar -->
-      <div class="flex flex-col items-center h-full min-h-0 overflow-y-auto py-3 gap-1.5">
+      <nav class="flex flex-col items-center h-full min-h-0 overflow-y-auto py-3 gap-1.5" aria-label={$_('accessibility.sidebar')}>
         <!-- Top actions -->
         <button
           onclick={() => ui.toggleSidebar()}
@@ -958,7 +656,7 @@
             <MessageSquareWarning size={smallIconSize} />
           </button>
         {/if}
-      </div>
+      </nav>
     {/if}
   {/if}
 </aside>

@@ -100,13 +100,10 @@
   import * as ui from '$lib/stores/ui.svelte';
   import { getTasksInDocument } from '$lib/utils/task-reorder';
 
-  import AITransformDialog from './AITransformDialog.svelte';
-  import ColorPickerPopover from './ColorPickerPopover.svelte';
-  import EditorPanels from './editor/EditorPanels.svelte';
+  import EditorDialogs from './editor/EditorDialogs.svelte';
+  import EditorStatusBar from './editor/EditorStatusBar.svelte';
   import EditorToolbar from './editor/EditorToolbar.svelte';
-  import EditorMoreMenu from './EditorMoreMenu.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
-  import TableInsertDialog from './TableInsertDialog.svelte';
   // ShareDialog is lazy-loaded via dialog-loaders.ts
   import TableOfContents from './TableOfContents.svelte';
 
@@ -1049,7 +1046,7 @@
         {$_('common.loading')}
       </div>
     {:else if notes.getError()}
-      <div class="flex-1 flex items-center justify-center text-destructive h-full">
+      <div class="flex-1 flex items-center justify-center text-destructive h-full" role="alert">
         {notes.getError()}
       </div>
     {:else if notes.getCurrentNote()}
@@ -1107,6 +1104,9 @@
           <div
             class="split-resize-handle"
             class:active={isSplitResizing}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={$_('component.editor.split_resize_handle')}
             onpointerdown={splitResizeController.onStart}
             onpointermove={splitResizeController.onMove}
             onpointerup={splitResizeController.onEnd}
@@ -1135,6 +1135,8 @@
             <!-- Intentional: Click handler delegates to interactive elements (wikilinks, checkboxes) in rendered markdown. These elements are natively interactive in the HTML output. -->
             <div
               class="markdown-preview"
+              role="region"
+              aria-label={$_('component.editor.preview_area')}
               onclick={handlePreviewClickLocal}
               use:taskCollapse={taskCollapseOptions}
               use:taskSortable={taskSortableOptions}
@@ -1150,34 +1152,16 @@
         {/if}
       </div>
 
-      {#if !ui.getIsMobile()}
-        <div class="shrink-0 px-4 pb-2 pt-1 border-t border-border">
-          <button
-            type="button"
-            class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            onclick={() => ui.toggleEditorPanelsCollapsed()}
-            aria-expanded={!ui.getEditorPanelsCollapsed()}
-          >
-            {ui.getEditorPanelsCollapsed()
-              ? $_('component.editor.show_bottom_panels')
-              : $_('component.editor.hide_bottom_panels')}
-          </button>
-        </div>
-      {/if}
-
-      {#if ui.getIsMobile() || !ui.getEditorPanelsCollapsed()}
-        <div class={ui.getIsMobile() ? '' : 'shrink-0 overflow-auto max-h-[40vh]'}>
-          <EditorPanels
-            note={notes.getCurrentNote()!}
-            backlinks={notes.getBacklinks()}
-            showTagSuggestions={FEATURE_FLAGS.tagSuggestions}
-            showLinkSuggestions={FEATURE_FLAGS.linkSuggestions}
-            {editorView}
-            onInsertLink={handleInsertLink}
-            onSummaryUpdated={handleSummaryUpdated}
-          />
-        </div>
-      {/if}
+      <EditorStatusBar
+        note={notes.getCurrentNote()!}
+        backlinks={notes.getBacklinks()}
+        {editorView}
+        isMobile={ui.getIsMobile()}
+        editorPanelsCollapsed={ui.getEditorPanelsCollapsed()}
+        onTogglePanelsCollapsed={() => ui.toggleEditorPanelsCollapsed()}
+        onInsertLink={handleInsertLink}
+        onSummaryUpdated={handleSummaryUpdated}
+      />
     {:else}
       <div class="flex-1 flex items-center justify-center text-muted-foreground h-full">
         {$_('component.editor.empty_state')}
@@ -1186,119 +1170,63 @@
   </div>
 </div>
 
-<!-- Move to folder dialog -->
-{#if showMoveDialog && notes.getCurrentNote()}
-  {#if dialogLoaders.moveToFolderDialog}
-    {@const MoveToFolderDialog = dialogLoaders.moveToFolderDialog}
-    <MoveToFolderDialog
-      noteId={notes.getCurrentNote()!.id}
-      currentFolder={notes.getCurrentNote()!.folder_path}
-      onClose={() => (showMoveDialog = false)}
-    />
-  {/if}
-{/if}
-
-<!-- Markdown Guide Dropdown -->
-{#if ui.getMarkdownGuideDropdownOpen() && dialogLoaders.markdownGuideDropdown}
-  {@const MarkdownGuideDropdown = dialogLoaders.markdownGuideDropdown}
-  <MarkdownGuideDropdown onClose={() => ui.setMarkdownGuideDropdownOpen(false)} />
-{/if}
-
-<!-- Markdown Guide Dialog -->
-{#if ui.getMarkdownGuideOpen() && dialogLoaders.markdownGuideDialog}
-  {@const MarkdownGuideDialog = dialogLoaders.markdownGuideDialog}
-  <MarkdownGuideDialog onClose={() => ui.setMarkdownGuideOpen(false)} />
-{/if}
-
-<!-- Version History Dialog -->
-{#if showVersionHistory && notes.getCurrentNote() && dialogLoaders.versionHistoryDialog}
-  {@const VersionHistoryDialog = dialogLoaders.versionHistoryDialog}
-  <VersionHistoryDialog
-    noteId={notes.getCurrentNote()!.id}
-    noteTitle={notes.getCurrentNote()!.title}
-    currentVersion={notes.getCurrentNote()!.version}
-    currentContent={notes.getCurrentNote()!.content}
-    onClose={() => (showVersionHistory = false)}
-    onRestored={async () => {
-      await notes.loadNote(noteId);
-      toast.success($_('component.editor.version_restored'));
-    }}
-  />
-{/if}
-
-<!-- Color Picker Popover -->
-{#if showColorPicker && FEATURE_FLAGS.colorSyntax}
-  <ColorPickerPopover onSelect={handleColorSelect} onClose={() => (showColorPicker = false)} />
-{/if}
-
-<!-- More Menu (rendered outside toolbar to avoid overflow clipping) -->
-{#if showMoreMenu}
-  <EditorMoreMenu
-    onDelete={handleDelete}
-    onMove={() => (showMoveDialog = true)}
-    onExport={handleExportNote}
-    onColorPicker={openColorPicker}
-    onHelp={openMarkdownHelp}
-    onIndent={handleIndent}
-    onOutdent={handleOutdent}
-    onAIToggle={handleAIToggle}
-    onShare={() => (showShareDialog = true)}
-    onEncryptionToggle={handleEncryptionToggle}
-    onSetEditorMode={settings.setEditorModePreference}
-    editorMode={ui.getEditorMode()}
-    isMobile={ui.getIsMobile()}
-    aiEnabled={notes.getCurrentNote()?.ai_enabled ?? false}
-    isEncrypted={notes.getCurrentNote()?.content_encrypted ?? false}
-    onClose={() => (showMoreMenu = false)}
-    triggerRect={moreMenuTriggerRect}
-  />
-{/if}
-
-<!-- AI Actions Dropdown (lazy-loaded, rendered outside toolbar to avoid overflow clipping) -->
-{#if showAIActionsDropdown && lazyDialogs.aiActionsDropdown}
-  <lazyDialogs.aiActionsDropdown
-    onSelectAction={handleAIActionSelect}
-    onClose={() => (showAIActionsDropdown = false)}
-    triggerRect={aiActionsTriggerRect}
-  />
-{/if}
-
-<!-- Table Insert Dialog -->
-<TableInsertDialog
-  open={showTableInsertDialog}
-  onClose={() => (showTableInsertDialog = false)}
-  onInsert={handleTableInsert}
+<!-- All dialogs extracted to EditorDialogs sub-component -->
+<EditorDialogs
+  note={notes.getCurrentNote()}
+  {noteId}
+  {showMoveDialog}
+  {dialogLoaders}
+  onCloseMoveDialog={() => (showMoveDialog = false)}
+  {showVersionHistory}
+  onCloseVersionHistory={() => (showVersionHistory = false)}
+  onVersionRestored={async () => {
+    await notes.loadNote(noteId);
+    toast.success($_('component.editor.version_restored'));
+  }}
+  markdownGuideOpen={ui.getMarkdownGuideOpen()}
+  markdownGuideDropdownOpen={ui.getMarkdownGuideDropdownOpen()}
+  onCloseMarkdownGuide={() => ui.setMarkdownGuideOpen(false)}
+  onCloseMarkdownGuideDropdown={() => ui.setMarkdownGuideDropdownOpen(false)}
+  {showColorPicker}
+  onColorSelect={handleColorSelect}
+  onCloseColorPicker={() => (showColorPicker = false)}
+  {showMoreMenu}
+  {moreMenuTriggerRect}
+  editorMode={ui.getEditorMode()}
+  isMobile={ui.getIsMobile()}
+  aiEnabled={notes.getCurrentNote()?.ai_enabled ?? false}
+  isEncrypted={notes.getCurrentNote()?.content_encrypted ?? false}
+  onDelete={handleDelete}
+  onMove={() => (showMoveDialog = true)}
+  onExport={handleExportNote}
+  onColorPicker={openColorPicker}
+  onHelp={openMarkdownHelp}
+  onIndent={handleIndent}
+  onOutdent={handleOutdent}
+  onAIToggle={handleAIToggle}
+  onShare={() => (showShareDialog = true)}
+  onEncryptionToggle={handleEncryptionToggle}
+  onSetEditorMode={settings.setEditorModePreference}
+  onCloseMoreMenu={() => (showMoreMenu = false)}
+  {showAIActionsDropdown}
+  {lazyDialogs}
+  {aiActionsTriggerRect}
+  onAIActionSelect={handleAIActionSelect}
+  onCloseAIActionsDropdown={() => (showAIActionsDropdown = false)}
+  {showTableInsertDialog}
+  onCloseTableInsertDialog={() => (showTableInsertDialog = false)}
+  onTableInsert={handleTableInsert}
+  {showAITransformDialog}
+  {aiTransformState}
+  getCurrentContent={() => notes.getCurrentNote()?.content ?? ''}
+  onApplyAITransform={applyAITransform}
+  onCloseAITransformDialog={() => {
+    showAITransformDialog = false;
+    aiTransformState = null;
+  }}
+  {showShareDialog}
+  onCloseShareDialog={() => (showShareDialog = false)}
 />
-
-<!-- AI Transform Dialog -->
-{#if showAITransformDialog && notes.getCurrentNote() && aiTransformState}
-  <AITransformDialog
-    noteId={notes.getCurrentNote()!.id}
-    action={aiTransformState.action}
-    customPrompt={aiTransformState.customPrompt}
-    originalText={aiTransformState.originalText}
-    selectionFrom={aiTransformState.selectionFrom}
-    selectionTo={aiTransformState.selectionTo}
-    isFullContent={aiTransformState.isFullContent}
-    initialContentHash={aiTransformState.initialContentHash}
-    getCurrentContent={() => notes.getCurrentNote()?.content ?? ''}
-    onApply={applyAITransform}
-    onClose={() => {
-      showAITransformDialog = false;
-      aiTransformState = null;
-    }}
-  />
-{/if}
-
-<!-- Share Note Dialog (lazy-loaded) -->
-{#if showShareDialog && notes.getCurrentNote() && lazyDialogs.shareDialog}
-  <lazyDialogs.shareDialog
-    resourceType="note"
-    resourceId={notes.getCurrentNote()!.id}
-    isEncrypted={notes.getCurrentNote()!.content_encrypted ?? false}
-    onClose={() => (showShareDialog = false)}
-  />
-{/if}
 
 <!-- Hidden file input for image upload -->
 <input
@@ -1308,6 +1236,8 @@
   bind:this={fileInput}
   onchange={handleFileInputChange}
   style="display:none"
+  aria-hidden="true"
+  tabindex="-1"
 />
 
 <style>

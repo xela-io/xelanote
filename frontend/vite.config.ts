@@ -224,5 +224,12 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'json-summary'],
+      reportsDirectory: './coverage',
+      include: ['src/lib/**/*.ts', 'src/lib/**/*.svelte.ts'],
+      exclude: ['src/test/**', 'src/**/*.test.ts', 'src/**/*.d.ts'],
+    },
   },
 });

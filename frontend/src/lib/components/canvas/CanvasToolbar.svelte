@@ -20,7 +20,7 @@
   }
 </script>
 
-<div class="canvas-toolbar">
+<div class="canvas-toolbar" role="toolbar" aria-label="Canvas tools">
   {#each tools as tool (tool.action)}
     <button
       class="canvas-toolbar-btn"

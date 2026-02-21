@@ -120,7 +120,12 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
       const summary = document.createElement('summary');
       summary.className = 'completed-tasks-summary';
       summary.setAttribute('aria-label', options.completedAriaLabel(checkedCount));
-      summary.innerHTML = `${CHEVRON_SVG} ${options.completedLabel(checkedCount)}`;
+      // F2-04: Use DOM methods instead of innerHTML to prevent XSS if completedLabel
+      // ever includes user data. SVG is inserted via a template, text via textContent.
+      const chevronContainer = document.createElement('span');
+      chevronContainer.innerHTML = CHEVRON_SVG; // hardcoded constant, safe
+      summary.appendChild(chevronContainer.firstChild!);
+      summary.appendChild(document.createTextNode(` ${options.completedLabel(checkedCount)}`));
 
       const innerList = document.createElement('ul');
       innerList.className = 'completed-tasks-inner';

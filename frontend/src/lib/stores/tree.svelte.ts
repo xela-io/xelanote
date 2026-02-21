@@ -1,41 +1,57 @@
 // Unified Tree Store - Merges folders and notes into a single tree view
 // Using Svelte 5 runes
+//
+// This is the main barrel file. State declarations, getters, selection,
+// expand/collapse, tree loading/building, and localStorage persistence live here.
+// Sub-modules:
+//   tree-index.svelte.ts  - Types & tree search/lookup helpers
+//   tree-cache.svelte.ts  - Flat tree cache, granular cache updates
+//   tree-operations.svelte.ts - CRUD operations (create/move/delete/rename/reorder/color)
 
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 import type { Folder, Note } from '$lib/api';
 import * as api from '$lib/api';
 
-// Tree Node Types
-export type TreeNode = FolderTreeNode | NoteTreeNode;
+// Re-export types from tree-index
+export type {
+  FlatTreeItem,
+  FolderTreeNode,
+  NoteTreeNode,
+  SortMode,
+  TreeNode,
+} from './tree-index.svelte';
 
-export interface FolderTreeNode {
-  type: 'folder';
-  id: number;
-  path: string;
-  name: string;
-  children: TreeNode[];
-  noteCount: number;
-  isExpanded: boolean;
-  displayOrder: number;
-  color?: string | null;
-}
+import type { FolderTreeNode, NoteTreeNode, SortMode } from './tree-index.svelte';
+import { findFolderNode } from './tree-index.svelte';
 
-export interface NoteTreeNode {
-  type: 'note';
-  id: string;
-  displayOrder: number;
-  title: string;
-  folderPath: string;
-  color?: string | null;
-  aiEnabled?: boolean;
-  noteType?: string;
-  updatedAt?: string;
-  createdAt?: string;
-}
+// Re-export cache functions
+export { invalidateFlatTreeCache } from './tree-cache.svelte';
+import {
+  getFlattenedTree as getFlattenedTreeFromCache,
+  granularToggleUpdate,
+  invalidateFlatTreeCache,
+} from './tree-cache.svelte';
 
-// Sort mode for notes in the sidebar
-export type SortMode = 'manual' | 'updated' | 'title' | 'created';
+// Re-export operations
+export {
+  createFolder,
+  deleteFolder,
+  moveFolder,
+  renameFolder,
+  reorderFolders,
+  reorderNotes,
+  updateFolderColor,
+  updateNoteColor,
+  updateNoteInTree,
+} from './tree-operations.svelte';
+import { initOperations } from './tree-operations.svelte';
+
+// Re-export index lookup functions (these take treeData as parameter)
+import {
+  findNodeById as findNodeByIdRaw,
+  findParentOfNodeById as findParentOfNodeByIdRaw,
+} from './tree-index.svelte';
 
 // State
 let treeData = $state<FolderTreeNode | null>(null);
@@ -63,91 +79,14 @@ try {
 const EXPANDED_KEY = 'xelanote_tree_expanded';
 let expandedFolders = $state<Record<string, boolean>>({ '/': true });
 
-// Flattened tree cache (for virtual scrolling performance)
-let flatTreeCache: FlatTreeItem[] | null = null;
-let flatTreeCacheTimestamp = 0;
-
-// Granular cache update feature flag (localStorage-backed)
-const GRANULAR_CACHE_KEY = 'xelanote_granular_tree_cache';
-let useGranularTreeCache = false;
-try {
-  useGranularTreeCache = localStorage.getItem(GRANULAR_CACHE_KEY) === 'true';
-} catch {
-  // localStorage unavailable
-}
-
-/** Enable/disable granular tree cache updates (for testing/rollout). */
-export function setGranularTreeCache(enabled: boolean): void {
-  useGranularTreeCache = enabled;
-  try {
-    localStorage.setItem(GRANULAR_CACHE_KEY, String(enabled));
-  } catch {
-    // silent
-  }
-}
-
-/** Index from node key (folder:path or note:id) to position in flatTreeCache. */
-const flatTreeIndex = new SvelteMap<string, number>();
-
-function nodeKey(node: TreeNode): string {
-  return node.type === 'folder' ? `folder:${node.path}` : `note:${node.id}`;
-}
-
-/** Rebuild the flat tree index from the current cache. */
-function rebuildFlatTreeIndex(): void {
-  flatTreeIndex.clear();
-  if (!flatTreeCache) return;
-  for (let i = 0; i < flatTreeCache.length; i++) {
-    flatTreeIndex.set(nodeKey(flatTreeCache[i].node), i);
-  }
-}
-
-/**
- * Dev-mode invariant check: verify flat cache matches a fresh flatten.
- * Only runs in dev builds to catch granular-update bugs.
- */
-function assertFlatTreeConsistency(): void {
-  if (!import.meta.env.DEV) return;
-  if (!flatTreeCache || !treeData) return;
-
-  const fresh = buildFreshFlatTree(treeData);
-  if (fresh.length !== flatTreeCache.length) {
-    console.warn(
-      `[Tree] Granular cache inconsistency: length ${flatTreeCache.length} vs expected ${fresh.length}. Falling back.`
-    );
-    invalidateFlatTreeCache();
-    return;
-  }
-
-  for (let i = 0; i < fresh.length; i++) {
-    if (nodeKey(fresh[i].node) !== nodeKey(flatTreeCache[i].node)) {
-      console.warn(
-        `[Tree] Granular cache inconsistency at index ${i}: ` +
-          `got ${nodeKey(flatTreeCache[i].node)}, expected ${nodeKey(fresh[i].node)}. Falling back.`
-      );
-      invalidateFlatTreeCache();
-      return;
-    }
-  }
-}
-
-/** Build a fresh flat tree without mutating the cache. */
-function buildFreshFlatTree(root: FolderTreeNode): FlatTreeItem[] {
-  const items: FlatTreeItem[] = [];
-  let idx = 0;
-  function flatten(node: TreeNode, level: number) {
-    items.push({ node, level, index: idx++ });
-    if (node.type === 'folder' && node.isExpanded) {
-      for (const child of node.children) {
-        flatten(child, level + 1);
-      }
-    }
-  }
-  for (const child of root.children) {
-    flatten(child, 0);
-  }
-  return items;
-}
+// Wire up the operations module with state accessors
+initOperations({
+  getTreeData: () => treeData,
+  setTreeData: (data) => {
+    treeData = data;
+  },
+  loadTree,
+});
 
 // Getters
 export function getTreeData() {
@@ -188,9 +127,33 @@ export function setSortMode(mode: SortMode): void {
   }
 }
 
+/**
+ * Get flattened tree representation for virtual scrolling.
+ * Wrapper that passes current treeData to the cache module.
+ */
+export function getFlattenedTree() {
+  return getFlattenedTreeFromCache(treeData);
+}
+
+/**
+ * Find a TreeNode by type and id in the tree.
+ * Wrapper that closes over the module-level treeData.
+ */
+export function findNodeById(type: 'folder' | 'note', id: string | number) {
+  return findNodeByIdRaw(treeData, type, id);
+}
+
+/**
+ * Find the parent FolderTreeNode of a node identified by type and id.
+ * Wrapper that closes over the module-level treeData.
+ */
+export function findParentOfNodeById(type: 'folder' | 'note', id: string | number) {
+  return findParentOfNodeByIdRaw(treeData, type, id);
+}
+
 // Actions
 
-/** Max pagination iterations to prevent infinite loops (500 notes/page × 100 = 50,000 notes) */
+/** Max pagination iterations to prevent infinite loops (500 notes/page x 100 = 50,000 notes) */
 const MAX_PAGINATION_ITERATIONS = 100;
 
 /**
@@ -335,7 +298,7 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
       createdAt: note.created_at,
     };
 
-    // Find the folder node for this note — O(1) via pathMap
+    // Find the folder node for this note -- O(1) via pathMap
     const folder = pathMap.get(note.folder_path);
     if (folder) {
       folder.children.push(noteNode);
@@ -463,63 +426,6 @@ function buildTree(folders: Folder[], notes: Note[]): FolderTreeNode {
   return virtualRoot;
 }
 
-// Flattened tree for virtual scrolling
-export interface FlatTreeItem {
-  node: TreeNode;
-  level: number;
-  index: number;
-}
-
-/**
- * Invalidate flattened tree cache.
- * Should be called whenever the tree structure changes.
- */
-function invalidateFlatTreeCache(): void {
-  flatTreeCache = null;
-  flatTreeCacheTimestamp = 0;
-  flatTreeIndex.clear();
-}
-
-/**
- * Get flattened tree representation for virtual scrolling.
- * Uses caching for performance - cache is invalidated on tree changes.
- */
-export function getFlattenedTree(): FlatTreeItem[] {
-  if (!treeData) return [];
-
-  // Return cached result if available
-  if (flatTreeCache && flatTreeCacheTimestamp > 0) {
-    return flatTreeCache;
-  }
-
-  // Build flattened tree
-  const items: FlatTreeItem[] = [];
-  let index = 0;
-
-  function flatten(node: TreeNode, level: number) {
-    items.push({ node, level, index: index++ });
-
-    // Only recurse into expanded folders
-    if (node.type === 'folder' && node.isExpanded) {
-      for (const child of node.children) {
-        flatten(child, level + 1);
-      }
-    }
-  }
-
-  // Flatten all children of virtual root (skip root itself)
-  for (const child of treeData.children) {
-    flatten(child, 0);
-  }
-
-  // Cache result
-  flatTreeCache = items;
-  flatTreeCacheTimestamp = Date.now();
-  rebuildFlatTreeIndex();
-
-  return items;
-}
-
 // Selection
 
 export function selectFolder(path: string) {
@@ -548,135 +454,12 @@ export function toggleExpanded(path: string) {
   saveExpandedState(path, node.isExpanded);
 
   // Try granular cache update (splice children in/out)
-  if (useGranularTreeCache && flatTreeCache) {
-    const folderIdx = flatTreeIndex.get(`folder:${path}`);
-    if (folderIdx !== undefined) {
-      try {
-        if (wasExpanded) {
-          // Collapsing: remove all descendants after this folder
-          const folderLevel = flatTreeCache[folderIdx].level;
-          let removeCount = 0;
-          for (let i = folderIdx + 1; i < flatTreeCache.length; i++) {
-            if (flatTreeCache[i].level <= folderLevel) break;
-            removeCount++;
-          }
-          if (removeCount > 0) {
-            flatTreeCache.splice(folderIdx + 1, removeCount);
-          }
-        } else {
-          // Expanding: insert flattened children after this folder
-          const folderLevel = flatTreeCache[folderIdx].level;
-          const childItems: FlatTreeItem[] = [];
-          let idx = 0;
-          function flattenChildren(parent: FolderTreeNode, level: number) {
-            for (const child of parent.children) {
-              childItems.push({ node: child, level, index: idx++ });
-              if (child.type === 'folder' && child.isExpanded) {
-                flattenChildren(child, level + 1);
-              }
-            }
-          }
-          flattenChildren(node, folderLevel + 1);
-          if (childItems.length > 0) {
-            flatTreeCache.splice(folderIdx + 1, 0, ...childItems);
-          }
-        }
-
-        // Re-index after splice
-        for (let i = 0; i < flatTreeCache.length; i++) {
-          flatTreeCache[i].index = i;
-        }
-        rebuildFlatTreeIndex();
-        flatTreeCacheTimestamp = Date.now();
-
-        assertFlatTreeConsistency();
-      } catch {
-        // Fallback to full invalidation on any error
-        invalidateFlatTreeCache();
-      }
-    } else {
-      // Node not in index — fallback
-      invalidateFlatTreeCache();
-    }
-  } else {
+  if (!granularToggleUpdate(path, wasExpanded, node)) {
     invalidateFlatTreeCache();
   }
 
   // Force reactivity
   treeData = { ...treeData! };
-}
-
-function findFolderNode(root: FolderTreeNode | null, path: string): FolderTreeNode | null {
-  if (!root) return null;
-  if (root.path === path) return root;
-
-  for (const child of root.children) {
-    if (child.type === 'folder') {
-      const found = findFolderNode(child, path);
-      if (found) return found;
-    }
-  }
-
-  return null;
-}
-
-function findFolderNodeById(root: FolderTreeNode | null, id: number): FolderTreeNode | null {
-  if (!root) return null;
-  if (root.id === id) return root;
-
-  for (const child of root.children) {
-    if (child.type === 'folder') {
-      const found = findFolderNodeById(child, id);
-      if (found) return found;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Find a TreeNode by type and id in the tree.
- */
-export function findNodeById(type: 'folder' | 'note', id: string | number): TreeNode | null {
-  if (!treeData) return null;
-
-  function search(node: FolderTreeNode): TreeNode | null {
-    for (const child of node.children) {
-      if (type === 'folder' && child.type === 'folder' && child.id === Number(id)) return child;
-      if (type === 'note' && child.type === 'note' && child.id === String(id)) return child;
-      if (child.type === 'folder') {
-        const found = search(child);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  return search(treeData);
-}
-
-/**
- * Find the parent FolderTreeNode of a node identified by type and id.
- */
-export function findParentOfNodeById(
-  type: 'folder' | 'note',
-  id: string | number
-): FolderTreeNode | null {
-  if (!treeData) return null;
-
-  function search(parent: FolderTreeNode): FolderTreeNode | null {
-    for (const child of parent.children) {
-      if (type === 'folder' && child.type === 'folder' && child.id === Number(id)) return parent;
-      if (type === 'note' && child.type === 'note' && child.id === String(id)) return parent;
-      if (child.type === 'folder') {
-        const found = search(child);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  return search(treeData);
 }
 
 // LocalStorage Persistence
@@ -736,260 +519,6 @@ function parseExpandedPaths(raw: string): string[] | null {
   if (!Array.isArray(parsed)) return null;
   if (!parsed.every((entry) => typeof entry === 'string')) return null;
   return parsed;
-}
-
-// Folder Operations
-
-export async function createFolder(path: string) {
-  // Snapshot for rollback (optimistic UI pattern)
-  const snapshot = JSON.parse(JSON.stringify(treeData));
-
-  // Parse path to get parent and name
-  const lastSlash = path.lastIndexOf('/');
-  const parentPath = path.substring(0, lastSlash) || '/';
-  const folderName = path.substring(lastSlash + 1);
-
-  // Optimistic UI update - add temporary folder node
-  const parent = findFolderNode(treeData, parentPath);
-  if (parent && treeData) {
-    const tempNode: FolderTreeNode = {
-      type: 'folder',
-      id: -Date.now(), // Temporary negative ID
-      path: path,
-      name: folderName,
-      children: [],
-      noteCount: 0,
-      isExpanded: false,
-      displayOrder: 0,
-    };
-    parent.children.push(tempNode);
-    treeData = { ...treeData }; // Force reactivity
-  }
-
-  try {
-    // API call in background
-    await api.createFolder(path);
-    // Success - reload to get real folder with server-assigned ID
-    await loadTree();
-    // Note: loadTree() already invalidates cache
-  } catch (e) {
-    // Revert to snapshot on error
-    treeData = snapshot;
-    invalidateFlatTreeCache(); // Invalidate after revert
-    throw e;
-  }
-}
-
-export async function moveFolder(folderId: number, newParentPath: string) {
-  // Snapshot for rollback (optimistic UI pattern)
-  const snapshot = JSON.parse(JSON.stringify(treeData));
-
-  // Optimistic UI update - move folder in tree
-  const folderToMove = findFolderNodeById(treeData, folderId);
-  if (folderToMove && treeData) {
-    // Remove from current parent
-    const removeFromParent = (node: FolderTreeNode): boolean => {
-      const index = node.children.findIndex(
-        (child) => child.type === 'folder' && child.id === folderId
-      );
-      if (index !== -1) {
-        node.children.splice(index, 1);
-        return true;
-      }
-      for (const child of node.children) {
-        if (child.type === 'folder' && removeFromParent(child)) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    removeFromParent(treeData);
-
-    // Add to new parent
-    const newParent = findFolderNode(treeData, newParentPath);
-    if (newParent) {
-      newParent.children.push(folderToMove);
-    }
-
-    treeData = { ...treeData }; // Force reactivity
-  }
-
-  try {
-    // API call in background
-    await api.moveFolder(folderId, newParentPath);
-    // Success - reload to get updated paths and server state
-    await loadTree();
-    // Note: loadTree() already invalidates cache
-  } catch (e) {
-    // Revert to snapshot on error
-    treeData = snapshot;
-    invalidateFlatTreeCache(); // Invalidate after revert
-    throw e;
-  }
-}
-
-export async function deleteFolder(folderId: number) {
-  // Snapshot for rollback (optimistic UI pattern)
-  const snapshot = JSON.parse(JSON.stringify(treeData));
-
-  // Optimistic UI update - remove folder from tree
-  const removeFolder = (node: FolderTreeNode): boolean => {
-    const index = node.children.findIndex(
-      (child) => child.type === 'folder' && child.id === folderId
-    );
-    if (index !== -1) {
-      node.children.splice(index, 1);
-      return true;
-    }
-    // Recursively search children
-    for (const child of node.children) {
-      if (child.type === 'folder' && removeFolder(child)) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  if (treeData) {
-    removeFolder(treeData);
-    treeData = { ...treeData }; // Force reactivity
-  }
-
-  try {
-    // API call in background
-    await api.deleteFolder(folderId);
-    // Success - reload to ensure consistency
-    await loadTree();
-    // Note: loadTree() already invalidates cache
-  } catch (e) {
-    // Revert to snapshot on error
-    treeData = snapshot;
-    invalidateFlatTreeCache(); // Invalidate after revert
-    throw e;
-  }
-}
-
-export async function renameFolder(folderId: number, newName: string) {
-  // Snapshot for rollback (optimistic UI pattern)
-  const snapshot = JSON.parse(JSON.stringify(treeData));
-
-  // Optimistic UI update
-  const node = findFolderNodeById(treeData, folderId);
-  if (node) {
-    node.name = newName;
-    treeData = { ...treeData! }; // Force reactivity
-  }
-
-  try {
-    // API call in background
-    await api.renameFolder(folderId, newName);
-    // Success - reload to get any server-side updates
-    await loadTree();
-    // Note: loadTree() already invalidates cache
-  } catch (e) {
-    // Revert to snapshot on error
-    treeData = snapshot;
-    invalidateFlatTreeCache(); // Invalidate after revert
-    throw e;
-  }
-}
-
-export async function reorderFolders(parentID: number | null, folderIds: number[]) {
-  await api.reorderFolders(parentID, folderIds);
-  await loadTree(); // Invalidates cache
-}
-
-export async function reorderNotes(folderPath: string, noteIds: string[]) {
-  await api.reorderNotes(folderPath, noteIds);
-  await loadTree(); // Invalidates cache
-}
-
-export async function updateFolderColor(folderId: number, color: string | null) {
-  await api.updateFolderColor(folderId, color);
-
-  // Try granular update for color-only change (no structural change)
-  if (useGranularTreeCache && flatTreeCache) {
-    const folderNode = findFolderNodeById(treeData, folderId);
-    if (folderNode) {
-      folderNode.color = color;
-      // Update the cached item in-place (no splice needed)
-      const idx = flatTreeIndex.get(`folder:${folderNode.path}`);
-      if (idx !== undefined && flatTreeCache[idx]) {
-        flatTreeCache[idx] = { ...flatTreeCache[idx], node: folderNode };
-        flatTreeCacheTimestamp = Date.now();
-        treeData = { ...treeData! };
-        return;
-      }
-    }
-  }
-
-  await loadTree(); // Fallback: full reload invalidates cache
-}
-
-export async function updateNoteColor(noteId: string, color: string | null) {
-  await api.updateNoteColor(noteId, color);
-
-  // Try granular update for color-only change (no structural change)
-  if (useGranularTreeCache && flatTreeCache) {
-    const idx = flatTreeIndex.get(`note:${noteId}`);
-    if (idx !== undefined && flatTreeCache[idx]) {
-      const item = flatTreeCache[idx];
-      if (item.node.type === 'note') {
-        item.node.color = color;
-        flatTreeCache[idx] = { ...item, node: { ...item.node } };
-        flatTreeCacheTimestamp = Date.now();
-        treeData = { ...treeData! };
-        return;
-      }
-    }
-  }
-
-  await loadTree(); // Fallback: full reload invalidates cache
-}
-
-/**
- * Update a note's title in the tree without full reload.
- * Used for granular cache updates when only the title changes.
- */
-export function updateNoteInTree(
-  noteId: string,
-  updates: { title?: string; color?: string | null }
-): void {
-  if (!treeData) return;
-
-  // Find and update the note node in the tree
-  function findAndUpdate(parent: FolderTreeNode): boolean {
-    for (let i = 0; i < parent.children.length; i++) {
-      const child = parent.children[i];
-      if (child.type === 'note' && child.id === noteId) {
-        if (updates.title !== undefined) child.title = updates.title;
-        if (updates.color !== undefined) child.color = updates.color;
-        return true;
-      }
-      if (child.type === 'folder' && findAndUpdate(child)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  if (!findAndUpdate(treeData)) return;
-
-  // Granular cache update: replace item in-place
-  if (useGranularTreeCache && flatTreeCache) {
-    const idx = flatTreeIndex.get(`note:${noteId}`);
-    if (idx !== undefined && flatTreeCache[idx]) {
-      flatTreeCache[idx] = { ...flatTreeCache[idx] };
-      flatTreeCacheTimestamp = Date.now();
-    } else {
-      invalidateFlatTreeCache();
-    }
-  } else {
-    invalidateFlatTreeCache();
-  }
-
-  treeData = { ...treeData };
 }
 
 // Select and expand a folder (for breadcrumb navigation)

@@ -344,12 +344,12 @@
 
 {#if ui.getQuickSwitcherOpen()}
   <!-- Backdrop -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 bg-black/50 z-50"
     onclick={handleBackdropClick}
     onkeydown={handleBackdropKeydown}
-    role="button"
-    tabindex="0"
+    aria-hidden="true"
   ></div>
 
   <!-- Dialog -->
@@ -401,6 +401,8 @@
         {#if loading && !isCommandMode}
           <div
             class="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
+            role="status"
+            aria-label={$_('common.loading')}
           ></div>
         {/if}
         {#if !isCommandMode}
@@ -408,7 +410,9 @@
             type="button"
             onclick={() => (filterMenuOpen = !filterMenuOpen)}
             class="p-1.5 hover:bg-accent rounded-md transition-colors relative"
-            title="Filter (Ctrl+F)"
+            title="{$_('component.quick_switcher.filter')} (Ctrl+F)"
+            aria-label={$_('component.quick_switcher.filter')}
+            aria-expanded={filterMenuOpen}
           >
             <Filter size={16} class="text-muted-foreground" />
             {#if activeFilterCount > 0}

@@ -117,7 +117,10 @@ class TaskCheckboxWidget extends WidgetType {
     dragHandle.className = 'cm-live-task-drag-handle';
     dragHandle.dataset.line = String(this.lineNumber);
     dragHandle.setAttribute('aria-hidden', 'true');
-    dragHandle.innerHTML = LIVE_TASK_DRAG_HANDLE_SVG;
+    // F2-08: Use DOM method instead of innerHTML. SVG is a hardcoded constant.
+    const svgContainer = document.createElement('span');
+    svgContainer.innerHTML = LIVE_TASK_DRAG_HANDLE_SVG; // hardcoded constant, safe
+    if (svgContainer.firstChild) dragHandle.appendChild(svgContainer.firstChild);
 
     const input = document.createElement('input');
     input.type = 'checkbox';
@@ -211,7 +214,10 @@ class TableWidget extends WidgetType {
 }
 
 function isCodeFence(text: string): boolean {
-  return /^\s*```/.test(text);
+  // CommonMark spec: code fences may be indented by 0-3 spaces only.
+  // 4+ spaces = indented code block (literal text, not a fence).
+  // Both backtick (```) and tilde (~~~) fences are supported by markdown-it.
+  return /^ {0,3}(?:```|~~~)/.test(text);
 }
 
 function isTableSeparatorLine(text: string): boolean {

@@ -10,7 +10,6 @@
     Panel,
     SvelteFlow,
   } from '@xyflow/svelte';
-  import { ExternalLink, FileText, Group as GroupIcon, Type } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
@@ -32,7 +31,8 @@
   import CanvasNotePicker from '$lib/components/canvas/CanvasNotePicker.svelte';
   import CanvasTextNode from '$lib/components/canvas/CanvasTextNode.svelte';
   import CanvasToolbar from '$lib/components/canvas/CanvasToolbar.svelte';
-  import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import CanvasDragPreview from '$lib/components/canvas/CanvasDragPreview.svelte';
+  import CanvasLinkDialog from '$lib/components/canvas/CanvasLinkDialog.svelte';
   import {
     type DialogLoaderState,
     loadMoveToFolderDialog,
@@ -411,19 +411,6 @@
       return action;
     }
     return null;
-  }
-
-  function getToolLabel(action: ToolbarAction): string {
-    switch (action) {
-      case 'add-text':
-        return 'Text';
-      case 'add-file':
-        return 'Note';
-      case 'add-link':
-        return 'Link';
-      case 'add-group':
-        return 'Group';
-    }
   }
 
   function getToolSize(action: ToolbarAction): { width: number; height: number } {
@@ -902,6 +889,7 @@
     ondropcapture={handleDrop}
     ondragleavecapture={handleDragLeave}
     role="application"
+    aria-label={$_('component.canvas.canvas_area')}
   >
     <SvelteFlow
       bind:nodes={flowNodes}
@@ -932,46 +920,13 @@
         y: toolDragPreview.y,
       })}
       {@const previewPos = flowToContainerPosition(previewOrigin.x, previewOrigin.y)}
-      <div
-        class={`tool-drag-preview tool-drag-preview--${toolDragPreview.action}`}
-        style={`left:${previewPos.x}px;top:${previewPos.y}px;width:${previewSize.width}px;height:${previewSize.height}px;`}
-        aria-hidden="true"
-      >
-        {#if toolDragPreview.action === 'add-text'}
-          <div class="tool-drag-preview-header">
-            <Type size={14} />
-            <span>{getToolLabel(toolDragPreview.action)}</span>
-          </div>
-          <div class="tool-drag-preview-text-lines">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        {:else if toolDragPreview.action === 'add-file'}
-          <div class="tool-drag-preview-header">
-            <FileText size={14} />
-            <span>{getToolLabel(toolDragPreview.action)}</span>
-          </div>
-          <div class="tool-drag-preview-text-lines">
-            <span></span>
-            <span></span>
-          </div>
-        {:else if toolDragPreview.action === 'add-link'}
-          <div class="tool-drag-preview-header">
-            <ExternalLink size={14} />
-            <span>{getToolLabel(toolDragPreview.action)}</span>
-          </div>
-          <div class="tool-drag-preview-link-url">example.com/path</div>
-          <div class="tool-drag-preview-text-lines">
-            <span></span>
-          </div>
-        {:else}
-          <div class="tool-drag-preview-group-label">
-            <GroupIcon size={14} />
-            <span>{getToolLabel(toolDragPreview.action)}</span>
-          </div>
-        {/if}
-      </div>
+      <CanvasDragPreview
+        action={toolDragPreview.action}
+        containerX={previewPos.x}
+        containerY={previewPos.y}
+        width={previewSize.width}
+        height={previewSize.height}
+      />
     {/if}
   </div>
 
@@ -1005,52 +960,14 @@
 </div>
 
 <!-- Add Link Dialog -->
-<BaseDialog
+<CanvasLinkDialog
   open={linkDialogOpen}
-  title={$_('component.canvas.link_dialog.title')}
+  {linkUrl}
+  {linkUrlError}
+  onUrlChange={(url) => (linkUrl = url)}
+  onSubmit={submitLinkDialog}
   onClose={closeLinkDialog}
-  size="sm"
->
-  {#snippet content()}
-    <div class="space-y-3">
-      <label for="canvas-link-input" class="text-sm font-medium text-foreground">
-        {$_('component.canvas.link_dialog.url_label')}
-      </label>
-      <input
-        id="canvas-link-input"
-        type="text"
-        bind:value={linkUrl}
-        placeholder={$_('component.canvas.link_dialog.placeholder')}
-        class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-        onkeydown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            submitLinkDialog();
-          }
-        }}
-      />
-      {#if linkUrlError}
-        <p class="text-sm text-red-600">{linkUrlError}</p>
-      {/if}
-    </div>
-  {/snippet}
-  {#snippet footer()}
-    <button
-      type="button"
-      onclick={closeLinkDialog}
-      class="px-4 py-2 text-sm hover:bg-accent rounded-md"
-    >
-      {$_('common.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={submitLinkDialog}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"
-    >
-      {$_('component.canvas.link_dialog.add_button')}
-    </button>
-  {/snippet}
-</BaseDialog>
+/>
 
 <!-- More Menu (rendered outside .canvas-editor for proper z-index) -->
 {#if showMoreMenu}
@@ -1111,6 +1028,8 @@
   bind:this={fileInput}
   onchange={handleFileInputChange}
   style="display:none"
+  aria-hidden="true"
+  tabindex="-1"
 />
 
 <style>
@@ -1131,90 +1050,6 @@
   .canvas-flow-container.drag-over {
     outline: 2px dashed var(--color-ring);
     outline-offset: -2px;
-  }
-
-  .tool-drag-preview {
-    position: absolute;
-    z-index: 20;
-    border-radius: 0.6rem;
-    border: 1px solid var(--color-border);
-    background: color-mix(in oklch, var(--color-card) 90%, transparent);
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--color-ring) 30%, transparent),
-      0 14px 32px color-mix(in oklch, var(--color-foreground) 16%, transparent);
-    pointer-events: none;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow: hidden;
-  }
-
-  .tool-drag-preview-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--color-foreground);
-  }
-
-  .tool-drag-preview-text-lines {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .tool-drag-preview-text-lines span {
-    display: block;
-    height: 8px;
-    border-radius: 999px;
-    background: color-mix(in oklch, var(--color-muted-foreground) 26%, transparent);
-  }
-
-  .tool-drag-preview-text-lines span:nth-child(1) {
-    width: 88%;
-  }
-
-  .tool-drag-preview-text-lines span:nth-child(2) {
-    width: 70%;
-  }
-
-  .tool-drag-preview-text-lines span:nth-child(3) {
-    width: 55%;
-  }
-
-  .tool-drag-preview-link-url {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--color-muted-foreground);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .tool-drag-preview-group-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: color-mix(in oklch, var(--color-foreground) 76%, var(--color-primary));
-  }
-
-  .tool-drag-preview--add-group {
-    border-style: dashed;
-    border-width: 1.5px;
-    background: color-mix(in oklch, var(--color-primary) 10%, transparent);
-  }
-
-  .tool-drag-preview--add-text,
-  .tool-drag-preview--add-file,
-  .tool-drag-preview--add-link {
-    border-left-width: 3px;
-    border-left-color: var(--color-primary);
   }
 
   /* Svelte Flow theme overrides */

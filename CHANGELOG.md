@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Service layer: Extracted duplicated note-limit checks (7 identical blocks across 5 files) into a single `checkNoteLimit()` method on NoteService
 - DB layer: Extracted shared graph node/edge scanning logic from `GetGlobalGraph` and `GetFilteredGraph` into `scanGraphNodes`, `scanFilteredEdges`, and `buildGraphData` helpers (eliminated ~60 lines of duplication)
 - Service layer: Extracted `validateCanvasNodes` and `validateCanvasEdges` from 107-line `ValidateCanvasContent` function
+- Logging: Migrated all 7 legacy `log.Printf` calls in `db/db.go` and `api/middleware.go` to structured `slog` with typed fields
 
 ### Tests
 

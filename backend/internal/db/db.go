@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -39,6 +39,18 @@ func (db *DB) BeginTx(ctx context.Context) (*Tx, error) {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	return &Tx{Tx: tx}, nil
+}
+
+// BeginImmediate starts a transaction with BEGIN IMMEDIATE semantics.
+// With MaxOpenConns(1), this is functionally equivalent to Begin() since all
+// operations are already serialized. This is defense-in-depth for future
+// architecture changes (F2-03, F2-07).
+func (db *DB) BeginImmediate() (*sql.Tx, error) {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin immediate transaction: %w", err)
+	}
+	return tx, nil
 }
 
 const encryptedDriverName = "sqlite3_xelanote_encrypted"
@@ -79,6 +91,9 @@ func Open(path, key string, opts ...OpenOptions) (*DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 	// SQLite performs best with a single connection and keeps per-connection pragmas consistent.
+	// SECURITY: MaxOpenConns(1) serializes all DB operations, which mitigates several
+	// race conditions (F2-01: admin registration, F2-03: 2FA state transitions).
+	// Do NOT increase without adding explicit transaction-level locking to those code paths.
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 
@@ -105,7 +120,9 @@ func Open(path, key string, opts ...OpenOptions) (*DB, error) {
 		return nil, fmt.Errorf("failed to verify journal_mode: %w", err)
 	}
 	if !strings.EqualFold(actualMode, journalMode) {
-		log.Printf("WARNING: requested journal_mode=%s but got %s (filesystem may not support WAL)", journalMode, actualMode)
+		slog.Warn("journal mode mismatch — filesystem may not support WAL",
+			slog.String("requested", journalMode),
+			slog.String("actual", actualMode))
 	}
 
 	// Verify connection
@@ -121,7 +138,7 @@ func Open(path, key string, opts ...OpenOptions) (*DB, error) {
 // Should be called at startup (after migrations), periodically, and before shutdown.
 func (db *DB) Optimize() {
 	if _, err := db.Exec("PRAGMA optimize"); err != nil {
-		log.Printf("PRAGMA optimize failed: %v", err)
+		slog.Warn("PRAGMA optimize failed", slog.String("error", err.Error()))
 	}
 }
 
@@ -139,9 +156,9 @@ func (db *DB) StartOptimizeScheduler(interval time.Duration) context.CancelFunc 
 			case <-ticker.C:
 				db.Optimize()
 				if cleaned, err := db.CleanupExpiredRefreshTokens(); err != nil {
-					log.Printf("Scheduled refresh token cleanup failed: %v", err)
+					slog.Warn("scheduled refresh token cleanup failed", slog.String("error", err.Error()))
 				} else if cleaned > 0 {
-					log.Printf("Scheduled cleanup: removed %d expired/revoked refresh tokens", cleaned)
+					slog.Info("scheduled cleanup: removed expired/revoked refresh tokens", slog.Int64("count", cleaned))
 				}
 			}
 		}

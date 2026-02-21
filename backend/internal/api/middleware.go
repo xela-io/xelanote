@@ -2,7 +2,8 @@ package api
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -28,7 +29,7 @@ func InitTrustedProxies(trustedProxiesEnv string) {
 
 	if trustedProxiesEnv == "" {
 		cidrs = defaultTrustedCIDRs
-		log.Printf("Using default trusted proxies: %v", cidrs)
+		slog.Info("using default trusted proxies", slog.String("cidrs", fmt.Sprintf("%v", cidrs)))
 	} else {
 		parts := strings.Split(trustedProxiesEnv, ",")
 		for _, part := range parts {
@@ -37,14 +38,14 @@ func InitTrustedProxies(trustedProxiesEnv string) {
 				cidrs = append(cidrs, cidr)
 			}
 		}
-		log.Printf("Using custom trusted proxies: %v", cidrs)
+		slog.Info("using custom trusted proxies", slog.String("cidrs", fmt.Sprintf("%v", cidrs)))
 	}
 
 	trustedProxyNets = make([]*net.IPNet, 0, len(cidrs))
 	for _, cidr := range cidrs {
 		_, ipNet, err := net.ParseCIDR(cidr)
 		if err != nil {
-			log.Printf("Warning: invalid trusted proxy CIDR '%s': %v", cidr, err)
+			slog.Warn("invalid trusted proxy CIDR", slog.String("cidr", cidr), slog.String("error", err.Error()))
 			continue
 		}
 		trustedProxyNets = append(trustedProxyNets, ipNet)

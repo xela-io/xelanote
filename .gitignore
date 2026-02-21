@@ -71,6 +71,7 @@ backend/server
 backend/cmd/server/server
 
 # Test artifacts
+test-results/
 frontend/test-results/
 
 # Private Keys / Certificates
@@ -99,3 +100,7 @@ claude.sh
 .codex-docker/
 codex.sh
 codex-config-backup-*.tar.gz
+
+# Local caches
+.gomodcache/
+frontend/.electron-tmp/

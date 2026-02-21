@@ -1,3 +1,0 @@
-internal/api/export.go
-internal/api/notes_crud_read.go
-internal/api/notes_misc_titles.go

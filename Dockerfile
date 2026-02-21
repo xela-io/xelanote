@@ -1,7 +1,9 @@
 # Multi-stage build: Frontend + Backend
 
 # Stage 1: Build Frontend
-FROM node:22-alpine AS frontend-builder
+# F2-05: Digest-pinned base images. Update quarterly: docker pull <image>, then
+# update the digest with: docker inspect --format='{{index .RepoDigests 0}}' <image>
+FROM node:22-alpine@sha256:c17e937e8e79dc0a5630221cfb8bbef536def6ea5b0c6dfc3779c1d41eb2637a AS frontend-builder
 
 WORKDIR /frontend
 
@@ -12,7 +14,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM golang:1.25-alpine AS backend-builder
+FROM golang:1.25-alpine@sha256:ef18ee7117463ac1055f789b7e25a0c9ddfb60e3bfbfb35aafe2fddefa036be3 AS backend-builder
 
 # For SQLCipher support: replace "gcc musl-dev" with "gcc musl-dev sqlcipher-dev",
 # change build tags to "fts5 sqlite_crypt", and add "sqlcipher" to runtime stage.
@@ -30,20 +32,14 @@ COPY backend/ ./
 # Copy built frontend from stage 1
 COPY --from=frontend-builder /frontend/build ./cmd/server/static/
 
-# Verify static files were copied (debugging)
-RUN ls -la ./cmd/server/static/ && echo "Static files found: $(find ./cmd/server/static/ -type f | wc -l) files"
-
 # Build with CGO and FTS5 for SQLite (stripped for production)
 ARG VERSION=dev
 RUN CGO_ENABLED=1 go build -tags "fts5" \
   -ldflags="-s -w -X github.com/xela-io/xelanote/internal/api.Version=${VERSION}" \
   -o /xelanote ./cmd/server
 
-# Verify binary size
-RUN ls -lh /xelanote && echo "Binary size: $(du -h /xelanote | cut -f1)"
-
 # Stage 3: Runtime
-FROM alpine:3.20
+FROM alpine:3.20@sha256:4edbd2beb5f78b1014028f4fbb99f3237d9561100b6881aabbf5acce2c4f9454
 
 RUN apk add --no-cache ca-certificates tzdata sqlite
 

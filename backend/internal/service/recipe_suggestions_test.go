@@ -224,6 +224,99 @@ func ptrString(v string) *string {
 	return &v
 }
 
+func TestFahrenheitToCelsius(t *testing.T) {
+	cases := []struct {
+		f    int
+		want int
+	}{
+		{f: 350, want: 175},
+		{f: 400, want: 205},
+		{f: 425, want: 220},
+		{f: 450, want: 230},
+		{f: 300, want: 150},
+		{f: 375, want: 190},
+		{f: 500, want: 260},
+		{f: 200, want: 95},
+		{f: 32, want: 0},
+		{f: 212, want: 100},
+	}
+
+	for _, tc := range cases {
+		if got := fahrenheitToCelsius(tc.f); got != tc.want {
+			t.Errorf("fahrenheitToCelsius(%d) = %d, want %d", tc.f, got, tc.want)
+		}
+	}
+}
+
+func TestConvertFahrenheitToCelsius(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "degree sign",
+			in:   "Preheat oven to 350°F.",
+			want: "Preheat oven to 175°C.",
+		},
+		{
+			name: "degree sign with space",
+			in:   "Bake at 400 °F for 20 minutes.",
+			want: "Bake at 205°C for 20 minutes.",
+		},
+		{
+			name: "degrees word",
+			in:   "Set to 425 degrees Fahrenheit.",
+			want: "Set to 220°C.",
+		},
+		{
+			name: "degrees F short",
+			in:   "Cook at 375 degrees F until golden.",
+			want: "Cook at 190°C until golden.",
+		},
+		{
+			name: "German Grad Fahrenheit",
+			in:   "Ofen auf 350 Grad Fahrenheit vorheizen.",
+			want: "Ofen auf 175°C vorheizen.",
+		},
+		{
+			name: "multiple temperatures",
+			in:   "Preheat to 350°F, then increase to 450°F.",
+			want: "Preheat to 175°C, then increase to 230°C.",
+		},
+		{
+			name: "no Fahrenheit",
+			in:   "Bake at 180°C for 30 minutes.",
+			want: "Bake at 180°C for 30 minutes.",
+		},
+		{
+			name: "lowercase f",
+			in:   "Heat to 350°f.",
+			want: "Heat to 175°C.",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := convertFahrenheitToCelsius(tc.in)
+			if got != tc.want {
+				t.Errorf("convertFahrenheitToCelsius(%q)\n got: %q\nwant: %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestConvertRecipeTemperatures(t *testing.T) {
+	recipe := &GeneratedRecipe{
+		Instructions: "1. Preheat oven to 350°F.\n2. Bake for 30 min at 350°F.",
+	}
+	convertRecipeTemperatures(recipe)
+	want := "1. Preheat oven to 175°C.\n2. Bake for 30 min at 175°C."
+	if recipe.Instructions != want {
+		t.Errorf("convertRecipeTemperatures:\n got: %q\nwant: %q", recipe.Instructions, want)
+	}
+}
+
 func TestParseSelectedImageCandidates(t *testing.T) {
 	candidates := []string{
 		"https://example.com/a.jpg",

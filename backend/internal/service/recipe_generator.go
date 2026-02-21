@@ -4,11 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/llm"
 )
+
+// fahrenheitPattern matches temperature values in Fahrenheit within recipe text.
+// Matches patterns like: 350°F, 350 °F, 350 degrees F, 350 degrees Fahrenheit, 350 Grad Fahrenheit.
+var fahrenheitPattern = regexp.MustCompile(`(\d+)\s*(?:°\s*|degrees?\s+|Grad\s+)[Ff](?:ahrenheit)?(?:\b|(?:[^a-zA-Z]))`)
 
 // SaveGeneratedRecipeRequest is the input for saving a generated recipe.
 type SaveGeneratedRecipeRequest struct {
@@ -285,4 +291,41 @@ func convertToMetricAmount(amount *float64, normalizedUnit string) (*float64, st
 
 	converted = math.Round(converted*100) / 100
 	return &converted, unit, true
+}
+
+// convertRecipeTemperatures converts Fahrenheit temperatures to Celsius in the recipe instructions.
+func convertRecipeTemperatures(recipe *GeneratedRecipe) {
+	recipe.Instructions = convertFahrenheitToCelsius(recipe.Instructions)
+}
+
+// convertFahrenheitToCelsius replaces Fahrenheit temperatures in text with Celsius equivalents.
+// Values are rounded to the nearest 5°C, which is conventional for cooking temperatures.
+func convertFahrenheitToCelsius(text string) string {
+	return fahrenheitPattern.ReplaceAllStringFunc(text, func(match string) string {
+		sub := fahrenheitPattern.FindStringSubmatch(match)
+		if len(sub) < 2 {
+			return match
+		}
+		f, err := strconv.Atoi(sub[1])
+		if err != nil {
+			return match
+		}
+		c := fahrenheitToCelsius(f)
+		// Preserve any trailing character that was part of the match but not the temperature.
+		suffix := ""
+		trimmed := strings.TrimRight(match, " ")
+		if len(trimmed) > 0 {
+			last := trimmed[len(trimmed)-1]
+			if last != 'F' && last != 'f' && last != 't' { // not ending on F/f/fahrenheit
+				suffix = string(last)
+			}
+		}
+		return fmt.Sprintf("%d°C%s", c, suffix)
+	})
+}
+
+// fahrenheitToCelsius converts a Fahrenheit value to Celsius, rounded to the nearest 5.
+func fahrenheitToCelsius(f int) int {
+	c := float64(f-32) * 5.0 / 9.0
+	return int(math.Round(c/5.0)) * 5
 }

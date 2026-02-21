@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Recipes: Automatic Fahrenheit→Celsius conversion in recipe instructions during AI import (image and URL), rounded to nearest 5°C
+
 ### Security
 
 - Upload directory permissions tightened from 0755 to 0750 (F-14)

@@ -67,6 +67,7 @@ func (s *RecipeSuggestionService) ExtractRecipeFromImage(
 		return nil, err
 	}
 	convertRecipeToMetricUnits(recipe)
+	convertRecipeTemperatures(recipe)
 	return recipe, nil
 }
 
@@ -97,6 +98,7 @@ func (s *RecipeSuggestionService) ExtractRecipeFromURL(
 		return nil, err
 	}
 	convertRecipeToMetricUnits(recipe)
+	convertRecipeTemperatures(recipe)
 
 	normalizedURL := strings.TrimSpace(rawURL)
 	if normalizedURL != "" {

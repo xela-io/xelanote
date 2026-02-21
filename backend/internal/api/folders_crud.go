@@ -22,7 +22,7 @@ func (s *Server) createFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := utils.ValidateFolderPath(req.Path); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		respondError(w, http.StatusBadRequest, "invalid folder path")
 		return
 	}
 
@@ -98,14 +98,14 @@ func (s *Server) moveFolder(w http.ResponseWriter, r *http.Request) {
 	// still applies for non-root paths.
 	if req.NewParentPath != "/" {
 		if err := utils.ValidateFolderPath(req.NewParentPath); err != nil {
-			respondError(w, http.StatusBadRequest, err.Error())
+			respondError(w, http.StatusBadRequest, "invalid folder path")
 			return
 		}
 	}
 
 	err := s.noteService.MoveFolder(userID, id, req.NewParentPath)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to move folder", err)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (s *Server) deleteFolder(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.DeleteFolder(userID, id)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to delete folder", err)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (s *Server) renameFolder(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.RenameFolder(userID, id, req.NewName)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to rename folder", err)
 		return
 	}
 

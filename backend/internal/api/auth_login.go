@@ -55,7 +55,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// Record failed login attempt for account lockout
 			s.accountLockout.RecordFailure(req.UsernameOrEmail, clientIP)
-			respondError(w, http.StatusUnauthorized, err.Error())
+			respondError(w, http.StatusUnauthorized, "invalid credentials or two-factor code")
 			return
 		}
 
@@ -81,7 +81,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 			slog.String("reason", "invalid_credentials"),
 			securityIPAttr(r))
 
-		respondError(w, http.StatusUnauthorized, err.Error())
+		respondError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 

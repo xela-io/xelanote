@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Email validation: `isValidEmail()` now rejects IP-literal addresses (`user@[192.168.1.1]`), single-label domains (`user@localhost`), and addresses shorter than 5 characters
+- Error leakage: Login, 2FA verification, and backup code regeneration endpoints no longer expose internal service/DB error details to clients
 
 - Lockout overflow fix: exponential backoff in `AccountLockout` now uses `safeLockoutDuration()` with capped bit-shift exponent (`maxExponentShift=20`) to prevent int64 overflow that produced negative durations, bypassing the lockout cap after ~39 failed attempts
 - CSP hardening: removed bare `ws: wss:` from `connect-src` (allowed WebSocket to any host); CSP Level 3 `'self'` covers same-origin WebSocket. Added `object-src 'none'` as defense-in-depth against plugin exploitation

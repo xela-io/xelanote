@@ -100,7 +100,7 @@ func (s *Server) verifyTwoFactor(w http.ResponseWriter, r *http.Request) {
 
 	// Verify TOTP code and enable 2FA
 	if err := s.tfaService.VerifyAndEnableTOTP(userID, req.Code); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to verify TOTP code", err)
 		return
 	}
 
@@ -279,7 +279,7 @@ func (s *Server) regenerateBackupCodes(w http.ResponseWriter, r *http.Request) {
 	// Regenerate backup codes
 	codes, err := s.tfaService.RegenerateBackupCodes(userID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to regenerate backup codes", err)
 		return
 	}
 

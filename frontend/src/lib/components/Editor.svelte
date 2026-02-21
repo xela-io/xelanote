@@ -77,6 +77,7 @@
   } from '$lib/editor/note-actions';
   import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
+  import { setupScrollSync, syncPreviewToEditor } from '$lib/editor/scroll-sync';
   import { createSplitResizeController } from '$lib/editor/split-resize';
   import { insertTable } from '$lib/editor/table-insert';
   import { taskCollapse, type TaskCollapseOptions } from '$lib/editor/task-collapse';
@@ -296,7 +297,7 @@
     onInsertTable: () => {
       handleInsertTable();
     },
-    onBeforeNewline: (view) => handleNewlineWithTaskReorder(view),
+    onBeforeNewline: () => false, // Defers to default CM behavior; task reorder on toggle
     onFindReplace: (options) => {
       openFindReplace(undefined, options);
     },
@@ -603,15 +604,6 @@
     });
   }
 
-  /**
-   * Handle Enter key in task lists.
-   * Currently defers to default CodeMirror behavior for all cases.
-   * Task reordering (checked → bottom) happens on checkbox toggle, not on Enter.
-   */
-  function handleNewlineWithTaskReorder(_view: import('@codemirror/view').EditorView): boolean {
-    return false;
-  }
-
   function toggleTask(checkboxIndex: number, checked: boolean, lineNumber?: number) {
     const cn = notes.getCurrentNote();
     const baseOptions = {
@@ -745,14 +737,17 @@
     resetInputEventValue(e);
   }
 
-  async function handleInsertTask() {
+  async function withEditor(action: (view: EditorView) => void) {
     const view = await ensureEditorReady({
       getEditorView: () => editorView,
       setEditorMode: (mode) => ui.setEditorMode(mode),
       tick,
     });
-    if (!view) return;
-    insertTask(view);
+    if (view) action(view);
+  }
+
+  function handleInsertTask() {
+    withEditor(insertTask);
   }
 
   function handleInsertTable() {
@@ -761,33 +756,15 @@
 
   async function handleTableInsert(rows: number, cols: number) {
     showTableInsertDialog = false;
-    const view = await ensureEditorReady({
-      getEditorView: () => editorView,
-      setEditorMode: (mode) => ui.setEditorMode(mode),
-      tick,
-    });
-    if (!view) return;
-    insertTable(view, rows, cols);
+    withEditor((view) => insertTable(view, rows, cols));
   }
 
-  async function handleIndent() {
-    const view = await ensureEditorReady({
-      getEditorView: () => editorView,
-      setEditorMode: (mode) => ui.setEditorMode(mode),
-      tick,
-    });
-    if (!view) return;
-    indentSelection(view);
+  function handleIndent() {
+    withEditor(indentSelection);
   }
 
-  async function handleOutdent() {
-    const view = await ensureEditorReady({
-      getEditorView: () => editorView,
-      setEditorMode: (mode) => ui.setEditorMode(mode),
-      tick,
-    });
-    if (!view) return;
-    outdentSelection(view);
+  function handleOutdent() {
+    withEditor(outdentSelection);
   }
 
   const findReplaceHandlers = {
@@ -877,57 +854,12 @@
     setFindReplaceState(nextState);
   }
 
-  function getScrollRatio(element: HTMLElement): number {
-    const maxScroll = element.scrollHeight - element.clientHeight;
-    if (maxScroll <= 0) return 0;
-    return Math.max(0, Math.min(1, element.scrollTop / maxScroll));
-  }
-
-  function setScrollByRatio(element: HTMLElement, ratio: number) {
-    const maxScroll = element.scrollHeight - element.clientHeight;
-    if (maxScroll <= 0) {
-      element.scrollTop = 0;
-      return;
-    }
-    element.scrollTop = maxScroll * Math.max(0, Math.min(1, ratio));
-  }
-
   $effect(() => {
     const isDesktopSplit = !ui.getIsMobile() && ui.getEditorMode() === 'split';
     const previewScroller = previewScrollRef;
     const editorScroller = editorView?.scrollDOM;
     if (!isDesktopSplit || !previewScroller || !editorScroller) return;
-
-    let syncingFromEditor = false;
-    let syncingFromPreview = false;
-
-    const syncPreviewFromEditor = () => {
-      if (syncingFromPreview) return;
-      syncingFromEditor = true;
-      setScrollByRatio(previewScroller, getScrollRatio(editorScroller));
-      requestAnimationFrame(() => {
-        syncingFromEditor = false;
-      });
-    };
-
-    const syncEditorFromPreview = () => {
-      if (syncingFromEditor) return;
-      syncingFromPreview = true;
-      setScrollByRatio(editorScroller, getScrollRatio(previewScroller));
-      requestAnimationFrame(() => {
-        syncingFromPreview = false;
-      });
-    };
-
-    // Keep preview position aligned when entering split mode.
-    syncPreviewFromEditor();
-
-    editorScroller.addEventListener('scroll', syncPreviewFromEditor, { passive: true });
-    previewScroller.addEventListener('scroll', syncEditorFromPreview, { passive: true });
-    return () => {
-      editorScroller.removeEventListener('scroll', syncPreviewFromEditor);
-      previewScroller.removeEventListener('scroll', syncEditorFromPreview);
-    };
+    return setupScrollSync(editorScroller, previewScroller);
   });
 
   $effect(() => {
@@ -939,7 +871,7 @@
 
     requestAnimationFrame(() => {
       void renderedContentSnapshot;
-      setScrollByRatio(previewScroller, getScrollRatio(editorScroller));
+      syncPreviewToEditor(previewScroller, editorScroller);
     });
   });
 
@@ -1100,7 +1032,6 @@
 
         <!-- Split resize handle -->
         {#if ui.getEditorMode() === 'split'}
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
             class="split-resize-handle"
             class:active={isSplitResizing}
@@ -1130,8 +1061,6 @@
             {#if headings.length > 0}
               <TableOfContents {headings} onHeadingClick={handleTocClickLocal} />
             {/if}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <!-- Intentional: Click handler delegates to interactive elements (wikilinks, checkboxes) in rendered markdown. These elements are natively interactive in the HTML output. -->
             <div
               class="markdown-preview"

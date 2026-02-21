@@ -54,7 +54,9 @@ function makeTree(): FolderTreeNode {
         id: 1,
         path: '/docs',
         name: 'docs',
-        children: [{ type: 'note', id: 'note-1', title: 'Note 1', displayOrder: 0 }],
+        children: [
+          { type: 'note', id: 'note-1', title: 'Note 1', displayOrder: 0, folderPath: '/docs' },
+        ],
         noteCount: 1,
         isExpanded: false,
         displayOrder: 0,

@@ -14,9 +14,9 @@
   import * as ui from '$lib/stores/ui.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
-  import TreeContextMenu from './TreeContextMenu.svelte';
   import TreeNodeDialogs from './tree/TreeNodeDialogs.svelte';
   import TreeNodeRow from './tree/TreeNodeRow.svelte';
+  import TreeContextMenu from './TreeContextMenu.svelte';
   import UnifiedTree from './UnifiedTree.svelte';
   const {
     node,

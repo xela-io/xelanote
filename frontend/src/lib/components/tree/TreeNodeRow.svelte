@@ -12,7 +12,6 @@
   import { _ } from 'svelte-i18n';
 
   import type { TreeNode } from '$lib/stores/tree.svelte';
-  import * as ui from '$lib/stores/ui.svelte';
 
   interface Props {
     node: TreeNode;
@@ -87,12 +86,7 @@
   {/if}
   <div class="tree-row">
     {#if node.type === 'folder' && node.children.length > 0}
-      <button
-        class="expand-button"
-        data-no-drag
-        onclick={onExpandClick}
-        aria-label="Toggle folder"
-      >
+      <button class="expand-button" data-no-drag onclick={onExpandClick} aria-label="Toggle folder">
         {#if node.isExpanded}
           <ChevronDown size={chevronIconSize} />
         {:else}
@@ -105,11 +99,7 @@
 
     {#if node.type === 'folder'}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="folder-row-container"
-        oncontextmenu={onContextMenu}
-        onkeydown={onRowKeydown}
-      >
+      <div class="folder-row-container" oncontextmenu={onContextMenu} onkeydown={onRowKeydown}>
         <button
           draggable={treeDragEnabled}
           ondragstart={treeDragEnabled ? onFolderDragStart : undefined}
@@ -149,11 +139,7 @@
     {:else}
       <!-- Note node -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="note-row-container"
-        oncontextmenu={onContextMenu}
-        onkeydown={onRowKeydown}
-      >
+      <div class="note-row-container" oncontextmenu={onContextMenu} onkeydown={onRowKeydown}>
         <button
           draggable={noteExternalDragEnabled}
           ondragstart={noteExternalDragEnabled ? onNoteDragStart : undefined}

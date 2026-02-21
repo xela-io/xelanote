@@ -22,7 +22,7 @@ const mockNote = (id: string): SharedNote =>
     title: `Note ${id}`,
     shared_by: 'alice',
     role: 'viewer',
-  }) as SharedNote;
+  }) as unknown as SharedNote;
 
 const mockFolder = (id: number): SharedFolder =>
   ({
@@ -30,7 +30,7 @@ const mockFolder = (id: number): SharedFolder =>
     path: `/shared-${id}`,
     shared_by: 'alice',
     role: 'viewer',
-  }) as SharedFolder;
+  }) as unknown as SharedFolder;
 
 const mockCollection = (id: number): SharedCollection =>
   ({
@@ -38,7 +38,7 @@ const mockCollection = (id: number): SharedCollection =>
     name: `Collection ${id}`,
     shared_by: 'alice',
     role: 'viewer',
-  }) as SharedCollection;
+  }) as unknown as SharedCollection;
 
 describe('sharing store', () => {
   beforeEach(() => {

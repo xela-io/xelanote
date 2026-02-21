@@ -41,8 +41,8 @@ const reorderRecipeImages = vi.fn();
 vi.mock('$lib/api', () => ({
   ApiError: class ApiError extends Error {
     status: number;
-    constructor(status = 500, msg = 'api error') {
-      super(msg);
+    constructor(message = 'api error', status = 500) {
+      super(message);
       this.status = status;
     }
   },
@@ -301,7 +301,7 @@ describe('recipes store', () => {
 
     it('should handle 404 error with specific message', async () => {
       const { ApiError } = await import('$lib/api');
-      getRecipeDetail.mockRejectedValue(new ApiError(404, 'not found'));
+      getRecipeDetail.mockRejectedValue(new ApiError('not found', 404));
 
       const store = await import('$lib/stores/recipes.svelte');
       await store.loadRecipeDetail('missing');
@@ -312,7 +312,7 @@ describe('recipes store', () => {
 
     it('should handle 403 error with specific message', async () => {
       const { ApiError } = await import('$lib/api');
-      getRecipeDetail.mockRejectedValue(new ApiError(403, 'forbidden'));
+      getRecipeDetail.mockRejectedValue(new ApiError('forbidden', 403));
 
       const store = await import('$lib/stores/recipes.svelte');
       await store.loadRecipeDetail('secret');
@@ -403,7 +403,7 @@ describe('recipes store', () => {
       getRecipeDetail.mockResolvedValue(detail);
 
       const { ApiError } = await import('$lib/api');
-      updateRecipeMetadata.mockRejectedValue(new ApiError(409, 'conflict'));
+      updateRecipeMetadata.mockRejectedValue(new ApiError('conflict', 409));
 
       const store = await import('$lib/stores/recipes.svelte');
       await store.loadRecipeDetail('note-1');
@@ -607,7 +607,7 @@ describe('recipes store', () => {
 
   describe('shareCollectionWithUser', () => {
     it('should share and return share object', async () => {
-      const share = { id: 1, user_id: 2, role: 'viewer' } as CollectionShare;
+      const share = { id: 1, user_id: 2, role: 'viewer' } as unknown as CollectionShare;
       shareCollection.mockResolvedValue(share);
 
       const store = await import('$lib/stores/recipes.svelte');
@@ -651,7 +651,7 @@ describe('recipes store', () => {
 
   describe('getCollectionSharesList', () => {
     it('should return shares array', async () => {
-      const shares = [{ id: 1, user_id: 2, role: 'viewer' }] as CollectionShare[];
+      const shares = [{ id: 1, user_id: 2, role: 'viewer' }] as unknown as CollectionShare[];
       getCollectionShares.mockResolvedValue(shares);
 
       const store = await import('$lib/stores/recipes.svelte');

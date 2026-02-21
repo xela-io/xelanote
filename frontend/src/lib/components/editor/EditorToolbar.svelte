@@ -235,7 +235,12 @@
     <div class="flex items-center gap-1 sm:contents">
       <div class="flex items-center justify-center gap-1 min-w-0 flex-1">
         <div class="toolbar-scroll-wrapper">
-          <div class="toolbar-buttons flex items-center gap-1" role="toolbar" aria-label={$_('component.editor.toolbar.editor_toolbar')} use:scrollFade>
+          <div
+            class="toolbar-buttons flex items-center gap-1"
+            role="toolbar"
+            aria-label={$_('component.editor.toolbar.editor_toolbar')}
+            use:scrollFade
+          >
             <!-- Sidebar toggle - always visible on mobile since MobileHeader is hidden on note pages -->
             {#if isMobile}
               <button

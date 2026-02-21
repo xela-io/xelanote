@@ -344,7 +344,6 @@
 
 {#if ui.getQuickSwitcherOpen()}
   <!-- Backdrop -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 bg-black/50 z-50"
     onclick={handleBackdropClick}

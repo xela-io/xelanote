@@ -29,12 +29,7 @@
     onNavigate?: () => void;
   }
 
-  const {
-    isMobile,
-    smallIconSize,
-    onShowFeedback,
-    onNavigate,
-  }: Props = $props();
+  const { isMobile, smallIconSize, onShowFeedback, onNavigate }: Props = $props();
 
   function navigateTo(path: string) {
     goto(path);
@@ -96,7 +91,9 @@
           ui.toggleQuickSwitcher();
           if (isMobile) ui.closeSidebarOnMobile();
         }}
-        class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile ? 'toolbar-btn' : ''} shrink-0"
+        class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile
+          ? 'toolbar-btn'
+          : ''} shrink-0"
         title="{$_('page.sidebar.search')} (Ctrl+P)"
         aria-label={$_('page.sidebar.search')}
       >
@@ -105,7 +102,9 @@
       {#if features.getGraphFeatureEnabled()}
         <button
           onclick={() => navigateTo('/graph')}
-          class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile ? 'toolbar-btn' : ''} shrink-0"
+          class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile
+            ? 'toolbar-btn'
+            : ''} shrink-0"
           title="{$_('page.sidebar.graph')} (Ctrl+G)"
           aria-label={$_('page.sidebar.graph')}
         >
@@ -117,7 +116,9 @@
       </div>
       <button
         onclick={() => navigateTo('/settings')}
-        class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile ? 'toolbar-btn' : ''} shrink-0"
+        class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile
+          ? 'toolbar-btn'
+          : ''} shrink-0"
         title={$_('page.sidebar.settings')}
         aria-label={$_('page.sidebar.settings')}
       >
@@ -126,7 +127,9 @@
       {#if auth.isAdmin()}
         <button
           onclick={() => navigateTo('/admin')}
-          class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile ? 'toolbar-btn' : ''} shrink-0"
+          class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile
+            ? 'toolbar-btn'
+            : ''} shrink-0"
           title={$_('page.sidebar.admin')}
           aria-label={$_('page.sidebar.admin')}
         >
@@ -136,7 +139,9 @@
       {#if errorReporter.getServiceAvailable()}
         <button
           onclick={onShowFeedback}
-          class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile ? 'toolbar-btn' : ''} shrink-0"
+          class="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile
+            ? 'toolbar-btn'
+            : ''} shrink-0"
           title={$_('feedback.sidebar_button')}
           aria-label={$_('feedback.sidebar_button')}
         >

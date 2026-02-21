@@ -200,9 +200,8 @@ describe('offline-queue', () => {
   });
 
   it('dequeues an operation by id', async () => {
-    const { enqueueOperation, dequeueOperation, getPendingOperations } = await import(
-      './offline-queue'
-    );
+    const { enqueueOperation, dequeueOperation, getPendingOperations } =
+      await import('./offline-queue');
 
     await enqueueOperation(makeOperation({ id: 'op-1' }));
     await enqueueOperation(makeOperation({ id: 'op-2', noteId: 'note-2' }));
@@ -232,9 +231,8 @@ describe('offline-queue', () => {
   });
 
   it('getQueueCount excludes completed and failed operations', async () => {
-    const { enqueueOperation, updateOperationStatus, getQueueCount } = await import(
-      './offline-queue'
-    );
+    const { enqueueOperation, updateOperationStatus, getQueueCount } =
+      await import('./offline-queue');
 
     await enqueueOperation(makeOperation({ id: 'op-1', status: 'pending' }));
     await enqueueOperation(makeOperation({ id: 'op-2', noteId: 'n2', status: 'pending' }));
@@ -248,9 +246,8 @@ describe('offline-queue', () => {
   });
 
   it('hasPendingForNote returns true for pending/syncing/conflict ops', async () => {
-    const { enqueueOperation, updateOperationStatus, hasPendingForNote } = await import(
-      './offline-queue'
-    );
+    const { enqueueOperation, updateOperationStatus, hasPendingForNote } =
+      await import('./offline-queue');
 
     await enqueueOperation(makeOperation({ id: 'op-1', noteId: 'note-A', status: 'pending' }));
 
@@ -266,9 +263,8 @@ describe('offline-queue', () => {
 
   describe('optimizeQueue', () => {
     it('collapses multiple updates into the last one with first expectedVersion', async () => {
-      const { enqueueOperation, optimizeQueue, getPendingOperations } = await import(
-        './offline-queue'
-      );
+      const { enqueueOperation, optimizeQueue, getPendingOperations } =
+        await import('./offline-queue');
 
       await enqueueOperation(
         makeOperation({
@@ -316,15 +312,18 @@ describe('offline-queue', () => {
       expect(pending).toHaveLength(1);
       expect(pending[0].id).toBe('u3');
       // Last content but first expectedVersion
-      const payload = pending[0].payload as { type: string; notePayload: { title: string; encrypted_content: string }; expectedVersion: number };
+      const payload = pending[0].payload as {
+        type: string;
+        notePayload: { title: string; encrypted_content: string };
+        expectedVersion: number;
+      };
       expect(payload.notePayload.title).toBe('v3');
       expect(payload.expectedVersion).toBe(1);
     });
 
     it('cancels create + delete for the same note', async () => {
-      const { enqueueOperation, optimizeQueue, getPendingOperations } = await import(
-        './offline-queue'
-      );
+      const { enqueueOperation, optimizeQueue, getPendingOperations } =
+        await import('./offline-queue');
 
       await enqueueOperation(
         makeOperation({
@@ -357,9 +356,8 @@ describe('offline-queue', () => {
     });
 
     it('keeps only delete when update + delete exist for same note', async () => {
-      const { enqueueOperation, optimizeQueue, getPendingOperations } = await import(
-        './offline-queue'
-      );
+      const { enqueueOperation, optimizeQueue, getPendingOperations } =
+        await import('./offline-queue');
 
       await enqueueOperation(
         makeOperation({

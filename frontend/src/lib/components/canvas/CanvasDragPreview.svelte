@@ -11,13 +11,7 @@
     height: number;
   }
 
-  const {
-    action,
-    containerX,
-    containerY,
-    width,
-    height,
-  }: Props = $props();
+  const { action, containerX, containerY, width, height }: Props = $props();
 
   function getToolLabel(a: ToolbarAction): string {
     switch (a) {

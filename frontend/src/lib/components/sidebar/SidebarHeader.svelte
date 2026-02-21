@@ -1,11 +1,5 @@
 <script lang="ts">
-  import {
-    ArrowUpDown,
-    Check,
-    ChevronLeft,
-    FilePlus,
-    FolderPlus,
-  } from 'lucide-svelte';
+  import { ArrowUpDown, Check, ChevronLeft, FilePlus, FolderPlus } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import type { SortMode } from '$lib/stores/tree.svelte';
@@ -51,20 +45,16 @@
   });
 </script>
 
-<div
-  class="flex items-center justify-between px-4 py-2.5 border-b border-sidebar-border shrink-0"
->
-  <a
-    href="/"
-    onclick={onLogoClick}
-    class="hover:opacity-80 transition-opacity"
-  >
+<div class="flex items-center justify-between px-4 py-2.5 border-b border-sidebar-border shrink-0">
+  <a href="/" onclick={onLogoClick} class="hover:opacity-80 transition-opacity">
     <Logo size="md" />
   </a>
   <div class="flex items-center gap-0.5">
     <button
       onclick={onCreateNote}
-      class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors {isMobile ? 'toolbar-btn' : ''}"
+      class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors {isMobile
+        ? 'toolbar-btn'
+        : ''}"
       title={$_('page.sidebar.new_note')}
       aria-label={$_('page.sidebar.new_note')}
     >
@@ -72,7 +62,9 @@
     </button>
     <button
       onclick={onCreateFolder}
-      class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors {isMobile ? 'toolbar-btn' : ''}"
+      class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors {isMobile
+        ? 'toolbar-btn'
+        : ''}"
       title={$_('page.sidebar.new_folder')}
       aria-label={$_('page.sidebar.new_folder')}
     >
@@ -81,7 +73,9 @@
     <div class="relative" bind:this={localSortDropdownRef}>
       <button
         onclick={onToggleSortDropdown}
-        class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors {isMobile ? 'toolbar-btn' : ''}"
+        class="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors {isMobile
+          ? 'toolbar-btn'
+          : ''}"
         class:bg-sidebar-accent={showSortDropdown}
         title={$_('page.sidebar.sort_notes')}
         aria-label={$_('page.sidebar.sort_notes')}
@@ -111,7 +105,9 @@
     {#if onCloseSidebar}
       <button
         onclick={onCloseSidebar}
-        class="p-1.5 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile ? 'toolbar-btn' : ''}"
+        class="p-1.5 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground {isMobile
+          ? 'toolbar-btn'
+          : ''}"
         title={$_(isMobile ? 'page.sidebar.close_drawer' : 'page.sidebar.collapse_sidebar')}
         aria-label={$_(isMobile ? 'page.sidebar.close_drawer' : 'page.sidebar.collapse_sidebar')}
       >

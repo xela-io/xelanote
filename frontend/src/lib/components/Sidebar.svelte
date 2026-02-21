@@ -56,8 +56,8 @@
   import JournalButton from './JournalButton.svelte';
   import RecipeButton from './RecipeButton.svelte';
   import SidebarFooter from './sidebar/SidebarFooter.svelte';
-  import ThemeSelector from './ThemeSelector.svelte';
   import SidebarHeader from './sidebar/SidebarHeader.svelte';
+  import ThemeSelector from './ThemeSelector.svelte';
   import UnifiedTree from './UnifiedTree.svelte';
   import VirtualizedTree from './VirtualizedTree.svelte';
 
@@ -369,7 +369,9 @@
         }}
       >
         {#if tree.getIsLoading()}
-          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">{$_('common.loading')}</div>
+          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">
+            {$_('common.loading')}
+          </div>
         {:else if tree.getTreeData()}
           <!-- Drop zone for moving folders/notes to top level -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -466,7 +468,9 @@
         }}
       >
         {#if tree.getIsLoading()}
-          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">{$_('common.loading')}</div>
+          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">
+            {$_('common.loading')}
+          </div>
         {:else if tree.getTreeData()}
           <!-- Drop zone for moving folders/notes to top level -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -522,7 +526,6 @@
       {/if}
 
       <!-- Resize handle -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="resize-handle"
         class:active={isResizing}
@@ -537,7 +540,10 @@
       ></div>
     {:else}
       <!-- Collapsed sidebar -->
-      <nav class="flex flex-col items-center h-full min-h-0 overflow-y-auto py-3 gap-1.5" aria-label={$_('accessibility.sidebar')}>
+      <nav
+        class="flex flex-col items-center h-full min-h-0 overflow-y-auto py-3 gap-1.5"
+        aria-label={$_('accessibility.sidebar')}
+      >
         <!-- Top actions -->
         <button
           onclick={() => ui.toggleSidebar()}

@@ -9,9 +9,9 @@
   import type { RecipeCollection } from '$lib/api';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
-  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
   import * as features from '$lib/stores/features.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
+  import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   let showCreateDialog = $state(false);
   let newTitle = $state('');
@@ -480,8 +480,5 @@
 {/if}
 
 {#if ImportDialog}
-  <ImportDialog
-    open={showImportDialog}
-    onClose={() => (showImportDialog = false)}
-  />
+  <ImportDialog open={showImportDialog} onClose={() => (showImportDialog = false)} />
 {/if}

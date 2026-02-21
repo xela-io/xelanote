@@ -75,7 +75,7 @@
 
   const {
     note,
-    noteId,
+    noteId: _noteId,
     showMoveDialog,
     dialogLoaders,
     onCloseMoveDialog,
@@ -171,14 +171,14 @@
 {#if showMoreMenu}
   <EditorMoreMenu
     {onDelete}
-    onMove={onMove}
-    onExport={onExport}
-    onColorPicker={onColorPicker}
-    onHelp={onHelp}
-    onIndent={onIndent}
-    onOutdent={onOutdent}
+    {onMove}
+    {onExport}
+    {onColorPicker}
+    {onHelp}
+    {onIndent}
+    {onOutdent}
     {onAIToggle}
-    onShare={onShare}
+    {onShare}
     {onEncryptionToggle}
     {onSetEditorMode}
     {editorMode}

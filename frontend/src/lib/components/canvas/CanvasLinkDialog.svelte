@@ -12,22 +12,10 @@
     onClose: () => void;
   }
 
-  const {
-    open,
-    linkUrl,
-    linkUrlError,
-    onUrlChange,
-    onSubmit,
-    onClose,
-  }: Props = $props();
+  const { open, linkUrl, linkUrlError, onUrlChange, onSubmit, onClose }: Props = $props();
 </script>
 
-<BaseDialog
-  {open}
-  title={$_('component.canvas.link_dialog.title')}
-  {onClose}
-  size="sm"
->
+<BaseDialog {open} title={$_('component.canvas.link_dialog.title')} {onClose} size="sm">
   {#snippet content()}
     <div class="space-y-3">
       <label for="canvas-link-input" class="text-sm font-medium text-foreground">
@@ -53,11 +41,7 @@
     </div>
   {/snippet}
   {#snippet footer()}
-    <button
-      type="button"
-      onclick={onClose}
-      class="px-4 py-2 text-sm hover:bg-accent rounded-md"
-    >
+    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
       {$_('common.cancel')}
     </button>
     <button

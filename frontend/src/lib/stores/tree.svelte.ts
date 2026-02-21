@@ -45,13 +45,12 @@ export {
   updateNoteColor,
   updateNoteInTree,
 } from './tree-operations.svelte';
-import { initOperations } from './tree-operations.svelte';
-
 // Re-export index lookup functions (these take treeData as parameter)
 import {
   findNodeById as findNodeByIdRaw,
   findParentOfNodeById as findParentOfNodeByIdRaw,
 } from './tree-index.svelte';
+import { initOperations } from './tree-operations.svelte';
 
 // State
 let treeData = $state<FolderTreeNode | null>(null);

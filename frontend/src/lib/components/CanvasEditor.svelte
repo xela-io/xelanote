@@ -23,16 +23,16 @@
   } from '$lib/components/canvas/canvas-note-drop';
   import { TOOL_DRAG_MIME, type ToolbarAction } from '$lib/components/canvas/canvas-toolbar-tools';
   import CanvasContextMenu from '$lib/components/canvas/CanvasContextMenu.svelte';
+  import CanvasDragPreview from '$lib/components/canvas/CanvasDragPreview.svelte';
   import CanvasEditorToolbar from '$lib/components/canvas/CanvasEditorToolbar.svelte';
   import CanvasFileNode from '$lib/components/canvas/CanvasFileNode.svelte';
   import CanvasGroupNode from '$lib/components/canvas/CanvasGroupNode.svelte';
+  import CanvasLinkDialog from '$lib/components/canvas/CanvasLinkDialog.svelte';
   import CanvasLinkNode from '$lib/components/canvas/CanvasLinkNode.svelte';
   import CanvasMoreMenu from '$lib/components/canvas/CanvasMoreMenu.svelte';
   import CanvasNotePicker from '$lib/components/canvas/CanvasNotePicker.svelte';
   import CanvasTextNode from '$lib/components/canvas/CanvasTextNode.svelte';
   import CanvasToolbar from '$lib/components/canvas/CanvasToolbar.svelte';
-  import CanvasDragPreview from '$lib/components/canvas/CanvasDragPreview.svelte';
-  import CanvasLinkDialog from '$lib/components/canvas/CanvasLinkDialog.svelte';
   import {
     type DialogLoaderState,
     loadMoveToFolderDialog,

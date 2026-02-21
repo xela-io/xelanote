@@ -247,7 +247,7 @@ describe('api client', () => {
       json: async () => {
         throw new SyntaxError('Unexpected token');
       },
-    } as Response);
+    } as unknown as Response);
 
     try {
       await request('/notes', { method: 'GET' });

@@ -15,19 +15,18 @@
 
 const isDev: boolean = import.meta.env.DEV;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = (..._args: unknown[]): void => {};
 
 export const log = {
-	/** Verbose debugging output. Silenced in production. */
-	debug: isDev ? console.debug.bind(console) : noop,
+  /** Verbose debugging output. Silenced in production. */
+  debug: isDev ? console.debug.bind(console) : noop,
 
-	/** Informational messages. Silenced in production. */
-	info: isDev ? console.info.bind(console) : noop,
+  /** Informational messages. Silenced in production. */
+  info: isDev ? console.info.bind(console) : noop,
 
-	/** Warnings — always logged in all environments. */
-	warn: console.warn.bind(console),
+  /** Warnings — always logged in all environments. */
+  warn: console.warn.bind(console),
 
-	/** Errors — always logged in all environments. */
-	error: console.error.bind(console)
+  /** Errors — always logged in all environments. */
+  error: console.error.bind(console),
 } as const;

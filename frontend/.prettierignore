@@ -12,3 +12,4 @@ coverage
 test-results
 static/generated
 src-tauri/target
+src-tauri/gen

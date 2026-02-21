@@ -39,10 +39,7 @@ export interface FlatTreeItem {
   index: number;
 }
 
-export function findFolderNode(
-  root: FolderTreeNode | null,
-  path: string
-): FolderTreeNode | null {
+export function findFolderNode(root: FolderTreeNode | null, path: string): FolderTreeNode | null {
   if (!root) return null;
   if (root.path === path) return root;
 
@@ -56,10 +53,7 @@ export function findFolderNode(
   return null;
 }
 
-export function findFolderNodeById(
-  root: FolderTreeNode | null,
-  id: number
-): FolderTreeNode | null {
+export function findFolderNodeById(root: FolderTreeNode | null, id: number): FolderTreeNode | null {
   if (!root) return null;
   if (root.id === id) return root;
 

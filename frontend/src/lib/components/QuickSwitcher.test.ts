@@ -112,10 +112,11 @@ describe('QuickSwitcher', () => {
     vi.mocked(searchStore.getActiveFilterCount).mockReturnValue(0);
     vi.mocked(searchStore.hasActiveFilters).mockReturnValue(false);
     vi.mocked(searchStore.getFilters).mockReturnValue({
+      query: '',
       folders: [],
       tags: [],
-      createdDate: null,
-      updatedDate: null,
+      createdDate: undefined,
+      updatedDate: undefined,
     });
   });
 

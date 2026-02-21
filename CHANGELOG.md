@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Recipes: AI import (image and URL) now reliably translates recipes to the user's locale (e.g. German) using sandwich-pattern prompt reinforcement
+
 ### Added
 
 - Recipes: Automatic Fahrenheit→Celsius conversion in recipe instructions during AI import (image and URL), rounded to nearest 5°C

@@ -488,11 +488,15 @@ JSON:`, lang)
 // BuildRecipeExtractionFromImagePrompt creates a prompt for extracting a full recipe from an image.
 func BuildRecipeExtractionFromImagePrompt(locale string) string {
 	lang := "English"
+	langReminder := ""
 	if locale == "de" {
 		lang = "German"
+		langReminder = "\n\nReminder: The JSON output MUST be in German. Translate title, ingredients, and instructions to German."
 	}
 
 	return fmt.Sprintf(`Extract a complete recipe from this image (photo, screenshot, or scan).
+
+IMPORTANT: All recipe content (title, ingredient names, units, and instructions) MUST be written in %s, regardless of the source language.
 
 Return ONLY valid JSON using exactly one of these shapes:
 1) A recipe object
@@ -520,25 +524,29 @@ Recipe object schema:
 }
 
 Rules:
-1. Write title, ingredients, and instructions in %s
+1. CRITICAL: Write title, ingredients, and instructions in %s — translate if the source is in a different language
 2. Keep only recipe-relevant content, remove ads or unrelated text
 3. If servings are missing, choose a reasonable default
 4. If difficulty is unclear, set it to null
 5. Use metric units for ingredients whenever possible (ml, l, g, kg)
 6. Use Celsius (°C) for all temperatures in instructions
-7. Return JSON only
+7. Return JSON only%s
 
-JSON:`, lang)
+JSON:`, lang, lang, langReminder)
 }
 
 // BuildRecipeExtractionFromTextPrompt creates a prompt for extracting a full recipe from webpage text.
 func BuildRecipeExtractionFromTextPrompt(pageText, locale string) string {
 	lang := "English"
+	langReminder := ""
 	if locale == "de" {
 		lang = "German"
+		langReminder = "\n\nReminder: The JSON output MUST be in German. Translate title, ingredients, and instructions to German."
 	}
 
 	return fmt.Sprintf(`Extract the primary recipe from this webpage text.
+
+IMPORTANT: All recipe content (title, ingredient names, units, and instructions) MUST be written in %s, regardless of the source language.
 
 Return ONLY valid JSON using exactly one of these shapes:
 1) A recipe object
@@ -568,15 +576,15 @@ Recipe object schema:
 Rules:
 1. Extract only one coherent recipe (prefer the main one)
 2. Ignore comments, ads, navigation, and unrelated page fragments
-3. Write title, ingredients, and instructions in %s
+3. CRITICAL: Write title, ingredients, and instructions in %s — translate if the source is in a different language
 4. Use metric units for ingredients whenever possible (ml, l, g, kg)
 5. Use Celsius (°C) for all temperatures in instructions
 6. Return JSON only
 
 Webpage text:
-%s
+%s%s
 
-JSON:`, lang, pageText)
+JSON:`, lang, lang, pageText, langReminder)
 }
 
 // BuildRecipeMainImageSelectionPrompt asks the LLM to pick the most suitable recipe hero images.

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -46,7 +45,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 
 // registerOrBootstrapUser tries Register, falling back to BootstrapAdmin when
 // registration is disabled and a valid bootstrap token is provided.
-func (s *Server) registerOrBootstrapUser(w http.ResponseWriter, r *http.Request, req RegisterRequest) (*db.User, bool) {
+func (s *Server) registerOrBootstrapUser(w http.ResponseWriter, r *http.Request, req RegisterRequest) (*service.User, bool) {
 	user, err := s.authService.Register(r.Context(), req.Username, req.Email, req.Password)
 	if err == nil {
 		return user, true
@@ -77,7 +76,7 @@ func (s *Server) registerOrBootstrapUser(w http.ResponseWriter, r *http.Request,
 
 // respondRegistrationSuccess handles the post-registration flow: generate salt,
 // auto-login, set cookies, and return the response.
-func (s *Server) respondRegistrationSuccess(w http.ResponseWriter, r *http.Request, user *db.User, req RegisterRequest) {
+func (s *Server) respondRegistrationSuccess(w http.ResponseWriter, r *http.Request, user *service.User, req RegisterRequest) {
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to generate encryption salt")

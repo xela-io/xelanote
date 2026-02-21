@@ -11,6 +11,10 @@ var (
 	ErrRefreshTokenReuse = db.ErrRefreshTokenReuse
 )
 
+// Type aliases re-export db types so the API layer uses service-layer types
+// instead of importing the db package directly (layer isolation).
+type User = db.User
+
 // ValidationError represents a user-facing validation error that is safe to
 // return to the client (as opposed to internal errors from DB, bcrypt, etc.).
 type ValidationError struct {

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improved
 
+- Style: gofmt fix for uploads_thumbnail.go (import order and alignment)
 - Docs: schema.sql header clarified as initial-only schema with migration reference (F-11)
 - DX: Documented `make build -j2` parallel build tip in Makefile (F-18)
 - Tests: Added HTTP-level path-traversal and user-isolation tests for upload handler (F-08)

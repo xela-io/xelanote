@@ -10,12 +10,12 @@ import (
 	"os"
 	"strings"
 
-	_ "golang.org/x/image/webp"
 	"golang.org/x/image/draw"
+	_ "golang.org/x/image/webp"
 )
 
 const (
-	thumbnailMaxDim = 200
+	thumbnailMaxDim  = 200
 	thumbnailQuality = 80
 )
 

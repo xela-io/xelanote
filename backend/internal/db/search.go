@@ -36,13 +36,11 @@ func escapeSnippetHTML(s string) string {
 }
 
 func validateSearchQuery(query string) error {
-	// Check total length
 	if len(query) > MaxTotalQueryLength {
 		return fmt.Errorf("search query too long: %d characters (max %d)",
 			len(query), MaxTotalQueryLength)
 	}
 
-	// Check term count and lengths
 	terms := strings.Fields(query)
 	if len(terms) > MaxSearchTerms {
 		return fmt.Errorf("too many search terms: %d (max %d)",
@@ -95,7 +93,6 @@ func buildFTSQuery(terms []string) string {
 func (db *DB) Search(ctx context.Context, userID int, query string, limit int) ([]SearchResult, error) {
 	query = strings.TrimSpace(query)
 
-	// Validate query complexity
 	if err := validateSearchQuery(query); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidQuery, err)
 	}
@@ -114,11 +111,9 @@ func (db *DB) Search(ctx context.Context, userID int, query string, limit int) (
 
 	ftsQ := buildFTSQuery(terms)
 
-	// Context with timeout to prevent ReDoS
 	ctx, cancel := context.WithTimeout(ctx, SearchTimeout)
 	defer cancel()
 
-	// Search plaintext notes via notes_fts
 	plaintext, err := db.searchPlaintext(ctx, userID, ftsQ, limit)
 	if err != nil {
 		return nil, err
@@ -205,7 +200,6 @@ func (db *DB) searchKeywords(ctx context.Context, userID int, ftsQuery string, l
 		if encryptedTitle.Valid {
 			r.EncryptedTitle = &encryptedTitle.String
 		}
-		// Parse matched keywords, sort for stable output, limit to 10
 		if matchedKeywords != "" {
 			kws := strings.Split(matchedKeywords, ",")
 			sort.Strings(kws)
@@ -237,7 +231,6 @@ func mergeSearchResults(plaintext, keywords []SearchResult, limit int) []SearchR
 
 	for _, r := range keywords {
 		if idx, exists := seen[r.ID]; exists {
-			// Duplicate: keep plaintext snippet, add matched keywords
 			merged[idx].MatchedKeywords = r.MatchedKeywords
 		} else {
 			merged = append(merged, r)
@@ -250,6 +243,25 @@ func mergeSearchResults(plaintext, keywords []SearchResult, limit int) []SearchR
 	return merged
 }
 
+// scanNoteRows scans rows with columns: id, title, content, folder_path, version, created_at, updated_at.
+func scanNoteRows(rows *sql.Rows) ([]Note, error) {
+	var notes []Note
+	for rows.Next() {
+		var note Note
+		var createdAt, updatedAt string
+		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &createdAt, &updatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan note: %w", err)
+		}
+		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+		notes = append(notes, note)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate search results: %w", err)
+	}
+	return notes, nil
+}
+
 // QuickSearch performs a fast title-only search for the quick switcher.
 func (db *DB) QuickSearch(ctx context.Context, userID int, query string, limit int) ([]Note, error) {
 	if limit <= 0 {
@@ -259,7 +271,6 @@ func (db *DB) QuickSearch(ctx context.Context, userID int, query string, limit i
 		limit = 50
 	}
 
-	// For empty query, return recent notes (excluding journals)
 	if query == "" {
 		rows, err := db.QueryContext(ctx, `
 			SELECT id, title, content, folder_path, version, created_at, updated_at
@@ -273,28 +284,10 @@ func (db *DB) QuickSearch(ctx context.Context, userID int, query string, limit i
 			return nil, fmt.Errorf("failed to quick search: %w", err)
 		}
 		defer rows.Close()
-
-		var notes []Note
-		for rows.Next() {
-			var note Note
-			var createdAt, updatedAt string
-			if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &createdAt, &updatedAt); err != nil {
-				return nil, fmt.Errorf("failed to scan note: %w", err)
-			}
-			note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-			note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-			notes = append(notes, note)
-		}
-		if err := rows.Err(); err != nil {
-			return nil, fmt.Errorf("failed to iterate quick search results: %w", err)
-		}
-
-		return notes, nil
+		return scanNoteRows(rows)
 	}
 
-	// Use LIKE for prefix matching on title (excluding journals)
 	pattern := "%" + strings.ToLower(query) + "%"
-
 	rows, err := db.QueryContext(ctx, `
 		SELECT id, title, content, folder_path, version, created_at, updated_at
 		FROM notes
@@ -309,23 +302,7 @@ func (db *DB) QuickSearch(ctx context.Context, userID int, query string, limit i
 		return nil, fmt.Errorf("failed to quick search: %w", err)
 	}
 	defer rows.Close()
-
-	var notes []Note
-	for rows.Next() {
-		var note Note
-		var createdAt, updatedAt string
-		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &createdAt, &updatedAt); err != nil {
-			return nil, fmt.Errorf("failed to scan note: %w", err)
-		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-		notes = append(notes, note)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate quick search results: %w", err)
-	}
-
-	return notes, nil
+	return scanNoteRows(rows)
 }
 
 // SearchFilters holds optional filters for filtered search.
@@ -340,7 +317,6 @@ type SearchFilters struct {
 }
 
 // FilteredSearch performs a search with optional filters.
-// This extends QuickSearch with folder, tag, and date filters.
 func (db *DB) FilteredSearch(ctx context.Context, userID int, filters SearchFilters, limit int) ([]Note, error) {
 	if limit <= 0 {
 		limit = 10
@@ -349,13 +325,23 @@ func (db *DB) FilteredSearch(ctx context.Context, userID int, filters SearchFilt
 		limit = 50
 	}
 
-	// Build dynamic query with filters
-	var queryBuilder strings.Builder
+	query, args := buildFilteredSearchQuery(userID, filters, limit)
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filtered search: %w", err)
+	}
+	defer rows.Close()
+	return scanNoteRows(rows)
+}
+
+// buildFilteredSearchQuery constructs the SQL query and args for FilteredSearch.
+func buildFilteredSearchQuery(userID int, filters SearchFilters, limit int) (string, []interface{}) {
+	var qb strings.Builder
 	var args []interface{}
 
-	// Base SELECT with optional JOIN for tags (excluding journals)
+	// Base SELECT — use tag JOIN when filtering by tags
 	if len(filters.Tags) > 0 {
-		queryBuilder.WriteString(`
+		qb.WriteString(`
 			SELECT DISTINCT n.id, n.title, n.content, n.folder_path, n.version, n.created_at, n.updated_at
 			FROM notes n
 			INNER JOIN note_tags nt ON nt.note_id = n.id
@@ -363,119 +349,99 @@ func (db *DB) FilteredSearch(ctx context.Context, userID int, filters SearchFilt
 			WHERE n.user_id = ? AND n.is_deleted = 0
 			  AND COALESCE(n.note_type, 'note') = 'note'
 		`)
-		args = append(args, userID)
 	} else {
-		queryBuilder.WriteString(`
+		qb.WriteString(`
 			SELECT id, title, content, folder_path, version, created_at, updated_at
 			FROM notes n
 			WHERE n.user_id = ? AND n.is_deleted = 0
 			  AND COALESCE(n.note_type, 'note') = 'note'
 		`)
-		args = append(args, userID)
 	}
+	args = append(args, userID)
 
-	// Filter by query (title search)
-	if filters.Query != "" {
-		pattern := "%" + strings.ToLower(filters.Query) + "%"
-		queryBuilder.WriteString(" AND title_norm LIKE ?")
-		args = append(args, pattern)
-	}
+	applyQueryFilter(&qb, &args, filters.Query)
+	applyFolderFilter(&qb, &args, filters.Folders)
+	applyDateFilters(&qb, &args, filters)
+	applyTagFilter(&qb, &args, userID, filters.Tags)
+	applyOrderBy(&qb, &args, filters.Query)
 
-	// Filter by folders (OR logic: note can be in ANY of the selected folders)
-	if len(filters.Folders) > 0 {
-		queryBuilder.WriteString(" AND (")
-		for i, folder := range filters.Folders {
-			if i > 0 {
-				queryBuilder.WriteString(" OR ")
-			}
-			queryBuilder.WriteString("n.folder_path = ?")
-			args = append(args, folder)
-		}
-		queryBuilder.WriteString(")")
-	}
-
-	// Filter by created date
-	if !filters.CreatedAfter.IsZero() {
-		queryBuilder.WriteString(" AND n.created_at >= ?")
-		args = append(args, filters.CreatedAfter.Format(time.RFC3339))
-	}
-	if !filters.CreatedBefore.IsZero() {
-		queryBuilder.WriteString(" AND n.created_at <= ?")
-		args = append(args, filters.CreatedBefore.Format(time.RFC3339))
-	}
-
-	// Filter by updated date
-	if !filters.UpdatedAfter.IsZero() {
-		queryBuilder.WriteString(" AND n.updated_at >= ?")
-		args = append(args, filters.UpdatedAfter.Format(time.RFC3339))
-	}
-	if !filters.UpdatedBefore.IsZero() {
-		queryBuilder.WriteString(" AND n.updated_at <= ?")
-		args = append(args, filters.UpdatedBefore.Format(time.RFC3339))
-	}
-
-	// Filter by tags (AND logic: note must have ALL selected tags)
-	if len(filters.Tags) > 0 {
-		// Normalize tag names for case-insensitive matching
-		normalizedTags := make([]string, len(filters.Tags))
-		for i, tag := range filters.Tags {
-			normalizedTags[i] = strings.ToLower(strings.TrimSpace(tag))
-		}
-
-		queryBuilder.WriteString(" AND t.user_id = ? AND t.name_norm IN (")
-		args = append(args, userID)
-		for i, tagNorm := range normalizedTags {
-			if i > 0 {
-				queryBuilder.WriteString(", ")
-			}
-			queryBuilder.WriteString("?")
-			args = append(args, tagNorm)
-		}
-		queryBuilder.WriteString(")")
-
-		// GROUP BY and HAVING to ensure ALL tags are present (AND logic)
-		queryBuilder.WriteString(" GROUP BY n.id HAVING COUNT(DISTINCT t.id) = ?")
-		args = append(args, len(filters.Tags))
-	}
-
-	// Order by relevance (prefix match first) and updated date
-	if filters.Query != "" {
-		prefixPattern := strings.ToLower(filters.Query) + "%"
-		queryBuilder.WriteString(`
-			ORDER BY
-				CASE WHEN title_norm LIKE ? THEN 0 ELSE 1 END,
-				updated_at DESC
-		`)
-		args = append(args, prefixPattern)
-	} else {
-		queryBuilder.WriteString(" ORDER BY updated_at DESC")
-	}
-
-	// Limit
-	queryBuilder.WriteString(" LIMIT ?")
+	qb.WriteString(" LIMIT ?")
 	args = append(args, limit)
 
-	// Execute query
-	rows, err := db.QueryContext(ctx, queryBuilder.String(), args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to filtered search: %w", err)
-	}
-	defer rows.Close()
+	return qb.String(), args
+}
 
-	var notes []Note
-	for rows.Next() {
-		var note Note
-		var createdAt, updatedAt string
-		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.FolderPath, &note.Version, &createdAt, &updatedAt); err != nil {
-			return nil, fmt.Errorf("failed to scan note: %w", err)
+func applyQueryFilter(qb *strings.Builder, args *[]interface{}, query string) {
+	if query != "" {
+		qb.WriteString(" AND title_norm LIKE ?")
+		*args = append(*args, "%"+strings.ToLower(query)+"%")
+	}
+}
+
+func applyFolderFilter(qb *strings.Builder, args *[]interface{}, folders []string) {
+	if len(folders) == 0 {
+		return
+	}
+	qb.WriteString(" AND (")
+	for i, folder := range folders {
+		if i > 0 {
+			qb.WriteString(" OR ")
 		}
-		note.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-		note.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-		notes = append(notes, note)
+		qb.WriteString("n.folder_path = ?")
+		*args = append(*args, folder)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate filtered search results: %w", err)
+	qb.WriteString(")")
+}
+
+func applyDateFilters(qb *strings.Builder, args *[]interface{}, f SearchFilters) {
+	if !f.CreatedAfter.IsZero() {
+		qb.WriteString(" AND n.created_at >= ?")
+		*args = append(*args, f.CreatedAfter.Format(time.RFC3339))
+	}
+	if !f.CreatedBefore.IsZero() {
+		qb.WriteString(" AND n.created_at <= ?")
+		*args = append(*args, f.CreatedBefore.Format(time.RFC3339))
+	}
+	if !f.UpdatedAfter.IsZero() {
+		qb.WriteString(" AND n.updated_at >= ?")
+		*args = append(*args, f.UpdatedAfter.Format(time.RFC3339))
+	}
+	if !f.UpdatedBefore.IsZero() {
+		qb.WriteString(" AND n.updated_at <= ?")
+		*args = append(*args, f.UpdatedBefore.Format(time.RFC3339))
+	}
+}
+
+func applyTagFilter(qb *strings.Builder, args *[]interface{}, userID int, tags []string) {
+	if len(tags) == 0 {
+		return
+	}
+	normalizedTags := make([]string, len(tags))
+	for i, tag := range tags {
+		normalizedTags[i] = strings.ToLower(strings.TrimSpace(tag))
 	}
 
-	return notes, nil
+	qb.WriteString(" AND t.user_id = ? AND t.name_norm IN (")
+	*args = append(*args, userID)
+	for i, tagNorm := range normalizedTags {
+		if i > 0 {
+			qb.WriteString(", ")
+		}
+		qb.WriteString("?")
+		*args = append(*args, tagNorm)
+	}
+	qb.WriteString(")")
+
+	// GROUP BY + HAVING ensures ALL tags are present (AND logic)
+	qb.WriteString(" GROUP BY n.id HAVING COUNT(DISTINCT t.id) = ?")
+	*args = append(*args, len(tags))
+}
+
+func applyOrderBy(qb *strings.Builder, args *[]interface{}, query string) {
+	if query != "" {
+		qb.WriteString(` ORDER BY CASE WHEN title_norm LIKE ? THEN 0 ELSE 1 END, updated_at DESC`)
+		*args = append(*args, strings.ToLower(query)+"%")
+	} else {
+		qb.WriteString(" ORDER BY updated_at DESC")
+	}
 }

@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Observability: Added `requestIDLoggerMiddleware` that stores the Chi request ID in context for downstream use
 - Folder handlers: Unified error handling — validation errors now use consistent string literals, service errors use `respondInternalErr()`
 - Handlers: Extracted long handler functions — `updateNote` (134→54 lines), `login` (115→58 lines), `register` (106→29 lines) — into focused helpers (`executeNoteUpdate`, `handleTwoFactorLogin`, `registerOrBootstrapUser`, etc.)
+- Search: Refactored `FilteredSearch` (137→16 lines) into composable sub-methods (`buildFilteredSearchQuery`, `applyQueryFilter`, `applyFolderFilter`, `applyDateFilters`, `applyTagFilter`, `applyOrderBy`); shared `scanNoteRows` with `QuickSearch`
 
 ### Tests
 

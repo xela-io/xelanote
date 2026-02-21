@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API layer: Added handler tests for folders (CRUD, nested, move, rename, cross-user isolation), templates (CRUD, validation, cross-user isolation), snippets (CRUD, validation, cross-user isolation), tags (set/get/delete, replace, cross-user isolation), and versions (list, get, compare, restore, ETag/If-Match) — 3 new test files, 49 tests
 - Service layer: Added sharing service tests for note sharing (share, unshare, get shares, update role, access check, shared note CRUD, editor vs viewer permissions) and folder sharing (share, unshare, update role, list shared folders, user search) — 11 new test functions, 10 subtests
 - Service layer: Added graph service tests (global graph empty/with notes, caching, cache invalidation, filtered graph, cross-user isolation) — 6 tests
+- DB layer: Added tests for tags (CRUD, set/replace/clear note tags, user isolation), snippets (CRUD, ACL checks, user isolation), and activity logs (log, filter, pagination, cleanup, distinct actions, user agent truncation) — 3 new test files, 32 tests
 
 ### Removed
 

@@ -328,6 +328,18 @@ Diese Regeln sollten in `docs/conventions.md` ergaenzt und vom Team gelebt werde
 | P-03 | Admin N+1: `calculateAllUserStorageMB()` traversiert Upload-Dir einmal statt pro User | Erledigt | `3186e23` |
 | C-01 (Teilmenge) | 4 sensitive `err.Error()`-Leaks gefixt: `auth_login.go` (Login, 2FA-Login), `twofa.go` (Verify, RegenerateBackupCodes) | Erledigt | siehe unten |
 
+### Sprint 2 Strukturelle Refactors (Session 2026-02-21)
+
+| Finding | Was | Status | Commit |
+|---------|-----|--------|--------|
+| P-01 | Recipe-Liste: `?fields=slim` fuer Content-freie Projektion | Erledigt | `fabc760` |
+| O-01 | Request-Correlation-ID: `requestIDLoggerMiddleware` + `respondInternalErr` enrichment | Erledigt | `e282670` |
+| S-01 | Rate-Limiter Memory-Cap — war bereits implementiert (`maxRateLimitClients=10000`, `evictOldest()`) | Entfaellt | — |
+| C-01 (komplett) | `ValidationError`-Typ in Service-Layer; Register/BootstrapAdmin Error-Handling getrennt (Validation→400, Internal→500) | Erledigt | `de9efed` |
+| C-03 | Handler-Extraktion: `updateNote` (134→54), `login` (115→58), `register` (106→29) | Erledigt | `5da2c7c` |
+| C-04 | `FilteredSearch` (137→16): `buildFilteredSearchQuery` + 5 Filter-Helpers + `scanNoteRows` shared | Erledigt | `3474a99` |
+| A-02 Phase 1 | `service.User` Type-Alias fuer `db.User` — 0 Layer-Violations in Baseline | Erledigt | `a049911` |
+
 ### Bekannte Bugs (entdeckt in Tests)
 
 | Bug | Status | Ref |

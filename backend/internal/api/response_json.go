@@ -27,9 +27,13 @@ func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, map[string]string{"error": message})
 }
 
-// respondInternalErr logs the error and responds with a generic 500 message.
+// respondInternalErr logs the error with the request ID and responds with a generic 500.
 // Use this instead of respondError(w, 500, err.Error()) to avoid leaking internal details.
 func (s *Server) respondInternalErr(w http.ResponseWriter, msg string, err error) {
-	s.logger().Error(msg, slog.Any("error", err))
+	attrs := []any{slog.Any("error", err)}
+	if reqID := w.Header().Get("X-Request-Id"); reqID != "" {
+		attrs = append(attrs, slog.String("request_id", reqID))
+	}
+	s.logger().Error(msg, attrs...)
 	respondError(w, http.StatusInternalServerError, "internal server error")
 }

@@ -14,6 +14,7 @@ func (s *Server) setupRoutes() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
+	r.Use(requestIDLoggerMiddleware)
 	r.Use(middleware.Compress(5)) // gzip level 5 - good compression/speed balance
 	r.Use(s.corsMiddleware)
 	r.Use(securityHeadersMiddleware)

@@ -6,12 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math"
-	"sort"
-	"strings"
+	"time"
 
+	"github.com/xela-io/xelanote/internal/cache"
 	"github.com/xela-io/xelanote/internal/db"
-	"github.com/xela-io/xelanote/internal/htmlutil"
 	"github.com/xela-io/xelanote/internal/llm"
 )
 
@@ -75,12 +73,16 @@ type IngredientSuggestionResult struct {
 	Generated []GeneratedRecipe       `json:"generated"`
 }
 
+// Cache key prefix for recipe suggestion lookups.
+const recipeSummaryCachePrefix = "cache:recipe:summaries:"
+
 // RecipeSuggestionService handles AI-powered recipe suggestions.
 type RecipeSuggestionService struct {
 	db     *db.DB
 	router *llm.ProviderRouter
 	recipe *RecipeService
 	logger *slog.Logger
+	cache  *cache.Cache
 }
 
 // NewRecipeSuggestionService creates a new RecipeSuggestionService.
@@ -90,123 +92,54 @@ func NewRecipeSuggestionService(database *db.DB, router *llm.ProviderRouter, rec
 		router: router,
 		recipe: recipeService,
 		logger: slog.Default(),
+		cache:  cache.NewCache(10 * time.Minute), // 10 minute TTL for recipe summaries
 	}
 }
 
-// FindSimilarRecipes finds recipes similar to the given recipe using LLM.
-func (s *RecipeSuggestionService) FindSimilarRecipes(
-	ctx context.Context, userID int, noteID string,
-	collectionID *int, locale string,
-) ([]SimilarRecipeResult, error) {
-	locale = normalizeLocale(locale)
+// Close releases background resources held by the service.
+func (s *RecipeSuggestionService) Close() {
+	if s.cache != nil {
+		s.cache.Close()
+	}
+}
 
-	// Get provider
-	provider, err := s.router.GetAnyProvider(ctx, userID)
+// getRecipeSummaries returns cached recipe summaries for a user.
+// The snippetLen parameter is included in the cache key because different
+// LLM providers request different snippet lengths.
+func (s *RecipeSuggestionService) getRecipeSummaries(userID, snippetLen int) ([]db.RecipeSummary, error) {
+	cacheKey := fmt.Sprintf("%s%d:%d", recipeSummaryCachePrefix, userID, snippetLen)
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.([]db.RecipeSummary), nil
+	}
+
+	summaries, err := s.db.GetRecipeSummaries(userID, snippetLen)
 	if err != nil {
 		return nil, err
 	}
 
-	// Load current recipe detail
-	detail, err := s.recipe.GetRecipeDetail(userID, noteID)
+	s.cache.Set(cacheKey, summaries)
+	return summaries, nil
+}
+
+// getRecipeSummariesInCollection returns cached recipe summaries for a collection.
+func (s *RecipeSuggestionService) getRecipeSummariesInCollection(userID, collectionID, snippetLen int) ([]db.RecipeSummary, error) {
+	cacheKey := fmt.Sprintf("%s%d:col:%d:%d", recipeSummaryCachePrefix, userID, collectionID, snippetLen)
+	if cached, ok := s.cache.Get(cacheKey); ok {
+		return cached.([]db.RecipeSummary), nil
+	}
+
+	summaries, err := s.db.GetRecipeSummariesInCollection(userID, collectionID, snippetLen)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get recipe detail: %w", err)
-	}
-	if detail.Encrypted {
-		return nil, ErrRecipeEncrypted
+		return nil, err
 	}
 
-	// Build current recipe context
-	currentIngNames := make([]string, 0, len(detail.Ingredients))
-	for _, ing := range detail.Ingredients {
-		currentIngNames = append(currentIngNames, ing.Name)
-	}
-	var difficulty *string
-	if detail.Metadata != nil {
-		difficulty = detail.Metadata.Difficulty
-	}
-	current := llm.RecipeContext{
-		NoteID:          noteID,
-		Title:           detail.Note.Title,
-		IngredientNames: currentIngNames,
-		ContentSnippet:  truncate(detail.Note.Content, MaxSnippetLength),
-		Difficulty:      difficulty,
-	}
+	s.cache.Set(cacheKey, summaries)
+	return summaries, nil
+}
 
-	// Load candidate summaries
-	snippetLen := computeSnippetLength(provider.Name())
-	var summaries []db.RecipeSummary
-	if collectionID != nil {
-		summaries, err = s.db.GetRecipeSummariesInCollection(userID, *collectionID, snippetLen)
-	} else {
-		summaries, err = s.db.GetRecipeSummaries(userID, snippetLen)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get recipe summaries: %w", err)
-	}
-
-	// Remove current recipe from candidates (service-level self-match exclusion)
-	candidates := make([]db.RecipeSummary, 0, len(summaries))
-	for _, s := range summaries {
-		if s.NoteID != noteID {
-			candidates = append(candidates, s)
-		}
-	}
-
-	if len(candidates) < 2 {
-		return []SimilarRecipeResult{}, nil
-	}
-
-	// Pre-filter if too many candidates
-	if len(candidates) > MaxRecipesForPrompt {
-		candidates = preFilterByJaccard(candidates, currentIngNames, MaxRecipesForPrompt)
-	}
-
-	// Build prompt contexts
-	promptCandidates := make([]llm.RecipeContext, len(candidates))
-	for i, c := range candidates {
-		promptCandidates[i] = llm.RecipeContext{
-			NoteID:          c.NoteID,
-			Title:           c.Title,
-			IngredientNames: c.IngredientNames,
-			ContentSnippet:  c.ContentSnippet,
-			Difficulty:      c.Difficulty,
-			Servings:        c.Servings,
-		}
-	}
-
-	// Load dietary preference (graceful fallback to "none")
-	dietaryPref, err := s.db.GetDietaryPreference(userID)
-	if err != nil {
-		s.logger.Warn("failed to load dietary preference, using default", slog.String("error", err.Error()))
-		dietaryPref = "none"
-	}
-
-	prompt := llm.BuildSimilarRecipePrompt(current, promptCandidates, locale, dietaryPref)
-
-	response, err := provider.Generate(ctx, prompt, 2000)
-	if err != nil {
-		return nil, fmt.Errorf("LLM generation failed: %w", err)
-	}
-
-	// Parse JSON response
-	var results []SimilarRecipeResult
-	if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(response)), &results); err != nil {
-		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
-	}
-
-	// Validate note_ids exist in our candidate set
-	candidateIDs := make(map[string]bool, len(candidates))
-	for _, c := range candidates {
-		candidateIDs[c.NoteID] = true
-	}
-	validated := make([]SimilarRecipeResult, 0, len(results))
-	for _, r := range results {
-		if candidateIDs[r.NoteID] && r.NoteID != noteID {
-			validated = append(validated, r)
-		}
-	}
-
-	return validated, nil
+// invalidateRecipeSummaryCache clears cached summaries for a user.
+func (s *RecipeSuggestionService) invalidateRecipeSummaryCache(userID int) {
+	s.cache.DeleteByPrefix(fmt.Sprintf("%s%d:", recipeSummaryCachePrefix, userID))
 }
 
 // SuggestByIngredients finds matching recipes and generates new ideas based on ingredients.
@@ -221,13 +154,13 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 		return nil, err
 	}
 
-	// Load summaries
+	// Load summaries (cached)
 	snippetLen := computeSnippetLength(provider.Name())
 	var summaries []db.RecipeSummary
 	if collectionID != nil {
-		summaries, err = s.db.GetRecipeSummariesInCollection(userID, *collectionID, snippetLen)
+		summaries, err = s.getRecipeSummariesInCollection(userID, *collectionID, snippetLen)
 	} else {
-		summaries, err = s.db.GetRecipeSummaries(userID, snippetLen)
+		summaries, err = s.getRecipeSummaries(userID, snippetLen)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipe summaries: %w", err)
@@ -313,204 +246,7 @@ func (s *RecipeSuggestionService) SuggestByIngredients(
 	return result, nil
 }
 
-// ExtractIngredientsFromPhoto uses a vision model to identify ingredients in a photo.
-func (s *RecipeSuggestionService) ExtractIngredientsFromPhoto(
-	ctx context.Context, userID int,
-	imageData []byte, mimeType string, locale string,
-) ([]string, error) {
-	locale = normalizeLocale(locale)
-
-	visionProvider, err := s.router.GetVisionProvider(ctx, userID)
-	if err != nil {
-		if errors.Is(err, llm.ErrVisionNotAvailable) {
-			return nil, err
-		}
-		return nil, fmt.Errorf("failed to get vision provider: %w", err)
-	}
-
-	prompt := llm.BuildFridgePhotoPrompt(locale)
-	response, err := visionProvider.GenerateWithImage(ctx, prompt, imageData, mimeType, 1000)
-	if err != nil {
-		return nil, fmt.Errorf("vision API call failed: %w", err)
-	}
-
-	var ingredients []string
-	if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(response)), &ingredients); err != nil {
-		return nil, fmt.Errorf("failed to parse vision response: %w", err)
-	}
-
-	return ingredients, nil
-}
-
-// ExtractRecipeFromImage uses a vision model to extract a full recipe from an image.
-func (s *RecipeSuggestionService) ExtractRecipeFromImage(
-	ctx context.Context, userID int,
-	imageData []byte, mimeType string, locale string,
-) (*GeneratedRecipe, error) {
-	locale = normalizeLocale(locale)
-
-	visionProvider, err := s.router.GetVisionProvider(ctx, userID)
-	if err != nil {
-		if errors.Is(err, llm.ErrVisionNotAvailable) {
-			return nil, err
-		}
-		return nil, fmt.Errorf("failed to get vision provider: %w", err)
-	}
-
-	prompt := llm.BuildRecipeExtractionFromImagePrompt(locale)
-	response, err := visionProvider.GenerateWithImage(ctx, prompt, imageData, mimeType, 4000)
-	if err != nil {
-		return nil, fmt.Errorf("vision API call failed: %w", err)
-	}
-
-	recipe, err := parseExtractedRecipe(response)
-	if err != nil {
-		return nil, err
-	}
-	convertRecipeToMetricUnits(recipe)
-	return recipe, nil
-}
-
-// ExtractRecipeFromURL fetches webpage text and extracts a full recipe with an LLM.
-func (s *RecipeSuggestionService) ExtractRecipeFromURL(
-	ctx context.Context, userID int, rawURL string, locale string,
-) (*GeneratedRecipe, error) {
-	locale = normalizeLocale(locale)
-
-	pageText, err := htmlutil.FetchAndStripHTML(ctx, rawURL)
-	if err != nil {
-		return nil, err
-	}
-
-	provider, err := s.router.GetAnyProvider(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	prompt := llm.BuildRecipeExtractionFromTextPrompt(pageText, locale)
-	response, err := provider.Generate(ctx, prompt, 4000)
-	if err != nil {
-		return nil, fmt.Errorf("LLM generation failed: %w", err)
-	}
-
-	recipe, err := parseExtractedRecipe(response)
-	if err != nil {
-		return nil, err
-	}
-	convertRecipeToMetricUnits(recipe)
-
-	normalizedURL := strings.TrimSpace(rawURL)
-	if normalizedURL != "" {
-		recipe.SourceURL = &normalizedURL
-	}
-	validateGeneratedRecipe(recipe)
-
-	return recipe, nil
-}
-
-// SelectMainRecipeImages uses an LLM to choose the best recipe images from URL candidates.
-// Falls back to the first items if no provider is available or parsing fails.
-func (s *RecipeSuggestionService) SelectMainRecipeImages(
-	ctx context.Context, userID int, pageURL string, candidates []string, limit int,
-) []string {
-	if limit < 1 {
-		return []string{}
-	}
-	if len(candidates) <= limit {
-		return candidates
-	}
-
-	provider, err := s.router.GetAnyProvider(ctx, userID)
-	if err != nil {
-		return candidates[:limit]
-	}
-
-	prompt := llm.BuildRecipeMainImageSelectionPrompt(pageURL, candidates)
-	response, err := provider.Generate(ctx, prompt, 400)
-	if err != nil {
-		s.logger.Warn("recipe image selection LLM call failed", slog.String("error", err.Error()))
-		return candidates[:limit]
-	}
-
-	selected := parseSelectedImageCandidates(response, candidates, limit)
-	if len(selected) == 0 {
-		return candidates[:limit]
-	}
-	return selected
-}
-
-// SaveGeneratedRecipe saves a generated recipe as a new note with metadata and ingredients.
-func (s *RecipeSuggestionService) SaveGeneratedRecipe(
-	userID int, req SaveGeneratedRecipeRequest,
-) (*db.Note, error) {
-	if strings.TrimSpace(req.Title) == "" {
-		return nil, fmt.Errorf("title is required")
-	}
-	if strings.TrimSpace(req.Instructions) == "" {
-		return nil, fmt.Errorf("instructions are required")
-	}
-	if req.Servings < 1 {
-		req.Servings = 4
-	}
-	if req.Servings > 999 {
-		req.Servings = 999
-	}
-	if req.FolderPath == "" {
-		req.FolderPath = "/Rezepte"
-	}
-
-	// Validate difficulty
-	if req.Difficulty != nil {
-		d := *req.Difficulty
-		if d != "easy" && d != "medium" && d != "hard" {
-			req.Difficulty = nil
-		}
-	}
-
-	metadata := db.RecipeMetadata{
-		Servings:        req.Servings,
-		PrepTimeMinutes: req.PrepTimeMinutes,
-		CookTimeMinutes: req.CookTimeMinutes,
-		Difficulty:      req.Difficulty,
-		SourceURL:       req.SourceURL,
-	}
-
-	ingredients := make([]db.RecipeIngredient, 0, len(req.Ingredients))
-	for _, ing := range req.Ingredients {
-		name := strings.TrimSpace(ing.Name)
-		if name == "" {
-			continue
-		}
-		ingredients = append(ingredients, db.RecipeIngredient{
-			Name:      name,
-			Amount:    ing.Amount,
-			Unit:      ing.Unit,
-			GroupName: ing.GroupName,
-			Optional:  ing.Optional,
-			Scalable:  ing.Scalable,
-		})
-	}
-
-	return s.db.CreateRecipeNoteWithIngredients(
-		userID, req.Title, req.Instructions, req.FolderPath,
-		metadata, ingredients,
-	)
-}
-
-// SaveGeneratedRecipeRequest is the input for saving a generated recipe.
-type SaveGeneratedRecipeRequest struct {
-	Title           string                `json:"title"`
-	Instructions    string                `json:"instructions"`
-	Servings        int                   `json:"servings"`
-	PrepTimeMinutes *int                  `json:"prep_time_minutes"`
-	CookTimeMinutes *int                  `json:"cook_time_minutes"`
-	Difficulty      *string               `json:"difficulty"`
-	SourceURL       *string               `json:"source_url,omitempty"`
-	Ingredients     []GeneratedIngredient `json:"ingredients"`
-	FolderPath      string                `json:"folder_path"`
-}
-
-// --- Helper functions ---
+// --- Shared helper functions ---
 
 func normalizeLocale(locale string) string {
 	if locale == "de" {
@@ -541,275 +277,4 @@ func computeSnippetLength(providerName string) int {
 		snippetLen = MaxSnippetLength
 	}
 	return snippetLen
-}
-
-// preFilterByJaccard selects the top-N candidates by Jaccard similarity on ingredient names.
-func preFilterByJaccard(candidates []db.RecipeSummary, targetIngredients []string, limit int) []db.RecipeSummary {
-	targetSet := make(map[string]bool, len(targetIngredients))
-	for _, ing := range targetIngredients {
-		targetSet[strings.ToLower(strings.TrimSpace(ing))] = true
-	}
-
-	type scored struct {
-		index int
-		score float64
-	}
-
-	scores := make([]scored, len(candidates))
-	for i, c := range candidates {
-		candSet := make(map[string]bool, len(c.IngredientNames))
-		for _, ing := range c.IngredientNames {
-			candSet[strings.ToLower(strings.TrimSpace(ing))] = true
-		}
-
-		intersection := 0
-		for k := range targetSet {
-			if candSet[k] {
-				intersection++
-			}
-		}
-
-		union := len(targetSet) + len(candSet) - intersection
-		score := 0.0
-		if union > 0 {
-			score = float64(intersection) / float64(union)
-		}
-		scores[i] = scored{index: i, score: score}
-	}
-
-	sort.Slice(scores, func(a, b int) bool {
-		return scores[a].score > scores[b].score
-	})
-
-	result := make([]db.RecipeSummary, 0, limit)
-	for i := 0; i < limit && i < len(scores); i++ {
-		result = append(result, candidates[scores[i].index])
-	}
-	return result
-}
-
-// validateGeneratedRecipe corrects/clamps values from LLM output.
-func validateGeneratedRecipe(r *GeneratedRecipe) {
-	if r.Servings < 1 {
-		r.Servings = 4
-	}
-	if r.Servings > 999 {
-		r.Servings = 999
-	}
-	r.Title = strings.TrimSpace(r.Title)
-	r.Instructions = strings.TrimSpace(r.Instructions)
-	if r.Difficulty != nil {
-		d := *r.Difficulty
-		if d != "easy" && d != "medium" && d != "hard" {
-			r.Difficulty = nil
-		}
-	}
-	if r.SourceURL != nil {
-		trimmed := strings.TrimSpace(*r.SourceURL)
-		if trimmed == "" {
-			r.SourceURL = nil
-		} else {
-			if len(trimmed) > 2048 {
-				trimmed = trimmed[:2048]
-			}
-			r.SourceURL = &trimmed
-		}
-	}
-	for i := range r.Ingredients {
-		r.Ingredients[i].Name = strings.TrimSpace(r.Ingredients[i].Name)
-		if len(r.Ingredients[i].Name) > 200 {
-			r.Ingredients[i].Name = r.Ingredients[i].Name[:200]
-		}
-		if r.Ingredients[i].Unit != nil {
-			trimmed := strings.TrimSpace(*r.Ingredients[i].Unit)
-			if len(trimmed) > 50 {
-				trimmed = trimmed[:50]
-			}
-			r.Ingredients[i].Unit = &trimmed
-		}
-		if r.Ingredients[i].GroupName != nil {
-			trimmed := strings.TrimSpace(*r.Ingredients[i].GroupName)
-			if trimmed == "" {
-				r.Ingredients[i].GroupName = nil
-			} else {
-				if len(trimmed) > 100 {
-					trimmed = trimmed[:100]
-				}
-				r.Ingredients[i].GroupName = &trimmed
-			}
-		}
-	}
-}
-
-func parseExtractedRecipe(rawResponse string) (*GeneratedRecipe, error) {
-	cleaned := llm.CleanMarkdownCodeBlock(rawResponse)
-
-	var errResp struct {
-		Error string `json:"error"`
-	}
-	if err := json.Unmarshal([]byte(cleaned), &errResp); err == nil && errResp.Error == "no_recipe_found" {
-		return nil, ErrNoRecipeFound
-	}
-
-	var recipe GeneratedRecipe
-	if err := json.Unmarshal([]byte(cleaned), &recipe); err != nil {
-		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
-	}
-	validateGeneratedRecipe(&recipe)
-	if recipe.Title == "" || recipe.Instructions == "" || len(recipe.Ingredients) == 0 {
-		return nil, ErrNoRecipeFound
-	}
-	return &recipe, nil
-}
-
-func parseSelectedImageCandidates(rawResponse string, candidates []string, limit int) []string {
-	var parsed struct {
-		SelectedIndexes []int `json:"selected_indexes"`
-	}
-	if err := json.Unmarshal([]byte(llm.CleanMarkdownCodeBlock(rawResponse)), &parsed); err != nil {
-		return []string{}
-	}
-
-	selected := make([]string, 0, limit)
-	seen := make(map[int]bool)
-	for _, idx := range parsed.SelectedIndexes {
-		if idx < 1 || idx > len(candidates) {
-			continue
-		}
-		if seen[idx] {
-			continue
-		}
-		seen[idx] = true
-		selected = append(selected, candidates[idx-1])
-		if len(selected) >= limit {
-			break
-		}
-	}
-	return selected
-}
-
-func convertRecipeToMetricUnits(recipe *GeneratedRecipe) {
-	for i := range recipe.Ingredients {
-		convertIngredientToMetricUnits(&recipe.Ingredients[i])
-	}
-}
-
-func convertIngredientToMetricUnits(ingredient *GeneratedIngredient) {
-	if ingredient.Unit == nil {
-		return
-	}
-
-	normalizedUnit := normalizeUnit(*ingredient.Unit)
-	if normalizedUnit == "" {
-		return
-	}
-
-	amount, convertedUnit, ok := convertToMetricAmount(ingredient.Amount, normalizedUnit)
-	if !ok {
-		return
-	}
-
-	ingredient.Amount = amount
-	ingredient.Unit = &convertedUnit
-}
-
-func normalizeUnit(unit string) string {
-	u := strings.ToLower(strings.TrimSpace(unit))
-	if u == "" {
-		return ""
-	}
-
-	replacer := strings.NewReplacer(".", "", "-", " ")
-	u = replacer.Replace(u)
-	u = strings.Join(strings.Fields(u), " ")
-
-	aliases := map[string]string{
-		"c":            "cup",
-		"cup":          "cup",
-		"cups":         "cup",
-		"tbsp":         "tbsp",
-		"tbsps":        "tbsp",
-		"tablespoon":   "tbsp",
-		"tablespoons":  "tbsp",
-		"tsp":          "tsp",
-		"tsps":         "tsp",
-		"teaspoon":     "tsp",
-		"teaspoons":    "tsp",
-		"fl oz":        "fl oz",
-		"fluid ounce":  "fl oz",
-		"fluid ounces": "fl oz",
-		"oz":           "oz",
-		"ounce":        "oz",
-		"ounces":       "oz",
-		"lb":           "lb",
-		"lbs":          "lb",
-		"pound":        "lb",
-		"pounds":       "lb",
-		"pt":           "pint",
-		"pint":         "pint",
-		"pints":        "pint",
-		"qt":           "quart",
-		"quart":        "quart",
-		"quarts":       "quart",
-		"gal":          "gallon",
-		"gallon":       "gallon",
-		"gallons":      "gallon",
-	}
-
-	if canonical, ok := aliases[u]; ok {
-		return canonical
-	}
-	return ""
-}
-
-func convertToMetricAmount(amount *float64, normalizedUnit string) (*float64, string, bool) {
-	if amount == nil {
-		return nil, "", false
-	}
-
-	converted := *amount
-	unit := ""
-
-	switch normalizedUnit {
-	case "cup":
-		converted = converted * 236.588
-		unit = "ml"
-	case "tbsp":
-		converted = converted * 14.7868
-		unit = "ml"
-	case "tsp":
-		converted = converted * 4.92892
-		unit = "ml"
-	case "fl oz":
-		converted = converted * 29.5735
-		unit = "ml"
-	case "pint":
-		converted = converted * 473.176
-		unit = "ml"
-	case "quart":
-		converted = converted * 946.353
-		unit = "ml"
-	case "gallon":
-		converted = converted * 3785.41
-		unit = "ml"
-	case "oz":
-		converted = converted * 28.3495
-		unit = "g"
-	case "lb":
-		converted = converted * 453.592
-		unit = "g"
-	default:
-		return nil, "", false
-	}
-
-	if unit == "ml" && converted >= 1000 {
-		converted = converted / 1000
-		unit = "l"
-	} else if unit == "g" && converted >= 1000 {
-		converted = converted / 1000
-		unit = "kg"
-	}
-
-	converted = math.Round(converted*100) / 100
-	return &converted, unit, true
 }

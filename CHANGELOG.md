@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactored
 
+- Frontend: Split `markdown.ts` (914 lines) into 8-module plugin architecture under `markdown/` — color, wikilink, due-date, image, HTML sanitizer, task processor, extractors, plus thin orchestrator (F-16)
 - API layer: Split `recipe_suggestions.go` (474 lines) into 4 focused files — core handlers, save/import, image processing, URL import (F-13)
 - DB layer: Added `fmt.Errorf` error wrapping across 8 core DB files (auth, settings, activity, admin, 2FA, API keys) — all raw `return err` returns now include operation context for debugging
 - Service layer: Extracted duplicated note-limit checks (7 identical blocks across 5 files) into a single `checkNoteLimit()` method on NoteService

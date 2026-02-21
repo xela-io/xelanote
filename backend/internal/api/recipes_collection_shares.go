@@ -106,7 +106,7 @@ func (s *Server) updateCollectionShareRole(w http.ResponseWriter, r *http.Reques
 			respondError(w, status, msg)
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to share collection", err)
 		return
 	}
 

@@ -36,7 +36,7 @@ func (s *Server) refresh(w http.ResponseWriter, r *http.Request) {
 				slog.String("event", "refresh_token_reuse"),
 				securityIPAttr(r))
 		}
-		respondError(w, http.StatusUnauthorized, err.Error())
+		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
 

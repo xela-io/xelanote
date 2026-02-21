@@ -1,6 +1,9 @@
 package db
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 // GetAllUsersWithStats returns all users with their note counts
 func (db *DB) GetAllUsersWithStats() ([]AdminUser, error) {
@@ -21,7 +24,7 @@ func (db *DB) GetAllUsersWithStats() ([]AdminUser, error) {
 		ORDER BY u.created_at DESC
 	`)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query all users with stats: %w", err)
 	}
 	defer rows.Close()
 
@@ -30,7 +33,7 @@ func (db *DB) GetAllUsersWithStats() ([]AdminUser, error) {
 		var u AdminUser
 		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.IsAdmin, &u.CreatedAt, &u.NoteCount,
 			&u.TOTPEnabled, &u.TOTPVerifiedAt, &u.TOTPDisabledAt, &u.TOTPSetupStartedAt); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan user with stats: %w", err)
 		}
 		users = append(users, u)
 	}
@@ -63,7 +66,7 @@ func (db *DB) GetUserStats(userID int) (*AdminUser, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query user stats: %w", err)
 	}
 
 	return &u, nil
@@ -76,7 +79,7 @@ func (db *DB) SetUserAdmin(userID int, isAdmin bool) error {
 		WHERE id = ?
 	`, isAdmin, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("set user admin: %w", err)
 	}
 	return ensureRowsAffected(result)
 }
@@ -86,84 +89,84 @@ func (db *DB) DeleteUserByAdmin(userID int) error {
 	// Start a transaction for atomic deletion
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("begin delete user tx: %w", err)
 	}
 	defer tx.Rollback()
 
 	// Delete user's refresh tokens
 	if _, err := tx.Exec("DELETE FROM refresh_tokens WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user refresh tokens: %w", err)
 	}
 
 	// Delete user's note versions
 	if _, err := tx.Exec(`
 		DELETE FROM note_versions WHERE note_id IN (SELECT id FROM notes WHERE user_id = ?)
 	`, userID); err != nil {
-		return err
+		return fmt.Errorf("delete user note versions: %w", err)
 	}
 
 	// Delete user's links
 	if _, err := tx.Exec(`
 		DELETE FROM links WHERE source_id IN (SELECT id FROM notes WHERE user_id = ?)
 	`, userID); err != nil {
-		return err
+		return fmt.Errorf("delete user links: %w", err)
 	}
 
 	// Delete user's unresolved links
 	if _, err := tx.Exec(`
 		DELETE FROM unresolved_links WHERE source_id IN (SELECT id FROM notes WHERE user_id = ?)
 	`, userID); err != nil {
-		return err
+		return fmt.Errorf("delete user unresolved links: %w", err)
 	}
 
 	// Delete note-tag associations
 	if _, err := tx.Exec(`
 		DELETE FROM note_tags WHERE note_id IN (SELECT id FROM notes WHERE user_id = ?)
 	`, userID); err != nil {
-		return err
+		return fmt.Errorf("delete user note tags: %w", err)
 	}
 
 	// Delete user's tags
 	if _, err := tx.Exec("DELETE FROM tags WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user tags: %w", err)
 	}
 
 	// Delete from FTS table
 	if _, err := tx.Exec(`
 		DELETE FROM notes_fts WHERE rowid IN (SELECT rowid FROM notes WHERE user_id = ?)
 	`, userID); err != nil {
-		return err
+		return fmt.Errorf("delete user FTS entries: %w", err)
 	}
 
 	// Delete user's notes
 	if _, err := tx.Exec("DELETE FROM notes WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user notes: %w", err)
 	}
 
 	// Delete user's folders
 	if _, err := tx.Exec("DELETE FROM folders WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user folders: %w", err)
 	}
 
 	// Delete user's templates
 	if _, err := tx.Exec("DELETE FROM templates WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user templates: %w", err)
 	}
 
 	// Delete user's snippets
 	if _, err := tx.Exec("DELETE FROM snippets WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user snippets: %w", err)
 	}
 
 	// Delete user's preferences
 	if _, err := tx.Exec("DELETE FROM user_preferences WHERE user_id = ?", userID); err != nil {
-		return err
+		return fmt.Errorf("delete user preferences: %w", err)
 	}
 
 	// Finally, delete the user
 	result, err := tx.Exec("DELETE FROM users WHERE id = ?", userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete user: %w", err)
 	}
 	if err := ensureRowsAffected(result); err != nil {
 		return err
@@ -192,7 +195,7 @@ func (db *DB) GetRecentUsers(limit int) ([]AdminUser, error) {
 		LIMIT ?
 	`, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query recent users: %w", err)
 	}
 	defer rows.Close()
 
@@ -201,7 +204,7 @@ func (db *DB) GetRecentUsers(limit int) ([]AdminUser, error) {
 		var u AdminUser
 		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.IsAdmin, &u.CreatedAt, &u.NoteCount,
 			&u.TOTPEnabled, &u.TOTPVerifiedAt, &u.TOTPDisabledAt, &u.TOTPSetupStartedAt); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan recent user: %w", err)
 		}
 		users = append(users, u)
 	}
@@ -217,7 +220,7 @@ func (db *DB) IsUserAdmin(userID int) (bool, error) {
 		return false, ErrNotFound
 	}
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("query user admin status: %w", err)
 	}
 	return isAdmin, nil
 }

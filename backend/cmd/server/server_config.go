@@ -16,7 +16,7 @@ func loadJWTSecret() string {
 	}
 
 	// Validate JWT_SECRET strength (SEC-001)
-	const defaultWeakSecret = "your-secret-key-min-32-characters-long-for-hs256"
+	const defaultWeakSecret = "your-secret-key-min-64-characters-long-for-hs256-do-not-use-this"
 	if jwtSecret == defaultWeakSecret {
 		log.Fatal("JWT_SECRET cannot be the default example value. Generate a strong secret with: openssl rand -hex 32")
 	}

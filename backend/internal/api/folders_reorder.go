@@ -24,7 +24,7 @@ func (s *Server) reorderFolders(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.ReorderFolders(userID, req.ParentID, req.Items)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to reorder folders", err)
 		return
 	}
 

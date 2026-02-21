@@ -39,19 +39,8 @@ func (s *CanvasService) checkFeatureEnabled(userID int) error {
 
 // CreateCanvasNote creates a new plaintext canvas note.
 func (s *CanvasService) CreateCanvasNote(userID int, title, content, folderPath string) (*db.Note, error) {
-	// Check note limit
-	maxNotes, err := s.db.GetMaxNotesPerUser()
-	if err != nil {
+	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
-	}
-	if maxNotes > 0 {
-		currentCount, err := s.db.GetNoteCountForUser(userID)
-		if err != nil {
-			return nil, err
-		}
-		if currentCount >= maxNotes {
-			return nil, ErrNoteLimitExceeded
-		}
 	}
 
 	if err := s.checkFeatureEnabled(userID); err != nil {
@@ -92,19 +81,8 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 	keywords []string,
 	folderPath string,
 ) (*db.Note, error) {
-	// Check note limit
-	maxNotes, err := s.db.GetMaxNotesPerUser()
-	if err != nil {
+	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
-	}
-	if maxNotes > 0 {
-		currentCount, err := s.db.GetNoteCountForUser(userID)
-		if err != nil {
-			return nil, err
-		}
-		if currentCount >= maxNotes {
-			return nil, ErrNoteLimitExceeded
-		}
 	}
 
 	if err := s.checkFeatureEnabled(userID); err != nil {

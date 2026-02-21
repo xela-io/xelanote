@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/llm"
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -175,7 +174,7 @@ func (s *Server) setAIModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.userService.SetAIModelPreferences(userID, &db.AIModelPreferences{
+	err := s.userService.SetAIModelPreferences(userID, &service.AIModelPreferences{
 		ClaudeModel:  req.ClaudeModel,
 		GeminiModel:  req.GeminiModel,
 		ChatGPTModel: req.ChatGPTModel,

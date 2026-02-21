@@ -163,12 +163,13 @@ func (s *ErrorReportService) SubmitReport(ctx context.Context, report ErrorRepor
 	body := s.buildIssueBody(report)
 	labelIDs := []int64{typeLabelID, fpLabelID}
 
-	retried := false
-retry:
-	err = s.createIssue(ctx, title, body, labelIDs)
-	if err != nil {
+	for attempt := 0; attempt < 2; attempt++ {
+		err = s.createIssue(ctx, title, body, labelIDs)
+		if err == nil {
+			break
+		}
 		// If label-related error (404/422), try re-resolving labels once
-		if !retried && (strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "422")) {
+		if attempt == 0 && (strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "422")) {
 			s.log.Warn("issue creation failed, re-resolving labels", "error", err)
 			if resolveErr := s.EnsureLabels(ctx); resolveErr != nil {
 				s.log.Error("failed to re-resolve labels", "error", resolveErr)
@@ -182,8 +183,7 @@ retry:
 				labelIDs[0] = s.autoReportLabelID
 			}
 			s.mu.RUnlock()
-			retried = true
-			goto retry
+			continue
 		}
 		s.log.Error("failed to create issue", "error", err)
 		return ErrorReportResult{Accepted: false}, err

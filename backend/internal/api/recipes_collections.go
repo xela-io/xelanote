@@ -43,7 +43,7 @@ func (s *Server) createRecipeCollection(w http.ResponseWriter, r *http.Request) 
 
 	coll, err := s.recipeService.CreateCollection(userID, req.Name, req.Description, req.Color)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to create collection", err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (s *Server) updateRecipeCollection(w http.ResponseWriter, r *http.Request) 
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update collection", err)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (s *Server) addRecipeToCollection(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "collection not found")
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to add recipe to collection", err)
 		return
 	}
 

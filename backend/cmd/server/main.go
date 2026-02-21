@@ -76,13 +76,6 @@ func main() {
 	core := initCoreServices(database, []byte(jwtSecret), dataDir, logger)
 	postStartupMaintenance(core.activity, database)
 
-	// Cleanup old activity logs at startup
-	if cleaned, err := core.activity.CleanupOldActivity(); err != nil {
-		log.Printf("Activity cleanup failed: %v", err)
-	} else if cleaned > 0 {
-		log.Printf("Cleaned up %d old activity logs", cleaned)
-	}
-
 	// Cleanup expired and revoked refresh tokens at startup
 	if cleaned, err := database.CleanupExpiredRefreshTokens(); err != nil {
 		log.Printf("Refresh token cleanup failed: %v", err)
@@ -154,6 +147,7 @@ func main() {
 		RecipeSuggestSvc: recipeSuggestionService,
 		CanvasService:    canvasService,
 		TelemetrySvc:     telemetryService,
+		LockoutDB:        database,
 		DBPing:           database.Ping,
 		JobManager:       jobManager,
 		WSManager:        wsManager,
@@ -185,6 +179,8 @@ func main() {
 		core.note.Close()
 		core.snippet.Close()
 		core.template.Close()
+		core.admin.Close()
+		recipeSuggestionService.Close()
 	}
 	setupGracefulShutdown(srv, pruneCancel, cleanup)
 

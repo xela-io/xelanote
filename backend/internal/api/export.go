@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,7 @@ func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cursor := ""
-	notes, nextCursor, err := s.noteService.ListNotes(userID, 100, cursor, db.ListNotesOptions{})
+	notes, nextCursor, err := s.noteService.ListNotes(userID, 100, cursor, service.ListNotesOptions{})
 	if err != nil {
 		s.respondInternalErr(w, "failed to export notes", err)
 		return
@@ -77,7 +77,7 @@ func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		cursor = nextCursor
-		notes, nextCursor, err = s.noteService.ListNotes(userID, 100, cursor, db.ListNotesOptions{})
+		notes, nextCursor, err = s.noteService.ListNotes(userID, 100, cursor, service.ListNotesOptions{})
 		if err != nil {
 			s.logger().Error("failed to export notes page", "cursor", cursor, "error", err)
 			break

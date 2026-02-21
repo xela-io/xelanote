@@ -112,7 +112,7 @@ func (s *Server) addToSharedCollection(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusBadRequest, "encrypted recipes cannot be added to shared collections")
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to add recipe to collection", err)
 		return
 	}
 

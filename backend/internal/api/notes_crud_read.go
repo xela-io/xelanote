@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -37,13 +36,13 @@ func (s *Server) listNotes(w http.ResponseWriter, r *http.Request) {
 	// Validate updated_since parameter if present
 	updatedSince := r.URL.Query().Get("updated_since")
 	if updatedSince != "" {
-		if _, _, err := db.ParseSyncToken(updatedSince); err != nil {
+		if _, _, err := service.ParseSyncToken(updatedSince); err != nil {
 			respondError(w, http.StatusBadRequest, "invalid updated_since parameter: expected format timestamp|id")
 			return
 		}
 	}
 
-	opts := db.ListNotesOptions{
+	opts := service.ListNotesOptions{
 		Fields:       fields,
 		UpdatedSince: updatedSince,
 	}
@@ -67,7 +66,7 @@ func (s *Server) listNotes(w http.ResponseWriter, r *http.Request) {
 
 	// Compute sync_token (high-watermark of result set)
 	isDelta := updatedSince != ""
-	syncToken := db.HighWatermark(noteSlice, isDelta)
+	syncToken := service.HighWatermark(noteSlice, isDelta)
 
 	respondJSON(w, http.StatusOK, NoteListResponse{
 		Notes:      noteSlice,

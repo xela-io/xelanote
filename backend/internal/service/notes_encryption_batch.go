@@ -27,17 +27,19 @@ func (s *NoteService) BatchUpdateWrappedDEKs(userID int, updates []struct {
 
 	updatedCount := 0
 	for _, update := range updates {
-		// Verify note belongs to user
-		note, err := s.db.GetNote(userID, update.NoteID)
+		// Verify note belongs to user and check encryption state.
+		// Uses the transaction to avoid deadlock with MaxOpenConns=1.
+		var contentEncrypted bool
+		err := tx.QueryRow(`
+			SELECT content_encrypted FROM notes
+			WHERE id = ? AND user_id = ? AND is_deleted = 0
+		`, update.NoteID, userID).Scan(&contentEncrypted)
 		if err != nil {
-			return 0, fmt.Errorf("failed to get note %s: %w", update.NoteID, err)
-		}
-		if note == nil {
 			return 0, fmt.Errorf("note %s not found or unauthorized", update.NoteID)
 		}
 
 		// Only update if note is encrypted
-		if !note.ContentEncrypted {
+		if !contentEncrypted {
 			s.logger.Warn("skipping non-encrypted note in DEK batch update", "note_id", update.NoteID)
 			continue
 		}

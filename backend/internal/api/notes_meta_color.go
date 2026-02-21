@@ -30,7 +30,7 @@ func (s *Server) updateNoteColor(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusNotFound, "note not found")
 			return
 		}
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update note color", err)
 		return
 	}
 

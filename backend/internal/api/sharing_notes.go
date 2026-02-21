@@ -238,7 +238,7 @@ func (s *Server) updateSharedNote(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusConflict, "version conflict - note was modified")
 			return
 		}
-		respondError(w, http.StatusForbidden, err.Error())
+		s.respondInternalErr(w, "failed to update shared note", err)
 		return
 	}
 

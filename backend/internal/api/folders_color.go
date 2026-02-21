@@ -25,7 +25,7 @@ func (s *Server) updateFolderColor(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.UpdateFolderColor(userID, id, req.Color)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update folder color", err)
 		return
 	}
 

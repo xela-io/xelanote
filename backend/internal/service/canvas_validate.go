@@ -85,28 +85,37 @@ func ValidateCanvasContent(content string) error {
 		return fmt.Errorf("too many edges: %d (max %d)", len(data.Edges), MaxCanvasEdges)
 	}
 
-	// Check node ID uniqueness
-	nodeIDs := make(map[string]bool, len(data.Nodes))
-	for i, node := range data.Nodes {
+	nodeIDs, err := validateCanvasNodes(data.Nodes)
+	if err != nil {
+		return err
+	}
+
+	return validateCanvasEdges(data.Edges, nodeIDs)
+}
+
+// validateCanvasNodes validates all nodes and returns the set of node IDs for edge validation.
+func validateCanvasNodes(nodes []canvasNodeV) (map[string]bool, error) {
+	nodeIDs := make(map[string]bool, len(nodes))
+	for i, node := range nodes {
 		if node.ID == "" {
-			return fmt.Errorf("node[%d]: missing id", i)
+			return nil, fmt.Errorf("node[%d]: missing id", i)
 		}
 		if nodeIDs[node.ID] {
-			return fmt.Errorf("node[%d]: duplicate id %q", i, node.ID)
+			return nil, fmt.Errorf("node[%d]: duplicate id %q", i, node.ID)
 		}
 		nodeIDs[node.ID] = true
 
 		if !validNodeTypes[node.Type] {
-			return fmt.Errorf("node[%d] (%s): invalid type %q", i, node.ID, node.Type)
+			return nil, fmt.Errorf("node[%d] (%s): invalid type %q", i, node.ID, node.Type)
 		}
 		if node.X == nil || node.Y == nil {
-			return fmt.Errorf("node[%d] (%s): x and y are required", i, node.ID)
+			return nil, fmt.Errorf("node[%d] (%s): x and y are required", i, node.ID)
 		}
 		if node.Width == nil || node.Height == nil {
-			return fmt.Errorf("node[%d] (%s): width and height are required", i, node.ID)
+			return nil, fmt.Errorf("node[%d] (%s): width and height are required", i, node.ID)
 		}
 		if *node.Width < 1 || *node.Height < 1 {
-			return fmt.Errorf("node[%d] (%s): width and height must be >= 1", i, node.ID)
+			return nil, fmt.Errorf("node[%d] (%s): width and height must be >= 1", i, node.ID)
 		}
 
 		// Type-specific validation
@@ -115,24 +124,27 @@ func ValidateCanvasContent(content string) error {
 			// text field is optional (can be empty)
 		case "file":
 			if node.File == "" {
-				return fmt.Errorf("node[%d] (%s): file node requires 'file' field", i, node.ID)
+				return nil, fmt.Errorf("node[%d] (%s): file node requires 'file' field", i, node.ID)
 			}
 		case "link":
 			if node.URL == "" {
-				return fmt.Errorf("node[%d] (%s): link node requires 'url' field", i, node.ID)
+				return nil, fmt.Errorf("node[%d] (%s): link node requires 'url' field", i, node.ID)
 			}
 		case "group":
 			// label is optional
 		}
 
 		if err := validateCanvasColor(node.Color); err != nil {
-			return fmt.Errorf("node[%d] (%s): %w", i, node.ID, err)
+			return nil, fmt.Errorf("node[%d] (%s): %w", i, node.ID, err)
 		}
 	}
+	return nodeIDs, nil
+}
 
-	// Check edge ID uniqueness and node references
-	edgeIDs := make(map[string]bool, len(data.Edges))
-	for i, edge := range data.Edges {
+// validateCanvasEdges validates all edges against the known nodeIDs set.
+func validateCanvasEdges(edges []canvasEdgeV, nodeIDs map[string]bool) error {
+	edgeIDs := make(map[string]bool, len(edges))
+	for i, edge := range edges {
 		if edge.ID == "" {
 			return fmt.Errorf("edge[%d]: missing id", i)
 		}
@@ -166,7 +178,6 @@ func ValidateCanvasContent(content string) error {
 			return fmt.Errorf("edge[%d] (%s): %w", i, edge.ID, err)
 		}
 	}
-
 	return nil
 }
 

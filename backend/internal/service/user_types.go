@@ -8,8 +8,11 @@ import (
 	"github.com/xela-io/xelanote/internal/db"
 )
 
-// Type alias for WebAuthn credential.
+// Type aliases for user-related DB types.
+// Allows the API layer to reference these types without importing db directly.
 type WebAuthnCredential = db.WebAuthnCredential
+type AIModelPreferences = db.AIModelPreferences
+type LockoutRecord = db.LockoutRecord
 
 // Validation errors
 var (

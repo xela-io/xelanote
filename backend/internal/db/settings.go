@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 )
 
@@ -20,7 +21,7 @@ func (db *DB) GetSetting(key string) (string, error) {
 		return "", ErrNotFound
 	}
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("query setting %q: %w", key, err)
 	}
 	return value, nil
 }
@@ -29,7 +30,7 @@ func (db *DB) GetSetting(key string) (string, error) {
 func (db *DB) GetAllSettings() (map[string]string, error) {
 	rows, err := db.Query("SELECT key, value FROM system_settings")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query all settings: %w", err)
 	}
 	defer rows.Close()
 
@@ -37,7 +38,7 @@ func (db *DB) GetAllSettings() (map[string]string, error) {
 	for rows.Next() {
 		var key, value string
 		if err := rows.Scan(&key, &value); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan setting: %w", err)
 		}
 		settings[key] = value
 	}
@@ -47,19 +48,21 @@ func (db *DB) GetAllSettings() (map[string]string, error) {
 
 // SetSetting sets a setting value (inserts or updates)
 func (db *DB) SetSetting(key, value string) error {
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		INSERT INTO system_settings (key, value, updated_at)
 		VALUES (?, ?, datetime('now'))
 		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
-	`, key, value)
-	return err
+	`, key, value); err != nil {
+		return fmt.Errorf("set setting %q: %w", key, err)
+	}
+	return nil
 }
 
 // SetSettings sets multiple settings at once
 func (db *DB) SetSettings(settings map[string]string) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("begin set settings tx: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -69,13 +72,13 @@ func (db *DB) SetSettings(settings map[string]string) error {
 		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
 	`)
 	if err != nil {
-		return err
+		return fmt.Errorf("prepare set setting stmt: %w", err)
 	}
 	defer stmt.Close()
 
 	for key, value := range settings {
 		if _, err := stmt.Exec(key, value); err != nil {
-			return err
+			return fmt.Errorf("set setting %q: %w", key, err)
 		}
 	}
 
@@ -159,6 +162,8 @@ func (db *DB) GetActivityRetentionDays() (int, error) {
 
 // DeleteSetting removes a setting
 func (db *DB) DeleteSetting(key string) error {
-	_, err := db.Exec("DELETE FROM system_settings WHERE key = ?", key)
-	return err
+	if _, err := db.Exec("DELETE FROM system_settings WHERE key = ?", key); err != nil {
+		return fmt.Errorf("delete setting %q: %w", key, err)
+	}
+	return nil
 }

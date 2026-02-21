@@ -147,7 +147,7 @@ func (s *Server) reorderRecipeImages(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrInvalidInput):
 			respondError(w, http.StatusBadRequest, "image_ids must not be empty")
 		default:
-			respondError(w, http.StatusBadRequest, err.Error())
+			s.respondInternalErr(w, "failed to reorder images", err)
 		}
 		return
 	}

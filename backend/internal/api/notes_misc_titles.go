@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -18,7 +17,7 @@ func (s *Server) listNoteTitles(w http.ResponseWriter, r *http.Request) {
 	var allNotes []service.Note
 	cursor := ""
 	for {
-		notes, nextCursor, err := s.noteService.ListNotes(userID, 500, cursor, db.ListNotesOptions{})
+		notes, nextCursor, err := s.noteService.ListNotes(userID, 500, cursor, service.ListNotesOptions{})
 		if err != nil {
 			s.respondInternalErr(w, "failed to list note titles", err)
 			return

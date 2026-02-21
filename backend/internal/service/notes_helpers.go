@@ -21,6 +21,26 @@ func normalizeFolderPath(path string) string {
 // ErrNoteLimitExceeded is returned when user has reached their note limit
 var ErrNoteLimitExceeded = errors.New("note limit exceeded")
 
+// checkNoteLimit returns ErrNoteLimitExceeded when the user has reached the
+// configured maximum number of notes. A limit of 0 means unlimited.
+func (s *NoteService) checkNoteLimit(userID int) error {
+	maxNotes, err := s.db.GetMaxNotesPerUser()
+	if err != nil {
+		return err
+	}
+	if maxNotes == 0 {
+		return nil
+	}
+	currentCount, err := s.db.GetNoteCountForUser(userID)
+	if err != nil {
+		return err
+	}
+	if currentCount >= maxNotes {
+		return ErrNoteLimitExceeded
+	}
+	return nil
+}
+
 // journalDateRegex validates YYYY-MM-DD format
 var journalDateRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 

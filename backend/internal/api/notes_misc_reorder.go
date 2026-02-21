@@ -31,7 +31,7 @@ func (s *Server) reorderNotes(w http.ResponseWriter, r *http.Request) {
 
 	err := s.noteService.ReorderNotes(userID, req.FolderPath, req.Items)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to reorder notes", err)
 		return
 	}
 

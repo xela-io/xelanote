@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -18,20 +19,21 @@ func (db *DB) SetClaudeAPIKey(userID int, encryptedKey string) error {
 		WHERE user_id = ?
 	`, encryptedKey, now, now, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update claude api key: %w", err)
 	}
 
 	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("check claude api key rows: %w", err)
 	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them with the API key
-		_, err = db.Exec(`
+		if _, err = db.Exec(`
 			INSERT INTO user_preferences (user_id, theme, editor_mode, encrypted_claude_api_key, claude_api_key_updated_at, created_at, updated_at)
 			VALUES (?, 'default-dark', 'split', ?, ?, ?, ?)
-		`, userID, encryptedKey, now, now, now)
-		return err
+		`, userID, encryptedKey, now, now, now); err != nil {
+			return fmt.Errorf("insert claude api key preferences: %w", err)
+		}
 	}
 
 	return nil
@@ -51,7 +53,7 @@ func (db *DB) GetClaudeAPIKey(userID int) (string, error) {
 		return "", ErrNotFound
 	}
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("query claude api key: %w", err)
 	}
 	if !encryptedKey.Valid || encryptedKey.String == "" {
 		return "", ErrNotFound
@@ -64,25 +66,25 @@ func (db *DB) GetClaudeAPIKey(userID int) (string, error) {
 func (db *DB) DeleteClaudeAPIKey(userID int) error {
 	now := time.Now().Format(time.RFC3339)
 
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		UPDATE user_preferences
 		SET encrypted_claude_api_key = NULL, claude_api_key_updated_at = NULL, updated_at = ?
 		WHERE user_id = ?
-	`, now, userID)
-	return err
+	`, now, userID); err != nil {
+		return fmt.Errorf("delete claude api key: %w", err)
+	}
+	return nil
 }
 
 // HasClaudeAPIKey checks if a user has a Claude API key stored.
 func (db *DB) HasClaudeAPIKey(userID int) (bool, error) {
 	var count int
-	err := db.QueryRow(`
+	if err := db.QueryRow(`
 		SELECT COUNT(*)
 		FROM user_preferences
 		WHERE user_id = ? AND encrypted_claude_api_key IS NOT NULL AND encrypted_claude_api_key != ''
-	`, userID).Scan(&count)
-
-	if err != nil {
-		return false, err
+	`, userID).Scan(&count); err != nil {
+		return false, fmt.Errorf("check claude api key: %w", err)
 	}
 
 	return count > 0, nil
@@ -102,7 +104,7 @@ func (db *DB) GetClaudeAPIKeyUpdatedAt(userID int) (*string, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query claude api key updated_at: %w", err)
 	}
 	if !updatedAt.Valid {
 		return nil, nil
@@ -124,20 +126,21 @@ func (db *DB) SetGeminiAPIKey(userID int, encryptedKey string) error {
 		WHERE user_id = ?
 	`, encryptedKey, now, now, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update gemini api key: %w", err)
 	}
 
 	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("check gemini api key rows: %w", err)
 	}
 	if rowsAffected == 0 {
 		// User preferences don't exist, create them with the API key
-		_, err = db.Exec(`
+		if _, err = db.Exec(`
 			INSERT INTO user_preferences (user_id, theme, editor_mode, encrypted_gemini_api_key, gemini_api_key_updated_at, created_at, updated_at)
 			VALUES (?, 'default-dark', 'split', ?, ?, ?, ?)
-		`, userID, encryptedKey, now, now, now)
-		return err
+		`, userID, encryptedKey, now, now, now); err != nil {
+			return fmt.Errorf("insert gemini api key preferences: %w", err)
+		}
 	}
 
 	return nil
@@ -157,7 +160,7 @@ func (db *DB) GetGeminiAPIKey(userID int) (string, error) {
 		return "", ErrNotFound
 	}
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("query gemini api key: %w", err)
 	}
 	if !encryptedKey.Valid || encryptedKey.String == "" {
 		return "", ErrNotFound
@@ -170,25 +173,25 @@ func (db *DB) GetGeminiAPIKey(userID int) (string, error) {
 func (db *DB) DeleteGeminiAPIKey(userID int) error {
 	now := time.Now().Format(time.RFC3339)
 
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		UPDATE user_preferences
 		SET encrypted_gemini_api_key = NULL, gemini_api_key_updated_at = NULL, updated_at = ?
 		WHERE user_id = ?
-	`, now, userID)
-	return err
+	`, now, userID); err != nil {
+		return fmt.Errorf("delete gemini api key: %w", err)
+	}
+	return nil
 }
 
 // HasGeminiAPIKey checks if a user has a Gemini API key stored.
 func (db *DB) HasGeminiAPIKey(userID int) (bool, error) {
 	var count int
-	err := db.QueryRow(`
+	if err := db.QueryRow(`
 		SELECT COUNT(*)
 		FROM user_preferences
 		WHERE user_id = ? AND encrypted_gemini_api_key IS NOT NULL AND encrypted_gemini_api_key != ''
-	`, userID).Scan(&count)
-
-	if err != nil {
-		return false, err
+	`, userID).Scan(&count); err != nil {
+		return false, fmt.Errorf("check gemini api key: %w", err)
 	}
 
 	return count > 0, nil
@@ -208,7 +211,7 @@ func (db *DB) GetGeminiAPIKeyUpdatedAt(userID int) (*string, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query gemini api key updated_at: %w", err)
 	}
 	if !updatedAt.Valid {
 		return nil, nil
@@ -230,19 +233,20 @@ func (db *DB) SetOpenAIAPIKey(userID int, encryptedKey string) error {
 		WHERE user_id = ?
 	`, encryptedKey, now, now, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update openai api key: %w", err)
 	}
 
 	rowsAffected, err := rowsAffectedCount(result, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("check openai api key rows: %w", err)
 	}
 	if rowsAffected == 0 {
-		_, err = db.Exec(`
+		if _, err = db.Exec(`
 			INSERT INTO user_preferences (user_id, theme, editor_mode, encrypted_openai_api_key, openai_api_key_updated_at, created_at, updated_at)
 			VALUES (?, 'default-dark', 'split', ?, ?, ?, ?)
-		`, userID, encryptedKey, now, now, now)
-		return err
+		`, userID, encryptedKey, now, now, now); err != nil {
+			return fmt.Errorf("insert openai api key preferences: %w", err)
+		}
 	}
 
 	return nil
@@ -262,7 +266,7 @@ func (db *DB) GetOpenAIAPIKey(userID int) (string, error) {
 		return "", ErrNotFound
 	}
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("query openai api key: %w", err)
 	}
 	if !encryptedKey.Valid || encryptedKey.String == "" {
 		return "", ErrNotFound
@@ -275,25 +279,25 @@ func (db *DB) GetOpenAIAPIKey(userID int) (string, error) {
 func (db *DB) DeleteOpenAIAPIKey(userID int) error {
 	now := time.Now().Format(time.RFC3339)
 
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		UPDATE user_preferences
 		SET encrypted_openai_api_key = NULL, openai_api_key_updated_at = NULL, updated_at = ?
 		WHERE user_id = ?
-	`, now, userID)
-	return err
+	`, now, userID); err != nil {
+		return fmt.Errorf("delete openai api key: %w", err)
+	}
+	return nil
 }
 
 // HasOpenAIAPIKey checks if a user has an OpenAI API key stored.
 func (db *DB) HasOpenAIAPIKey(userID int) (bool, error) {
 	var count int
-	err := db.QueryRow(`
+	if err := db.QueryRow(`
 		SELECT COUNT(*)
 		FROM user_preferences
 		WHERE user_id = ? AND encrypted_openai_api_key IS NOT NULL AND encrypted_openai_api_key != ''
-	`, userID).Scan(&count)
-
-	if err != nil {
-		return false, err
+	`, userID).Scan(&count); err != nil {
+		return false, fmt.Errorf("check openai api key: %w", err)
 	}
 
 	return count > 0, nil
@@ -313,7 +317,7 @@ func (db *DB) GetOpenAIAPIKeyUpdatedAt(userID int) (*string, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query openai api key updated_at: %w", err)
 	}
 	if !updatedAt.Valid {
 		return nil, nil

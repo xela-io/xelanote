@@ -30,7 +30,7 @@ func (s *Server) updateFolderAIEnabledDefault(w http.ResponseWriter, r *http.Req
 
 	// Update ai_enabled_default flag
 	if err := s.noteService.UpdateFolderAIEnabledDefault(userID, id, req.AIEnabled); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update AI setting", err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (s *Server) getFolderAIEnabledDefault(w http.ResponseWriter, r *http.Reques
 
 	aiEnabled, err := s.noteService.GetFolderAIEnabledDefault(userID, id)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to get AI setting", err)
 		return
 	}
 

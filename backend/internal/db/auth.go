@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/xela-io/xelanote/internal/auth"
@@ -37,12 +38,12 @@ func (db *DB) CreateUser(username, email, passwordHash string) (*User, error) {
 			err.Error() == "UNIQUE constraint failed: users.email" {
 			return nil, ErrDuplicate
 		}
-		return nil, err
+		return nil, fmt.Errorf("insert user: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get user insert id: %w", err)
 	}
 	userID, err := validateLastInsertID(id, "user id")
 	if err != nil {
@@ -66,7 +67,7 @@ func (db *DB) GetUserByID(id int) (*User, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query user by id: %w", err)
 	}
 
 	// Convert encryption_salt BLOB to base64 string if present
@@ -94,7 +95,7 @@ func (db *DB) GetUserByUsernameOrEmail(usernameOrEmail string) (*User, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query user by username or email: %w", err)
 	}
 
 	// Convert encryption_salt BLOB to base64 string if present
@@ -112,13 +113,16 @@ func (db *DB) CreateRefreshToken(userID int, token string) error {
 	tokenHash := hashRefreshToken(token)
 	familyID, err := generateTokenFamilyID()
 	if err != nil {
-		return err
+		return fmt.Errorf("generate token family id: %w", err)
 	}
 	_, err = db.Exec(`
 		INSERT INTO refresh_tokens (user_id, token, expires_at, family_id)
 		VALUES (?, ?, ?, ?)
 	`, userID, tokenHash, expiresAt, familyID)
-	return err
+	if err != nil {
+		return fmt.Errorf("insert refresh token: %w", err)
+	}
+	return nil
 }
 
 // ValidateRefreshToken checks if a refresh token exists and is not expired
@@ -138,13 +142,13 @@ func (db *DB) ValidateRefreshToken(token string) (int, error) {
 		return 0, ErrNotFound
 	}
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("query refresh token: %w", err)
 	}
 
 	// Check expiration
 	expiresTime, err := time.Parse(time.RFC3339, expiresAt)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("parse refresh token expiry: %w", err)
 	}
 
 	if consumedAt.Valid || revokedAt.Valid {
@@ -164,7 +168,7 @@ func (db *DB) ValidateRefreshToken(token string) (int, error) {
 func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("begin token rotation tx: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -183,7 +187,7 @@ func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) e
 		return ErrNotFound
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("query old refresh token: %w", err)
 	}
 
 	if dbUserID != userID {
@@ -192,27 +196,27 @@ func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) e
 	if familyID == "" {
 		familyID, err = generateTokenFamilyID()
 		if err != nil {
-			return err
+			return fmt.Errorf("generate token family id: %w", err)
 		}
 		if _, err := tx.Exec(`UPDATE refresh_tokens SET family_id = ? WHERE token = ?`, familyID, oldTokenHash); err != nil {
-			return err
+			return fmt.Errorf("set token family id: %w", err)
 		}
 	}
 
 	if consumedAt.Valid || revokedAt.Valid {
 		if _, err := tx.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL`, familyID); err != nil {
-			return err
+			return fmt.Errorf("revoke token family: %w", err)
 		}
 		return ErrRefreshTokenReuse
 	}
 
 	expiry, err := time.Parse(time.RFC3339, expiresAt)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse token expiry: %w", err)
 	}
 	if time.Now().After(expiry) {
 		if _, err := tx.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE token = ?`, oldTokenHash); err != nil {
-			return err
+			return fmt.Errorf("revoke expired token: %w", err)
 		}
 		return errors.New("refresh token expired")
 	}
@@ -223,15 +227,15 @@ func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) e
 		WHERE token = ? AND consumed_at IS NULL AND revoked_at IS NULL
 	`, newTokenHash, oldTokenHash)
 	if err != nil {
-		return err
+		return fmt.Errorf("consume old token: %w", err)
 	}
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("check token consumption rows: %w", err)
 	}
 	if rows == 0 {
 		if _, err := tx.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL`, familyID); err != nil {
-			return err
+			return fmt.Errorf("revoke token family after failed rotation: %w", err)
 		}
 		return ErrRefreshTokenReuse
 	}
@@ -242,7 +246,7 @@ func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) e
 		VALUES (?, ?, ?, ?)
 	`, userID, newTokenHash, newExpiresAt, familyID)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert rotated token: %w", err)
 	}
 
 	return tx.Commit()
@@ -251,8 +255,10 @@ func (db *DB) RotateRefreshToken(oldToken string, userID int, newToken string) e
 // DeleteRefreshToken removes a refresh token (used for logout)
 func (db *DB) DeleteRefreshToken(token string) error {
 	tokenHash := hashRefreshToken(token)
-	_, err := db.Exec(`DELETE FROM refresh_tokens WHERE token = ?`, tokenHash)
-	return err
+	if _, err := db.Exec(`DELETE FROM refresh_tokens WHERE token = ?`, tokenHash); err != nil {
+		return fmt.Errorf("delete refresh token: %w", err)
+	}
+	return nil
 }
 
 // CleanupExpiredRefreshTokens removes expired and old revoked tokens from the database.
@@ -265,9 +271,13 @@ func (db *DB) CleanupExpiredRefreshTokens() (int64, error) {
 		   OR (revoked_at IS NOT NULL AND revoked_at < datetime('now', '-7 days'))
 	`, now)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("cleanup expired tokens: %w", err)
 	}
-	return res.RowsAffected()
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("get cleanup rows affected: %w", err)
+	}
+	return n, nil
 }
 
 func hashRefreshToken(token string) string {
@@ -278,7 +288,7 @@ func hashRefreshToken(token string) string {
 func generateTokenFamilyID() (string, error) {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("generate random bytes: %w", err)
 	}
 	return hex.EncodeToString(b), nil
 }
@@ -286,15 +296,17 @@ func generateTokenFamilyID() (string, error) {
 // RevokeRefreshTokenFamilyByToken revokes all refresh tokens in the family of token.
 func (db *DB) RevokeRefreshTokenFamilyByToken(token string) error {
 	tokenHash := hashRefreshToken(token)
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		UPDATE refresh_tokens
 		SET revoked_at = datetime('now')
 		WHERE family_id = (
 			SELECT family_id FROM refresh_tokens WHERE token = ?
 		)
 		AND revoked_at IS NULL
-	`, tokenHash)
-	return err
+	`, tokenHash); err != nil {
+		return fmt.Errorf("revoke token family: %w", err)
+	}
+	return nil
 }
 
 // DeleteAllUserRefreshTokensExcept deletes all refresh tokens for a user except the current one
@@ -302,14 +314,18 @@ func (db *DB) RevokeRefreshTokenFamilyByToken(token string) error {
 // The currentRawToken is hashed internally (consistent with other functions)
 func (db *DB) DeleteAllUserRefreshTokensExcept(userID int, currentRawToken string) error {
 	hashedToken := hashRefreshToken(currentRawToken)
-	_, err := db.Exec(`DELETE FROM refresh_tokens WHERE user_id = ? AND token != ?`, userID, hashedToken)
-	return err
+	if _, err := db.Exec(`DELETE FROM refresh_tokens WHERE user_id = ? AND token != ?`, userID, hashedToken); err != nil {
+		return fmt.Errorf("delete other refresh tokens: %w", err)
+	}
+	return nil
 }
 
 // DeleteAllUserRefreshTokens deletes all refresh tokens for a user (e.g., after password reset)
 func (db *DB) DeleteAllUserRefreshTokens(userID int) error {
-	_, err := db.Exec(`DELETE FROM refresh_tokens WHERE user_id = ?`, userID)
-	return err
+	if _, err := db.Exec(`DELETE FROM refresh_tokens WHERE user_id = ?`, userID); err != nil {
+		return fmt.Errorf("delete all user refresh tokens: %w", err)
+	}
+	return nil
 }
 
 // UpdateUserEmail updates a user's email address
@@ -324,7 +340,7 @@ func (db *DB) UpdateUserEmail(userID int, newEmail string) error {
 		if err.Error() == "UNIQUE constraint failed: users.email" {
 			return ErrDuplicate
 		}
-		return err
+		return fmt.Errorf("update user email: %w", err)
 	}
 
 	return ensureRowsAffected(result)
@@ -338,7 +354,7 @@ func (db *DB) UpdateUserPassword(userID int, newPasswordHash string) error {
 		WHERE id = ?
 	`, newPasswordHash, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update user password: %w", err)
 	}
 
 	return ensureRowsAffected(result)
@@ -353,7 +369,7 @@ func (tx *Tx) UpdateUserPasswordTx(userID int, newPasswordHash string) error {
 		WHERE id = ?
 	`, newPasswordHash, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update user password in tx: %w", err)
 	}
 
 	return ensureRowsAffected(result)
@@ -371,18 +387,23 @@ func (db *DB) GetUserByEmail(email string) (*User, error) {
 	if err == sql.ErrNoRows {
 		return nil, ErrNotFound
 	}
-	return &user, err
+	if err != nil {
+		return nil, fmt.Errorf("query user by email: %w", err)
+	}
+	return &user, nil
 }
 
 // SetUserEncryptionSalt stores or updates a user's encryption salt
 // The salt is used for Argon2id key derivation on the client-side
 func (db *DB) SetUserEncryptionSalt(userID int, salt []byte) error {
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		UPDATE users
 		SET encryption_salt = ?
 		WHERE id = ?
-	`, salt, userID)
-	return err
+	`, salt, userID); err != nil {
+		return fmt.Errorf("set encryption salt: %w", err)
+	}
+	return nil
 }
 
 // GetUserEncryptionSalt retrieves a user's encryption salt
@@ -399,7 +420,7 @@ func (db *DB) GetUserEncryptionSalt(userID int) ([]byte, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query encryption salt: %w", err)
 	}
 
 	// Check if salt is NULL (not yet generated)

@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 )
 
 // ActivityLog represents a single activity log entry
@@ -38,7 +39,7 @@ func (db *DB) LogActivity(userID *int, action string, targetType, targetID *stri
 	if details != nil {
 		detailsJSON, err = json.Marshal(details)
 		if err != nil {
-			return err
+			return fmt.Errorf("marshal activity details: %w", err)
 		}
 	}
 
@@ -48,12 +49,14 @@ func (db *DB) LogActivity(userID *int, action string, targetType, targetID *stri
 		userAgent = &truncated
 	}
 
-	_, err = db.Exec(`
+	if _, err = db.Exec(`
 		INSERT INTO activity_logs (user_id, action, target_type, target_id, details, ip_address, user_agent)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, userID, action, targetType, targetID, detailsJSON, ipAddress, userAgent)
+	`, userID, action, targetType, targetID, detailsJSON, ipAddress, userAgent); err != nil {
+		return fmt.Errorf("insert activity log: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // GetActivityLogs returns activity logs with pagination and optional filters
@@ -113,15 +116,14 @@ func (db *DB) GetActivityLogs(limit, offset int, filter *ActivityFilter) ([]Acti
 
 	// Get total count
 	var total int
-	err := db.QueryRow(countQuery, countArgs...).Scan(&total)
-	if err != nil {
-		return nil, 0, err
+	if err := db.QueryRow(countQuery, countArgs...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count activity logs: %w", err)
 	}
 
 	// Get logs
 	rows, err := db.Query(query, args...)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("query activity logs: %w", err)
 	}
 	defer rows.Close()
 
@@ -134,7 +136,7 @@ func (db *DB) GetActivityLogs(limit, offset int, filter *ActivityFilter) ([]Acti
 			&details, &log.IPAddress, &log.UserAgent, &log.CreatedAt,
 		)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, fmt.Errorf("scan activity log row: %w", err)
 		}
 
 		// Convert details to RawMessage if valid JSON
@@ -147,7 +149,7 @@ func (db *DB) GetActivityLogs(limit, offset int, filter *ActivityFilter) ([]Acti
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("iterate activity logs: %w", err)
 	}
 
 	return logs, total, nil
@@ -164,7 +166,7 @@ func (db *DB) GetRecentActivity(limit int) ([]ActivityLog, error) {
 		LIMIT ?
 	`, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query recent activity: %w", err)
 	}
 	defer rows.Close()
 
@@ -177,7 +179,7 @@ func (db *DB) GetRecentActivity(limit int) ([]ActivityLog, error) {
 			&details, &log.IPAddress, &log.UserAgent, &log.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan recent activity row: %w", err)
 		}
 
 		if details != nil && json.Valid(details) {
@@ -189,7 +191,7 @@ func (db *DB) GetRecentActivity(limit int) ([]ActivityLog, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iterate recent activity: %w", err)
 	}
 
 	return logs, nil
@@ -207,7 +209,7 @@ func (db *DB) CleanupOldActivity(retentionDays int) (int64, error) {
 		WHERE created_at < datetime('now', '-' || ? || ' days')
 	`, retentionDays)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("cleanup old activity: %w", err)
 	}
 	return rowsAffectedCount(result, "")
 }
@@ -224,7 +226,7 @@ func (db *DB) GetActivityByUser(userID int, limit int) ([]ActivityLog, error) {
 		LIMIT ?
 	`, userID, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query user activity: %w", err)
 	}
 	defer rows.Close()
 
@@ -237,7 +239,7 @@ func (db *DB) GetActivityByUser(userID int, limit int) ([]ActivityLog, error) {
 			&details, &log.IPAddress, &log.UserAgent, &log.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan user activity row: %w", err)
 		}
 
 		if details != nil && json.Valid(details) {
@@ -249,7 +251,7 @@ func (db *DB) GetActivityByUser(userID int, limit int) ([]ActivityLog, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iterate user activity: %w", err)
 	}
 
 	return logs, nil
@@ -259,7 +261,7 @@ func (db *DB) GetActivityByUser(userID int, limit int) ([]ActivityLog, error) {
 func (db *DB) GetDistinctActions() ([]string, error) {
 	rows, err := db.Query("SELECT DISTINCT action FROM activity_logs ORDER BY action")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query distinct actions: %w", err)
 	}
 	defer rows.Close()
 
@@ -267,13 +269,13 @@ func (db *DB) GetDistinctActions() ([]string, error) {
 	for rows.Next() {
 		var action string
 		if err := rows.Scan(&action); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan action: %w", err)
 		}
 		actions = append(actions, action)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iterate distinct actions: %w", err)
 	}
 
 	return actions, nil
@@ -282,12 +284,14 @@ func (db *DB) GetDistinctActions() ([]string, error) {
 // CountActivityToday returns the count of activity logs created today
 func (db *DB) CountActivityToday() (int, error) {
 	var count int
-	err := db.QueryRow(`
+	if err := db.QueryRow(`
 		SELECT COUNT(*)
 		FROM activity_logs
 		WHERE date(created_at) = date('now')
-	`).Scan(&count)
-	return count, err
+	`).Scan(&count); err != nil {
+		return 0, fmt.Errorf("count activity today: %w", err)
+	}
+	return count, nil
 }
 
 // GetActivityCountByAction returns activity counts grouped by action for the last N days
@@ -300,7 +304,7 @@ func (db *DB) GetActivityCountByAction(days int) (map[string]int, error) {
 		ORDER BY count DESC
 	`, days)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query activity count by action: %w", err)
 	}
 	defer rows.Close()
 
@@ -309,13 +313,13 @@ func (db *DB) GetActivityCountByAction(days int) (map[string]int, error) {
 		var action string
 		var count int
 		if err := rows.Scan(&action, &count); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan activity count row: %w", err)
 		}
 		counts[action] = count
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iterate activity counts: %w", err)
 	}
 
 	return counts, nil
@@ -340,7 +344,7 @@ func (db *DB) GetUserActivitySummary(days, limit int) ([]UserActivitySummary, er
 		LIMIT ?
 	`, days, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query user activity summary: %w", err)
 	}
 	defer rows.Close()
 
@@ -350,7 +354,7 @@ func (db *DB) GetUserActivitySummary(days, limit int) ([]UserActivitySummary, er
 		var userID sql.NullInt64
 		var username sql.NullString
 		if err := rows.Scan(&userID, &username, &s.Count); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan user activity summary row: %w", err)
 		}
 		if userID.Valid {
 			s.UserID = int(userID.Int64)
@@ -362,7 +366,7 @@ func (db *DB) GetUserActivitySummary(days, limit int) ([]UserActivitySummary, er
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iterate user activity summaries: %w", err)
 	}
 
 	return summaries, nil

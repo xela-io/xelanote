@@ -22,7 +22,7 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := s.sharingService.SearchUsers(query, userID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to search users", err)
 		return
 	}
 

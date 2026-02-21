@@ -29,7 +29,7 @@ func (s *Server) updateFolderEncryptionDefault(w http.ResponseWriter, r *http.Re
 	}
 
 	if err := s.noteService.UpdateFolderEncryptionDefault(userID, id, req.Encrypted); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to update encryption setting", err)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (s *Server) getFolderEncryptionDefault(w http.ResponseWriter, r *http.Reque
 
 	encrypted, err := s.noteService.GetFolderEncryptionDefault(userID, id)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		s.respondInternalErr(w, "failed to get encryption setting", err)
 		return
 	}
 

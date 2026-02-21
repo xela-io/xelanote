@@ -47,7 +47,7 @@ func ValidateAccessToken(tokenString string, secret []byte) (*Claims, error) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return secret, nil
-	})
+	}, jwt.WithIssuer("xelanote"))
 
 	if err != nil {
 		return nil, err

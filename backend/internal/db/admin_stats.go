@@ -1,31 +1,22 @@
 package db
 
+import "fmt"
+
 // GetSystemStats returns basic system statistics
 func (db *DB) GetSystemStats() (*SystemStats, error) {
 	stats := &SystemStats{}
 
-	// Count users
-	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers)
-	if err != nil {
-		return nil, err
+	if err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers); err != nil {
+		return nil, fmt.Errorf("count users: %w", err)
 	}
-
-	// Count notes (active only)
-	err = db.QueryRow("SELECT COUNT(*) FROM notes WHERE deleted_at IS NULL").Scan(&stats.TotalNotes)
-	if err != nil {
-		return nil, err
+	if err := db.QueryRow("SELECT COUNT(*) FROM notes WHERE deleted_at IS NULL").Scan(&stats.TotalNotes); err != nil {
+		return nil, fmt.Errorf("count notes: %w", err)
 	}
-
-	// Count folders
-	err = db.QueryRow("SELECT COUNT(*) FROM folders").Scan(&stats.TotalFolders)
-	if err != nil {
-		return nil, err
+	if err := db.QueryRow("SELECT COUNT(*) FROM folders").Scan(&stats.TotalFolders); err != nil {
+		return nil, fmt.Errorf("count folders: %w", err)
 	}
-
-	// Count tags
-	err = db.QueryRow("SELECT COUNT(*) FROM tags").Scan(&stats.TotalTags)
-	if err != nil {
-		return nil, err
+	if err := db.QueryRow("SELECT COUNT(*) FROM tags").Scan(&stats.TotalTags); err != nil {
+		return nil, fmt.Errorf("count tags: %w", err)
 	}
 
 	// Storage is calculated at runtime from uploads directory
@@ -56,14 +47,14 @@ func (db *DB) GetDetailedStats(days int) (*DetailedStats, error) {
 		ORDER BY day
 	`, days)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query user growth: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var dc DailyCount
 		if err := rows.Scan(&dc.Date, &dc.Count); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan user growth row: %w", err)
 		}
 		detailed.UserGrowth = append(detailed.UserGrowth, dc)
 	}
@@ -78,14 +69,14 @@ func (db *DB) GetDetailedStats(days int) (*DetailedStats, error) {
 		ORDER BY day
 	`, days)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query note growth: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var dc DailyCount
 		if err := rows.Scan(&dc.Date, &dc.Count); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan note growth row: %w", err)
 		}
 		detailed.NoteGrowth = append(detailed.NoteGrowth, dc)
 	}

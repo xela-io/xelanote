@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"net/mail"
+	"strings"
 
 	"github.com/xela-io/xelanote/internal/db"
 )
@@ -102,9 +103,23 @@ func isValidDietaryPreference(pref string) bool {
 	return validDietaryPreferences[pref]
 }
 
-// isValidEmail validates an email address using Go's net/mail package.
-// This is more robust than a simple @ check and handles edge cases.
+// isValidEmail validates an email address using Go's net/mail package
+// with additional checks to reject unusual but technically valid formats
+// like user@[192.168.1.1] or single-label domains like user@localhost.
 func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
+	if len(email) < 5 {
+		return false
+	}
+	addr, err := mail.ParseAddress(email)
+	if err != nil {
+		return false
+	}
+	// Use the parsed address (strips display name if present)
+	at := strings.LastIndex(addr.Address, "@")
+	if at < 1 {
+		return false
+	}
+	domain := addr.Address[at+1:]
+	// Domain must contain a dot (rejects IP-literals and single-label domains)
+	return strings.Contains(domain, ".")
 }

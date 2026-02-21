@@ -1,6 +1,11 @@
 package api
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+
+	"github.com/xela-io/xelanote/internal/service"
+)
 
 func (s *Server) resolveETagVersion(w http.ResponseWriter, userID int, noteID, ifMatch string) (int, bool) {
 	if ifMatch == "" {
@@ -10,6 +15,10 @@ func (s *Server) resolveETagVersion(w http.ResponseWriter, userID int, noteID, i
 
 	note, err := s.noteService.GetNote(userID, noteID)
 	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			respondError(w, http.StatusNotFound, "note not found")
+			return 0, false
+		}
 		s.respondInternalErr(w, "failed to get note", err)
 		return 0, false
 	}

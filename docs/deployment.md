@@ -668,9 +668,19 @@ See [SECURITY.md](../SECURITY.md) for detailed security logging documentation.
 
 **Multi-Stage Dockerfile:**
 
-1. **Backend Builder**: Go 1.24 Alpine with CGO for SQLite/FTS5/SQLCipher
-2. **Frontend Builder**: Node 20 Alpine for SvelteKit build
+1. **Frontend Builder**: Node 22 Alpine for SvelteKit build
+2. **Backend Builder**: Go 1.25 Alpine with CGO for SQLite/FTS5
 3. **Final Image**: Alpine 3.20 with compiled binary and static assets
+
+**Build Tags:**
+
+| Umgebung | Tags | Hinweis |
+|----------|------|---------|
+| Lokal (Makefile) | `fts5 sqlite_crypt` | SQLCipher fuer DB-Encryption-at-Rest verfuegbar |
+| Docker (Dockerfile) | `fts5` | SQLCipher **nicht** enthalten (opt-in, siehe Dockerfile-Kommentare) |
+| CI (GitHub Actions) | `fts5 sqlite_crypt` | Wie lokal |
+
+**Bewusste Entscheidung:** Docker verzichtet auf SQLCipher, weil die meisten Deployments DB-Encryption-at-Rest nicht benoetigen (Container-Volume + OS-Level-Encryption genuegen). Fuer SQLCipher im Docker-Image: siehe Kommentar in `Dockerfile` Zeile 17-18.
 
 **Build Time**: ~40 seconds (with caching)
 

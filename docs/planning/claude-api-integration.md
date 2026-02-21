@@ -158,7 +158,7 @@ ALTER TABLE folders ADD COLUMN ai_enabled_default INTEGER DEFAULT 0;
 
 **Akzeptanzkriterien:**
 - [ ] `XELANOTE_API_KEY_SECRET` Env-Variable dokumentiert
-- [ ] Validierung: Mindestens 32 Zeichen (wie JWT_SECRET)
+- [ ] Validierung: Mindestens 64 Zeichen (wie JWT_SECRET)
 - [ ] Server startet ohne Secret (Feature disabled), mit Warning-Log
 - [ ] Dokumentation in CLAUDE.md und deployment.md
 

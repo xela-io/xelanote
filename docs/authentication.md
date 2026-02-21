@@ -419,20 +419,20 @@ CREATE INDEX idx_folders_user_id ON folders(user_id);
 ### Environment Variables
 
 ```bash
-# Required - Must be at least 32 characters
-JWT_SECRET=your-super-secret-jwt-key-min-32-characters
+# Required - Must be at least 64 characters
+JWT_SECRET=your-super-secret-jwt-key-min-64-characters-use-openssl-rand-hex-32
 
 # Environment mode (affects cookie security)
 XELANOTE_ENV=production  # or 'development'
 
-# Generate secure secret:
-openssl rand -base64 32
+# Generate secure secret (produces 64 hex characters):
+openssl rand -hex 32
 ```
 
 ### .env.example
 
 ```bash
-# JWT Secret (min 32 characters, cryptographically secure)
+# JWT Secret (min 64 characters, cryptographically secure)
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 # Environment mode (development or production)

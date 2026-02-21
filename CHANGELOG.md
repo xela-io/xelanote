@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FTS5: Fixed `notes_au` trigger that unconditionally deleted OLD from FTS index, causing "database disk image is malformed" when restoring soft-deleted notes (migration 052)
 - Encryption: Fixed `BatchUpdateWrappedDEKs` deadlock with `MaxOpenConns=1` by using the transaction for ownership/encryption checks instead of a separate DB query
 - ETag: `resolveETagVersion` now returns 404 instead of 500 for nonexistent notes by mapping `ErrNotFound` correctly
+- Performance: Keyword insertion now uses batch INSERT instead of per-keyword loop (1 query instead of N)
 
 ### Refactored
 

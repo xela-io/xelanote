@@ -8,19 +8,8 @@ import (
 
 // CreateRecipeNote creates a new recipe note with default metadata.
 func (s *RecipeService) CreateRecipeNote(userID int, title, content, folderPath string) (*db.Note, error) {
-	// Check note limit
-	maxNotes, err := s.db.GetMaxNotesPerUser()
-	if err != nil {
+	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
-	}
-	if maxNotes > 0 {
-		currentCount, err := s.db.GetNoteCountForUser(userID)
-		if err != nil {
-			return nil, err
-		}
-		if currentCount >= maxNotes {
-			return nil, ErrNoteLimitExceeded
-		}
 	}
 
 	// Check feature enabled
@@ -56,19 +45,8 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 	keywords []string,
 	folderPath string,
 ) (*db.Note, error) {
-	// Check note limit
-	maxNotes, err := s.db.GetMaxNotesPerUser()
-	if err != nil {
+	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
-	}
-	if maxNotes > 0 {
-		currentCount, err := s.db.GetNoteCountForUser(userID)
-		if err != nil {
-			return nil, err
-		}
-		if currentCount >= maxNotes {
-			return nil, ErrNoteLimitExceeded
-		}
 	}
 
 	// Check feature enabled
@@ -88,10 +66,8 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 	if len(keywords) > 0 {
 		prefs, err := s.db.GetUserPreferences(userID)
 		if err == nil && prefs.KeywordsEnabled {
-			for _, kw := range keywords {
-				if err := s.db.InsertNoteKeyword(note.ID, kw); err != nil {
-					s.notes.logger.Warn("failed to insert keyword", "error", err)
-				}
+			if err := s.db.InsertNoteKeywords(note.ID, keywords); err != nil {
+				s.notes.logger.Warn("failed to insert keywords", "error", err)
 			}
 		}
 	}

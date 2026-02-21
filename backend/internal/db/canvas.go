@@ -56,10 +56,8 @@ func (db *DB) CreateEncryptedCanvasNote(
 
 	// Store keywords if provided
 	if len(keywords) > 0 {
-		for _, kw := range keywords {
-			if err := db.InsertNoteKeyword(id, kw); err != nil {
-				fmt.Printf("WARNING: Failed to insert keyword for canvas note %s: %v\n", id, err)
-			}
+		if err := db.InsertNoteKeywords(id, keywords); err != nil {
+			return nil, fmt.Errorf("failed to insert keywords for canvas note %s: %w", id, err)
 		}
 	}
 

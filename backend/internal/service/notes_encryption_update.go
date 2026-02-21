@@ -95,10 +95,8 @@ func (s *NoteService) UpdateEncryptedNote(
 		// Insert new keywords if user has enabled keyword extraction
 		prefs, err := s.db.GetUserPreferences(userID)
 		if err == nil && prefs.KeywordsEnabled {
-			for _, kw := range keywords {
-				if err := s.db.InsertNoteKeyword(noteID, kw); err != nil {
-					s.logger.Warn("failed to insert keyword", "error", err)
-				}
+			if err := s.db.InsertNoteKeywords(noteID, keywords); err != nil {
+				s.logger.Warn("failed to insert keywords", "error", err)
 			}
 		}
 	}

@@ -43,12 +43,10 @@ func (s *NoteService) CreateEncryptedNote(
 	if len(keywords) > 0 {
 		prefs, err := s.db.GetUserPreferences(userID)
 		if err == nil && prefs.KeywordsEnabled {
-			for _, kw := range keywords {
-				if err := s.db.InsertNoteKeyword(note.ID, kw); err != nil {
-					s.logger.Warn("failed to insert keyword", "error", err)
-				}
+			if err := s.db.InsertNoteKeywords(note.ID, keywords); err != nil {
+				s.logger.Warn("failed to insert keywords", "error", err)
 			}
-		} else if len(keywords) > 0 {
+		} else {
 			s.logger.Warn("keywords sent but user has keywords disabled", "userID", userID)
 		}
 	}
@@ -61,19 +59,8 @@ func (s *NoteService) CreateEncryptedNote(
 
 // CreateJournalNote creates a new plaintext journal note for a specific date.
 func (s *NoteService) CreateJournalNote(userID int, title, content, folderPath, journalDate string) (*db.Note, error) {
-	// Check note limit
-	maxNotes, err := s.db.GetMaxNotesPerUser()
-	if err != nil {
+	if err := s.checkNoteLimit(userID); err != nil {
 		return nil, err
-	}
-	if maxNotes > 0 {
-		currentCount, err := s.db.GetNoteCountForUser(userID)
-		if err != nil {
-			return nil, err
-		}
-		if currentCount >= maxNotes {
-			return nil, ErrNoteLimitExceeded
-		}
 	}
 
 	// Validate journal date
@@ -126,19 +113,8 @@ func (s *NoteService) CreateEncryptedJournalNote(
 	folderPath string,
 	journalDate string,
 ) (*db.Note, error) {
-	// Check note limit
-	maxNotes, err := s.db.GetMaxNotesPerUser()
-	if err != nil {
+	if err := s.checkNoteLimit(userID); err != nil {
 		return nil, err
-	}
-	if maxNotes > 0 {
-		currentCount, err := s.db.GetNoteCountForUser(userID)
-		if err != nil {
-			return nil, err
-		}
-		if currentCount >= maxNotes {
-			return nil, ErrNoteLimitExceeded
-		}
 	}
 
 	// Validate journal date
@@ -174,10 +150,8 @@ func (s *NoteService) CreateEncryptedJournalNote(
 	if len(keywords) > 0 {
 		prefs, err := s.db.GetUserPreferences(userID)
 		if err == nil && prefs.KeywordsEnabled {
-			for _, kw := range keywords {
-				if err := s.db.InsertNoteKeyword(note.ID, kw); err != nil {
-					s.logger.Warn("failed to insert keyword", "error", err)
-				}
+			if err := s.db.InsertNoteKeywords(note.ID, keywords); err != nil {
+				s.logger.Warn("failed to insert keywords", "error", err)
 			}
 		}
 	}

@@ -256,6 +256,25 @@ func (db *DB) InsertNoteKeyword(noteID, keyword string) error {
 	return err
 }
 
+// InsertNoteKeywords adds multiple keywords to a note in a single batch INSERT.
+func (db *DB) InsertNoteKeywords(noteID string, keywords []string) error {
+	if len(keywords) == 0 {
+		return nil
+	}
+	query := "INSERT INTO note_keywords (note_id, keyword) VALUES "
+	args := make([]interface{}, 0, len(keywords)*2)
+	for i, kw := range keywords {
+		if i > 0 {
+			query += ","
+		}
+		query += "(?,?)"
+		args = append(args, noteID, kw)
+	}
+	query += " ON CONFLICT(note_id, keyword) DO NOTHING"
+	_, err := db.Exec(query, args...)
+	return err
+}
+
 // DeleteNoteKeywords removes all keywords for a note.
 func (db *DB) DeleteNoteKeywords(noteID string) error {
 	_, err := db.Exec("DELETE FROM note_keywords WHERE note_id = ?", noteID)

@@ -5,7 +5,6 @@
   import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { get } from 'svelte/store';
-  import { fade } from 'svelte/transition';
   import { _, locale } from 'svelte-i18n';
 
   import { browser } from '$app/environment';
@@ -548,28 +547,37 @@
         {/snippet}
       </svelte:boundary>
 
-      <main
-        id="main-content"
-        tabindex="-1"
-        class="flex-1 overflow-hidden flex flex-col focus:outline-none relative z-0"
-        style:padding-bottom={ui.getIsMobile() && !ui.getIsKeyboardOpen()
-          ? 'calc(3.5rem + var(--safe-area-inset-bottom))'
-          : '0'}
+      <!-- Mobile: sliding wrapper that pushes content right when sidebar opens -->
+      <div
+        class="flex-1 flex flex-col min-w-0 {ui.getIsMobile()
+          ? 'transition-[transform,filter] duration-200'
+          : ''}"
+        style={ui.getIsMobile()
+          ? `transform: translateX(${ui.getSidebarOpen() ? 'min(85vw, 20rem)' : '0px'}); filter: blur(${ui.getSidebarOpen() ? '3px' : '0px'})`
+          : ''}
       >
-        <div class="flex-1 overflow-hidden">
-          {@render children()}
-        </div>
-      </main>
+        <main
+          id="main-content"
+          tabindex="-1"
+          class="flex-1 overflow-hidden flex flex-col focus:outline-none relative z-0"
+          style:padding-bottom={ui.getIsMobile() && !ui.getIsKeyboardOpen()
+            ? 'calc(3.5rem + var(--safe-area-inset-bottom))'
+            : '0'}
+        >
+          <div class="flex-1 overflow-hidden">
+            {@render children()}
+          </div>
+        </main>
 
-      {#if ui.getIsMobile() && !ui.getIsKeyboardOpen()}
-        <MobileBottomNav />
-      {/if}
+        {#if ui.getIsMobile() && !ui.getIsKeyboardOpen()}
+          <MobileBottomNav />
+        {/if}
+      </div>
 
-      <!-- Mobile backdrop - after main for correct stacking -->
+      <!-- Mobile: transparent overlay to close sidebar on tap -->
       {#if ui.getIsMobile() && ui.getSidebarOpen()}
         <div
-          class="fixed inset-0 bg-black/40 backdrop-blur-md motion-reduce:backdrop-blur-none motion-reduce:bg-black/50 z-40"
-          transition:fade={{ duration: 200 }}
+          class="fixed inset-0 z-40"
           onclick={() => ui.setSidebarOpen(false)}
           onkeydown={(e) => {
             if (e.key === 'Escape') ui.setSidebarOpen(false);
@@ -585,9 +593,10 @@
         ></div>
       {/if}
 
-      <!-- Mobile sidebar toggle button — always visible (even with keyboard open) -->
+      <!-- Mobile sidebar toggle button -->
       {#if ui.getIsMobile()}
         <button
+          type="button"
           onclick={() => ui.setSidebarOpen(!ui.getSidebarOpen())}
           class="fixed top-[calc(var(--safe-area-inset-top)+0.625rem)] p-2 rounded-md active:scale-95 transition-all duration-200 toolbar-btn
             {ui.getSidebarOpen()

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor: Elevated layout with subtle gradient background, grid-pattern overlay, frosted-glass toolbar, and card-style editor panels (backlinks, summary, tags). New CSS surface tokens for consistent panel styling across themes
 - Mobile: Replace top MobileHeader with fixed bottom navigation bar (Notes, Search, More tabs). Sidebar toggle button always visible and visually integrated into editor toolbars. Mobile sidebar uses two-column layout matching desktop (icon strip + tree panel). Editor toolbars use single-row layout with horizontal scroll overflow
 - PWA: Lock orientation to portrait to respect Android rotation lock, add `display_override` for window-controls-overlay, add `mobile-web-app-capable` meta tag, add manifest screenshots for richer Android install prompt
+- Mobile: Sidebar now pushes content to the right with blur effect instead of overlaying with dark backdrop
 
 ### Fixed
 

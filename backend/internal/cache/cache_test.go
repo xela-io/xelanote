@@ -6,7 +6,7 @@ import (
 )
 
 func TestCache_SetGet(t *testing.T) {
-	c := NewCache(50 * time.Millisecond)
+	c := New(50 * time.Millisecond)
 	defer c.Close()
 
 	c.Set("k1", "value")
@@ -16,7 +16,7 @@ func TestCache_SetGet(t *testing.T) {
 }
 
 func TestCache_Expires(t *testing.T) {
-	c := NewCache(10 * time.Millisecond)
+	c := New(10 * time.Millisecond)
 	defer c.Close()
 
 	c.Set("k1", "value")
@@ -27,7 +27,7 @@ func TestCache_Expires(t *testing.T) {
 }
 
 func TestCache_DeleteByPrefix(t *testing.T) {
-	c := NewCache(1 * time.Minute)
+	c := New(1 * time.Minute)
 	defer c.Close()
 
 	c.Set("a:1", 1)

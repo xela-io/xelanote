@@ -22,7 +22,7 @@ func NewNoteService(database *db.DB) *NoteService {
 	return &NoteService{
 		db:     database,
 		logger: slog.Default(),
-		cache:  cache.NewCache(5 * time.Minute), // 5 minute TTL
+		cache:  cache.New(5 * time.Minute), // 5 minute TTL
 	}
 }
 

@@ -12,7 +12,7 @@ func setupGraphTest(t *testing.T) (*GraphService, *NoteService, int) {
 	t.Helper()
 
 	database := setupTestDB(t)
-	c := cache.NewCache(0)
+	c := cache.New(0)
 	t.Cleanup(func() { c.Close() })
 
 	graphSvc := NewGraphService(database, c)
@@ -132,7 +132,7 @@ func TestGraphService_GetFilteredGraph(t *testing.T) {
 
 func TestGraphService_CrossUserIsolation(t *testing.T) {
 	database := setupTestDB(t)
-	c := cache.NewCache(0)
+	c := cache.New(0)
 	t.Cleanup(func() { c.Close() })
 
 	graphSvc := NewGraphService(database, c)

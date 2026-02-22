@@ -92,7 +92,7 @@ func NewRecipeSuggestionService(database *db.DB, router *llm.ProviderRouter, rec
 		router: router,
 		recipe: recipeService,
 		logger: slog.Default(),
-		cache:  cache.NewCache(10 * time.Minute), // 10 minute TTL for recipe summaries
+		cache:  cache.New(10 * time.Minute), // 10 minute TTL for recipe summaries
 	}
 }
 

@@ -20,7 +20,7 @@ type SnippetService struct {
 func NewSnippetService(database *db.DB) *SnippetService {
 	return &SnippetService{
 		db:     database,
-		cache:  cache.NewCache(5 * time.Minute), // 5 minute TTL
+		cache:  cache.New(5 * time.Minute), // 5 minute TTL
 		logger: slog.Default(),
 	}
 }

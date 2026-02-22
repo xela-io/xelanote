@@ -20,7 +20,7 @@ type TemplateService struct {
 func NewTemplateService(database *db.DB) *TemplateService {
 	return &TemplateService{
 		db:     database,
-		cache:  cache.NewCache(5 * time.Minute), // 5 minute TTL
+		cache:  cache.New(5 * time.Minute), // 5 minute TTL
 		logger: slog.Default(),
 	}
 }

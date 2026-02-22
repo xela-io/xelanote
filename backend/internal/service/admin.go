@@ -36,7 +36,7 @@ func NewAdminService(database *db.DB, dataDir string) *AdminService {
 	return &AdminService{
 		db:      database,
 		dataDir: dataDir,
-		cache:   cache.NewCache(5 * time.Minute), // 5 minute TTL for admin stats
+		cache:   cache.New(5 * time.Minute), // 5 minute TTL for admin stats
 	}
 }
 

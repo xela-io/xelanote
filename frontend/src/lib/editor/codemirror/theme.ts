@@ -8,9 +8,11 @@ export const lightTheme = EditorView.theme({
   '&': {
     backgroundColor: 'var(--color-background)',
     color: 'var(--color-foreground)',
+    fontFamily: 'var(--font-sans)',
   },
   '.cm-content': {
     caretColor: 'var(--color-foreground)',
+    fontFamily: 'var(--font-sans)',
   },
   '.cm-cursor': {
     borderLeftColor: 'var(--color-foreground)',
@@ -53,5 +55,13 @@ export const markdownSyntaxStyle = HighlightStyle.define([
   {
     tag: [tags.link, tags.url],
     color: 'var(--color-primary)',
+  },
+  {
+    tag: tags.strong,
+    fontWeight: '700',
+  },
+  {
+    tag: tags.emphasis,
+    fontStyle: 'italic',
   },
 ]);

@@ -1061,7 +1061,7 @@ html {
   font-weight: 600;
 }
 
-.cm-editor .cm-live-preview-line.cm-live-blockquote {
+.cm-editor .cm-live-blockquote {
   border-left: 3px solid var(--color-border);
   padding-left: 1rem;
   color: var(--color-muted-foreground);
@@ -1073,7 +1073,7 @@ html {
   user-select: none;
 }
 
-.cm-editor .cm-live-preview-line.cm-live-code-line {
+.cm-editor .cm-live-code-line {
   font-family: var(--font-mono);
   background-color: var(--color-muted);
 }

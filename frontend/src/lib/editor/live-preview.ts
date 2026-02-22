@@ -233,7 +233,7 @@ function buildDecorations(
           lineClasses.push('cm-live-task-line');
         }
 
-        if (line.number === 1 && !isActiveLine) {
+        if (line.number === 1) {
           lineClasses.push('cm-live-first-line-title');
         }
         if (primitives.heading) {
@@ -242,24 +242,23 @@ function buildDecorations(
         if (showHeadingToggle) {
           lineClasses.push('cm-live-heading-toggle-line');
         }
+        if (primitives.blockquote) {
+          lineClasses.push('cm-live-blockquote');
+        }
         if (!isActiveLine) {
           lineClasses.push('cm-live-preview-line');
-          if (primitives.blockquote) {
-            lineClasses.push('cm-live-blockquote');
+          if (structuredLines.codeFenceLines.has(line.number)) {
+            lineClasses.push('cm-live-code-fence');
           }
         }
         if (listMarkerInfo) {
           lineClasses.push('cm-live-list-item');
         }
-        if (!isActiveLine) {
-          if (structuredLines.codeFenceLines.has(line.number)) {
-            lineClasses.push('cm-live-code-fence');
-          } else if (structuredLines.codeContentLines.has(line.number)) {
-            lineClasses.push('cm-live-code-line');
-          }
-          if (structuredLines.tableLines.has(line.number)) {
-            lineClasses.push('cm-live-table-line');
-          }
+        if (structuredLines.codeContentLines.has(line.number)) {
+          lineClasses.push('cm-live-code-line');
+        }
+        if (structuredLines.tableLines.has(line.number)) {
+          lineClasses.push('cm-live-table-line');
         }
 
         if (lineClasses.length > 0) {

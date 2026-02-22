@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ImagePlus, ListTodo, Table2 } from 'lucide-svelte';
+  import { ImagePlus, ListTodo, Plus, Table2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { bottomsheet } from '$lib/actions/bottomsheet';
@@ -59,8 +59,9 @@
 
 <div
   class="fixed z-50 bg-background p-4
+    pt-3
     bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
-    sm:bottom-auto sm:left-auto sm:right-auto sm:w-64 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
+    sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
   style={desktopStyle}
   role="menu"
   aria-label={$_('component.editor.table_insert.insert')}
@@ -69,11 +70,14 @@
   onclick={handleMenuClick}
   use:bottomsheet={{ onClose }}
 >
-  <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
+  <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-3 sm:hidden"></div>
 
   <div class="space-y-1">
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
-      {$_('component.editor.table_insert.insert')}
+    <div
+      class="px-2.5 pt-0.5 pb-1.5 text-xs font-medium text-muted-foreground flex items-center gap-1.5"
+    >
+      <Plus size={14} />
+      <span>{$_('component.editor.table_insert.insert')}</span>
     </div>
 
     <button
@@ -82,7 +86,7 @@
         onInsertTask();
         onClose();
       }}
-      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      class="w-full flex items-center gap-3 px-2.5 py-2 text-left hover:bg-accent rounded-md transition-colors"
       role="menuitem"
     >
       <ListTodo size={18} />
@@ -95,7 +99,7 @@
         onInsertTable();
         onClose();
       }}
-      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      class="w-full flex items-center gap-3 px-2.5 py-2 text-left hover:bg-accent rounded-md transition-colors"
       role="menuitem"
     >
       <Table2 size={18} />
@@ -108,7 +112,7 @@
         onUpload();
         onClose();
       }}
-      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+      class="w-full flex items-center gap-3 px-2.5 py-2 text-left hover:bg-accent rounded-md transition-colors"
       role="menuitem"
     >
       <ImagePlus size={18} />

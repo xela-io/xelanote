@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Columns, Edit, Eye, ScanEye } from 'lucide-svelte';
+  import { Check, ChevronDown, Columns, Edit, Eye, ScanEye } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   type EditorMode = 'edit' | 'split' | 'preview' | 'live';
@@ -12,6 +12,9 @@
 
   const { editorMode, isMobile = false, onSetEditorMode }: Props = $props();
 
+  let mobileMenuOpen = $state(false);
+  let mobileTriggerRect = $state<DOMRect | null>(null);
+
   const modeOptions = $derived.by(() => {
     const base = [
       { value: 'live' as const, label: $_('component.editor.toolbar.mode_live') },
@@ -22,27 +25,86 @@
     return [...base, { value: 'split' as const, label: $_('component.editor.toolbar.mode_split') }];
   });
 
-  function handleSelectChange(e: Event) {
-    const next = (e.currentTarget as HTMLSelectElement).value as EditorMode;
-    onSetEditorMode(next);
+  function getModeLabel(mode: EditorMode) {
+    if (mode === 'live') return $_('component.editor.toolbar.mode_live');
+    if (mode === 'edit') return $_('component.editor.toolbar.mode_edit');
+    if (mode === 'preview') return $_('component.editor.toolbar.mode_preview');
+    return $_('component.editor.toolbar.mode_split');
+  }
+
+  const mobileMenuStyle = $derived.by(() => {
+    if (!mobileTriggerRect) return '';
+    const top = mobileTriggerRect.bottom + 6;
+    const minWidth = Math.max(168, mobileTriggerRect.width);
+    const maxLeft = Math.max(8, window.innerWidth - minWidth - 8);
+    const left = Math.min(maxLeft, Math.max(8, mobileTriggerRect.left));
+    return `top: ${top}px; left: ${left}px; min-width: ${minWidth}px; max-width: calc(100vw - 16px);`;
+  });
+
+  function toggleMobileMenu(e: MouseEvent) {
+    mobileTriggerRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    mobileMenuOpen = !mobileMenuOpen;
+  }
+
+  function closeMobileMenu() {
+    mobileMenuOpen = false;
+  }
+
+  function selectMobileMode(mode: EditorMode) {
+    onSetEditorMode(mode);
+    closeMobileMenu();
   }
 </script>
 
 {#if isMobile}
-  <label class="sr-only" for="editor-mode-select">
-    {$_('component.editor.toolbar.more_options')}
-  </label>
-  <select
-    id="editor-mode-select"
-    class="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-accent toolbar-btn flex-shrink-0"
-    value={editorMode}
-    onchange={handleSelectChange}
-    aria-label={$_('component.editor.toolbar.mode_live')}
+  <button
+    type="button"
+    class="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-accent toolbar-btn flex-shrink-0 inline-flex items-center gap-1"
+    onclick={toggleMobileMenu}
+    aria-label={$_('component.editor.toolbar.mode_group')}
+    aria-expanded={mobileMenuOpen}
+    aria-haspopup="menu"
+    title={getModeLabel(editorMode)}
   >
-    {#each modeOptions as mode (mode.value)}
-      <option value={mode.value}>{mode.label}</option>
-    {/each}
-  </select>
+    <span class="truncate max-w-[6.5rem]">{getModeLabel(editorMode)}</span>
+    <ChevronDown size={14} class={`transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`} />
+  </button>
+
+  {#if mobileMenuOpen}
+    <button
+      type="button"
+      class="fixed inset-0 z-40 bg-transparent"
+      onclick={closeMobileMenu}
+      aria-label={$_('component.editor.toolbar.more_options')}
+    ></button>
+
+    <div
+      class="fixed z-50 rounded-lg border border-border bg-background shadow-lg p-1.5"
+      style={mobileMenuStyle}
+      role="menu"
+      aria-label={$_('component.editor.toolbar.mode_group')}
+    >
+      <div class="px-2 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+        {$_('component.editor.toolbar.mode_group')}
+      </div>
+      {#each modeOptions as mode (mode.value)}
+        <button
+          type="button"
+          class="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs rounded-md hover:bg-accent"
+          onclick={() => selectMobileMode(mode.value)}
+          role="menuitemradio"
+          aria-checked={editorMode === mode.value}
+        >
+          {#if editorMode === mode.value}
+            <Check size={14} />
+          {:else}
+            <span class="w-[14px]"></span>
+          {/if}
+          <span>{mode.label}</span>
+        </button>
+      {/each}
+    </div>
+  {/if}
 {:else}
   <div
     class="inline-flex items-center rounded-md border border-border bg-background p-0.5 gap-0.5 flex-shrink-0"

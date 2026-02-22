@@ -1064,6 +1064,7 @@
         "mode_split": "Editor und Preview",
         "mode_preview": "Nur Preview",
         "save": "Manuell speichern (Strg+S)",
+        "save_short": "Speichern",
         "upload": "Bild hochladen",
         "history": "Versionshistorie",
         "focus_mode": "Fokusmodus",
@@ -1089,7 +1090,12 @@
         "decrypt_note": "Notiz entschlüsseln",
         "encrypt_note": "Notiz verschlüsseln",
         "open_menu": "Menü öffnen",
-        "editor_toolbar": "Editor-Werkzeugleiste"
+        "editor_toolbar": "Editor-Werkzeugleiste",
+        "section_view_mode": "Ansicht",
+        "section_formatting": "Formatierung",
+        "section_note": "Notiz",
+        "section_features_help": "Funktionen & Hilfe",
+        "section_danger": "Gefährlich"
       },
       "encryption_toggle": {
         "decrypt_confirm_title": "Notiz entschlüsseln?",

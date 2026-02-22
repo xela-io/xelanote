@@ -589,7 +589,7 @@
       {#if ui.getIsMobile()}
         <button
           onclick={() => ui.setSidebarOpen(!ui.getSidebarOpen())}
-          class="fixed top-[calc(var(--safe-area-inset-top)+0.375rem)] p-2 rounded-md active:scale-95 transition-all duration-200 toolbar-btn
+          class="fixed top-[calc(var(--safe-area-inset-top)+0.625rem)] p-2 rounded-md active:scale-95 transition-all duration-200 toolbar-btn
             {ui.getSidebarOpen()
             ? 'left-[calc(min(85vw,20rem)+0.5rem)] z-[55] bg-background border border-border text-foreground shadow-sm'
             : 'left-[0.5rem] z-20 text-muted-foreground hover:bg-accent'}"

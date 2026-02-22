@@ -126,7 +126,9 @@
     </div>
 
     {#if onSetEditorMode}
-      <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">View Mode</div>
+      <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+        {$_('component.editor.toolbar.section_view_mode')}
+      </div>
       <button
         type="button"
         onclick={() => {
@@ -188,7 +190,9 @@
       <hr class="my-2 border-border" />
     {/if}
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Formatting</div>
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+      {$_('component.editor.toolbar.section_formatting')}
+    </div>
     <button
       type="button"
       onclick={() => {
@@ -217,7 +221,9 @@
 
     <hr class="my-2 border-border" />
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Note</div>
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+      {$_('component.editor.toolbar.section_note')}
+    </div>
     {#if FEATURE_FLAGS.colorSyntax}
       <button
         type="button"
@@ -297,7 +303,9 @@
 
     <hr class="my-2 border-border" />
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Features & Help</div>
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+      {$_('component.editor.toolbar.section_features_help')}
+    </div>
 
     <button
       type="button"
@@ -345,7 +353,9 @@
 
     <hr class="my-2 border-border" />
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Danger</div>
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+      {$_('component.editor.toolbar.section_danger')}
+    </div>
     <button
       type="button"
       onclick={() => {

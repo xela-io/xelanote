@@ -84,7 +84,6 @@
   import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as auth from '$lib/stores/auth.svelte';
-  import * as autosave from '$lib/stores/autosave.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as focusMode from '$lib/stores/focus-mode.svelte';
@@ -682,14 +681,14 @@
   }
 
   // Upload Logic
-  let uploading = $state(false);
+  let _uploading = $state(false);
 
   async function uploadImagesFromEditor(files: File[]) {
     await uploadImagesFromEditorAction({
       files,
       editorView,
       setUploading: (value) => {
-        uploading = value;
+        _uploading = value;
       },
       toast: {
         success: (message) => toast.success(message),
@@ -937,10 +936,8 @@
       isMobile={ui.getIsMobile()}
       editorMode={ui.getEditorMode()}
       autoSaveStatus={notes.getAutoSaveStatus()}
-      autoSaveEnabled={autosave.getAutoSaveEnabled()}
       isDirty={notes.getIsDirty()}
       isSaving={notes.getIsSaving()}
-      {uploading}
       {showAIActionsDropdown}
       {showMoreMenu}
       {showInsertMenu}

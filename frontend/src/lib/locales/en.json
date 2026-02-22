@@ -1064,6 +1064,7 @@
         "mode_split": "Editor and preview",
         "mode_preview": "Preview only",
         "save": "Save manually (Ctrl+S)",
+        "save_short": "Save",
         "upload": "Upload image",
         "history": "Version history",
         "focus_mode": "Focus mode",
@@ -1089,7 +1090,12 @@
         "decrypt_note": "Decrypt note",
         "encrypt_note": "Encrypt note",
         "open_menu": "Open menu",
-        "editor_toolbar": "Editor toolbar"
+        "editor_toolbar": "Editor toolbar",
+        "section_view_mode": "View mode",
+        "section_formatting": "Formatting",
+        "section_note": "Note",
+        "section_features_help": "Features & Help",
+        "section_danger": "Danger"
       },
       "encryption_toggle": {
         "decrypt_confirm_title": "Decrypt note?",

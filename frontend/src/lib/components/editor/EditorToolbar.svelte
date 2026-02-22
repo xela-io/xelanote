@@ -82,6 +82,16 @@
     onOpenMoreMenu,
   }: Props = $props();
 
+  const showSaveButton = $derived.by(() => !isMobile || isDirty || isSaving);
+  const showHistoryButton = $derived.by(() => !isMobile);
+  const showAIPillContent = $derived.by(
+    () =>
+      (aiEnabled && (editorMode === 'edit' || editorMode === 'split' || editorMode === 'live')) ||
+      (!isMobile && FEATURE_FLAGS.spellCheck && showSpellCheck) ||
+      !isMobile
+  );
+  const showSaveHistoryPill = $derived.by(() => showSaveButton || showHistoryButton);
+
   // Svelte Action: Scroll-Fade for toolbar overflow indicator
   function scrollFade(node: HTMLElement) {
     const wrapper = node.parentElement!;
@@ -200,90 +210,115 @@
       <div class="flex items-center justify-center gap-1 min-w-0 flex-1">
         <div class="toolbar-scroll-wrapper">
           <div
-            class="toolbar-buttons flex items-center gap-1"
+            class="toolbar-buttons flex items-center gap-1.5"
             role="toolbar"
             aria-label={$_('component.editor.toolbar.editor_toolbar')}
             use:scrollFade
           >
-            {#if FEATURE_FLAGS.livePreview}
-              <EditorModeSelector {editorMode} {isMobile} {onSetEditorMode} />
-            {/if}
+            <div class="toolbar-group-pill">
+              {#if FEATURE_FLAGS.livePreview}
+                <EditorModeSelector {editorMode} {isMobile} {onSetEditorMode} />
+              {/if}
 
-            <button
-              type="button"
-              onclick={handleInsertMenuClick}
-              class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
-              class:bg-accent={showInsertMenu}
-              aria-label={$_('component.editor.table_insert.insert')}
-              aria-expanded={showInsertMenu}
-              aria-haspopup="menu"
-              title={$_('component.editor.table_insert.insert')}
-            >
-              <Plus size={16} />
-              <span class="hidden sm:inline text-xs">
-                {$_('component.editor.table_insert.insert')}
-              </span>
-            </button>
-
-            <!-- Save button - always visible -->
-            <button
-              type="button"
-              onclick={onSave}
-              disabled={!isDirty || isSaving}
-              class="p-2 hover:bg-accent rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn"
-              aria-label={$_('component.editor.toolbar.save')}
-            >
-              <Save size={16} />
-            </button>
-
-            <!-- History button - always visible -->
-            <button
-              type="button"
-              onclick={onShowHistory}
-              class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-              aria-label={$_('component.editor.toolbar.history')}
-            >
-              <History size={16} />
-            </button>
-
-            <!-- Focus Mode toggle - hidden on mobile -->
-            {#if !isMobile}
               <button
                 type="button"
-                onclick={onToggleFocus}
-                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                class:bg-accent={focusModeActive}
-                aria-label={$_('component.editor.toolbar.focus_mode')}
-                aria-pressed={focusModeActive}
+                onclick={handleInsertMenuClick}
+                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
+                class:bg-accent={showInsertMenu}
+                aria-label={$_('component.editor.table_insert.insert')}
+                aria-expanded={showInsertMenu}
+                aria-haspopup="menu"
+                title={$_('component.editor.table_insert.insert')}
               >
-                {#if focusModeActive}
-                  <Minimize2 size={16} />
-                {:else}
-                  <Maximize2 size={16} />
-                {/if}
+                <Plus size={16} />
+                <span class="hidden sm:inline text-xs">
+                  {$_('component.editor.table_insert.insert')}
+                </span>
               </button>
+            </div>
+
+            {#if showSaveHistoryPill}
+              <div class="toolbar-group-pill">
+                {#if showSaveButton}
+                  <button
+                    type="button"
+                    onclick={onSave}
+                    disabled={!isDirty || isSaving}
+                    class="p-2 rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn inline-flex items-center gap-1 hover:bg-accent"
+                    class:bg-primary={isDirty && !isSaving}
+                    class:text-primary-foreground={isDirty && !isSaving}
+                    aria-label={$_('component.editor.toolbar.save')}
+                    title={$_('component.editor.toolbar.save')}
+                  >
+                    {#if isSaving}
+                      <Loader2 size={16} class="animate-spin" />
+                    {:else}
+                      <Save size={16} />
+                    {/if}
+                    {#if isDirty || isSaving}
+                      <span class="hidden md:inline text-xs">
+                        {$_('component.editor.toolbar.save_short')}
+                      </span>
+                    {/if}
+                  </button>
+                {/if}
+
+                {#if showHistoryButton}
+                  <button
+                    type="button"
+                    onclick={onShowHistory}
+                    class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn hidden sm:inline-flex"
+                    aria-label={$_('component.editor.toolbar.history')}
+                    title={$_('component.editor.toolbar.history')}
+                  >
+                    <History size={16} />
+                  </button>
+                {/if}
+              </div>
             {/if}
 
-            <!-- Spell Check toggle - only in edit mode with AI enabled -->
-            {#if FEATURE_FLAGS.spellCheck && showSpellCheck}
-              <SpellCheckToggle {editorView} />
-            {/if}
+            {#if showAIPillContent}
+              <div class="toolbar-group-pill">
+                <!-- AI Actions button - only when AI enabled -->
+                {#if aiEnabled && (editorMode === 'edit' || editorMode === 'split' || editorMode === 'live')}
+                  <div class="flex-shrink-0">
+                    <button
+                      type="button"
+                      onclick={handleAIActionsClick}
+                      class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
+                      class:bg-accent={showAIActionsDropdown}
+                      aria-label={$_('component.editor.ai_actions')}
+                      title={$_('component.editor.ai_actions_tooltip')}
+                      aria-expanded={showAIActionsDropdown}
+                      aria-haspopup="menu"
+                    >
+                      <Wand2 size={16} />
+                    </button>
+                  </div>
+                {/if}
 
-            <!-- AI Actions button - only when AI enabled -->
-            {#if aiEnabled && (editorMode === 'edit' || editorMode === 'split' || editorMode === 'live')}
-              <div class="flex-shrink-0">
-                <button
-                  type="button"
-                  onclick={handleAIActionsClick}
-                  class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                  class:bg-accent={showAIActionsDropdown}
-                  aria-label={$_('component.editor.ai_actions')}
-                  title={$_('component.editor.ai_actions_tooltip')}
-                  aria-expanded={showAIActionsDropdown}
-                  aria-haspopup="menu"
-                >
-                  <Wand2 size={16} />
-                </button>
+                <!-- Spell Check toggle - only in edit mode with AI enabled -->
+                {#if FEATURE_FLAGS.spellCheck && showSpellCheck && !isMobile}
+                  <SpellCheckToggle {editorView} />
+                {/if}
+
+                <!-- Focus Mode toggle - hidden on mobile -->
+                {#if !isMobile}
+                  <button
+                    type="button"
+                    onclick={onToggleFocus}
+                    class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
+                    class:bg-accent={focusModeActive}
+                    aria-label={$_('component.editor.toolbar.focus_mode')}
+                    aria-pressed={focusModeActive}
+                  >
+                    {#if focusModeActive}
+                      <Minimize2 size={16} />
+                    {:else}
+                      <Maximize2 size={16} />
+                    {/if}
+                  </button>
+                {/if}
               </div>
             {/if}
           </div>
@@ -304,3 +339,23 @@
     </div>
   </div>
 </div>
+
+<style>
+  .toolbar-group-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    border-radius: 0.625rem;
+    border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+    background: color-mix(in oklab, var(--color-background) 94%, white 6%);
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 639px) {
+    .toolbar-group-pill {
+      gap: 0;
+      border-radius: 0.5rem;
+    }
+  }
+</style>

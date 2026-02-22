@@ -176,18 +176,17 @@ describe('EditorToolbar', () => {
     expect(cbs.onSetEditorMode).toHaveBeenCalledWith('preview');
   });
 
-  it('uses compact mode select on mobile without split option', () => {
+  it('uses compact mode menu on mobile without split option', async () => {
     const cbs = mockCallbacks();
-    const { container } = render(EditorToolbar, {
+    const { getByLabelText, queryByText, getAllByText } = render(EditorToolbar, {
       props: { note: baseNote, isMobile: true, editorMode: 'live', ...cbs },
     });
 
-    const select = container.querySelector('select');
-    expect(select).toBeInTheDocument();
-    expect(select?.textContent).toContain('component.editor.toolbar.mode_live');
-    expect(select?.textContent).toContain('component.editor.toolbar.mode_edit');
-    expect(select?.textContent).toContain('component.editor.toolbar.mode_preview');
-    expect(select?.textContent).not.toContain('component.editor.toolbar.mode_split');
+    await fireEvent.click(getByLabelText('component.editor.toolbar.mode_group'));
+    expect(getAllByText('component.editor.toolbar.mode_live').length).toBeGreaterThan(0);
+    expect(getAllByText('component.editor.toolbar.mode_edit').length).toBeGreaterThan(0);
+    expect(getAllByText('component.editor.toolbar.mode_preview').length).toBeGreaterThan(0);
+    expect(queryByText('component.editor.toolbar.mode_split')).not.toBeInTheDocument();
   });
 
   it('shows focus mode toggle on desktop, not on mobile', () => {

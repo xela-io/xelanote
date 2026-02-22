@@ -85,6 +85,9 @@ frontend/test-results/
 CLAUDE.md
 .git.old/
 
+# Screenshots
+Screenshots/
+
 # Claude Code plan files
 moonlit-discovering-gray.md
 
@@ -104,3 +107,9 @@ codex-config-backup-*.tar.gz
 # Local caches
 .gomodcache/
 frontend/.electron-tmp/
+
+# Codex Docker
+.codex-docker/.env
+.codex-docker/docker-compose.override.yml
+codex-config-backup-*.tar.gz
+.aider*

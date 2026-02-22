@@ -1,31 +1,31 @@
 package cache
 
 import (
-	"strings"
 	"sync"
 	"time"
 )
 
-// Cache is a thread-safe in-memory cache with TTL support
+// Cache is a thread-safe in-memory cache with TTL
 type Cache struct {
-	items    sync.Map
-	ttl      time.Duration
-	stopChan chan struct{}
-	stopOnce sync.Once
+	items      sync.Map
+	ttl        time.Duration
+	stopChan   chan struct{}
+	stopOnce   sync.Once
 }
 
+// cacheItem represents a cached value with expiration
 type cacheItem struct {
 	value      interface{}
 	expiration time.Time
 }
 
-// NewCache creates a new cache with the specified TTL
-func NewCache(ttl time.Duration) *Cache {
+// New creates a new cache with the specified TTL
+func New(ttl time.Duration) *Cache {
 	c := &Cache{
 		ttl:      ttl,
 		stopChan: make(chan struct{}),
 	}
-	go c.cleanupExpired() // Start cleanup goroutine
+	go c.cleanupExpired()
 	return c
 }
 
@@ -57,7 +57,7 @@ func (c *Cache) Delete(key string) {
 // DeleteByPrefix removes all cache entries whose keys start with the given prefix
 func (c *Cache) DeleteByPrefix(prefix string) {
 	c.items.Range(func(key, _ interface{}) bool {
-		if strings.HasPrefix(key.(string), prefix) {
+		if keyStr, ok := key.(string); ok && len(keyStr) >= len(prefix) && keyStr[:len(prefix)] == prefix {
 			c.items.Delete(key)
 		}
 		return true

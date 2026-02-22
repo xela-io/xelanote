@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Frontend: Sidebar redesigned with Obsidian-style icon strip layout — persistent left icon column (40px) with navigation, theme toggle, and settings; collapsible main panel with toolbar header; mobile drawer unchanged
+
 ### Fixed
 
 - Recipes: AI import (image and URL) now reliably translates recipes to the user's locale (e.g. German) using sandwich-pattern prompt reinforcement

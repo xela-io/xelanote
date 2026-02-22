@@ -388,6 +388,14 @@ body,
 :root {
   --bg-primary: var(--color-background);
   --bg-secondary: var(--color-card);
+  /* Reusable elevated surfaces (cards/panels/toolbars) */
+  --surface-panel-bg: color-mix(in oklch, var(--color-card), var(--color-background) 28%);
+  --surface-panel-bg-soft: color-mix(in oklch, var(--color-card), var(--color-background) 22%);
+  --surface-panel-bg-contrast: color-mix(in oklch, var(--color-card), var(--color-background) 14%);
+  --surface-panel-border: color-mix(in oklch, var(--color-border), transparent 22%);
+  --surface-panel-border-soft: color-mix(in oklch, var(--color-border), transparent 20%);
+  --surface-panel-border-strong: color-mix(in oklab, var(--color-border) 58%, transparent);
+  --surface-panel-inset-highlight: color-mix(in oklch, white, transparent 93%);
   --text-primary: var(--color-foreground);
   --text-secondary: var(--color-muted-foreground);
   --text-tertiary: var(--color-muted-foreground);

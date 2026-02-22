@@ -927,7 +927,7 @@
   });
 </script>
 
-<div class="flex flex-col h-full">
+<div class="editor-shell flex h-full flex-col">
   <!-- Toolbar (fixed header, not in scroll container) -->
   {#if notes.getCurrentNote()}
     <EditorToolbar
@@ -1004,7 +1004,7 @@
 
       <!-- Editor / Preview area — flex-1 so it fills remaining height -->
       <div
-        class="relative flex min-h-0 {ui.getIsMobile() ? '' : 'flex-1'}"
+        class="editor-workspace-shell relative flex min-h-0 {ui.getIsMobile() ? '' : 'flex-1'}"
         bind:this={splitContainerRef}
       >
         {#if ui.getEditorMode() === 'live' && headings.length > 0}
@@ -1019,6 +1019,7 @@
             use:taskSortable={liveTaskSortableOptions}
             role="region"
             aria-label={$_('component.editor.editor_area')}
+            class="editor-pane-shell"
             class:flex-1={ui.getEditorMode() !== 'split'}
             class:desktop-split-editor={ui.getEditorMode() === 'split' && !ui.getIsMobile()}
             ondrop={(e) => handleEditorDrop(e, uploadImagesFromEditor)}
@@ -1052,7 +1053,7 @@
         {#if ui.getEditorMode() === 'preview' || ui.getEditorMode() === 'split'}
           <!-- Theme wrapper for preview (overflow-auto for internal scrolling) -->
           <div
-            class="relative {ui.getIsMobile()
+            class="preview-pane-shell relative {ui.getIsMobile()
               ? ''
               : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
             class:flex-1={ui.getEditorMode() !== 'split'}
@@ -1180,6 +1181,63 @@
 />
 
 <style>
+  .editor-shell {
+    position: relative;
+    background:
+      radial-gradient(
+        48rem 22rem at 70% 14%,
+        color-mix(in oklch, var(--color-primary), transparent 92%),
+        transparent
+      ),
+      var(--color-background);
+  }
+
+  .editor-scroll-container {
+    position: relative;
+  }
+
+  .editor-scroll-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image:
+      linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  .editor-workspace-shell {
+    background: var(--surface-panel-bg);
+    border-top: 1px solid var(--surface-panel-border-soft);
+  }
+
+  .editor-pane-shell {
+    position: relative;
+    background: color-mix(in oklch, var(--color-background), black 2%);
+  }
+
+  .preview-pane-shell {
+    background: var(--surface-panel-bg-contrast);
+    border-left: 1px solid var(--surface-panel-border);
+  }
+
+  @media (max-width: 639px) {
+    .editor-scroll-container::before {
+      opacity: 0.06;
+      background-size: 24px 24px;
+    }
+
+    .editor-workspace-shell {
+      border-top-color: color-mix(in oklch, var(--color-border), transparent 35%);
+    }
+
+    .preview-pane-shell {
+      border-left: 0;
+    }
+  }
+
   .split-resize-handle {
     width: 6px;
     cursor: col-resize;

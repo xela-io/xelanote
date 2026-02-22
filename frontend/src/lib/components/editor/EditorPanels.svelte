@@ -34,7 +34,7 @@
 
 <!-- Backlinks panel -->
 {#if backlinks.length > 0}
-  <div class="border-t border-border p-4">
+  <section class="editor-panel-section">
     <h3 class="text-sm font-medium flex items-center gap-2 mb-2">
       <Link size={14} />
       {$_('component.editor.backlinks_title', {
@@ -51,21 +51,21 @@
         </a>
       {/each}
     </div>
-  </div>
+  </section>
 {/if}
 
 <!-- AI Summary Panel -->
-<div class="border-t border-border p-4">
+<section class="editor-panel-section">
   <SummaryPanel
     {note}
     decryptedContent={note.content_encrypted ? note.content : undefined}
     {onSummaryUpdated}
   />
-</div>
+</section>
 
 <!-- Tag Suggestions Panel -->
 {#if showTagSuggestions}
-  <div class="border-t border-border p-4">
+  <section class="editor-panel-section">
     <TagSuggestionsPanel
       noteId={note.id}
       isEncrypted={note.content_encrypted || false}
@@ -78,12 +78,12 @@
         }
       }}
     />
-  </div>
+  </section>
 {/if}
 
 <!-- Link Suggestions Panel -->
 {#if showLinkSuggestions}
-  <div class="border-t border-border p-4">
+  <section class="editor-panel-section">
     <LinkSuggestionsPanel
       noteId={note.id}
       isEncrypted={note.content_encrypted || false}
@@ -92,11 +92,11 @@
         onInsertLink(term, targetTitle);
       }}
     />
-  </div>
+  </section>
 {/if}
 
 <!-- Tag editor panel -->
-<div class="border-t border-border p-4">
+<section class="editor-panel-section">
   <TagEditor
     bind:this={tagEditorRef}
     noteId={note.id}
@@ -104,4 +104,23 @@
       currentTags = tags;
     }}
   />
-</div>
+</section>
+
+<style>
+  .editor-panel-section {
+    margin: 0.65rem 0.75rem 0;
+    padding: 0.85rem;
+    border: 1px solid var(--surface-panel-border);
+    border-radius: 0.9rem;
+    background: var(--surface-panel-bg);
+    box-shadow: inset 0 1px 0 var(--surface-panel-inset-highlight);
+  }
+
+  @media (max-width: 639px) {
+    .editor-panel-section {
+      margin: 0.5rem 0.5rem 0;
+      padding: 0.75rem;
+      border-radius: 0.8rem;
+    }
+  }
+</style>

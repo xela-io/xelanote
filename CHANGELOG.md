@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: Sidebar redesigned with Obsidian-style icon strip layout — persistent left icon column (40px) with navigation, theme toggle, and settings; collapsible main panel with toolbar header
 - Frontend: Sidebar icon strip now shows active-state indicators (left accent bar), reordered navigation (Home, Due Dates, Shared, Trash), and Notes/Journal section labels in the tree view. Tree node rows have improved spacing, selection borders, and visible kebab menus on selected items. SidebarHeader toolbar features a prominent "New Note" button with label
 - Frontend: Home screen redesigned with two-column card layout — hero section with gradient background, grid pattern, branding pill, and prominent action buttons; recent notes panel with icon thumbnails and relative timestamps
+- Editor: Elevated layout with subtle gradient background, grid-pattern overlay, frosted-glass toolbar, and card-style editor panels (backlinks, summary, tags). New CSS surface tokens for consistent panel styling across themes
 - Mobile: Replace top MobileHeader with fixed bottom navigation bar (Notes, Search, More tabs). Sidebar toggle button always visible and visually integrated into editor toolbars. Mobile sidebar uses two-column layout matching desktop (icon strip + tree panel). Editor toolbars use single-row layout with horizontal scroll overflow
 
 ### Fixed

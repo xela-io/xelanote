@@ -112,10 +112,10 @@
   }
 </script>
 
-<div class="summary-panel rounded-lg border border-border bg-card p-3">
+<div class="summary-panel rounded-xl border border-border/60 bg-background/35 p-3.5">
   <button
     type="button"
-    class="flex w-full items-center justify-between text-left"
+    class="flex w-full items-center justify-between text-left rounded-lg px-1 py-0.5"
     onclick={toggleExpanded}
   >
     <div class="flex items-center gap-2">
@@ -168,7 +168,7 @@
         <p class="text-sm text-muted-foreground italic">{$_('summary.empty')}</p>
       {/if}
 
-      <div class="flex justify-end">
+      <div class="flex justify-end pt-1">
         <Button
           variant="ghost"
           size="sm"
@@ -185,10 +185,13 @@
 
 <style>
   .summary-panel {
-    transition: all var(--duration-fast) var(--ease-default);
+    transition:
+      border-color var(--duration-fast) var(--ease-default),
+      background-color var(--duration-fast) var(--ease-default);
   }
 
   .summary-panel:hover {
-    border-color: var(--color-border-hover, var(--color-border));
+    border-color: color-mix(in oklch, var(--color-border), var(--color-primary) 12%);
+    background: var(--surface-panel-bg-soft);
   }
 </style>

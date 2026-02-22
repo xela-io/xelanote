@@ -129,10 +129,10 @@
 </script>
 
 <!-- Toolbar (fixed header, not in scroll container) -->
-<div class="flex-shrink-0 z-10 border-b border-border bg-background">
+<div class="flex-shrink-0 z-10 border-b border-border/70 bg-background/85 backdrop-blur-md">
   <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
-    class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-1.5 sm:py-2 gap-1 sm:gap-2"
+    class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-2 sm:py-2.5 gap-1 sm:gap-2"
     style:padding-left={isMobile ? '3.5rem' : undefined}
   >
     <!-- Left: metadata (desktop only shows full info, mobile shows compact) -->
@@ -345,17 +345,27 @@
     display: inline-flex;
     align-items: center;
     gap: 0.125rem;
-    padding: 0.125rem;
-    border-radius: 0.625rem;
-    border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
-    background: color-mix(in oklab, var(--color-background) 94%, white 6%);
+    padding: 0.16rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--surface-panel-border-strong);
+    background: var(--surface-panel-bg);
+    box-shadow: inset 0 1px 0 var(--surface-panel-inset-highlight);
     flex-shrink: 0;
+  }
+
+  :global(.toolbar-btn) {
+    transition:
+      background-color var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default);
+    border-radius: 0.55rem;
   }
 
   @media (max-width: 639px) {
     .toolbar-group-pill {
       gap: 0;
       border-radius: 0.5rem;
+      padding: 0.125rem;
     }
   }
 </style>

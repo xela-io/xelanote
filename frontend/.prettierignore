@@ -13,3 +13,5 @@ test-results
 static/generated
 src-tauri/target
 src-tauri/gen
+tauri-dev.log
+.electron-tmp

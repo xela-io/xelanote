@@ -23,12 +23,8 @@
 </script>
 
 {#if auth.isAdmin() || errorReporter.getServiceAvailable()}
-  <div
-    class="border-t border-sidebar-border shrink-0 {isMobile ? 'pb-safe' : ''}"
-  >
-    <div
-      class="flex items-center {isMobile ? 'px-2 py-2 gap-1' : 'px-1.5 py-1.5 gap-0.5'}"
-    >
+  <div class="border-t border-sidebar-border shrink-0 {isMobile ? 'pb-safe' : ''}">
+    <div class="flex items-center {isMobile ? 'px-2 py-2 gap-1' : 'px-1.5 py-1.5 gap-0.5'}">
       {#if auth.isAdmin()}
         <button
           onclick={() => navigateTo('/admin')}

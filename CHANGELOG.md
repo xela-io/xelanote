@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor: Live preview now keeps consistent font styling when clicking on a line (no more sans-serif → monospace switch on active lines)
 - Backend: UpdateNote now automatically updates wikilinks in all linking notes when a note's title changes (previously only handled by explicit rename)
 - Recipes: AI import (image and URL) now reliably translates recipes to the user's locale (e.g. German) using sandwich-pattern prompt reinforcement
+- Toast: Fixed type mismatches in toast store API (functions now return toast ID, warning accepts action directly, added undoToast for undo-capable notifications)
 
 ### Added
 

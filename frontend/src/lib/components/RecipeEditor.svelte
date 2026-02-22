@@ -196,7 +196,7 @@
 
     <!-- Tabs -->
     <div
-      class="flex items-center border-b border-border px-2 sm:px-4 shrink-0"
+      class="flex items-center border-b border-border px-2 sm:px-4 py-1.5 sm:py-2 shrink-0"
       style:padding-left={ui.getIsMobile() ? '3.5rem' : undefined}
     >
       <div class="flex gap-0 -mb-px">

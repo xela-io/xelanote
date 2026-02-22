@@ -156,36 +156,48 @@
 
 <div class="h-full flex flex-col">
   <!-- Header -->
-  <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-    <h1 class="text-xl font-bold">{$_('page.recipes.title')}</h1>
-    <div class="flex items-center gap-2">
-      <button
-        onclick={async () => {
-          await ensureSuggestionDialog();
-          showIngredientSuggestions = true;
-        }}
-        class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-accent transition-colors"
+  <div class="border-b border-border shrink-0 px-4 py-3 sm:px-6 sm:py-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <h1
+        class="text-xl font-bold pl-[calc(var(--safe-area-inset-left)+2.75rem)] mt-2 sm:mt-0 sm:pl-0"
       >
-        <Sparkles size={16} />
-        {$_('page.recipes.suggestions.what_can_i_cook')}
-      </button>
-      <button
-        onclick={async () => {
-          await ensureImportDialog();
-          showImportDialog = true;
-        }}
-        class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-accent transition-colors"
-      >
-        <Upload size={16} />
-        {$_('page.recipes.import.button')}
-      </button>
-      <button
-        onclick={() => (showCreateDialog = true)}
-        class="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-      >
-        <Plus size={16} />
-        {$_('page.recipes.create')}
-      </button>
+        {$_('page.recipes.title')}
+      </h1>
+      <div class="grid grid-cols-2 gap-2 min-w-0 sm:flex sm:items-center sm:min-w-auto">
+        <div
+          class="col-span-2 flex min-w-0 gap-2 overflow-x-auto pb-1 -mb-1 sm:col-span-1 sm:mb-0 sm:pb-0 sm:overflow-visible sm:flex-none scrollbar-none"
+        >
+          <button
+            onclick={async () => {
+              await ensureSuggestionDialog();
+              showIngredientSuggestions = true;
+            }}
+            class="flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:bg-accent sm:flex-none sm:justify-start sm:py-1.5"
+          >
+            <Sparkles size={16} />
+            <span class="leading-tight whitespace-nowrap">
+              {$_('page.recipes.suggestions.what_can_i_cook')}
+            </span>
+          </button>
+          <button
+            onclick={async () => {
+              await ensureImportDialog();
+              showImportDialog = true;
+            }}
+            class="flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:bg-accent sm:flex-none sm:justify-start sm:py-1.5"
+          >
+            <Upload size={16} />
+            <span class="leading-tight whitespace-nowrap">{$_('page.recipes.import.button')}</span>
+          </button>
+        </div>
+        <button
+          onclick={() => (showCreateDialog = true)}
+          class="col-span-2 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 sm:col-span-1 sm:w-auto sm:justify-start sm:py-1.5"
+        >
+          <Plus size={16} />
+          <span class="leading-tight whitespace-nowrap">{$_('page.recipes.create')}</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -194,7 +206,7 @@
       <Loader2 class="w-8 h-8 animate-spin" />
     </div>
   {:else}
-    <div class="flex-1 overflow-y-auto p-6">
+    <div class="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 sm:pb-6">
       {#if selectedCollectionId && selectedCollection}
         <!-- Collection Detail View -->
         <div class="max-w-5xl">
@@ -205,89 +217,97 @@
             <ArrowLeft size={14} />
             {$_('page.recipes.all_recipes')}
           </button>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold flex items-center gap-2">
-              {#if selectedCollection.color}
-                <span
-                  class="w-3 h-3 rounded-full shrink-0"
-                  style="background-color: {selectedCollection.color}"
-                ></span>
-              {/if}
-              {selectedCollection.name}
-            </h2>
-            <div class="flex items-center gap-1">
-              <button
-                onclick={() => handleShareCollection(selectedCollection.id)}
-                class="p-2 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
-                title={$_('sharing.collection_title')}
+          <div class="rounded-xl border border-border bg-background/50 p-4 sm:p-5">
+            <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <h2 class="text-lg font-semibold flex items-center gap-2">
+                  {#if selectedCollection.color}
+                    <span
+                      class="w-3 h-3 rounded-full shrink-0"
+                      style="background-color: {selectedCollection.color}"
+                    ></span>
+                  {/if}
+                  <span class="truncate">{selectedCollection.name}</span>
+                </h2>
+                {#if selectedCollection.description}
+                  <p class="text-sm text-muted-foreground mt-2">{selectedCollection.description}</p>
+                {/if}
+              </div>
+              <div
+                class="flex items-center gap-1 self-start rounded-lg border border-border bg-background/40 p-1"
               >
-                <Users size={16} />
-              </button>
-              <button
-                onclick={() => handleEditCollection(selectedCollection)}
-                class="p-2 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
-                title={$_('common.edit')}
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                onclick={() => handleDeleteCollectionFromDetail(selectedCollection.id)}
-                class="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                title={$_('common.delete')}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
-          {#if selectedCollection.description}
-            <p class="text-sm text-muted-foreground mb-4">{selectedCollection.description}</p>
-          {/if}
-
-          {#if collectionItemsLoading}
-            <div class="flex items-center justify-center py-12">
-              <Loader2 class="w-6 h-6 animate-spin" />
-            </div>
-          {:else if displayedRecipes.length === 0}
-            <div class="text-center py-12 text-muted-foreground">
-              <ChefHat class="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>{$_('page.recipes.collection_empty')}</p>
-            </div>
-          {:else}
-            <div class="space-y-2">
-              {#each displayedRecipes as recipe (recipe.id)}
                 <button
-                  onclick={() => goto(`/note/${recipe.id}`)}
-                  class="w-full text-left p-3 rounded-lg border border-border hover:bg-accent transition-colors"
+                  onclick={() => handleShareCollection(selectedCollection.id)}
+                  class="p-2 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                  title={$_('sharing.collection_title')}
                 >
-                  <div class="flex items-center gap-2">
-                    <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
-                    {#if recipe.content_encrypted}
-                      <Lock size={12} class="text-muted-foreground shrink-0" />
-                    {/if}
-                  </div>
-                  <div class="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    {#if recipe.servings}
-                      <span>{recipe.servings} {$_('page.recipes.servings')}</span>
-                    {/if}
-                    {#if recipe.prep_time_minutes}
-                      <span class="flex items-center gap-0.5">
-                        <Clock size={10} />
-                        {recipe.prep_time_minutes} min
-                      </span>
-                    {/if}
-                    {#if recipe.difficulty}
-                      <span>{difficultyLabel(recipe.difficulty)}</span>
-                    {/if}
-                  </div>
+                  <Users size={16} />
                 </button>
-              {/each}
+                <button
+                  onclick={() => handleEditCollection(selectedCollection)}
+                  class="p-2 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                  title={$_('common.edit')}
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  onclick={() => handleDeleteCollectionFromDetail(selectedCollection.id)}
+                  class="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                  title={$_('common.delete')}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
-          {/if}
+
+            {#if collectionItemsLoading}
+              <div class="flex items-center justify-center py-12">
+                <Loader2 class="w-6 h-6 animate-spin" />
+              </div>
+            {:else if displayedRecipes.length === 0}
+              <div class="text-center py-12 text-muted-foreground">
+                <ChefHat class="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>{$_('page.recipes.collection_empty')}</p>
+              </div>
+            {:else}
+              <div class="space-y-2">
+                {#each displayedRecipes as recipe (recipe.id)}
+                  <button
+                    onclick={() => goto(`/note/${recipe.id}`)}
+                    class="w-full text-left p-3 rounded-lg border border-border bg-background/40 hover:bg-accent transition-colors"
+                  >
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
+                      {#if recipe.content_encrypted}
+                        <Lock size={12} class="text-muted-foreground shrink-0" />
+                      {/if}
+                    </div>
+                    <div
+                      class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                    >
+                      {#if recipe.servings}
+                        <span>{recipe.servings} {$_('page.recipes.servings')}</span>
+                      {/if}
+                      {#if recipe.prep_time_minutes}
+                        <span class="flex items-center gap-0.5">
+                          <Clock size={10} />
+                          {recipe.prep_time_minutes} min
+                        </span>
+                      {/if}
+                      {#if recipe.difficulty}
+                        <span>{difficultyLabel(recipe.difficulty)}</span>
+                      {/if}
+                    </div>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </div>
       {:else}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+        <div class="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 max-w-5xl">
           <!-- Recipe List -->
-          <div>
+          <section class="rounded-xl border border-border bg-background/50 p-4 sm:p-5">
             <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               {$_('page.recipes.all_recipes')} ({recipeList.length})
             </h2>
@@ -308,7 +328,7 @@
                 {#each recipeList as recipe (recipe.id)}
                   <button
                     onclick={() => goto(`/note/${recipe.id}`)}
-                    class="w-full text-left p-3 rounded-lg border border-border hover:bg-accent transition-colors"
+                    class="w-full text-left p-3 rounded-lg border border-border bg-background/40 hover:bg-accent transition-colors"
                   >
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
@@ -316,7 +336,9 @@
                         <Lock size={12} class="text-muted-foreground shrink-0" />
                       {/if}
                     </div>
-                    <div class="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <div
+                      class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                    >
                       {#if recipe.servings}
                         <span>{recipe.servings} {$_('page.recipes.servings')}</span>
                       {/if}
@@ -334,10 +356,10 @@
                 {/each}
               </div>
             {/if}
-          </div>
+          </section>
 
           <!-- Collections -->
-          <div>
+          <section class="rounded-xl border border-border bg-background/50 p-4 sm:p-5">
             <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               {$_('page.recipes.collections')}
             </h2>
@@ -352,13 +374,15 @@
               onSelect={handleSelectCollection}
               onShare={handleShareCollection}
             />
-          </div>
+          </section>
         </div>
       {/if}
 
       <!-- Shared Recipes -->
       {#if sharedRecipesList.length > 0}
-        <div class="max-w-5xl mt-8">
+        <div
+          class="max-w-5xl mt-6 sm:mt-8 rounded-xl border border-border bg-background/50 p-4 sm:p-5"
+        >
           <h2
             class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2"
           >
@@ -369,7 +393,7 @@
             {#each sharedRecipesList as recipe (recipe.id)}
               <button
                 onclick={() => goto(`/note/${recipe.id}`)}
-                class="w-full text-left p-3 rounded-lg border border-border hover:bg-accent transition-colors"
+                class="w-full text-left p-3 rounded-lg border border-border bg-background/40 hover:bg-accent transition-colors"
               >
                 <div class="flex items-center gap-2">
                   <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>

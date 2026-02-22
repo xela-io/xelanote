@@ -93,12 +93,12 @@
   import * as history from '$lib/stores/history.svelte';
   import * as network from '$lib/stores/network.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import { composeEditorContent, decomposeEditorContent } from '$lib/stores/notes/state-updates';
   import * as settings from '$lib/stores/settings.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
-  import { composeEditorContent, decomposeEditorContent } from '$lib/stores/notes/state-updates';
   import { getTasksInDocument } from '$lib/utils/task-reorder';
 
   import EditorDialogs from './editor/EditorDialogs.svelte';
@@ -951,7 +951,6 @@
         (ui.getEditorMode() === 'edit' ||
           ui.getEditorMode() === 'split' ||
           ui.getEditorMode() === 'live')}
-      onOpenSidebar={() => ui.setSidebarOpen(true)}
       onSetEditorMode={settings.setEditorModePreference}
       onInsertTask={handleInsertTask}
       onInsertTable={handleInsertTable}

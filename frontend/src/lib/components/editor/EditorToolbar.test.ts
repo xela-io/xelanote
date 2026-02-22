@@ -58,7 +58,6 @@ const baseNote: Note = {
 
 function mockCallbacks() {
   return {
-    onOpenSidebar: vi.fn(),
     onSetEditorMode: vi.fn(),
     onInsertTask: vi.fn(),
     onInsertTable: vi.fn(),
@@ -195,22 +194,6 @@ describe('EditorToolbar', () => {
       props: { note: baseNote, isMobile: true, ...cbs },
     });
     expect(queryByLabelText('component.editor.toolbar.focus_mode')).not.toBeInTheDocument();
-  });
-
-  it('shows sidebar menu button on mobile', () => {
-    const cbs = mockCallbacks();
-    const { getByLabelText } = render(EditorToolbar, {
-      props: { note: baseNote, isMobile: true, ...cbs },
-    });
-    expect(getByLabelText('component.editor.toolbar.open_menu')).toBeInTheDocument();
-  });
-
-  it('hides sidebar menu button on desktop', () => {
-    const cbs = mockCallbacks();
-    const { queryByLabelText } = render(EditorToolbar, {
-      props: { note: baseNote, isMobile: false, ...cbs },
-    });
-    expect(queryByLabelText('component.editor.toolbar.open_menu')).not.toBeInTheDocument();
   });
 
   it('shows AI actions button only when aiEnabled and in edit-compatible mode', () => {

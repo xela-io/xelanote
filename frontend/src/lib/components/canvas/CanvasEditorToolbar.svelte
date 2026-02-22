@@ -7,7 +7,6 @@
     Loader2,
     Lock,
     Maximize2,
-    Menu,
     Minimize2,
     MoreVertical,
     RefreshCw,
@@ -32,7 +31,6 @@
     isEncryptionUnlocked?: boolean;
     focusModeActive?: boolean;
     onTitleInput: (event: Event) => void;
-    onOpenSidebar: () => void;
     onSave: () => void;
     onUpload: () => void;
     onShowHistory: () => void;
@@ -53,7 +51,6 @@
     isEncryptionUnlocked = true,
     focusModeActive = false,
     onTitleInput,
-    onOpenSidebar,
     onSave,
     onUpload,
     onShowHistory,
@@ -88,12 +85,13 @@
 
 <!-- Toolbar (fixed header, not in scroll container) -->
 <div class="flex-shrink-0 z-10 border-b border-border bg-background">
-  <!-- Mobile: flex-col stacked | Desktop: 3-column grid for true centering -->
+  <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
-    class="flex flex-col sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-4 py-2 gap-2"
+    class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-1.5 sm:py-2 gap-1 sm:gap-2"
+    style:padding-left={isMobile ? '3.5rem' : undefined}
   >
     <!-- Left: Title + Last Updated + Sync status -->
-    <div class="flex items-center gap-2 min-w-0">
+    <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
       <input
         type="text"
         value={note?.title ?? ''}
@@ -166,7 +164,7 @@
     </div>
 
     <!-- Center + Right: wrapped together so the ⋮ button stays inline on mobile -->
-    <div class="flex items-center gap-1 sm:contents">
+    <div class="flex items-center gap-1 flex-1 min-w-0 sm:contents">
       <div class="flex items-center justify-center gap-1 min-w-0 flex-1">
         <div class="toolbar-scroll-wrapper">
           <div
@@ -175,18 +173,6 @@
             aria-label={$_('component.editor.toolbar.editor_toolbar')}
             use:scrollFade
           >
-            <!-- Sidebar toggle - always visible on mobile -->
-            {#if isMobile}
-              <button
-                type="button"
-                onclick={onOpenSidebar}
-                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                aria-label={$_('component.editor.toolbar.open_menu')}
-              >
-                <Menu size={16} />
-              </button>
-            {/if}
-
             <!-- Save button -->
             <button
               type="button"

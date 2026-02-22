@@ -4,6 +4,7 @@
   import { getIsSyncing, getPendingCount, getSyncProgress } from '$lib/offline/sync-manager.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as network from '$lib/stores/network.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
 
   const isOnline = $derived(network.getIsOnline());
   const isSyncing = $derived(getIsSyncing());
@@ -31,13 +32,20 @@
   const bgClass = $derived(
     state === 'syncing' ? 'bg-blue-500' : state === 'locked' ? 'bg-amber-600' : 'bg-amber-500'
   );
+
+  const bannerBottom = $derived(
+    ui.getIsMobile() && !ui.getIsKeyboardOpen()
+      ? 'calc(3.5rem + var(--safe-area-inset-bottom))'
+      : '0'
+  );
 </script>
 
 {#if state !== 'hidden'}
   <div
     role="alert"
     aria-live="assertive"
-    class="fixed bottom-0 left-0 right-0 z-50 {bgClass} text-white px-3 py-1.5 flex items-center justify-center gap-1.5 text-xs shadow-sm"
+    class="fixed left-0 right-0 z-50 {bgClass} text-white px-3 py-1.5 flex items-center justify-center gap-1.5 text-xs shadow-sm"
+    style:bottom={bannerBottom}
   >
     {#if state === 'syncing'}
       <RefreshCw size={14} class="animate-spin shrink-0" />

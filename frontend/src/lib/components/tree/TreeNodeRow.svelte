@@ -74,7 +74,7 @@
   class:drop-before={dropPosition === 'before'}
   class:drop-after={dropPosition === 'after'}
   class:has-color={node.color}
-  style="padding-left: {depth * 12}px"
+  style="padding-left: {depth * 10}px"
   data-drag-type={node.type}
   data-drag-id={String(node.id)}
   data-drag-path={node.type === 'folder' ? node.path : undefined}
@@ -221,11 +221,13 @@
   .tree-row {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
   }
 
   .expand-button {
-    padding: 2px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
     background: none;
     border: none;
     cursor: pointer;
@@ -246,25 +248,27 @@
   }
 
   .expand-spacer {
-    width: 18px;
+    width: 16px;
     flex-shrink: 0;
   }
 
   .tree-button {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
+    gap: 5px;
+    padding: 3px 7px;
     background: none;
     border: none;
     cursor: pointer;
     font-size: 13px;
+    line-height: 1.2;
     color: var(--color-sidebar-foreground);
     border-radius: var(--radius-sm);
     max-width: 100%;
     text-align: left;
     transition: background var(--duration-fast) var(--ease-default);
     min-width: 0;
+    min-height: 28px;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -300,7 +304,7 @@
     font-size: 11px;
     color: var(--color-muted-foreground);
     background: var(--color-sidebar-accent);
-    padding: 2px 6px;
+    padding: 1px 5px;
     border-radius: var(--radius-xl);
     font-weight: 500;
     opacity: 0;
@@ -323,6 +327,7 @@
     opacity: 0.7;
     display: flex;
     align-items: center;
+    margin-left: 1px;
   }
 
   @media (hover: hover) {
@@ -354,7 +359,7 @@
   .folder-row-container {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex: 1;
     min-width: 0;
   }
@@ -368,7 +373,7 @@
   .note-row-container {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex: 1;
     min-width: 0;
   }
@@ -384,7 +389,7 @@
     pointer-events: none;
     display: flex;
     align-items: center;
-    padding: 2px;
+    padding: 1px;
     background: none;
     border: none;
     cursor: pointer;

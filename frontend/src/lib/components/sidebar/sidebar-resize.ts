@@ -35,5 +35,5 @@ export function handleSidebarResizeEnd(handlers: SidebarResizeHandlers) {
 }
 
 export function handleSidebarResizeDblClick(handlers: SidebarResizeHandlers) {
-  handlers.setSidebarWidth(256);
+  handlers.setSidebarWidth(240);
 }

@@ -1338,6 +1338,15 @@
     "collection_unshare_success": "Kochbuch-Freigabe entfernt",
     "collection_already_shared": "Kochbuch ist bereits mit diesem Benutzer geteilt"
   },
+  "nav": {
+    "bottom_navigation": "Hauptnavigation",
+    "notes": "Notizen",
+    "new_note": "Neue Notiz",
+    "more": "Mehr",
+    "more_options": "Weitere Optionen",
+    "toggle_theme": "Theme wechseln",
+    "notes_tree": "Notizenbaum"
+  },
   "feedback": {
     "sidebar_button": "Feedback senden",
     "dialog_title": "Feedback senden",

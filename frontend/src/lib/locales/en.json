@@ -1338,6 +1338,15 @@
     "collection_unshare_success": "Cookbook share removed",
     "collection_already_shared": "Cookbook is already shared with this user"
   },
+  "nav": {
+    "bottom_navigation": "Main navigation",
+    "notes": "Notes",
+    "new_note": "New note",
+    "more": "More",
+    "more_options": "More options",
+    "toggle_theme": "Toggle theme",
+    "notes_tree": "Notes tree"
+  },
   "feedback": {
     "sidebar_button": "Send Feedback",
     "dialog_title": "Send Feedback",

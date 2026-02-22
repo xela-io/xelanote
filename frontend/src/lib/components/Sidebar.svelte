@@ -1,11 +1,5 @@
 <script lang="ts">
-  import {
-    CalendarClock,
-    PanelLeft,
-    Settings,
-    Trash2,
-    Users,
-  } from 'lucide-svelte';
+  import { CalendarClock, PanelLeft, Settings, Trash2, Users } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -314,10 +308,10 @@
 />
 
 {#if ui.getIsMobile()}
-  <!-- Mobile: Full-width drawer, unchanged -->
+  <!-- Mobile: Two-column drawer (icon strip + tree panel), mirrors desktop layout -->
   <aside
     aria-label={$_('accessibility.sidebar')}
-    class="flex flex-col border-r border-border bg-sidebar-background h-full
+    class="flex flex-row border-r border-border bg-sidebar-background h-full
       fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs shadow-xl transition-transform duration-200
       {ui.getSidebarOpen() ? 'translate-x-0' : '-translate-x-full'}"
     use:swipe={{
@@ -328,95 +322,175 @@
     }}
   >
     {#if ui.getSidebarOpen()}
-      <!-- Safe area spacer for iOS PWA standalone mode -->
-      <div class="pt-safe shrink-0"></div>
-      <!-- Header with creation buttons -->
-      <SidebarHeader
-        isMobile={true}
-        {mainIconSize}
-        {showSortDropdown}
-        currentSortMode={tree.getSortMode()}
-        {sortOptions}
-        {sortDropdownRef}
-        onCreateNote={handleCreateNote}
-        onCreateFolder={handleCreateFolder}
-        onToggleSortDropdown={() => (showSortDropdown = !showSortDropdown)}
-        onSortSelect={handleSortSelect}
-        onCloseSidebar={() => ui.setSidebarOpen(false)}
-        onBindSortDropdownRef={(el) => (sortDropdownRef = el)}
-        onLogoClick={() => ui.closeSidebarOnMobile()}
-      />
-
-      <!-- Notes Tree (main content - maximized space) -->
+      <!-- Left icon strip — matches desktop -->
       <nav
-        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain thin-scrollbar px-2 py-2"
-        aria-label={$_('accessibility.notes_tree')}
-        use:touchdrag={{
-          holdDuration: 300,
-          enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
-          onDrop: handleTouchDrop,
-          onDragStart: () => (touchDragActive = true),
-          onDragEnd: () => (touchDragActive = false),
-        }}
+        class="flex flex-col items-center h-full shrink-0 border-r border-sidebar-border py-2 gap-1"
+        style="width: {ICON_STRIP_WIDTH}px; padding-top: calc(var(--safe-area-inset-top) + 2.5rem)"
+        aria-label={$_('accessibility.sidebar')}
       >
-        {#if tree.getIsLoading()}
-          <div class="px-4 py-2 text-sm text-muted-foreground" role="status">
-            {$_('common.loading')}
+        <!-- Journal (if enabled) -->
+        {#if journalEnabled}
+          <div class="icon-strip-item">
+            <JournalButton iconOnly />
           </div>
-        {:else if tree.getTreeData()}
-          <!-- Drop zone for moving folders/notes to top level -->
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <!-- Intentional: Drag-drop zone is inherently pointer-based. Keyboard alternative exists via MoveToFolderDialog context menu. -->
-          <div
-            class="drop-zone"
-            class:active={isDropZoneActive}
-            class:touch-drag-visible={touchDragActive}
-            data-drag-type="root-dropzone"
-            data-drag-id="root"
-            ondragover={handleDropZoneDragOver}
-            ondragleave={handleDropZoneDragLeave}
-            ondrop={handleDropZoneDrop}
-          >
-            <div class="drop-zone-hint">
-              {$_('page.sidebar.drag_to_top_level')}
-            </div>
-          </div>
-
-          <!-- Render tree (virtual or non-virtual based on settings) -->
-          {#if settings.getVirtualTreeEnabled()}
-            <VirtualizedTree />
-          {:else}
-            <!-- Render top-level folders and notes (non-virtual) -->
-            {#each tree.getTreeData()?.children ?? [] as child (child.type === 'folder' ? `f-${child.id}` : `n-${child.id}`)}
-              <UnifiedTree node={child} />
-            {/each}
-          {/if}
-        {:else}
-          <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.no_data')}</div>
         {/if}
 
-        <!-- Footer (Admin/Feedback only) -->
-        <SidebarFooter
-          isMobile={true}
-          {smallIconSize}
-          onShowFeedback={() => (showFeedbackDialog = true)}
-          onNavigate={() => ui.closeSidebarOnMobile()}
-        />
+        <!-- Recipe (if enabled) -->
+        {#if recipeEnabled}
+          <div class="icon-strip-item">
+            <RecipeButton iconOnly />
+          </div>
+        {/if}
+
+        <!-- Shared -->
+        <button
+          onclick={() => {
+            goto('/shared');
+            ui.closeSidebarOnMobile();
+          }}
+          class="relative p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
+          title={$_('sharing.shared_with_me')}
+          aria-label={$_('sharing.shared_with_me')}
+        >
+          <Users size={smallIconSize} />
+          {#if sharing.getTotalSharedCount() > 0}
+            <span
+              class="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
+            >
+              {sharing.getTotalSharedCount()}
+            </span>
+          {/if}
+        </button>
+
+        <!-- Due Dates -->
+        <button
+          onclick={() => {
+            goto('/due-dates');
+            ui.closeSidebarOnMobile();
+          }}
+          class="p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
+          title={$_('page.due_dates.title')}
+          aria-label={$_('page.due_dates.title')}
+        >
+          <CalendarClock size={smallIconSize} />
+        </button>
+
+        <!-- Trash -->
+        <button
+          onclick={() => {
+            goto('/trash');
+            ui.closeSidebarOnMobile();
+          }}
+          class="relative p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
+          title={$_('page.sidebar.trash')}
+          aria-label={$_('page.sidebar.trash')}
+        >
+          <Trash2 size={smallIconSize} />
+          {#if trash.getTrashCount() > 0}
+            <span
+              class="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
+            >
+              {trash.getTrashCount()}
+            </span>
+          {/if}
+        </button>
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+        <!-- Theme toggle -->
+        <ThemeSelector />
+
+        <!-- Settings -->
+        <button
+          onclick={() => {
+            goto('/settings');
+            ui.closeSidebarOnMobile();
+          }}
+          class="p-2 rounded hover:bg-sidebar-accent/50 text-sidebar-foreground"
+          title={$_('page.sidebar.settings')}
+          aria-label={$_('page.sidebar.settings')}
+        >
+          <Settings size={smallIconSize} />
+        </button>
       </nav>
 
-      <!-- Journal Button (if enabled) - Mobile -->
-      {#if journalEnabled}
-        <div class="border-t border-sidebar-border px-2 py-2 shrink-0">
-          <JournalButton />
-        </div>
-      {/if}
+      <!-- Right panel: header + tree -->
+      <div class="flex flex-col flex-1 min-w-0">
+        <!-- Safe area spacer for iOS PWA standalone mode -->
+        <div class="pt-safe shrink-0"></div>
+        <!-- Header with creation buttons -->
+        <SidebarHeader
+          isMobile={true}
+          {mainIconSize}
+          {showSortDropdown}
+          currentSortMode={tree.getSortMode()}
+          {sortOptions}
+          {sortDropdownRef}
+          onCreateNote={handleCreateNote}
+          onCreateFolder={handleCreateFolder}
+          onToggleSortDropdown={() => (showSortDropdown = !showSortDropdown)}
+          onSortSelect={handleSortSelect}
+          onBindSortDropdownRef={(el) => (sortDropdownRef = el)}
+        />
 
-      <!-- Recipe Button (if enabled) - Mobile -->
-      {#if recipeEnabled}
-        <div class="border-t border-sidebar-border px-2 py-2 shrink-0">
-          <RecipeButton />
-        </div>
-      {/if}
+        <!-- Notes Tree (main content - maximized space) -->
+        <nav
+          class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain thin-scrollbar px-2 py-2"
+          aria-label={$_('accessibility.notes_tree')}
+          use:touchdrag={{
+            holdDuration: 300,
+            enabled: () => ui.getIsMobile() && !settings.getVirtualTreeEnabled(),
+            onDrop: handleTouchDrop,
+            onDragStart: () => (touchDragActive = true),
+            onDragEnd: () => (touchDragActive = false),
+          }}
+        >
+          {#if tree.getIsLoading()}
+            <div class="px-4 py-2 text-sm text-muted-foreground" role="status">
+              {$_('common.loading')}
+            </div>
+          {:else if tree.getTreeData()}
+            <!-- Drop zone for moving folders/notes to top level -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <!-- Intentional: Drag-drop zone is inherently pointer-based. Keyboard alternative exists via MoveToFolderDialog context menu. -->
+            <div
+              class="drop-zone"
+              class:active={isDropZoneActive}
+              class:touch-drag-visible={touchDragActive}
+              data-drag-type="root-dropzone"
+              data-drag-id="root"
+              ondragover={handleDropZoneDragOver}
+              ondragleave={handleDropZoneDragLeave}
+              ondrop={handleDropZoneDrop}
+            >
+              <div class="drop-zone-hint">
+                {$_('page.sidebar.drag_to_top_level')}
+              </div>
+            </div>
+
+            <!-- Render tree (virtual or non-virtual based on settings) -->
+            {#if settings.getVirtualTreeEnabled()}
+              <VirtualizedTree />
+            {:else}
+              <!-- Render top-level folders and notes (non-virtual) -->
+              {#each tree.getTreeData()?.children ?? [] as child (child.type === 'folder' ? `f-${child.id}` : `n-${child.id}`)}
+                <UnifiedTree node={child} />
+              {/each}
+            {/if}
+          {:else}
+            <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.no_data')}</div>
+          {/if}
+
+          <!-- Footer (Admin/Feedback only) -->
+          <SidebarFooter
+            isMobile={true}
+            {smallIconSize}
+            onShowFeedback={() => (showFeedbackDialog = true)}
+            onNavigate={() => ui.closeSidebarOnMobile()}
+          />
+        </nav>
+      </div>
     {/if}
   </aside>
 {:else}
@@ -436,8 +510,12 @@
       <button
         onclick={() => ui.toggleSidebar()}
         class="p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-        title={$_(ui.getSidebarOpen() ? 'page.sidebar.collapse_sidebar' : 'page.sidebar.expand_sidebar')}
-        aria-label={$_(ui.getSidebarOpen() ? 'page.sidebar.collapse_sidebar' : 'page.sidebar.expand_sidebar')}
+        title={$_(
+          ui.getSidebarOpen() ? 'page.sidebar.collapse_sidebar' : 'page.sidebar.expand_sidebar'
+        )}
+        aria-label={$_(
+          ui.getSidebarOpen() ? 'page.sidebar.collapse_sidebar' : 'page.sidebar.expand_sidebar'
+        )}
       >
         <PanelLeft size={smallIconSize} />
       </button>

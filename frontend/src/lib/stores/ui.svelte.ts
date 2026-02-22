@@ -9,9 +9,11 @@ import {
 
 // Sidebar state
 let sidebarOpen = $state(true);
-let sidebarWidth = $state(256); // default w-64
+let sidebarWidth = $state(240); // compact desktop default
 const SIDEBAR_MIN_WIDTH = 200;
 const SIDEBAR_MAX_WIDTH = 500;
+const SIDEBAR_WIDTH_STORAGE_KEY = 'xelanote-sidebar-width';
+const SIDEBAR_WIDTH_MIGRATION_V1_KEY = 'xelanote-sidebar-width-migrated-v1';
 
 // Split view position (editor percentage, 20-80)
 let splitPosition = $state(50);
@@ -75,7 +77,7 @@ export function getSidebarWidth() {
 export function setSidebarWidth(width: number) {
   sidebarWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('xelanote-sidebar-width', String(sidebarWidth));
+    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidth));
   }
 }
 
@@ -89,11 +91,20 @@ export function getSidebarMaxWidth() {
 
 export function initSidebarWidth() {
   if (typeof localStorage !== 'undefined') {
-    const saved = localStorage.getItem('xelanote-sidebar-width');
+    const saved = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
     if (saved) {
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed)) {
-        sidebarWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, parsed));
+        const migrated = localStorage.getItem(SIDEBAR_WIDTH_MIGRATION_V1_KEY) === '1';
+        // Only auto-normalize the legacy default width once; keep user-chosen widths intact.
+        const normalized = !migrated && parsed === 256 ? 240 : parsed;
+        sidebarWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, normalized));
+        if (!migrated) {
+          localStorage.setItem(SIDEBAR_WIDTH_MIGRATION_V1_KEY, '1');
+          if (normalized !== parsed) {
+            localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidth));
+          }
+        }
       }
     }
   }

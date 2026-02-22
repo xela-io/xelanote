@@ -1,46 +1,66 @@
-import { writable } from 'svelte/store';
+// Toast store using Svelte 5 runes
 
-// Toast type definition
+const MAX_TOASTS = 3;
+const DEFAULT_DURATION = 3000;
+
+export interface ToastAction {
+  label: string;
+  handler: () => void;
+}
+
 export interface Toast {
-	id: string;
-	message: string;
-	type: 'success' | 'error' | 'warning' | 'info';
-	duration?: number;
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  duration?: number;
+  action?: ToastAction;
 }
 
-// Create a toast store
-function createToastStore() {
-	const { subscribe, set, update } = writable<Toast[]>([]);
+type ToastOptions = {
+  duration?: number;
+  action?: ToastAction;
+};
 
-	// Add a new toast
-	function add(toast: Omit<Toast, 'id'>) {
-		const id = Math.random().toString(36).substring(2, 9);
-		const newToast: Toast = { ...toast, id };
-		
-		update(items => [...items, newToast]);
-		
-		// Auto-remove toast after duration
-		if (toast.duration !== 0) {
-			setTimeout(() => remove(id), toast.duration || 5000);
-		}
-	}
+let toasts = $state<Toast[]>([]);
 
-	// Remove a toast by id
-	function remove(id: string) {
-		update(items => items.filter(item => item.id !== id));
-	}
+export const toastState = {
+  get toasts() {
+    return toasts;
+  },
+};
 
-	// Clear all toasts
-	function clear() {
-		set([]);
-	}
-
-	return {
-		subscribe,
-		add,
-		remove,
-		clear
-	};
+export function getToasts(): Toast[] {
+  return toasts;
 }
 
-export const toast = createToastStore();
+export function addToast(toast: Omit<Toast, 'id'>) {
+  const id = Math.random().toString(36).substring(2, 9);
+  const newToast: Toast = { ...toast, id };
+
+  toasts = [...toasts, newToast].slice(-MAX_TOASTS);
+
+  const duration = toast.duration ?? DEFAULT_DURATION;
+  if (duration > 0) {
+    setTimeout(() => removeToast(id), duration);
+  }
+}
+
+export function removeToast(id: string) {
+  toasts = toasts.filter((t) => t.id !== id);
+}
+
+export function success(message: string, options?: ToastOptions) {
+  addToast({ message, type: 'success', ...options });
+}
+
+export function error(message: string, options?: ToastOptions) {
+  addToast({ message, type: 'error', ...options });
+}
+
+export function warning(message: string, options?: ToastOptions) {
+  addToast({ message, type: 'warning', ...options });
+}
+
+export function info(message: string, options?: ToastOptions) {
+  addToast({ message, type: 'info', ...options });
+}

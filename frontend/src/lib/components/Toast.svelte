@@ -4,8 +4,15 @@
   import { _ } from 'svelte-i18n';
 
   import * as toast from '$lib/stores/toast.svelte';
+  import * as ui from '$lib/stores/ui.svelte';
 
   const toasts = $derived(toast.toastState.toasts);
+
+  const bottomOffset = $derived(
+    ui.getIsMobile() && !ui.getIsKeyboardOpen()
+      ? 'calc(4.5rem + var(--safe-area-inset-bottom))'
+      : 'max(1rem, env(safe-area-inset-bottom, 0))'
+  );
 
   function getTypeClasses(type: string): string {
     switch (type) {
@@ -27,7 +34,7 @@
   role="region"
   aria-label={$_('accessibility.notifications')}
   class="fixed left-4 right-4 sm:left-auto sm:right-4 z-50 flex flex-col gap-2 pointer-events-none"
-  style="bottom: max(1rem, env(safe-area-inset-bottom, 0));"
+  style:bottom={bottomOffset}
 >
   {#each toasts as t (t.id)}
     <div

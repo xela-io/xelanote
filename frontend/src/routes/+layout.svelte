@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../app.css';
 
+  import { PanelLeft } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { get } from 'svelte/store';
@@ -16,7 +17,7 @@
   import DesktopTitleBar from '$lib/components/DesktopTitleBar.svelte';
   import LayoutOverlays from '$lib/components/LayoutOverlays.svelte';
   import Logo from '$lib/components/Logo.svelte';
-  import MobileHeader from '$lib/components/MobileHeader.svelte';
+  import MobileBottomNav from '$lib/components/MobileBottomNav.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import { clearPersistedKEK, initKEKDatabase } from '$lib/crypto/kek-persistence';
   import { initSodium } from '$lib/crypto/sodium';
@@ -551,14 +552,18 @@
         id="main-content"
         tabindex="-1"
         class="flex-1 overflow-hidden flex flex-col focus:outline-none relative z-0"
+        style:padding-bottom={ui.getIsMobile() && !ui.getIsKeyboardOpen()
+          ? 'calc(3.5rem + var(--safe-area-inset-bottom))'
+          : '0'}
       >
-        {#if ui.getIsMobile() && !ui.getIsKeyboardOpen() && !$page.url.pathname.startsWith('/note/')}
-          <MobileHeader />
-        {/if}
         <div class="flex-1 overflow-hidden">
           {@render children()}
         </div>
       </main>
+
+      {#if ui.getIsMobile() && !ui.getIsKeyboardOpen()}
+        <MobileBottomNav />
+      {/if}
 
       <!-- Mobile backdrop - after main for correct stacking -->
       {#if ui.getIsMobile() && ui.getSidebarOpen()}
@@ -578,6 +583,21 @@
             enabled: () => ui.getIsMobile(),
           }}
         ></div>
+      {/if}
+
+      <!-- Mobile sidebar toggle button — always visible (even with keyboard open) -->
+      {#if ui.getIsMobile()}
+        <button
+          onclick={() => ui.setSidebarOpen(!ui.getSidebarOpen())}
+          class="fixed top-[calc(var(--safe-area-inset-top)+0.375rem)] p-2 rounded-md active:scale-95 transition-all duration-200 toolbar-btn
+            {ui.getSidebarOpen()
+            ? 'left-[calc(min(85vw,20rem)+0.5rem)] z-[55] bg-background border border-border text-foreground shadow-sm'
+            : 'left-[0.5rem] z-20 text-muted-foreground hover:bg-accent'}"
+          style="-webkit-tap-highlight-color: transparent"
+          aria-label={ui.getSidebarOpen() ? $_('page.sidebar.close_drawer') : $_('nav.notes_tree')}
+        >
+          <PanelLeft size={18} />
+        </button>
       {/if}
     </div>
 

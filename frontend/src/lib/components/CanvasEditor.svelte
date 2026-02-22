@@ -869,7 +869,6 @@
       isEncryptionUnlocked={encryption.isEncryptionUnlocked()}
       focusModeActive={focusMode.isActive()}
       onTitleInput={handleTitleInput}
-      onOpenSidebar={() => ui.setSidebarOpen(true)}
       onSave={handleManualSave}
       onUpload={handleUploadButtonClick}
       onShowHistory={() => (showVersionHistory = true)}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Loader2, Lock, Menu, Plus, Sparkles, X } from 'lucide-svelte';
+  import { Loader2, Lock, Plus, Sparkles, X } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -195,18 +195,10 @@
     {/if}
 
     <!-- Tabs -->
-    <div class="flex items-center border-b border-border px-4 shrink-0">
-      <!-- Sidebar toggle on mobile (MobileHeader is hidden on /note/ routes) -->
-      {#if ui.getIsMobile()}
-        <button
-          type="button"
-          onclick={() => ui.setSidebarOpen(true)}
-          class="p-2 -ml-2 mr-1 rounded-md hover:bg-accent toolbar-btn"
-          aria-label="Menü öffnen"
-        >
-          <Menu size={16} />
-        </button>
-      {/if}
+    <div
+      class="flex items-center border-b border-border px-2 sm:px-4 shrink-0"
+      style:padding-left={ui.getIsMobile() ? '3.5rem' : undefined}
+    >
       <div class="flex gap-0 -mb-px">
         <button
           onclick={() => switchTab('ingredients')}

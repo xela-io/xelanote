@@ -4,8 +4,6 @@
 
   import type { SortMode } from '$lib/stores/tree.svelte';
 
-  import Logo from '../Logo.svelte';
-
   interface Props {
     isMobile: boolean;
     mainIconSize: number;
@@ -26,10 +24,6 @@
     graphEnabled?: boolean;
     /** Desktop: collapse the sidebar panel */
     onCollapseSidebar?: () => void;
-    /** Mobile only: close the drawer */
-    onCloseSidebar?: () => void;
-    /** Mobile only: logo click handler */
-    onLogoClick?: () => void;
   }
 
   const {
@@ -48,8 +42,6 @@
     onOpenGraph,
     graphEnabled = false,
     onCollapseSidebar,
-    onCloseSidebar,
-    onLogoClick,
   }: Props = $props();
 
   let localSortDropdownRef = $state<HTMLDivElement | null>(null);
@@ -60,11 +52,10 @@
 </script>
 
 {#if isMobile}
-  <!-- Mobile header: keep logo + existing layout -->
-  <div class="flex items-center justify-between border-b border-sidebar-border shrink-0 px-3 py-2">
-    <a href="/" onclick={onLogoClick} class="hover:opacity-80 transition-opacity">
-      <Logo size="md" />
-    </a>
+  <!-- Mobile header: toolbar only (no logo — Bottom Nav handles branding) -->
+  <div
+    class="flex items-center justify-between border-b border-sidebar-border shrink-0 px-2 py-1.5"
+  >
     <div class="flex items-center gap-0.5">
       <button
         onclick={onCreateNote}
@@ -112,16 +103,6 @@
           </div>
         {/if}
       </div>
-      {#if onCloseSidebar}
-        <button
-          onclick={onCloseSidebar}
-          class="rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground p-1.5 toolbar-btn"
-          title={$_('page.sidebar.close_drawer')}
-          aria-label={$_('page.sidebar.close_drawer')}
-        >
-          <X size={mainIconSize} />
-        </button>
-      {/if}
     </div>
   </div>
 {:else}

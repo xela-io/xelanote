@@ -486,9 +486,12 @@
       "sort_manual": "Manuell",
       "sort_updated": "Zuletzt bearbeitet",
       "sort_title": "Titel A-Z",
-      "sort_created": "Erstelldatum"
+      "sort_created": "Erstelldatum",
+      "section_notes": "Notizen",
+      "section_journal": "Journal"
     },
     "home": {
+      "title": "Startseite",
       "welcome_title": "Willkommen bei xelanote",
       "welcome_subtitle": "Deine persönliche Notiz-App mit Wikilinks und Backlinks.",
       "new_note_title_prompt": "Neuer Notiz-Titel:",

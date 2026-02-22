@@ -358,13 +358,13 @@ body,
   --color-ring: oklch(72% 0.1 155);
   --color-selection: oklch(38% 0.04 60);
   --color-selection-foreground: oklch(90% 0.03 85);
-  --color-sidebar-background: oklch(17% 0.02 60);
-  --color-sidebar-foreground: oklch(72% 0.12 155);
+  --color-sidebar-background: oklch(16.5% 0.015 55);
+  --color-sidebar-foreground: oklch(74% 0.09 158);
   --color-sidebar-primary: oklch(72% 0.1 155);
   --color-sidebar-primary-foreground: oklch(22% 0.02 60);
-  --color-sidebar-accent: oklch(30% 0.06 155);
+  --color-sidebar-accent: oklch(27% 0.04 156);
   --color-sidebar-accent-foreground: oklch(95% 0.03 85);
-  --color-sidebar-border: oklch(30% 0.02 60);
+  --color-sidebar-border: oklch(28% 0.015 58);
   --color-sidebar-ring: oklch(72% 0.1 155);
 
   /* Canvas color presets (Gruvbox dark) */

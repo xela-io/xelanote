@@ -486,9 +486,12 @@
       "sort_manual": "Manual",
       "sort_updated": "Last modified",
       "sort_title": "Title A-Z",
-      "sort_created": "Date created"
+      "sort_created": "Date created",
+      "section_notes": "Notes",
+      "section_journal": "Journal"
     },
     "home": {
+      "title": "Home",
       "welcome_title": "Welcome to xelanote",
       "welcome_subtitle": "Your personal note-taking app with wikilinks and backlinks.",
       "new_note_title_prompt": "New note title:",

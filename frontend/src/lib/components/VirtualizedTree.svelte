@@ -2,7 +2,10 @@
   import type { SvelteVirtualizer } from '@tanstack/svelte-virtual';
   import { createVirtualizer } from '@tanstack/svelte-virtual';
   import { Info } from 'lucide-svelte';
+  import { SvelteMap } from 'svelte/reactivity';
+  import { _ } from 'svelte-i18n';
 
+  import type { FlatTreeItem } from '$lib/stores/tree.svelte';
   import * as tree from '$lib/stores/tree.svelte';
 
   import UnifiedTree from './UnifiedTree.svelte';
@@ -66,13 +69,78 @@
   const flatItems = $derived(tree.getFlattenedTree());
   const itemCount = $derived(flatItems.length);
 
+  type DisplayRow =
+    | {
+        kind: 'section';
+        id: string;
+        label: string;
+      }
+    | {
+        kind: 'item';
+        id: string;
+        flatIndex: number;
+        item: FlatTreeItem;
+      };
+
+  function isJournalTopLevelFlatItem(item: FlatTreeItem) {
+    return item.level === 0 && item.node.type === 'folder' && item.node.path === '/Journal';
+  }
+
+  const displayRows = $derived.by<DisplayRow[]>(() => {
+    const rows: DisplayRow[] = [];
+    let insertedNotes = false;
+    let insertedJournal = false;
+
+    flatItems.forEach((item, flatIndex) => {
+      if (item.level === 0) {
+        if (isJournalTopLevelFlatItem(item)) {
+          if (!insertedJournal) {
+            rows.push({
+              kind: 'section',
+              id: 'section-journal',
+              label: $_('page.sidebar.section_journal'),
+            });
+            insertedJournal = true;
+          }
+        } else if (!insertedNotes) {
+          rows.push({
+            kind: 'section',
+            id: 'section-notes',
+            label: $_('page.sidebar.section_notes'),
+          });
+          insertedNotes = true;
+        }
+      }
+
+      rows.push({
+        kind: 'item',
+        id: `${item.node.type}-${String(item.node.id)}-${flatIndex}`,
+        flatIndex,
+        item,
+      });
+    });
+
+    return rows;
+  });
+
+  const displayRowCount = $derived(displayRows.length);
+  const flatIndexToDisplayIndex = $derived.by(() => {
+    const indexMap = new SvelteMap<number, number>();
+    displayRows.forEach((row, displayIndex) => {
+      if (row.kind === 'item') {
+        indexMap.set(row.flatIndex, displayIndex);
+      }
+    });
+    return indexMap;
+  });
+
   // Create virtualizer when items are available
   $effect(() => {
-    if (itemCount > 0 && scrollElement) {
+    if (displayRowCount > 0 && scrollElement) {
       const store = createVirtualizer({
-        count: itemCount,
+        count: displayRowCount,
         getScrollElement: () => scrollElement!,
-        estimateSize: () => 36, // Average: Desktop 32px, Mobile 40px
+        estimateSize: (index) => (displayRows[index]?.kind === 'section' ? 24 : 36),
         overscan: 5,
       });
 
@@ -108,12 +176,13 @@
       });
 
       if (index >= 0) {
+        const displayIndex = flatIndexToDisplayIndex.get(index) ?? index;
         // Check if item is already visible (avoid unnecessary scrolling)
         const visibleRange = virtualizerValue.getVirtualItems() as Array<{ index: number }>;
-        const isVisible = visibleRange.some((v) => v.index === index);
+        const isVisible = visibleRange.some((v) => v.index === displayIndex);
 
         if (!isVisible) {
-          virtualizerValue.scrollToIndex(index, {
+          virtualizerValue.scrollToIndex(displayIndex, {
             align: 'center',
             behavior: 'smooth',
           });
@@ -132,8 +201,9 @@
     );
 
     if (itemIndex >= 0 && virtualizerValue) {
+      const displayIndex = flatIndexToDisplayIndex.get(itemIndex) ?? itemIndex;
       // Scroll to keep folder in view after expansion
-      virtualizerValue.scrollToIndex(itemIndex, {
+      virtualizerValue.scrollToIndex(displayIndex, {
         align: 'start',
         behavior: 'auto',
       });
@@ -183,7 +253,8 @@
 
   function scrollToFocusedItem() {
     if (focusedIndex >= 0 && focusedIndex < itemCount && virtualizerValue) {
-      virtualizerValue.scrollToIndex(focusedIndex, {
+      const displayIndex = flatIndexToDisplayIndex.get(focusedIndex) ?? focusedIndex;
+      virtualizerValue.scrollToIndex(displayIndex, {
         align: 'auto',
         behavior: 'smooth',
       });
@@ -243,34 +314,56 @@
     <!-- Virtual rendering -->
     <div style="height: {totalSize}px; width: 100%; position: relative;">
       {#each virtualItems as virtualRow (virtualRow.key)}
-        {@const item = flatItems[virtualRow.index]}
-        {@const isFocused = focusedIndex === virtualRow.index}
-        <div
-          style="position: absolute; top: 0; left: 0; width: 100%; transform: translateY({virtualRow.start}px);"
-          role="treeitem"
-          aria-level={item.level + 1}
-          aria-expanded={item.node.type === 'folder' ? item.node.isExpanded : undefined}
-          aria-selected={isFocused}
-          tabindex={isFocused ? 0 : -1}
-        >
-          <div style="padding-left: {item.level * 12}px">
-            <UnifiedTree
-              node={item.node}
-              depth={item.level}
-              isVirtualized={true}
-              on:expand={handleExpand}
-            />
+        {@const row = displayRows[virtualRow.index]}
+        {#if row?.kind === 'section'}
+          <div
+            class="virtual-section-label"
+            class:section-divider={row.id === 'section-journal'}
+            style="position: absolute; top: 0; left: 0; width: 100%; transform: translateY({virtualRow.start}px);"
+            role="presentation"
+          >
+            {row.label}
           </div>
-        </div>
+        {:else if row?.kind === 'item'}
+          {@const item = row.item}
+          {@const isFocused = focusedIndex === row.flatIndex}
+          <div
+            style="position: absolute; top: 0; left: 0; width: 100%; transform: translateY({virtualRow.start}px);"
+            role="treeitem"
+            aria-level={item.level + 1}
+            aria-expanded={item.node.type === 'folder' ? item.node.isExpanded : undefined}
+            aria-selected={isFocused}
+            tabindex={isFocused ? 0 : -1}
+          >
+            <div style="padding-left: {item.level * 12}px">
+              <UnifiedTree
+                node={item.node}
+                depth={item.level}
+                isVirtualized={true}
+                on:expand={handleExpand}
+              />
+            </div>
+          </div>
+        {/if}
       {/each}
     </div>
   {:else if itemCount > 0}
     <!-- SSR/Hydration Fallback: Show first 20 items -->
     <div class="space-y-0">
-      {#each flatItems.slice(0, 20) as item, index (index)}
-        <div style="padding-left: {item.level * 12}px">
-          <UnifiedTree node={item.node} depth={item.level} isVirtualized={true} />
-        </div>
+      {#each displayRows.slice(0, 24) as row, index (index)}
+        {#if row.kind === 'section'}
+          <div
+            class="virtual-section-label"
+            class:section-divider={row.id === 'section-journal'}
+            role="presentation"
+          >
+            {row.label}
+          </div>
+        {:else}
+          <div style="padding-left: {row.item.level * 12}px">
+            <UnifiedTree node={row.item.node} depth={row.item.level} isVirtualized={true} />
+          </div>
+        {/if}
       {/each}
     </div>
   {:else}
@@ -296,5 +389,26 @@
   /* Ensure focus is visible for accessibility */
   [role='tree']:focus-visible {
     box-shadow: inset 0 0 0 2px var(--color-ring, #3b82f6);
+  }
+
+  .virtual-section-label {
+    font-size: 0.68rem;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 48%
+    );
+    padding: 0.5rem 0.5rem 0.22rem;
+    background: color-mix(in oklch, var(--color-sidebar-background), transparent 6%);
+  }
+
+  .virtual-section-label.section-divider {
+    border-top: 1px solid color-mix(in oklch, var(--color-sidebar-border), transparent 22%);
+    margin-top: 0.45rem;
+    padding-top: 0.62rem;
   }
 </style>

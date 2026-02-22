@@ -7,10 +7,10 @@ import (
 
 // Cache is a thread-safe in-memory cache with TTL
 type Cache struct {
-	items      sync.Map
-	ttl        time.Duration
-	stopChan   chan struct{}
-	stopOnce   sync.Once
+	items    sync.Map
+	ttl      time.Duration
+	stopChan chan struct{}
+	stopOnce sync.Once
 }
 
 // cacheItem represents a cached value with expiration

@@ -99,7 +99,13 @@
 
     {#if node.type === 'folder'}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="folder-row-container" oncontextmenu={onContextMenu} onkeydown={onRowKeydown}>
+      <div
+        class="folder-row-container"
+        class:selected-row={isSelected}
+        class:context-open={showContextMenu}
+        oncontextmenu={onContextMenu}
+        onkeydown={onRowKeydown}
+      >
         <button
           draggable={treeDragEnabled}
           ondragstart={treeDragEnabled ? onFolderDragStart : undefined}
@@ -109,6 +115,7 @@
           ondrop={treeDragEnabled ? onDrop : undefined}
           class="tree-button"
           class:selected={isSelected}
+          class:journal-parent={node.path === '/Journal'}
           class:drag-over={isDragOver}
           class:dragging={isDragging}
           onclick={onClick}
@@ -128,6 +135,7 @@
             data-no-drag
             onclick={onKebabClick}
             class="kebab-button"
+            class:visible={isSelected || showContextMenu}
             aria-label={$_('component.tree.context_menu.more_options')}
             aria-haspopup="menu"
             aria-expanded={showContextMenu}
@@ -139,7 +147,13 @@
     {:else}
       <!-- Note node -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="note-row-container" oncontextmenu={onContextMenu} onkeydown={onRowKeydown}>
+      <div
+        class="note-row-container"
+        class:selected-row={isSelected}
+        class:context-open={showContextMenu}
+        oncontextmenu={onContextMenu}
+        onkeydown={onRowKeydown}
+      >
         <button
           draggable={noteExternalDragEnabled}
           ondragstart={noteExternalDragEnabled ? onNoteDragStart : undefined}
@@ -149,6 +163,7 @@
           ondrop={treeDragEnabled ? onDrop : undefined}
           class="tree-button note-button"
           class:selected={isSelected}
+          class:journal-note={node.folderPath === '/Journal'}
           class:dragging={isDragging}
           onclick={onClick}
         >
@@ -168,6 +183,7 @@
           data-no-drag
           onclick={onKebabClick}
           class="kebab-button"
+          class:visible={isSelected || showContextMenu}
           aria-label={$_('component.tree.context_menu.more_options')}
           aria-haspopup="menu"
           aria-expanded={showContextMenu}
@@ -221,7 +237,7 @@
   .tree-row {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
   }
 
   .expand-button {
@@ -234,7 +250,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-muted-foreground);
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 42%
+    );
     border-radius: var(--radius-sm);
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
@@ -255,10 +275,10 @@
   .tree-button {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 7px;
+    gap: 6px;
+    padding: 5px 10px;
     background: none;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
     font-size: 13px;
     line-height: 1.2;
@@ -266,22 +286,26 @@
     border-radius: var(--radius-sm);
     max-width: 100%;
     text-align: left;
-    transition: background var(--duration-fast) var(--ease-default);
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default);
     min-width: 0;
-    min-height: 28px;
+    min-height: 32px;
     -webkit-tap-highlight-color: transparent;
   }
 
   /* Only show hover on devices with a real pointer (mouse/trackpad) */
   @media (hover: hover) {
     .tree-button:hover {
-      background: var(--color-sidebar-accent);
+      background: color-mix(in oklch, var(--color-sidebar-accent), white 8%);
     }
   }
 
   .tree-button.selected {
-    background: var(--color-sidebar-accent);
-    color: var(--color-primary);
+    background: color-mix(in oklch, var(--color-primary), transparent 84%);
+    border-color: color-mix(in oklch, var(--color-primary), transparent 72%);
+    color: color-mix(in oklch, var(--color-primary), white 10%);
   }
 
   .tree-button.drag-over {
@@ -302,8 +326,16 @@
 
   .note-count {
     font-size: 11px;
-    color: var(--color-muted-foreground);
-    background: var(--color-sidebar-accent);
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 30%
+    );
+    background: color-mix(
+      in oklch,
+      var(--color-sidebar-accent),
+      var(--color-sidebar-background) 20%
+    );
     padding: 1px 5px;
     border-radius: var(--radius-xl);
     font-weight: 500;
@@ -312,6 +344,11 @@
   }
 
   .folder-row-container:focus-within .note-count {
+    opacity: 1;
+  }
+
+  .folder-row-container.selected-row .note-count,
+  .folder-row-container.context-open .note-count {
     opacity: 1;
   }
 
@@ -337,7 +374,24 @@
   }
 
   .note-button {
-    color: var(--color-muted-foreground);
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 35%
+    );
+  }
+
+  .tree-button.journal-parent {
+    color: color-mix(in oklch, var(--color-sidebar-foreground), var(--color-primary) 20%);
+    font-weight: 500;
+  }
+
+  .note-button.journal-note {
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 42%
+    );
   }
 
   @media (hover: hover) {
@@ -359,9 +413,10 @@
   .folder-row-container {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     flex: 1;
     min-width: 0;
+    padding-right: 2px;
   }
 
   .folder-row-container .tree-button {
@@ -373,9 +428,10 @@
   .note-row-container {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     flex: 1;
     min-width: 0;
+    padding-right: 2px;
   }
 
   .note-row-container .tree-button {
@@ -389,15 +445,28 @@
     pointer-events: none;
     display: flex;
     align-items: center;
-    padding: 1px;
+    padding: 3px;
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--color-muted-foreground);
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 40%
+    );
     border-radius: var(--radius-sm);
     flex-shrink: 0;
-    transition: opacity var(--duration-fast) var(--ease-default);
+    margin-right: 1px;
+    transition:
+      opacity var(--duration-fast) var(--ease-default),
+      background var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default);
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .kebab-button.visible {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .folder-row-container:focus-within .kebab-button,
@@ -417,6 +486,14 @@
       background: var(--color-sidebar-accent);
       color: var(--color-sidebar-foreground);
     }
+  }
+
+  .folder-row-container.selected-row .kebab-button,
+  .folder-row-container.context-open .kebab-button,
+  .note-row-container.selected-row .kebab-button,
+  .note-row-container.context-open .kebab-button {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .kebab-button:focus-visible {

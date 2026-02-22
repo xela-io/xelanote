@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { CalendarClock, PanelLeft, Settings, Trash2, Users } from 'lucide-svelte';
+  import { CalendarClock, Home, PanelLeft, Settings, Trash2, Users } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import { swipe } from '$lib/actions/swipe';
   import type { DropPosition, TouchDragData } from '$lib/actions/touchdrag';
   import { touchdrag } from '$lib/actions/touchdrag';
@@ -290,6 +291,31 @@
   function handleCreateFolderConfirm(path: string) {
     handleCreateFolderConfirmAction(path, sidebarActionDeps);
   }
+
+  const iconStripButtonBase =
+    'relative p-2 rounded-lg text-sidebar-foreground transition-colors hover:bg-sidebar-accent';
+  const iconStripButtonSubtle =
+    'relative p-2 rounded-lg text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50';
+
+  function isPathActive(path: string) {
+    return page.url.pathname === path;
+  }
+
+  function iconStripButtonClass(active: boolean, subtle = false) {
+    return `icon-strip-nav-button ${subtle ? iconStripButtonSubtle : iconStripButtonBase} ${active ? 'active bg-sidebar-accent shadow-sm' : ''}`;
+  }
+
+  function isJournalTopLevelNode(node: tree.TreeNode) {
+    return node.type === 'folder' && node.path === '/Journal';
+  }
+
+  function getTopLevelNonJournalNodes() {
+    return (tree.getTreeData()?.children ?? []).filter((child) => !isJournalTopLevelNode(child));
+  }
+
+  function getTopLevelJournalNode() {
+    return (tree.getTreeData()?.children ?? []).find((child) => isJournalTopLevelNode(child));
+  }
 </script>
 
 <!-- Escape handler for mobile drawer -->
@@ -328,6 +354,74 @@
         style="width: {ICON_STRIP_WIDTH}px; padding-top: calc(var(--safe-area-inset-top) + 2.5rem)"
         aria-label={$_('accessibility.sidebar')}
       >
+        <!-- Home -->
+        <button
+          onclick={() => {
+            goto('/');
+            ui.closeSidebarOnMobile();
+          }}
+          class={iconStripButtonClass(isPathActive('/'))}
+          title={$_('page.home.title')}
+          aria-label={$_('page.home.title')}
+        >
+          <Home size={smallIconSize} />
+        </button>
+
+        <!-- Due Dates -->
+        <button
+          onclick={() => {
+            goto('/due-dates');
+            ui.closeSidebarOnMobile();
+          }}
+          class={iconStripButtonClass(isPathActive('/due-dates'))}
+          title={$_('page.due_dates.title')}
+          aria-label={$_('page.due_dates.title')}
+        >
+          <CalendarClock size={smallIconSize} />
+        </button>
+
+        <!-- Shared -->
+        <button
+          onclick={() => {
+            goto('/shared');
+            ui.closeSidebarOnMobile();
+          }}
+          class={iconStripButtonClass(isPathActive('/shared'))}
+          title={$_('sharing.shared_with_me')}
+          aria-label={$_('sharing.shared_with_me')}
+        >
+          <Users size={smallIconSize} />
+          {#if sharing.getTotalSharedCount() > 0}
+            <span
+              class="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
+            >
+              {sharing.getTotalSharedCount()}
+            </span>
+          {/if}
+        </button>
+
+        <!-- Trash -->
+        <button
+          onclick={() => {
+            goto('/trash');
+            ui.closeSidebarOnMobile();
+          }}
+          class={iconStripButtonClass(isPathActive('/trash'))}
+          title={$_('page.sidebar.trash')}
+          aria-label={$_('page.sidebar.trash')}
+        >
+          <Trash2 size={smallIconSize} />
+          {#if trash.getTrashCount() > 0}
+            <span
+              class="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
+            >
+              {trash.getTrashCount()}
+            </span>
+          {/if}
+        </button>
+
+        <div class="h-px w-6 my-1 bg-sidebar-border/80"></div>
+
         <!-- Journal (if enabled) -->
         {#if journalEnabled}
           <div class="icon-strip-item">
@@ -342,59 +436,6 @@
           </div>
         {/if}
 
-        <!-- Shared -->
-        <button
-          onclick={() => {
-            goto('/shared');
-            ui.closeSidebarOnMobile();
-          }}
-          class="relative p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-          title={$_('sharing.shared_with_me')}
-          aria-label={$_('sharing.shared_with_me')}
-        >
-          <Users size={smallIconSize} />
-          {#if sharing.getTotalSharedCount() > 0}
-            <span
-              class="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
-            >
-              {sharing.getTotalSharedCount()}
-            </span>
-          {/if}
-        </button>
-
-        <!-- Due Dates -->
-        <button
-          onclick={() => {
-            goto('/due-dates');
-            ui.closeSidebarOnMobile();
-          }}
-          class="p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-          title={$_('page.due_dates.title')}
-          aria-label={$_('page.due_dates.title')}
-        >
-          <CalendarClock size={smallIconSize} />
-        </button>
-
-        <!-- Trash -->
-        <button
-          onclick={() => {
-            goto('/trash');
-            ui.closeSidebarOnMobile();
-          }}
-          class="relative p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-          title={$_('page.sidebar.trash')}
-          aria-label={$_('page.sidebar.trash')}
-        >
-          <Trash2 size={smallIconSize} />
-          {#if trash.getTrashCount() > 0}
-            <span
-              class="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
-            >
-              {trash.getTrashCount()}
-            </span>
-          {/if}
-        </button>
-
         <!-- Spacer -->
         <div class="flex-1"></div>
 
@@ -407,7 +448,7 @@
             goto('/settings');
             ui.closeSidebarOnMobile();
           }}
-          class="p-2 rounded hover:bg-sidebar-accent/50 text-sidebar-foreground"
+          class={iconStripButtonClass(isPathActive('/settings'), true)}
           title={$_('page.sidebar.settings')}
           aria-label={$_('page.sidebar.settings')}
         >
@@ -473,10 +514,19 @@
             {#if settings.getVirtualTreeEnabled()}
               <VirtualizedTree />
             {:else}
-              <!-- Render top-level folders and notes (non-virtual) -->
-              {#each tree.getTreeData()?.children ?? [] as child (child.type === 'folder' ? `f-${child.id}` : `n-${child.id}`)}
-                <UnifiedTree node={child} />
-              {/each}
+              {#if getTopLevelNonJournalNodes().length > 0}
+                <div class="sidebar-tree-section-label">{$_('page.sidebar.section_notes')}</div>
+                {#each getTopLevelNonJournalNodes() as child (child.type === 'folder' ? `f-${child.id}` : `n-${child.id}`)}
+                  <UnifiedTree node={child} />
+                {/each}
+              {/if}
+
+              {#if getTopLevelJournalNode()}
+                <div class="sidebar-tree-section-label section-divider mt-2">
+                  {$_('page.sidebar.section_journal')}
+                </div>
+                <UnifiedTree node={getTopLevelJournalNode()!} />
+              {/if}
             {/if}
           {:else}
             <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.no_data')}</div>
@@ -509,7 +559,7 @@
       <!-- Toggle panel expand/collapse -->
       <button
         onclick={() => ui.toggleSidebar()}
-        class="p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
+        class={iconStripButtonClass(ui.getSidebarOpen())}
         title={$_(
           ui.getSidebarOpen() ? 'page.sidebar.collapse_sidebar' : 'page.sidebar.expand_sidebar'
         )}
@@ -519,6 +569,62 @@
       >
         <PanelLeft size={smallIconSize} />
       </button>
+
+      <!-- Home -->
+      <button
+        onclick={() => goto('/')}
+        class={iconStripButtonClass(isPathActive('/'))}
+        title={$_('page.home.title')}
+        aria-label={$_('page.home.title')}
+      >
+        <Home size={smallIconSize} />
+      </button>
+
+      <!-- Due Dates -->
+      <button
+        onclick={() => goto('/due-dates')}
+        class={iconStripButtonClass(isPathActive('/due-dates'))}
+        title={$_('page.due_dates.title')}
+        aria-label={$_('page.due_dates.title')}
+      >
+        <CalendarClock size={smallIconSize} />
+      </button>
+
+      <!-- Shared -->
+      <button
+        onclick={() => goto('/shared')}
+        class={iconStripButtonClass(isPathActive('/shared'))}
+        title={$_('sharing.shared_with_me')}
+        aria-label={$_('sharing.shared_with_me')}
+      >
+        <Users size={smallIconSize} />
+        {#if sharing.getTotalSharedCount() > 0}
+          <span
+            class="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
+          >
+            {sharing.getTotalSharedCount()}
+          </span>
+        {/if}
+      </button>
+
+      <!-- Trash -->
+      <button
+        onclick={() => goto('/trash')}
+        class={iconStripButtonClass(isPathActive('/trash'))}
+        title={$_('page.sidebar.trash')}
+        aria-label={$_('page.sidebar.trash')}
+      >
+        <Trash2 size={smallIconSize} />
+        {#if trash.getTrashCount() > 0}
+          <span
+            class="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
+          >
+            {trash.getTrashCount()}
+          </span>
+        {/if}
+      </button>
+
+      <div class="h-px w-6 my-1 bg-sidebar-border/80"></div>
 
       <!-- Journal (if enabled) -->
       {#if journalEnabled}
@@ -534,50 +640,6 @@
         </div>
       {/if}
 
-      <!-- Shared -->
-      <button
-        onclick={() => goto('/shared')}
-        class="relative p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-        title={$_('sharing.shared_with_me')}
-        aria-label={$_('sharing.shared_with_me')}
-      >
-        <Users size={smallIconSize} />
-        {#if sharing.getTotalSharedCount() > 0}
-          <span
-            class="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
-          >
-            {sharing.getTotalSharedCount()}
-          </span>
-        {/if}
-      </button>
-
-      <!-- Due Dates -->
-      <button
-        onclick={() => goto('/due-dates')}
-        class="p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-        title={$_('page.due_dates.title')}
-        aria-label={$_('page.due_dates.title')}
-      >
-        <CalendarClock size={smallIconSize} />
-      </button>
-
-      <!-- Trash -->
-      <button
-        onclick={() => goto('/trash')}
-        class="relative p-2 rounded hover:bg-sidebar-accent text-sidebar-foreground"
-        title={$_('page.sidebar.trash')}
-        aria-label={$_('page.sidebar.trash')}
-      >
-        <Trash2 size={smallIconSize} />
-        {#if trash.getTrashCount() > 0}
-          <span
-            class="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[8px] font-medium w-3.5 h-3.5 rounded-full flex items-center justify-center"
-          >
-            {trash.getTrashCount()}
-          </span>
-        {/if}
-      </button>
-
       <!-- Spacer -->
       <div class="flex-1"></div>
 
@@ -587,7 +649,7 @@
       <!-- Settings -->
       <button
         onclick={() => goto('/settings')}
-        class="p-2 rounded hover:bg-sidebar-accent/50 text-sidebar-foreground"
+        class={iconStripButtonClass(isPathActive('/settings'), true)}
         title={$_('page.sidebar.settings')}
         aria-label={$_('page.sidebar.settings')}
       >
@@ -656,10 +718,19 @@
             {#if settings.getVirtualTreeEnabled()}
               <VirtualizedTree />
             {:else}
-              <!-- Render top-level folders and notes (non-virtual) -->
-              {#each tree.getTreeData()?.children ?? [] as child (child.type === 'folder' ? `f-${child.id}` : `n-${child.id}`)}
-                <UnifiedTree node={child} />
-              {/each}
+              {#if getTopLevelNonJournalNodes().length > 0}
+                <div class="sidebar-tree-section-label">{$_('page.sidebar.section_notes')}</div>
+                {#each getTopLevelNonJournalNodes() as child (child.type === 'folder' ? `f-${child.id}` : `n-${child.id}`)}
+                  <UnifiedTree node={child} />
+                {/each}
+              {/if}
+
+              {#if getTopLevelJournalNode()}
+                <div class="sidebar-tree-section-label section-divider mt-2">
+                  {$_('page.sidebar.section_journal')}
+                </div>
+                <UnifiedTree node={getTopLevelJournalNode()!} />
+              {/if}
             {/if}
           {:else}
             <div class="px-4 py-2 text-sm text-muted-foreground">{$_('common.no_data')}</div>
@@ -793,5 +864,46 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .icon-strip-nav-button {
+    position: relative;
+  }
+
+  .icon-strip-nav-button.active::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 5px;
+    bottom: 5px;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--color-primary);
+    opacity: 1;
+    box-shadow: 0 0 8px color-mix(in oklch, var(--color-primary), transparent 60%);
+  }
+
+  .icon-strip-nav-button.active {
+    background: color-mix(in oklch, var(--color-sidebar-accent), var(--color-primary) 10%);
+  }
+
+  .sidebar-tree-section-label {
+    font-size: 0.68rem;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: color-mix(
+      in oklch,
+      var(--color-sidebar-foreground),
+      var(--color-sidebar-background) 48%
+    );
+    padding: 0.55rem 0.5rem 0.32rem;
+  }
+
+  .sidebar-tree-section-label.section-divider {
+    border-top: 1px solid color-mix(in oklch, var(--color-sidebar-border), transparent 22%);
+    margin-top: 0.5rem;
+    padding-top: 0.65rem;
   }
 </style>

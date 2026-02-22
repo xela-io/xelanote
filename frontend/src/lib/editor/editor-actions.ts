@@ -26,11 +26,6 @@ interface AutoSaveDeps {
   scheduleAutoSave: () => void;
 }
 
-interface TitleDeps {
-  updateTitle: (title: string) => void;
-  scheduleAutoSave: () => void;
-}
-
 interface AIToggleDeps {
   getCurrentNote: () => { id: string; ai_enabled: boolean } | null;
   updateCurrentAI: (value: boolean) => void;
@@ -102,12 +97,6 @@ export async function handleSaveNote(deps: SaveNoteDeps) {
       deps.toast.error(deps.strings.errorSave);
     }
   }
-}
-
-export function handleTitleInput(e: Event, deps: TitleDeps) {
-  const title = (e.currentTarget as HTMLInputElement).value;
-  deps.updateTitle(title);
-  deps.scheduleAutoSave();
 }
 
 export function handleAutoSaveToggle(deps: AutoSaveDeps) {

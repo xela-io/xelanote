@@ -26,7 +26,6 @@
     handleAutoSaveToggle as handleAutoSaveToggleAction,
     handleEncryptionToggle as handleEncryptionToggleAction,
     handleSaveNote as handleSaveNoteAction,
-    handleTitleInput as handleTitleInputAction,
   } from '$lib/editor/editor-actions';
   import {
     applyAITransformAction,
@@ -99,6 +98,7 @@
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
   import * as ui from '$lib/stores/ui.svelte';
+  import { composeEditorContent, decomposeEditorContent } from '$lib/stores/notes/state-updates';
   import { getTasksInDocument } from '$lib/utils/task-reorder';
 
   import EditorDialogs from './editor/EditorDialogs.svelte';
@@ -214,9 +214,9 @@
       headings = [];
       return;
     }
-    const content = note.content;
+    const composedContent = composeEditorContent(note);
     const timer = setTimeout(() => {
-      headings = extractHeadings(content);
+      headings = extractHeadings(composedContent);
     }, 300);
     return () => clearTimeout(timer);
   });
@@ -227,19 +227,19 @@
     const note = notes.getCurrentNote();
     if (!note) return;
     // Capture reactive deps synchronously for Svelte tracking
-    const content = note.content;
+    const composedContent = composeEditorContent(note);
     const map = titleToIdMap;
     const mode = ui.getEditorMode();
 
     if (mode === 'split') {
       const timer = setTimeout(() => {
-        renderedContent = renderMarkdown(content, { titleToIdMap: map });
+        renderedContent = renderMarkdown(composedContent, { titleToIdMap: map });
         taskCollapseOptions.revision = renderedContent;
         taskSortableOptions.revision = renderedContent;
       }, 150);
       return () => clearTimeout(timer);
     } else {
-      renderedContent = renderMarkdown(content, { titleToIdMap: map });
+      renderedContent = renderMarkdown(composedContent, { titleToIdMap: map });
       taskCollapseOptions.revision = renderedContent;
       taskSortableOptions.revision = renderedContent;
     }
@@ -253,7 +253,7 @@
     const note = notes.getCurrentNote();
     liveTaskSortableOptions.enabled =
       FEATURE_FLAGS.taskLists && ui.getEditorMode() === 'live' && Boolean(note);
-    liveTaskSortableOptions.revision = note?.content ?? '';
+    liveTaskSortableOptions.revision = note ? composeEditorContent(note) : '';
     liveTaskSortableOptions.editorView = editorView;
   });
 
@@ -279,9 +279,22 @@
   });
 
   const initEditor = initEditorAction({
-    getDoc: () => notes.getCurrentNote()?.content ?? '',
-    onChange: (content) => {
-      notes.updateCurrentNoteContent(content);
+    getDoc: () => {
+      const note = notes.getCurrentNote();
+      if (!note) return '';
+      return composeEditorContent(note);
+    },
+    onChange: (fullContent) => {
+      const note = notes.getCurrentNote();
+      if (!note) return;
+      if (note.note_type === 'journal') {
+        notes.updateCurrentNoteContent(fullContent);
+      } else {
+        const { title, content } = decomposeEditorContent(fullContent);
+        notes.updateCurrentNoteTitle(title);
+        notes.updateCurrentNoteContent(content);
+        tree.updateNoteInTree(note.id, { title });
+      }
       // Don't render markdown here — the $effect on getCurrentNote() handles it,
       // avoiding duplicate rendering on every keystroke.
       notes.scheduleAutoSave();
@@ -336,7 +349,7 @@
   $effect(() => {
     const note = notes.getCurrentNote();
     if (editorView && note && !notes.getIsDirty()) {
-      updateEditorContent(editorView, note.content);
+      updateEditorContent(editorView, composeEditorContent(note));
     }
   });
 
@@ -372,13 +385,6 @@
         errorRemote: $_('component.editor.status.error_remote'),
         errorSave: $_('component.editor.status.error'),
       },
-    });
-  }
-
-  function handleTitleInput(e: Event) {
-    handleTitleInputAction(e, {
-      updateTitle: notes.updateCurrentNoteTitle,
-      scheduleAutoSave: notes.scheduleAutoSave,
     });
   }
 
@@ -945,7 +951,6 @@
         (ui.getEditorMode() === 'edit' ||
           ui.getEditorMode() === 'split' ||
           ui.getEditorMode() === 'live')}
-      onTitleInput={handleTitleInput}
       onOpenSidebar={() => ui.setSidebarOpen(true)}
       onSetEditorMode={settings.setEditorModePreference}
       onInsertTask={handleInsertTask}

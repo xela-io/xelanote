@@ -233,6 +233,9 @@ function buildDecorations(
           lineClasses.push('cm-live-task-line');
         }
 
+        if (line.number === 1 && !isActiveLine) {
+          lineClasses.push('cm-live-first-line-title');
+        }
         if (primitives.heading) {
           lineClasses.push(`cm-live-heading-h${primitives.heading.level}`);
         }

@@ -16,6 +16,7 @@ import { FEATURE_FLAGS } from '$lib/config';
 import {
   colorTagPlugin,
   dueDatePlugin,
+  firstLineTitlePlugin,
   listIndentPlugin,
   livePreviewCompartment,
   taskBracketPlugin,
@@ -92,6 +93,7 @@ const sharedDecorationPlugins: Extension[] = [
   taskBracketPlugin,
   dueDatePlugin,
   listIndentPlugin,
+  firstLineTitlePlugin,
   lightTheme,
 ];
 

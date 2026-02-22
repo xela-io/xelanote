@@ -40,7 +40,6 @@
     loadVersionHistoryDialog,
     maybeLoadDialog,
   } from '$lib/editor/dialog-loaders';
-  import { handleTitleInput as handleTitleInputAction } from '$lib/editor/editor-actions';
   import {
     handleDeleteNote,
     handleWikilinkClick as handleWikilinkAction,
@@ -738,10 +737,9 @@
   // --- Top toolbar handlers ---
 
   function handleTitleInput(e: Event) {
-    handleTitleInputAction(e, {
-      updateTitle: notes.updateCurrentNoteTitle,
-      scheduleAutoSave: notes.scheduleAutoSave,
-    });
+    const title = (e.currentTarget as HTMLInputElement).value;
+    notes.updateCurrentNoteTitle(title);
+    notes.scheduleAutoSave();
   }
 
   function handleManualSave() {

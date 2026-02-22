@@ -63,6 +63,31 @@ export function clearCurrentNote(deps: NoteStateDeps) {
   deps.clearError();
 }
 
+/**
+ * Compose editor content from a note's title and content.
+ * Journal notes skip inline title (date title is read-only in toolbar).
+ */
+export function composeEditorContent(note: Note): string {
+  if (note.note_type === 'journal') {
+    return note.content;
+  }
+  return note.title + '\n' + note.content;
+}
+
+/**
+ * Decompose editor content into title (first line) and content (rest).
+ */
+export function decomposeEditorContent(fullContent: string): { title: string; content: string } {
+  const newlineIndex = fullContent.indexOf('\n');
+  if (newlineIndex === -1) {
+    return { title: fullContent, content: '' };
+  }
+  return {
+    title: fullContent.substring(0, newlineIndex),
+    content: fullContent.substring(newlineIndex + 1),
+  };
+}
+
 export function replaceTempId(tempId: string, realNote: Note, deps: NoteStateDeps) {
   deps.setNotes(deps.getNotes().map((note) => (note.id === tempId ? realNote : note)));
   if (deps.getCurrentNote()?.id === tempId) {

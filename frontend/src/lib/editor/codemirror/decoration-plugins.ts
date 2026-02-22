@@ -320,3 +320,32 @@ export const listIndentPlugin = ViewPlugin.fromClass(
     decorations: (v) => v.decorations,
   }
 );
+
+// First-line title decoration — always applied (edit, split, live modes)
+const firstLineTitleDecoration = Decoration.line({ class: 'cm-first-line-title' });
+
+function getFirstLineTitleDecoration(view: EditorView): DecorationSet {
+  if (view.state.doc.lines === 0) return Decoration.set([]);
+  const firstLine = view.state.doc.line(1);
+  if (firstLine.length === 0) return Decoration.set([]);
+  return Decoration.set([firstLineTitleDecoration.range(firstLine.from)]);
+}
+
+export const firstLineTitlePlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+
+    constructor(view: EditorView) {
+      this.decorations = getFirstLineTitleDecoration(view);
+    }
+
+    update(update: ViewUpdate) {
+      if (update.docChanged) {
+        this.decorations = getFirstLineTitleDecoration(update.view);
+      }
+    }
+  },
+  {
+    decorations: (v) => v.decorations,
+  }
+);

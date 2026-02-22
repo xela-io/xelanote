@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Editor: Note title is now edited inline as the first line of the editor content (Bear/Apple Notes style) instead of a separate toolbar input. Title and content remain separate in the API/DB. Journal notes retain their read-only date title in the toolbar.
 - Frontend: Sidebar redesigned with Obsidian-style icon strip layout — persistent left icon column (40px) with navigation, theme toggle, and settings; collapsible main panel with toolbar header; mobile drawer unchanged
 
 ### Fixed
 
+- Backend: UpdateNote now automatically updates wikilinks in all linking notes when a note's title changes (previously only handled by explicit rename)
 - Recipes: AI import (image and URL) now reliably translates recipes to the user's locale (e.g. German) using sandwich-pattern prompt reinforcement
 
 ### Added

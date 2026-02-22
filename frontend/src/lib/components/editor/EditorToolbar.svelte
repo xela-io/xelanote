@@ -52,7 +52,6 @@
     isEncryptionUnlocked?: boolean;
     focusModeActive?: boolean;
     showSpellCheck?: boolean;
-    onTitleInput: (event: Event) => void;
     onOpenSidebar: () => void;
     onSetEditorMode: (mode: EditorMode) => void;
     onInsertTask: () => void;
@@ -86,7 +85,6 @@
     isEncryptionUnlocked = true,
     focusModeActive = false,
     showSpellCheck = false,
-    onTitleInput,
     onOpenSidebar,
     onSetEditorMode,
     onInsertTask,
@@ -154,23 +152,16 @@
   <div
     class="flex flex-col sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-4 py-2 gap-2"
   >
-    <!-- Left: Title + Last Updated + Sync status -->
+    <!-- Left: Journal title (read-only) or metadata + Sync status -->
     <div class="flex items-center gap-2 min-w-0">
-      <input
-        type="text"
-        value={note?.title ?? ''}
-        oninput={onTitleInput}
-        readonly={note?.note_type === 'journal'}
-        autocorrect="on"
-        autocapitalize="words"
-        spellcheck="true"
-        inputmode="text"
-        aria-label={$_('component.editor.title_input')}
-        class="text-lg font-semibold bg-transparent border-0 outline-none rounded px-1 min-w-0 flex-1
-          {note?.note_type === 'journal'
-          ? 'cursor-default opacity-70'
-          : 'focus:ring-1 focus:ring-ring'}"
-      />
+      {#if note?.note_type === 'journal'}
+        <span
+          class="text-lg font-semibold px-1 min-w-0 flex-1 truncate cursor-default opacity-70"
+          aria-label={$_('component.editor.title_input')}
+        >
+          {note.title}
+        </span>
+      {/if}
       {#if note?.content_encrypted}
         <Lock size={14} class="flex-shrink-0 text-muted-foreground" />
       {/if}

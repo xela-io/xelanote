@@ -82,6 +82,44 @@ func (s *NoteService) UpdateNote(userID int, id, title, content, folderPath stri
 		}
 	}
 
+	// If title changed on a non-journal note, update wikilinks in all linking notes
+	// BEFORE writing the new title so oldTitle is still correct.
+	titleChanged := existingNote.Title != title && existingNote.NoteType != db.NoteTypeJournal
+	if titleChanged {
+		oldTitle := existingNote.Title
+		linkingNoteIDs, linkErr := s.db.GetNotesLinkingTo(userID, id, oldTitle)
+		if linkErr != nil {
+			s.logger.Error("failed to get notes linking to during title update", "err", linkErr, "note_id", id, "user_id", userID)
+		} else if len(linkingNoteIDs) > 0 {
+			linkingNotes, batchErr := s.db.GetNotesByIDs(userID, linkingNoteIDs)
+			if batchErr != nil {
+				s.logger.Error("failed to batch-load linking notes during title update", "err", batchErr, "note_id", id, "user_id", userID)
+			} else {
+				for _, linkingID := range linkingNoteIDs {
+					sourceNote, ok := linkingNotes[linkingID]
+					if !ok || sourceNote == nil {
+						continue
+					}
+					newContent := replaceWikilinkTitle(sourceNote.Content, oldTitle, title)
+					if newContent != sourceNote.Content {
+						updatedSourceNote, updErr := s.db.UpdateNote(userID, sourceNote.ID, sourceNote.Title, newContent, "", sourceNote.Version)
+						if updErr != nil {
+							s.logger.Error("failed to update backlink content during title update", "err", updErr, "note_id", sourceNote.ID, "user_id", userID)
+							continue
+						}
+						if err := s.updateLinks(userID, sourceNote.ID, newContent); err != nil {
+							s.logger.Error("failed to update links after backlink content update", "err", err, "note_id", sourceNote.ID)
+						}
+						if updatedSourceNote != nil {
+							s.cache.Set(noteCacheKey(userID, updatedSourceNote.ID), updatedSourceNote)
+							s.invalidateNotesByFolderCache(userID, updatedSourceNote.FolderPath)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// Normalize folder path (remove trailing slash)
 	if folderPath != "" {
 		folderPath = normalizeFolderPath(folderPath)

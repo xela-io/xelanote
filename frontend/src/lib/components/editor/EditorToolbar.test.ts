@@ -58,7 +58,6 @@ const baseNote: Note = {
 
 function mockCallbacks() {
   return {
-    onTitleInput: vi.fn(),
     onOpenSidebar: vi.fn(),
     onSetEditorMode: vi.fn(),
     onInsertTask: vi.fn(),
@@ -78,36 +77,26 @@ describe('EditorToolbar', () => {
     vi.clearAllMocks();
   });
 
-  it('renders title input with note title', () => {
+  it('does not render title input for regular notes (inline title in editor)', () => {
     const cbs = mockCallbacks();
     const { container } = render(EditorToolbar, {
       props: { note: baseNote, ...cbs },
     });
 
-    const titleInput = container.querySelector('input[type="text"]') as HTMLInputElement;
-    expect(titleInput).toBeInTheDocument();
-    expect(titleInput.value).toBe('Test Note');
+    const titleInput = container.querySelector('input[type="text"]');
+    expect(titleInput).not.toBeInTheDocument();
   });
 
-  it('sets title input readonly for journal notes', () => {
+  it('shows read-only title span for journal notes', () => {
     const cbs = mockCallbacks();
-    const journalNote = { ...baseNote, note_type: 'journal' };
+    const journalNote = { ...baseNote, note_type: 'journal', title: '2026-01-15' };
     const { container } = render(EditorToolbar, {
       props: { note: journalNote, ...cbs },
     });
 
-    const titleInput = container.querySelector('input[type="text"]') as HTMLInputElement;
-    expect(titleInput.readOnly).toBe(true);
-  });
-
-  it('title input is editable for regular notes', () => {
-    const cbs = mockCallbacks();
-    const { container } = render(EditorToolbar, {
-      props: { note: baseNote, ...cbs },
-    });
-
-    const titleInput = container.querySelector('input[type="text"]') as HTMLInputElement;
-    expect(titleInput.readOnly).toBe(false);
+    const titleSpan = container.querySelector('span.truncate');
+    expect(titleSpan).toBeInTheDocument();
+    expect(titleSpan?.textContent?.trim()).toBe('2026-01-15');
   });
 
   it('save button is disabled when not dirty', () => {

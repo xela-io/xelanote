@@ -25,7 +25,8 @@ plugins.push(
       theme_color: '#458588', // Gruvbox teal — matches meta theme-color for light mode
       background_color: '#282828',
       display: 'standalone',
-      orientation: 'any',
+      display_override: ['window-controls-overlay', 'standalone'],
+      orientation: 'portrait',
       start_url: '/',
       scope: '/',
       categories: ['productivity', 'utilities'],
@@ -79,6 +80,22 @@ plugins.push(
           short_name: 'Due',
           url: '/due-dates',
           icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        },
+      ],
+      screenshots: [
+        {
+          src: '/screenshots/narrow.png',
+          sizes: '540x720',
+          type: 'image/png',
+          form_factor: 'narrow',
+          label: 'xelanote on mobile',
+        },
+        {
+          src: '/screenshots/wide.png',
+          sizes: '1280x720',
+          type: 'image/png',
+          form_factor: 'wide',
+          label: 'xelanote on desktop',
         },
       ],
       share_target: {

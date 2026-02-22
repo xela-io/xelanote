@@ -10,6 +10,7 @@
   import ColorPickerPopover from '../ColorPickerPopover.svelte';
   import EditorMoreMenu from '../EditorMoreMenu.svelte';
   import TableInsertDialog from '../TableInsertDialog.svelte';
+  import EditorInsertMenu from './EditorInsertMenu.svelte';
 
   type EditorMode = 'edit' | 'split' | 'preview' | 'live';
 
@@ -33,6 +34,13 @@
     showColorPicker: boolean;
     onColorSelect: (color: string) => void;
     onCloseColorPicker: () => void;
+    // Insert menu
+    showInsertMenu: boolean;
+    insertMenuTriggerRect: DOMRect | null;
+    onInsertTask: () => void;
+    onInsertTable: () => void;
+    onUpload: () => void;
+    onCloseInsertMenu: () => void;
     // More menu
     showMoreMenu: boolean;
     moreMenuTriggerRect: DOMRect | null;
@@ -89,6 +97,12 @@
     showColorPicker,
     onColorSelect,
     onCloseColorPicker,
+    showInsertMenu,
+    insertMenuTriggerRect,
+    onInsertTask,
+    onInsertTable,
+    onUpload,
+    onCloseInsertMenu,
     showMoreMenu,
     moreMenuTriggerRect,
     editorMode,
@@ -165,6 +179,18 @@
 <!-- Color Picker Popover -->
 {#if showColorPicker && FEATURE_FLAGS.colorSyntax}
   <ColorPickerPopover onSelect={onColorSelect} onClose={onCloseColorPicker} />
+{/if}
+
+<!-- Insert Menu (rendered outside toolbar to avoid overflow clipping) -->
+{#if showInsertMenu}
+  <EditorInsertMenu
+    {onInsertTask}
+    {onInsertTable}
+    {onUpload}
+    {isMobile}
+    onClose={onCloseInsertMenu}
+    triggerRect={insertMenuTriggerRect}
+  />
 {/if}
 
 <!-- More Menu (rendered outside toolbar to avoid overflow clipping) -->

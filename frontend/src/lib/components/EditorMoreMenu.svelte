@@ -121,6 +121,10 @@
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
 
   <div class="space-y-1">
+    <div class="px-3 pt-1 pb-2 text-xs font-semibold tracking-wide text-muted-foreground sm:hidden">
+      {$_('component.editor.toolbar.more_options')}
+    </div>
+
     {#if onSetEditorMode}
       <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">View Mode</div>
       <button
@@ -184,6 +188,7 @@
       <hr class="my-2 border-border" />
     {/if}
 
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Formatting</div>
     <button
       type="button"
       onclick={() => {
@@ -212,6 +217,7 @@
 
     <hr class="my-2 border-border" />
 
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Note</div>
     {#if FEATURE_FLAGS.colorSyntax}
       <button
         type="button"
@@ -289,20 +295,9 @@
       {$_('component.editor.toolbar.move')}
     </button>
 
-    <button
-      type="button"
-      onclick={() => {
-        onDelete();
-        onClose();
-      }}
-      class="w-full flex items-center gap-3 px-3 py-2.5 text-left text-destructive hover:bg-accent rounded-md transition-colors"
-      role="menuitem"
-    >
-      <Trash2 size={18} />
-      {$_('component.editor.toolbar.delete_note')}
-    </button>
-
     <hr class="my-2 border-border" />
+
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Features & Help</div>
 
     <button
       type="button"
@@ -346,6 +341,22 @@
       {autosave.getAutoSaveEnabled()
         ? $_('component.editor.toolbar.autosave_disable')
         : $_('component.editor.toolbar.autosave_enable')}
+    </button>
+
+    <hr class="my-2 border-border" />
+
+    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">Danger</div>
+    <button
+      type="button"
+      onclick={() => {
+        onDelete();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-left text-destructive hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Trash2 size={18} />
+      {$_('component.editor.toolbar.delete_note')}
     </button>
   </div>
 </div>

@@ -23,7 +23,6 @@
   } from '$lib/editor/dialog-loaders';
   import {
     handleAIToggle as handleAIToggleAction,
-    handleAutoSaveToggle as handleAutoSaveToggleAction,
     handleEncryptionToggle as handleEncryptionToggleAction,
     handleSaveNote as handleSaveNoteAction,
   } from '$lib/editor/editor-actions';
@@ -144,8 +143,10 @@
   let showMoveDialog = $state(false);
   let showVersionHistory = $state(false);
   let showColorPicker = $state(false);
+  let showInsertMenu = $state(false);
   let showMoreMenu = $state(false);
   let showShareDialog = $state(false);
+  let insertMenuTriggerRect = $state<DOMRect | null>(null);
   let moreMenuTriggerRect = $state<DOMRect | null>(null);
   let showAIActionsDropdown = $state(false);
   let aiActionsTriggerRect = $state<DOMRect | null>(null);
@@ -388,15 +389,6 @@
     });
   }
 
-  function handleAutoSaveToggle() {
-    handleAutoSaveToggleAction({
-      getAutoSaveEnabled: autosave.getAutoSaveEnabled,
-      setAutoSaveEnabled: autosave.setAutoSaveEnabled,
-      getIsDirty: notes.getIsDirty,
-      scheduleAutoSave: notes.scheduleAutoSave,
-    });
-  }
-
   async function handleAIToggle() {
     await handleAIToggleAction({
       getCurrentNote: () => {
@@ -500,6 +492,7 @@
 
   // Menu coordination: close other menus when one opens
   function openMoreMenu(triggerRect: DOMRect) {
+    showInsertMenu = false;
     openMoreMenuAction(
       {
         setShowColorPicker: (value) => {
@@ -517,7 +510,16 @@
     );
   }
 
+  function openInsertMenu(triggerRect: DOMRect) {
+    showMoreMenu = false;
+    showColorPicker = false;
+    ui.setMarkdownGuideDropdownOpen(false);
+    insertMenuTriggerRect = triggerRect;
+    showInsertMenu = true;
+  }
+
   function openColorPicker() {
+    showInsertMenu = false;
     openColorPickerAction({
       setShowMoreMenu: (value) => {
         showMoreMenu = value;
@@ -530,6 +532,7 @@
   }
 
   function openMarkdownHelp() {
+    showInsertMenu = false;
     openMarkdownHelpAction({
       setShowMoreMenu: (value) => {
         showMoreMenu = value;
@@ -940,6 +943,7 @@
       {uploading}
       {showAIActionsDropdown}
       {showMoreMenu}
+      {showInsertMenu}
       aiEnabled={notes.getCurrentNote()?.ai_enabled ?? false}
       syncing={getIsSyncing()}
       syncProgress={getSyncProgress()}
@@ -952,14 +956,11 @@
           ui.getEditorMode() === 'split' ||
           ui.getEditorMode() === 'live')}
       onSetEditorMode={settings.setEditorModePreference}
-      onInsertTask={handleInsertTask}
-      onInsertTable={handleInsertTable}
       onSave={handleSave}
-      onUpload={handleUploadButtonClick}
       onShowHistory={() => (showVersionHistory = true)}
       onToggleFocus={focusMode.toggle}
-      onToggleAutosave={handleAutoSaveToggle}
       onAIActions={handleAIActionsClick}
+      onOpenInsertMenu={openInsertMenu}
       onOpenMoreMenu={openMoreMenu}
     />
   {/if}
@@ -1125,6 +1126,12 @@
   {showColorPicker}
   onColorSelect={handleColorSelect}
   onCloseColorPicker={() => (showColorPicker = false)}
+  {showInsertMenu}
+  {insertMenuTriggerRect}
+  onInsertTask={handleInsertTask}
+  onInsertTable={handleInsertTable}
+  onUpload={handleUploadButtonClick}
+  onCloseInsertMenu={() => (showInsertMenu = false)}
   {showMoreMenu}
   {moreMenuTriggerRect}
   editorMode={ui.getEditorMode()}

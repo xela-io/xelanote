@@ -59,14 +59,11 @@ const baseNote: Note = {
 function mockCallbacks() {
   return {
     onSetEditorMode: vi.fn(),
-    onInsertTask: vi.fn(),
-    onInsertTable: vi.fn(),
     onSave: vi.fn(),
-    onUpload: vi.fn(),
     onShowHistory: vi.fn(),
     onToggleFocus: vi.fn(),
-    onToggleAutosave: vi.fn(),
     onAIActions: vi.fn(),
+    onOpenInsertMenu: vi.fn(),
     onOpenMoreMenu: vi.fn(),
   };
 }
@@ -138,34 +135,25 @@ describe('EditorToolbar', () => {
     expect(cbs.onSave).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onInsertTable when table button clicked', async () => {
+  it('keeps insert actions out of the main toolbar', () => {
     const cbs = mockCallbacks();
-    const { getByLabelText } = render(EditorToolbar, {
+    const { queryByLabelText } = render(EditorToolbar, {
       props: { note: baseNote, ...cbs },
     });
 
-    await fireEvent.click(getByLabelText('component.editor.toolbar.table'));
-    expect(cbs.onInsertTable).toHaveBeenCalledTimes(1);
+    expect(queryByLabelText('component.editor.toolbar.task')).not.toBeInTheDocument();
+    expect(queryByLabelText('component.editor.toolbar.table')).not.toBeInTheDocument();
+    expect(queryByLabelText('component.editor.toolbar.upload')).not.toBeInTheDocument();
   });
 
-  it('calls onInsertTask when task button clicked', async () => {
+  it('opens insert menu when insert button is clicked', async () => {
     const cbs = mockCallbacks();
     const { getByLabelText } = render(EditorToolbar, {
       props: { note: baseNote, ...cbs },
     });
 
-    await fireEvent.click(getByLabelText('component.editor.toolbar.task'));
-    expect(cbs.onInsertTask).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onUpload when upload button clicked', async () => {
-    const cbs = mockCallbacks();
-    const { getByLabelText } = render(EditorToolbar, {
-      props: { note: baseNote, ...cbs },
-    });
-
-    await fireEvent.click(getByLabelText('component.editor.toolbar.upload'));
-    expect(cbs.onUpload).toHaveBeenCalledTimes(1);
+    await fireEvent.click(getByLabelText('component.editor.table_insert.insert'));
+    expect(cbs.onOpenInsertMenu).toHaveBeenCalledTimes(1);
   });
 
   it('calls onShowHistory when history button clicked', async () => {
@@ -176,6 +164,30 @@ describe('EditorToolbar', () => {
 
     await fireEvent.click(getByLabelText('component.editor.toolbar.history'));
     expect(cbs.onShowHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows direct mode selection on desktop', async () => {
+    const cbs = mockCallbacks();
+    const { getByLabelText } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: false, editorMode: 'edit', ...cbs },
+    });
+
+    await fireEvent.click(getByLabelText('component.editor.toolbar.mode_preview'));
+    expect(cbs.onSetEditorMode).toHaveBeenCalledWith('preview');
+  });
+
+  it('uses compact mode select on mobile without split option', () => {
+    const cbs = mockCallbacks();
+    const { container } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: true, editorMode: 'live', ...cbs },
+    });
+
+    const select = container.querySelector('select');
+    expect(select).toBeInTheDocument();
+    expect(select?.textContent).toContain('component.editor.toolbar.mode_live');
+    expect(select?.textContent).toContain('component.editor.toolbar.mode_edit');
+    expect(select?.textContent).toContain('component.editor.toolbar.mode_preview');
+    expect(select?.textContent).not.toContain('component.editor.toolbar.mode_split');
   });
 
   it('shows focus mode toggle on desktop, not on mobile', () => {
@@ -222,14 +234,13 @@ describe('EditorToolbar', () => {
     expect(queryByLabelText('component.editor.ai_actions')).not.toBeInTheDocument();
   });
 
-  it('calls onToggleAutosave when autosave button clicked', async () => {
+  it('does not show autosave toggle in the main toolbar', () => {
     const cbs = mockCallbacks();
-    const { getByLabelText } = render(EditorToolbar, {
+    const { queryByLabelText } = render(EditorToolbar, {
       props: { note: baseNote, ...cbs },
     });
 
-    await fireEvent.click(getByLabelText('component.editor.toolbar.autosave'));
-    expect(cbs.onToggleAutosave).toHaveBeenCalledTimes(1);
+    expect(queryByLabelText('component.editor.toolbar.autosave')).not.toBeInTheDocument();
   });
 
   it('shows more menu button with correct aria-expanded', () => {

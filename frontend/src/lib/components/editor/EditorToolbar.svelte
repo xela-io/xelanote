@@ -3,21 +3,15 @@
   import {
     AlertCircle,
     Check,
-    Columns,
-    Edit,
-    Eye,
     History,
-    ImagePlus,
-    ListTodo,
     Loader2,
     Lock,
     Maximize2,
     Minimize2,
     MoreVertical,
+    Plus,
     RefreshCw,
     Save,
-    ScanEye,
-    Table2,
     Wand2,
     WifiOff,
   } from 'lucide-svelte';
@@ -28,6 +22,7 @@
   import { formatRelativeTime } from '$lib/utils/time';
 
   import SpellCheckToggle from '../SpellCheckToggle.svelte';
+  import EditorModeSelector from './EditorModeSelector.svelte';
 
   type EditorMode = 'edit' | 'split' | 'preview' | 'live';
 
@@ -37,10 +32,8 @@
     isMobile?: boolean;
     editorMode?: EditorMode;
     autoSaveStatus?: 'saving' | 'saved' | 'error' | 'idle' | 'pending';
-    autoSaveEnabled?: boolean;
     isDirty?: boolean;
     isSaving?: boolean;
-    uploading?: boolean;
     showAIActionsDropdown?: boolean;
     showMoreMenu?: boolean;
     aiEnabled?: boolean;
@@ -51,15 +44,13 @@
     isEncryptionUnlocked?: boolean;
     focusModeActive?: boolean;
     showSpellCheck?: boolean;
+    showInsertMenu?: boolean;
     onSetEditorMode: (mode: EditorMode) => void;
-    onInsertTask: () => void;
-    onInsertTable: () => void;
     onSave: () => void;
-    onUpload: () => void;
     onShowHistory: () => void;
     onToggleFocus: () => void;
-    onToggleAutosave: () => void;
     onAIActions: (rect: DOMRect) => void;
+    onOpenInsertMenu: (rect: DOMRect) => void;
     onOpenMoreMenu: (rect: DOMRect) => void;
   }
 
@@ -69,10 +60,8 @@
     isMobile = false,
     editorMode = 'edit',
     autoSaveStatus = 'idle',
-    autoSaveEnabled = false,
     isDirty = false,
     isSaving = false,
-    uploading = false,
     showAIActionsDropdown = false,
     showMoreMenu = false,
     aiEnabled = false,
@@ -83,15 +72,13 @@
     isEncryptionUnlocked = true,
     focusModeActive = false,
     showSpellCheck = false,
+    showInsertMenu = false,
     onSetEditorMode,
-    onInsertTask,
-    onInsertTable,
     onSave,
-    onUpload,
     onShowHistory,
     onToggleFocus,
-    onToggleAutosave,
     onAIActions,
+    onOpenInsertMenu,
     onOpenMoreMenu,
   }: Props = $props();
 
@@ -126,20 +113,8 @@
     onOpenMoreMenu((e.currentTarget as HTMLElement).getBoundingClientRect());
   }
 
-  function cycleEditorMode() {
-    const modes: EditorMode[] = isMobile
-      ? ['live', 'edit', 'preview']
-      : ['live', 'edit', 'preview', 'split'];
-    const currentIndex = modes.indexOf(editorMode);
-    const nextMode = modes[(currentIndex + 1) % modes.length] ?? modes[0];
-    onSetEditorMode(nextMode);
-  }
-
-  function getModeLabel(mode: EditorMode): string {
-    if (mode === 'live') return $_('component.editor.toolbar.mode_live');
-    if (mode === 'edit') return $_('component.editor.toolbar.mode_edit');
-    if (mode === 'preview') return $_('component.editor.toolbar.mode_preview');
-    return $_('component.editor.toolbar.mode_split');
+  function handleInsertMenuClick(e: MouseEvent) {
+    onOpenInsertMenu((e.currentTarget as HTMLElement).getBoundingClientRect());
   }
 </script>
 
@@ -231,52 +206,24 @@
             use:scrollFade
           >
             {#if FEATURE_FLAGS.livePreview}
-              <button
-                type="button"
-                onclick={cycleEditorMode}
-                class="h-8 w-8 p-0 hover:bg-accent rounded-md toolbar-btn flex-shrink-0 inline-flex items-center justify-center"
-                class:bg-accent={editorMode === 'live' ||
-                  editorMode === 'edit' ||
-                  editorMode === 'preview' ||
-                  editorMode === 'split'}
-                aria-label={getModeLabel(editorMode)}
-                title={getModeLabel(editorMode)}
-              >
-                {#if editorMode === 'live'}
-                  <ScanEye size={16} />
-                {:else if editorMode === 'edit'}
-                  <Edit size={16} />
-                {:else if editorMode === 'preview'}
-                  <Eye size={16} />
-                {:else}
-                  <Columns size={16} />
-                {/if}
-              </button>
-            {/if}
-
-            <!-- Formatting tools - always visible -->
-            {#if FEATURE_FLAGS.taskLists}
-              <button
-                type="button"
-                onclick={onInsertTask}
-                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-                aria-label={$_('component.editor.toolbar.task')}
-              >
-                <ListTodo size={16} />
-              </button>
+              <EditorModeSelector {editorMode} {isMobile} {onSetEditorMode} />
             {/if}
 
             <button
               type="button"
-              onclick={onInsertTable}
-              class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-              aria-label={$_('component.editor.toolbar.table')}
+              onclick={handleInsertMenuClick}
+              class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
+              class:bg-accent={showInsertMenu}
+              aria-label={$_('component.editor.table_insert.insert')}
+              aria-expanded={showInsertMenu}
+              aria-haspopup="menu"
+              title={$_('component.editor.table_insert.insert')}
             >
-              <Table2 size={16} />
+              <Plus size={16} />
+              <span class="hidden sm:inline text-xs">
+                {$_('component.editor.table_insert.insert')}
+              </span>
             </button>
-
-            <!-- Divider -->
-            <div class="w-px h-6 bg-border mx-1 flex-shrink-0"></div>
 
             <!-- Save button - always visible -->
             <button
@@ -287,17 +234,6 @@
               aria-label={$_('component.editor.toolbar.save')}
             >
               <Save size={16} />
-            </button>
-
-            <!-- Upload button - always visible -->
-            <button
-              type="button"
-              onclick={onUpload}
-              disabled={uploading}
-              class="p-2 hover:bg-accent rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn"
-              aria-label={$_('component.editor.toolbar.upload')}
-            >
-              <ImagePlus size={16} />
             </button>
 
             <!-- History button - always visible -->
@@ -350,26 +286,6 @@
                 </button>
               </div>
             {/if}
-
-            <!-- Auto-save toggle -->
-            <button
-              type="button"
-              onclick={onToggleAutosave}
-              class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn"
-              class:bg-accent={autoSaveEnabled}
-              aria-label={$_('component.editor.toolbar.autosave')}
-              aria-pressed={autoSaveEnabled}
-            >
-              {#if autoSaveStatus === 'saving'}
-                <Loader2 size={16} class="animate-spin" />
-              {:else if autoSaveStatus === 'saved'}
-                <Check size={16} class="text-success" />
-              {:else if autoSaveStatus === 'error'}
-                <AlertCircle size={16} class="text-destructive" />
-              {:else}
-                <Save size={16} class={autoSaveEnabled ? 'text-primary' : ''} />
-              {/if}
-            </button>
           </div>
         </div>
       </div>

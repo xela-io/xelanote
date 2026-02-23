@@ -156,7 +156,7 @@
     </div>
 
     <form onsubmit={handleSubmit} class="mb-6">
-      <div class="flex gap-2">
+      <div class="ui-panel p-2 flex gap-2">
         <div class="flex-1 relative">
           <Search
             size={18}
@@ -169,13 +169,10 @@
             aria-label={$_('page.search.input_label')}
             autocomplete="off"
             inputmode="search"
-            class="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring focus:border-transparent"
+            class="ui-input w-full pl-10 pr-4 py-2"
           />
         </div>
-        <button
-          type="submit"
-          class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-        >
+        <button type="submit" class="ui-button ui-button-primary">
           {$_('page.search.submit')}
         </button>
       </div>
@@ -183,37 +180,37 @@
 
     {#if getIndexState() === 'building'}
       <div
-        class="text-sm text-muted-foreground bg-muted p-3 rounded-lg mb-4 flex items-center justify-between"
+        class="ui-panel-soft text-sm text-muted-foreground p-3 mb-4 flex items-center justify-between"
       >
         <span
           >{$_('page.search.building_index')} ({getIndexProgress().current}/{getIndexProgress()
             .total})</span
         >
-        <button onclick={() => cancelBuild()} class="text-xs underline">
+        <button onclick={() => cancelBuild()} class="ui-button ui-button-ghost px-2 py-1 text-xs">
           {$_('page.search.cancel')}
         </button>
       </div>
     {:else if getIndexState() === 'error'}
       <div
-        class="text-sm text-destructive bg-destructive/10 p-3 rounded-lg mb-4 flex items-center justify-between"
+        class="ui-panel-soft text-sm text-destructive bg-destructive/10 p-3 mb-4 flex items-center justify-between"
       >
         <span>{$_('page.search.index_error')}</span>
-        <button onclick={() => buildIndex()} class="text-xs underline">
+        <button onclick={() => buildIndex()} class="ui-button ui-button-ghost px-2 py-1 text-xs">
           {$_('page.search.retry')}
         </button>
       </div>
     {/if}
 
     {#if loading}
-      <div class="text-center py-8 text-muted-foreground" role="status" aria-live="polite">
+      <div class="ui-empty-state ui-empty-state-compact py-8" role="status" aria-live="polite">
         {$_('page.search.searching')}
       </div>
     {:else if error}
-      <div class="text-center py-8 text-destructive">
+      <div class="ui-empty-state ui-empty-state-compact py-8 text-destructive">
         {error}
       </div>
     {:else if query && results.length === 0}
-      <div class="text-center py-8 text-muted-foreground">
+      <div class="ui-empty-state ui-empty-state-compact py-8">
         {$_('page.search.no_results', { values: { query } })}
       </div>
     {:else if results.length > 0}
@@ -228,7 +225,7 @@
             {@const result = results[virtualRow.index]}
             <a
               href="/note/{result.id}?highlight={encodeURIComponent(query)}"
-              class="block p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+              class="ui-list-item block p-4"
               style="position: absolute; top: 0; left: 0; width: 100%; transform: translateY({virtualRow.start}px);"
             >
               <div class="flex items-start gap-3">
@@ -257,7 +254,7 @@
         </div>
       </div>
     {:else}
-      <div class="text-center py-8 text-muted-foreground">
+      <div class="ui-empty-state ui-empty-state-compact py-8">
         {$_('page.search.enter_query')}
       </div>
     {/if}

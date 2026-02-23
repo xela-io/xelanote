@@ -806,538 +806,534 @@
 <div class="h-full bg-background overflow-y-auto overflow-x-hidden scrollbar-none">
   <div class="max-w-3xl mx-auto p-4 md:p-8">
     <!-- Header -->
-    <div class="flex items-center gap-2 sm:gap-4 mb-8">
+    <div class="ui-panel flex items-center gap-2 sm:gap-4 mb-6 p-4 sm:p-5">
       <MobileSidebarInlineToggle />
-      <button
-        onclick={() => goto('/')}
-        class="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        title={$_('page.settings.back')}
-      >
+      <button onclick={() => goto('/')} class="ui-icon-button p-2" title={$_('page.settings.back')}>
         <ArrowLeft size={20} />
       </button>
       <h1 class="text-2xl font-bold text-foreground">{$_('page.settings.title')}</h1>
     </div>
 
     <!-- Tabs: Option A - Icon-only on mobile, with text on desktop -->
-    <div class="flex gap-2 md:gap-1 mb-8 border-b border-border overflow-x-auto scrollbar-none">
-      <button
-        onclick={() => (activeTab = 'appearance')}
-        title={$_('page.settings.tabs.appearance')}
-        class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-					{activeTab === 'appearance'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground'}"
-      >
-        <Palette size={18} />
-        <span class="hidden sm:inline">{$_('page.settings.tabs.appearance')}</span>
-      </button>
-      <button
-        onclick={() => (activeTab = 'editor')}
-        title={$_('page.settings.tabs.editor')}
-        class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-					{activeTab === 'editor'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground'}"
-      >
-        <Edit3 size={18} />
-        <span class="hidden sm:inline">{$_('page.settings.tabs.editor')}</span>
-      </button>
-      <button
-        onclick={() => (activeTab = 'security')}
-        title={$_('page.settings.tabs.security')}
-        class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-					{activeTab === 'security'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground'}"
-      >
-        <Shield size={18} />
-        <span class="hidden sm:inline">{$_('page.settings.tabs.security')}</span>
-      </button>
-      <button
-        onclick={() => (activeTab = 'account')}
-        title={$_('page.settings.tabs.account')}
-        class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-					{activeTab === 'account'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground'}"
-      >
-        <User size={18} />
-        <span class="hidden sm:inline">{$_('page.settings.tabs.account')}</span>
-      </button>
-      <button
-        onclick={() => (activeTab = 'ai')}
-        title={$_('page.settings.tabs.ai')}
-        class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-					{activeTab === 'ai'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground'}"
-      >
-        <Sparkles size={18} />
-        <span class="hidden sm:inline">{$_('page.settings.tabs.ai')}</span>
-      </button>
-      <button
-        onclick={() => (activeTab = 'data')}
-        title={$_('page.settings.tabs.data')}
-        class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-					{activeTab === 'data'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground'}"
-      >
-        <Database size={18} />
-        <span class="hidden sm:inline">{$_('page.settings.tabs.data')}</span>
-      </button>
-      {#if isTauriApp}
+    <div class="ui-panel p-1.5 sm:p-2 mb-8 overflow-x-auto scrollbar-none">
+      <div class="ui-tablist min-w-max" role="tablist">
         <button
-          onclick={() => (activeTab = 'connection')}
-          title="Connection"
-          class="flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0 whitespace-nowrap
-						{activeTab === 'connection'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-muted-foreground hover:text-foreground'}"
+          onclick={() => (activeTab = 'appearance')}
+          title={$_('page.settings.tabs.appearance')}
+          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+          role="tab"
+          aria-selected={activeTab === 'appearance'}
         >
-          <Globe size={18} />
-          <span class="hidden sm:inline">Connection</span>
+          <Palette size={18} />
+          <span class="hidden sm:inline">{$_('page.settings.tabs.appearance')}</span>
         </button>
-      {/if}
+        <button
+          onclick={() => (activeTab = 'editor')}
+          title={$_('page.settings.tabs.editor')}
+          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+          role="tab"
+          aria-selected={activeTab === 'editor'}
+        >
+          <Edit3 size={18} />
+          <span class="hidden sm:inline">{$_('page.settings.tabs.editor')}</span>
+        </button>
+        <button
+          onclick={() => (activeTab = 'security')}
+          title={$_('page.settings.tabs.security')}
+          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+          role="tab"
+          aria-selected={activeTab === 'security'}
+        >
+          <Shield size={18} />
+          <span class="hidden sm:inline">{$_('page.settings.tabs.security')}</span>
+        </button>
+        <button
+          onclick={() => (activeTab = 'account')}
+          title={$_('page.settings.tabs.account')}
+          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+          role="tab"
+          aria-selected={activeTab === 'account'}
+        >
+          <User size={18} />
+          <span class="hidden sm:inline">{$_('page.settings.tabs.account')}</span>
+        </button>
+        <button
+          onclick={() => (activeTab = 'ai')}
+          title={$_('page.settings.tabs.ai')}
+          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+          role="tab"
+          aria-selected={activeTab === 'ai'}
+        >
+          <Sparkles size={18} />
+          <span class="hidden sm:inline">{$_('page.settings.tabs.ai')}</span>
+        </button>
+        <button
+          onclick={() => (activeTab = 'data')}
+          title={$_('page.settings.tabs.data')}
+          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+          role="tab"
+          aria-selected={activeTab === 'data'}
+        >
+          <Database size={18} />
+          <span class="hidden sm:inline">{$_('page.settings.tabs.data')}</span>
+        </button>
+        {#if isTauriApp}
+          <button
+            onclick={() => (activeTab = 'connection')}
+            title="Connection"
+            class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+            role="tab"
+            aria-selected={activeTab === 'connection'}
+          >
+            <Globe size={18} />
+            <span class="hidden sm:inline">Connection</span>
+          </button>
+        {/if}
+      </div>
     </div>
 
     <!-- Tab Content -->
-    {#if activeTab === 'appearance'}
-      <div class="space-y-8">
-        <!-- Language -->
-        <div>
-          <h3 class="text-sm font-medium text-muted-foreground mb-4">
-            {$_('page.settings.appearance.language')}
-          </h3>
-          <div class="space-y-2">
-            <select
-              value={$locale}
-              onchange={(e) => {
-                const newLocale = (e.target as HTMLSelectElement).value;
-                locale.set(newLocale);
-                window.localStorage.setItem('locale', newLocale);
-              }}
-              class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
+    <div class="ui-panel p-4 sm:p-5">
+      {#if activeTab === 'appearance'}
+        <div class="space-y-8">
+          <!-- Language -->
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-4">
+              {$_('page.settings.appearance.language')}
+            </h3>
+            <div class="space-y-2">
+              <select
+                value={$locale}
+                onchange={(e) => {
+                  const newLocale = (e.target as HTMLSelectElement).value;
+                  locale.set(newLocale);
+                  window.localStorage.setItem('locale', newLocale);
+                }}
+                class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
 								focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="de">Deutsch</option>
-              <option value="en">English</option>
-            </select>
+              >
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        <!-- Dark Themes -->
-        <div>
-          <h3 class="text-sm font-medium text-muted-foreground mb-4">
-            {$_('page.settings.appearance.dark_themes')}
-          </h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {#each darkThemes as theme (theme.id)}
-              <button
-                onclick={() => handleThemeChange(theme.id)}
-                disabled={settings.getIsSavingPreferences()}
-                class="relative p-4 rounded-lg border-2 transition-all text-left
+          <!-- Dark Themes -->
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-4">
+              {$_('page.settings.appearance.dark_themes')}
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {#each darkThemes as theme (theme.id)}
+                <button
+                  onclick={() => handleThemeChange(theme.id)}
+                  disabled={settings.getIsSavingPreferences()}
+                  class="relative p-4 rounded-lg border-2 transition-all text-left
 									{ui.getCurrentThemeId() === theme.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50 bg-card'}"
-              >
-                {#if ui.getCurrentThemeId() === theme.id}
-                  <div class="absolute top-2 right-2 text-primary">
-                    <Check size={16} />
-                  </div>
-                {/if}
-                <div class="font-medium text-foreground text-sm">{theme.name}</div>
-                {#if theme.description}
-                  <div class="text-xs text-muted-foreground mt-1">{theme.description}</div>
-                {/if}
-              </button>
-            {/each}
-          </div>
-        </div>
-
-        <!-- Light Themes -->
-        <div>
-          <h3 class="text-sm font-medium text-muted-foreground mb-4">
-            {$_('page.settings.appearance.light_themes')}
-          </h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {#each lightThemes as theme (theme.id)}
-              <button
-                onclick={() => handleThemeChange(theme.id)}
-                disabled={settings.getIsSavingPreferences()}
-                class="relative p-4 rounded-lg border-2 transition-all text-left
-									{ui.getCurrentThemeId() === theme.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50 bg-card'}"
-              >
-                {#if ui.getCurrentThemeId() === theme.id}
-                  <div class="absolute top-2 right-2 text-primary">
-                    <Check size={16} />
-                  </div>
-                {/if}
-                <div class="font-medium text-foreground text-sm">{theme.name}</div>
-                {#if theme.description}
-                  <div class="text-xs text-muted-foreground mt-1">{theme.description}</div>
-                {/if}
-              </button>
-            {/each}
-          </div>
-        </div>
-      </div>
-    {:else if activeTab === 'editor'}
-      <div class="space-y-6">
-        <div>
-          <h3 class="text-sm font-medium text-muted-foreground mb-4">
-            {$_('page.settings.editor.default_editor_mode')}
-          </h3>
-          <div class="space-y-2">
-            {#each editorModes as mode (mode.id)}
-              <button
-                onclick={() => handleEditorModeChange(mode.id)}
-                disabled={settings.getIsSavingPreferences()}
-                class="w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left
-									{ui.getEditorMode() === mode.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50 bg-card'}"
-              >
-                <div
-                  class="w-5 h-5 rounded-full border-2 flex items-center justify-center
-									{ui.getEditorMode() === mode.id ? 'border-primary' : 'border-muted-foreground'}"
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50 bg-card'}"
                 >
-                  {#if ui.getEditorMode() === mode.id}
-                    <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                  {#if ui.getCurrentThemeId() === theme.id}
+                    <div class="absolute top-2 right-2 text-primary">
+                      <Check size={16} />
+                    </div>
                   {/if}
-                </div>
-                <div class="flex-1">
-                  <div class="font-medium text-foreground">{mode.label}</div>
-                  <div class="text-sm text-muted-foreground">{mode.description}</div>
-                </div>
-              </button>
-            {/each}
+                  <div class="font-medium text-foreground text-sm">{theme.name}</div>
+                  {#if theme.description}
+                    <div class="text-xs text-muted-foreground mt-1">{theme.description}</div>
+                  {/if}
+                </button>
+              {/each}
+            </div>
+          </div>
+
+          <!-- Light Themes -->
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-4">
+              {$_('page.settings.appearance.light_themes')}
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {#each lightThemes as theme (theme.id)}
+                <button
+                  onclick={() => handleThemeChange(theme.id)}
+                  disabled={settings.getIsSavingPreferences()}
+                  class="relative p-4 rounded-lg border-2 transition-all text-left
+									{ui.getCurrentThemeId() === theme.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50 bg-card'}"
+                >
+                  {#if ui.getCurrentThemeId() === theme.id}
+                    <div class="absolute top-2 right-2 text-primary">
+                      <Check size={16} />
+                    </div>
+                  {/if}
+                  <div class="font-medium text-foreground text-sm">{theme.name}</div>
+                  {#if theme.description}
+                    <div class="text-xs text-muted-foreground mt-1">{theme.description}</div>
+                  {/if}
+                </button>
+              {/each}
+            </div>
           </div>
         </div>
-
-        <!-- Performance Settings (Experimental) -->
-        <div>
-          <h3 class="text-sm font-medium text-muted-foreground mb-4">Performance (Experimental)</h3>
-          <div class="space-y-4">
-            <label
-              class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={settings.getVirtualTreeEnabled()}
-                onchange={(e) => settings.setVirtualTreeEnabled(e.currentTarget.checked)}
-                class="mt-1"
-              />
-              <div class="flex-1">
-                <div class="font-medium text-foreground">Virtual Tree Scrolling</div>
-                <div class="text-sm text-muted-foreground mt-1">
-                  Verbessert die Performance bei 500+ Notizen durch virtuelles Scrollen (nur
-                  sichtbare Items werden gerendert).
-                  <strong class="text-orange-600 dark:text-orange-400">Hinweis:</strong> Drag-and-Drop
-                  ist auf sichtbare Items beschränkt.
-                </div>
-              </div>
-            </label>
+      {:else if activeTab === 'editor'}
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-4">
+              {$_('page.settings.editor.default_editor_mode')}
+            </h3>
+            <div class="space-y-2">
+              {#each editorModes as mode (mode.id)}
+                <button
+                  onclick={() => handleEditorModeChange(mode.id)}
+                  disabled={settings.getIsSavingPreferences()}
+                  class="w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left
+									{ui.getEditorMode() === mode.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50 bg-card'}"
+                >
+                  <div
+                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center
+									{ui.getEditorMode() === mode.id ? 'border-primary' : 'border-muted-foreground'}"
+                  >
+                    {#if ui.getEditorMode() === mode.id}
+                      <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                    {/if}
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-medium text-foreground">{mode.label}</div>
+                    <div class="text-sm text-muted-foreground">{mode.description}</div>
+                  </div>
+                </button>
+              {/each}
+            </div>
           </div>
-        </div>
 
-        <!-- Feature Toggles -->
-        <div>
-          <h3 class="text-sm font-medium text-muted-foreground mb-4">
-            {$_('page.settings.editor.features_title')}
-          </h3>
-          <div class="space-y-4">
-            <label
-              class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={features.getJournalFeatureEnabled()}
-                disabled={features.getJournalFeatureLoading()}
-                onchange={(e) => handleJournalToggle(e.currentTarget.checked)}
-                class="mt-1"
-              />
-              <div class="flex-1">
-                <div class="font-medium text-foreground">
-                  {$_('page.settings.editor.journal_feature_title')}
-                </div>
-                <div class="text-sm text-muted-foreground mt-1">
-                  {$_('page.settings.editor.journal_feature_description')}
-                </div>
-              </div>
-              {#if features.getJournalFeatureLoading()}
-                <Loader2 size={16} class="animate-spin text-muted-foreground" />
-              {/if}
-            </label>
-
-            <label
-              class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={features.getRecipeFeatureEnabled()}
-                disabled={features.getRecipeFeatureLoading()}
-                onchange={(e) => handleRecipeToggle(e.currentTarget.checked)}
-                class="mt-1"
-              />
-              <div class="flex-1">
-                <div class="font-medium text-foreground">
-                  {$_('page.settings.editor.recipe_feature_title')}
-                </div>
-                <div class="text-sm text-muted-foreground mt-1">
-                  {$_('page.settings.editor.recipe_feature_description')}
-                </div>
-              </div>
-              {#if features.getRecipeFeatureLoading()}
-                <Loader2 size={16} class="animate-spin text-muted-foreground" />
-              {/if}
-            </label>
-
-            <label
-              class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={features.getCanvasFeatureEnabled()}
-                disabled={features.getCanvasFeatureLoading()}
-                onchange={(e) => handleCanvasToggle(e.currentTarget.checked)}
-                class="mt-1"
-              />
-              <div class="flex-1">
-                <div class="font-medium text-foreground">
-                  {$_('page.settings.editor.canvas_feature_title')}
-                </div>
-                <div class="text-sm text-muted-foreground mt-1">
-                  {$_('page.settings.editor.canvas_feature_description')}
-                </div>
-              </div>
-              {#if features.getCanvasFeatureLoading()}
-                <Loader2 size={16} class="animate-spin text-muted-foreground" />
-              {/if}
-            </label>
-
-            {#if errorReporter.getServiceAvailable()}
+          <!-- Performance Settings (Experimental) -->
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-4">
+              Performance (Experimental)
+            </h3>
+            <div class="space-y-4">
               <label
                 class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
               >
                 <input
                   type="checkbox"
-                  checked={errorReporter.isEnabled()}
-                  onchange={(e) => errorReporter.setEnabled(e.currentTarget.checked)}
+                  checked={settings.getVirtualTreeEnabled()}
+                  onchange={(e) => settings.setVirtualTreeEnabled(e.currentTarget.checked)}
                   class="mt-1"
                 />
                 <div class="flex-1">
-                  <div class="font-medium text-foreground">{$_('feedback.settings_title')}</div>
+                  <div class="font-medium text-foreground">Virtual Tree Scrolling</div>
                   <div class="text-sm text-muted-foreground mt-1">
-                    {$_('feedback.settings_description')}
+                    Verbessert die Performance bei 500+ Notizen durch virtuelles Scrollen (nur
+                    sichtbare Items werden gerendert).
+                    <strong class="text-orange-600 dark:text-orange-400">Hinweis:</strong> Drag-and-Drop
+                    ist auf sichtbare Items beschränkt.
                   </div>
                 </div>
               </label>
-            {/if}
+            </div>
+          </div>
+
+          <!-- Feature Toggles -->
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-4">
+              {$_('page.settings.editor.features_title')}
+            </h3>
+            <div class="space-y-4">
+              <label
+                class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={features.getJournalFeatureEnabled()}
+                  disabled={features.getJournalFeatureLoading()}
+                  onchange={(e) => handleJournalToggle(e.currentTarget.checked)}
+                  class="mt-1"
+                />
+                <div class="flex-1">
+                  <div class="font-medium text-foreground">
+                    {$_('page.settings.editor.journal_feature_title')}
+                  </div>
+                  <div class="text-sm text-muted-foreground mt-1">
+                    {$_('page.settings.editor.journal_feature_description')}
+                  </div>
+                </div>
+                {#if features.getJournalFeatureLoading()}
+                  <Loader2 size={16} class="animate-spin text-muted-foreground" />
+                {/if}
+              </label>
+
+              <label
+                class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={features.getRecipeFeatureEnabled()}
+                  disabled={features.getRecipeFeatureLoading()}
+                  onchange={(e) => handleRecipeToggle(e.currentTarget.checked)}
+                  class="mt-1"
+                />
+                <div class="flex-1">
+                  <div class="font-medium text-foreground">
+                    {$_('page.settings.editor.recipe_feature_title')}
+                  </div>
+                  <div class="text-sm text-muted-foreground mt-1">
+                    {$_('page.settings.editor.recipe_feature_description')}
+                  </div>
+                </div>
+                {#if features.getRecipeFeatureLoading()}
+                  <Loader2 size={16} class="animate-spin text-muted-foreground" />
+                {/if}
+              </label>
+
+              <label
+                class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={features.getCanvasFeatureEnabled()}
+                  disabled={features.getCanvasFeatureLoading()}
+                  onchange={(e) => handleCanvasToggle(e.currentTarget.checked)}
+                  class="mt-1"
+                />
+                <div class="flex-1">
+                  <div class="font-medium text-foreground">
+                    {$_('page.settings.editor.canvas_feature_title')}
+                  </div>
+                  <div class="text-sm text-muted-foreground mt-1">
+                    {$_('page.settings.editor.canvas_feature_description')}
+                  </div>
+                </div>
+                {#if features.getCanvasFeatureLoading()}
+                  <Loader2 size={16} class="animate-spin text-muted-foreground" />
+                {/if}
+              </label>
+
+              {#if errorReporter.getServiceAvailable()}
+                <label
+                  class="flex items-start gap-3 p-4 rounded-lg border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={errorReporter.isEnabled()}
+                    onchange={(e) => errorReporter.setEnabled(e.currentTarget.checked)}
+                    class="mt-1"
+                  />
+                  <div class="flex-1">
+                    <div class="font-medium text-foreground">{$_('feedback.settings_title')}</div>
+                    <div class="text-sm text-muted-foreground mt-1">
+                      {$_('feedback.settings_description')}
+                    </div>
+                  </div>
+                </label>
+              {/if}
+            </div>
           </div>
         </div>
-      </div>
-    {:else if activeTab === 'security'}
-      <SecurityTab
-        {encryption}
-        {securityLevel}
-        {isSavingSecurityLevel}
-        bind:autoLockTimeout
-        {isSavingAutoLockTimeout}
-        {handleSecurityLevelChange}
-        {handleAutoLockTimeoutChange}
-        {webAuthnCredentials}
-        {load2FAStatus}
-        {loadSecurityPreferences}
-        {isLoadingMigrationStats}
-        {migrationStats}
-      />
-    {:else if activeTab === 'account'}
-      <AccountTab
-        {auth}
-        {emailForm}
-        {passwordForm}
-        {handleEmailSubmit}
-        {handlePasswordSubmit}
-        {tfaStatus}
-        {isLoadingTfa}
-        bind:showSetupDialog
-        bind:showDisableDialog
-        {handleRegenerateBackupCodes}
-        {formatDate}
-        {handleSettingsLogout}
-      />
-    {:else if activeTab === 'ai'}
-      <AiTab
-        {claudeApiKeyStatus}
-        {isLoadingClaudeKeyStatus}
-        {claudeKeyForm}
-        {handleSaveClaudeApiKey}
-        {handleDeleteClaudeApiKey}
-        {geminiApiKeyStatus}
-        {isLoadingGeminiKeyStatus}
-        {geminiKeyForm}
-        {handleSaveGeminiApiKey}
-        {handleDeleteGeminiApiKey}
-        {openAIApiKeyStatus}
-        {isLoadingOpenAIKeyStatus}
-        {openAIKeyForm}
-        {handleSaveOpenAIApiKey}
-        {handleDeleteOpenAIApiKey}
-        {activeAIProvider}
-        {isSavingAIProvider}
-        {handleAIProviderChange}
-        {dietaryPreference}
-        {isSavingDietaryPreference}
-        {handleDietaryPreferenceChange}
-        {aiModels}
-        {availableAIModels}
-        {isLoadingAvailableAIModels}
-        {isSavingAIModels}
-        {handleSaveAIModels}
-      />
-    {:else if activeTab === 'data'}
-      <div class="space-y-8">
-        <!-- Export -->
-        <div>
-          <h3 class="text-lg font-medium text-foreground mb-2">
-            {$_('page.settings.data.export_title')}
-          </h3>
-          <p class="text-sm text-muted-foreground mb-4">
-            {$_('page.settings.data.export_description')}
-          </p>
-          <button
-            onclick={handleExport}
-            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+      {:else if activeTab === 'security'}
+        <SecurityTab
+          {encryption}
+          {securityLevel}
+          {isSavingSecurityLevel}
+          bind:autoLockTimeout
+          {isSavingAutoLockTimeout}
+          {handleSecurityLevelChange}
+          {handleAutoLockTimeoutChange}
+          {webAuthnCredentials}
+          {load2FAStatus}
+          {loadSecurityPreferences}
+          {isLoadingMigrationStats}
+          {migrationStats}
+        />
+      {:else if activeTab === 'account'}
+        <AccountTab
+          {auth}
+          {emailForm}
+          {passwordForm}
+          {handleEmailSubmit}
+          {handlePasswordSubmit}
+          {tfaStatus}
+          {isLoadingTfa}
+          bind:showSetupDialog
+          bind:showDisableDialog
+          {handleRegenerateBackupCodes}
+          {formatDate}
+          {handleSettingsLogout}
+        />
+      {:else if activeTab === 'ai'}
+        <AiTab
+          {claudeApiKeyStatus}
+          {isLoadingClaudeKeyStatus}
+          {claudeKeyForm}
+          {handleSaveClaudeApiKey}
+          {handleDeleteClaudeApiKey}
+          {geminiApiKeyStatus}
+          {isLoadingGeminiKeyStatus}
+          {geminiKeyForm}
+          {handleSaveGeminiApiKey}
+          {handleDeleteGeminiApiKey}
+          {openAIApiKeyStatus}
+          {isLoadingOpenAIKeyStatus}
+          {openAIKeyForm}
+          {handleSaveOpenAIApiKey}
+          {handleDeleteOpenAIApiKey}
+          {activeAIProvider}
+          {isSavingAIProvider}
+          {handleAIProviderChange}
+          {dietaryPreference}
+          {isSavingDietaryPreference}
+          {handleDietaryPreferenceChange}
+          {aiModels}
+          {availableAIModels}
+          {isLoadingAvailableAIModels}
+          {isSavingAIModels}
+          {handleSaveAIModels}
+        />
+      {:else if activeTab === 'data'}
+        <div class="space-y-8">
+          <!-- Export -->
+          <div>
+            <h3 class="text-lg font-medium text-foreground mb-2">
+              {$_('page.settings.data.export_title')}
+            </h3>
+            <p class="text-sm text-muted-foreground mb-4">
+              {$_('page.settings.data.export_description')}
+            </p>
+            <button onclick={handleExport} class="ui-button ui-button-primary">
+              <Download size={16} />
+              {$_('page.settings.data.export_button')}
+            </button>
+          </div>
+
+          <!-- Import -->
+          <div>
+            <h3 class="text-lg font-medium text-foreground mb-2">
+              {$_('page.settings.data.import_title')}
+            </h3>
+            <p class="text-sm text-muted-foreground mb-4">
+              {$_('page.settings.data.import_description')}
+            </p>
+            <button
+              onclick={handleImportClick}
+              disabled={importing}
+              class="ui-button ui-button-secondary"
+            >
+              {#if importing}
+                <Loader2 size={16} class="animate-spin" />
+                {$_('page.settings.data.importing')}
+              {:else}
+                <Upload size={16} />
+                {$_('page.settings.data.import_button')}
+              {/if}
+            </button>
+          </div>
+
+          <!-- Info -->
+          <div
+            class="p-4 rounded-lg bg-primary/10 border border-primary/30 text-sm text-foreground"
           >
-            <Download size={16} />
-            {$_('page.settings.data.export_button')}
-          </button>
+            <strong>{$_('common.note')}</strong>
+            {$_('page.settings.data.info_note')}
+          </div>
         </div>
+      {:else if activeTab === 'connection' && isTauriApp}
+        <div class="space-y-8">
+          <!-- Server URL -->
+          <div>
+            <h3 class="text-lg font-medium text-foreground mb-4">Server-Verbindung</h3>
+            <p class="text-sm text-muted-foreground mb-4">
+              Verbinde dich mit xelanote.com oder deinem eigenen Server.
+            </p>
 
-        <!-- Import -->
-        <div>
-          <h3 class="text-lg font-medium text-foreground mb-2">
-            {$_('page.settings.data.import_title')}
-          </h3>
-          <p class="text-sm text-muted-foreground mb-4">
-            {$_('page.settings.data.import_description')}
-          </p>
-          <button
-            onclick={handleImportClick}
-            disabled={importing}
-            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground font-medium hover:bg-muted disabled:opacity-50 transition-colors"
-          >
-            {#if importing}
-              <Loader2 size={16} class="animate-spin" />
-              {$_('page.settings.data.importing')}
-            {:else}
-              <Upload size={16} />
-              {$_('page.settings.data.import_button')}
-            {/if}
-          </button>
-        </div>
-
-        <!-- Info -->
-        <div class="p-4 rounded-lg bg-primary/10 border border-primary/30 text-sm text-foreground">
-          <strong>{$_('common.note')}</strong>
-          {$_('page.settings.data.info_note')}
-        </div>
-      </div>
-    {:else if activeTab === 'connection' && isTauriApp}
-      <div class="space-y-8">
-        <!-- Server URL -->
-        <div>
-          <h3 class="text-lg font-medium text-foreground mb-4">Server-Verbindung</h3>
-          <p class="text-sm text-muted-foreground mb-4">
-            Verbinde dich mit xelanote.com oder deinem eigenen Server.
-          </p>
-
-          <form onsubmit={handleServerUrlSubmit} class="space-y-4">
-            <div>
-              <label for="server-url" class="block text-sm font-medium text-foreground mb-1">
-                Server URL
-              </label>
-              <input
-                id="server-url"
-                type="url"
-                bind:value={serverUrlForm.url}
-                disabled={serverUrlForm.isSaving}
-                class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
+            <form onsubmit={handleServerUrlSubmit} class="space-y-4">
+              <div>
+                <label for="server-url" class="block text-sm font-medium text-foreground mb-1">
+                  Server URL
+                </label>
+                <input
+                  id="server-url"
+                  type="url"
+                  bind:value={serverUrlForm.url}
+                  disabled={serverUrlForm.isSaving}
+                  class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
 									focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                placeholder="https://xelanote.com"
-              />
-            </div>
+                  placeholder="https://xelanote.com"
+                />
+              </div>
 
-            {#if serverUrlForm.error}
-              <div class="text-sm text-red-500">{serverUrlForm.error}</div>
-            {/if}
+              {#if serverUrlForm.error}
+                <div class="text-sm text-red-500">{serverUrlForm.error}</div>
+              {/if}
 
-            {#if serverUrlForm.showRestartWarning}
-              <div
-                class="p-4 rounded-lg bg-orange-100/80 dark:bg-orange-900/20 border border-orange-400 dark:border-orange-700"
-              >
-                <div class="flex items-start gap-3">
-                  <AlertTriangle size={20} class="text-orange-700 dark:text-orange-400 mt-0.5" />
-                  <div class="flex-1">
-                    <div class="font-medium text-orange-950 dark:text-orange-200 mb-1">
-                      Server URL geändert
-                    </div>
-                    <div class="text-sm text-orange-900 dark:text-orange-300">
-                      Die neue Server-URL wurde gespeichert. Bitte melde dich ab und neu an, um die
-                      Änderung anzuwenden.
+              {#if serverUrlForm.showRestartWarning}
+                <div
+                  class="p-4 rounded-lg bg-orange-100/80 dark:bg-orange-900/20 border border-orange-400 dark:border-orange-700"
+                >
+                  <div class="flex items-start gap-3">
+                    <AlertTriangle size={20} class="text-orange-700 dark:text-orange-400 mt-0.5" />
+                    <div class="flex-1">
+                      <div class="font-medium text-orange-950 dark:text-orange-200 mb-1">
+                        Server URL geändert
+                      </div>
+                      <div class="text-sm text-orange-900 dark:text-orange-300">
+                        Die neue Server-URL wurde gespeichert. Bitte melde dich ab und neu an, um
+                        die Änderung anzuwenden.
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            {/if}
+              {/if}
 
-            <div class="flex gap-2">
-              <button
-                type="submit"
-                disabled={serverUrlForm.isSaving}
-                class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
+              <div class="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={serverUrlForm.isSaving}
+                  class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
 									font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {#if serverUrlForm.isSaving}
-                  <Loader2 size={16} class="animate-spin" />
-                  Verbinde...
-                {:else}
-                  <Check size={16} />
-                  Verbindung testen & speichern
-                {/if}
-              </button>
-              <button
-                type="button"
-                onclick={handleResetServerUrl}
-                disabled={serverUrlForm.isSaving}
-                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border
+                >
+                  {#if serverUrlForm.isSaving}
+                    <Loader2 size={16} class="animate-spin" />
+                    Verbinde...
+                  {:else}
+                    <Check size={16} />
+                    Verbindung testen & speichern
+                  {/if}
+                </button>
+                <button
+                  type="button"
+                  onclick={handleResetServerUrl}
+                  disabled={serverUrlForm.isSaving}
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border
 									bg-background text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
-              >
-                <RefreshCw size={16} />
-                Standard
-              </button>
-            </div>
-          </form>
-        </div>
+                >
+                  <RefreshCw size={16} />
+                  Standard
+                </button>
+              </div>
+            </form>
+          </div>
 
-        <!-- Self-hosted info -->
-        <div class="p-4 rounded-lg bg-primary/10 border border-primary/30 text-sm text-foreground">
-          <strong>Hinweis:</strong> Du kannst xelanote selbst hosten. Weitere Informationen findest
-          du in der
-          <a
-            href="https://github.com/xela-io/xelanote"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="underline hover:no-underline"
+          <!-- Self-hosted info -->
+          <div
+            class="p-4 rounded-lg bg-primary/10 border border-primary/30 text-sm text-foreground"
           >
-            Dokumentation
-          </a>.
+            <strong>Hinweis:</strong> Du kannst xelanote selbst hosten. Weitere Informationen
+            findest du in der
+            <a
+              href="https://github.com/xela-io/xelanote"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline hover:no-underline"
+            >
+              Dokumentation
+            </a>.
+          </div>
         </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
 </div>
 

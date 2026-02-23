@@ -269,6 +269,10 @@ func (db *DB) runMigrations() error {
 		"049_chatgpt_and_ai_provider.sql",
 		"050_ai_model_preferences.sql",
 		"051_dietary_preference.sql",
+		"052_fix_fts_update_trigger.sql",
+		"053_unique_admin_constraint.sql",
+		"054_account_lockouts.sql",
+		"055_home_dashboard_layout.sql",
 	}
 
 	for _, migrationFile := range migrations {

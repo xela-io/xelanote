@@ -115,6 +115,7 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
 - [Users](#users)
   - [GET /api/users/preferences](#get-apiuserspreferences)
   - [PUT /api/users/preferences](#put-apiuserspreferences)
+  - [PATCH /api/users/preferences](#patch-apiuserspreferences)
   - [GET /api/users/dietary-preference](#get-apiusersdietary-preference)
   - [PUT /api/users/dietary-preference](#put-apiusersdietary-preference)
   - [PUT /api/users/email](#put-apiusersemail)
@@ -3742,6 +3743,7 @@ Authorization: Bearer <access_token>
 {
   "theme": "default-dark",
   "editor_mode": "split",
+  "home_dashboard_layout": null,
   "created": false
 }
 ```
@@ -3750,6 +3752,7 @@ Authorization: Bearer <access_token>
 |------|--------------|
 | `theme` | Aktuelles Theme (z.B. "default-dark", "default-light", "nord-dark", etc.) |
 | `editor_mode` | Editor-Modus ("edit", "preview", "split") |
+| `home_dashboard_layout` | Optional gespeichertes Startseiten-Layout (JSON-Objekt oder `null`) |
 | `created` | `true` wenn Default-Werte neu erstellt wurden |
 
 ---
@@ -3803,6 +3806,78 @@ Content-Type: application/json
 
 ```http
 400 Bad Request - "invalid theme" oder "invalid editor mode"
+401 Unauthorized - User nicht authentifiziert
+500 Internal Server Error - Fehler beim Speichern
+```
+
+---
+
+### PATCH /api/users/preferences
+
+Aktualisiert Teilbereiche der Benutzereinstellungen. Aktuell unterstützt: `home_dashboard_layout`.
+
+#### Request
+
+```http
+PATCH /api/users/preferences
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "home_dashboard_layout": {
+    "version": 1,
+    "collapsed_sections": {
+      "hero": false,
+      "recent": false,
+      "activity": false,
+      "created": false,
+      "all": true
+    },
+    "right_section_order": ["recent", "activity", "created", "all"]
+  }
+}
+```
+
+| Parameter | Typ | Pflicht | Beschreibung |
+|-----------|-----|---------|--------------|
+| `home_dashboard_layout` | object/null | Ja | Persistiertes Layout der Startseite; `null` löscht das gespeicherte Layout |
+
+**Validierung `home_dashboard_layout`:**
+- `version` muss `1` sein
+- `collapsed_sections` enthält die Boolean-Flags `hero`, `recent`, `activity`, `created`, `all`
+- `right_section_order` enthält genau einmal: `recent`, `activity`, `created`, `all` (beliebige Reihenfolge)
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "theme": "default-dark",
+  "editor_mode": "split",
+  "home_dashboard_layout": {
+    "version": 1,
+    "collapsed_sections": {
+      "hero": false,
+      "recent": false,
+      "activity": false,
+      "created": false,
+      "all": true
+    },
+    "right_section_order": ["recent", "activity", "created", "all"]
+  },
+  "created": false
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - "invalid request body", "home_dashboard_layout is required" oder "invalid home dashboard layout"
 401 Unauthorized - User nicht authentifiziert
 500 Internal Server Error - Fehler beim Speichern
 ```

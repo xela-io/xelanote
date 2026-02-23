@@ -10,6 +10,7 @@ func (s *Server) registerUserRoutes(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/preferences", s.getPreferences)
 		r.Put("/preferences", s.updatePreferences)
+		r.Patch("/preferences", s.patchPreferences)
 		r.Put("/preferences/encryption", s.updateEncryptionPreferences)
 		r.Put("/preferences/security", s.updateSecurityPreferences)
 		r.Get("/ai-provider", s.getAIProviderPreference)

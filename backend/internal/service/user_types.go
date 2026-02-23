@@ -13,18 +13,34 @@ import (
 type WebAuthnCredential = db.WebAuthnCredential
 type AIModelPreferences = db.AIModelPreferences
 type LockoutRecord = db.LockoutRecord
+type UserPreferences = db.UserPreferences
+
+type HomeDashboardLayoutPreferences struct {
+	Version           int                            `json:"version"`
+	CollapsedSections HomeDashboardCollapsedSections `json:"collapsed_sections"`
+	RightSectionOrder []string                       `json:"right_section_order"`
+}
+
+type HomeDashboardCollapsedSections struct {
+	Hero     bool `json:"hero"`
+	Recent   bool `json:"recent"`
+	Activity bool `json:"activity"`
+	Created  bool `json:"created"`
+	All      bool `json:"all"`
+}
 
 // Validation errors
 var (
-	ErrInvalidTheme             = errors.New("invalid theme")
-	ErrInvalidEditorMode        = errors.New("invalid editor mode")
-	ErrInvalidAIProvider        = errors.New("invalid AI provider")
-	ErrInvalidAIModel           = errors.New("invalid AI model")
-	ErrInvalidDietaryPreference = errors.New("invalid dietary preference")
-	ErrInvalidPassword          = errors.New("invalid password")
-	ErrEmailInUse               = errors.New("email already in use")
-	ErrPasswordTooShort         = errors.New("password must be at least 8 characters")
-	ErrInvalidEmail             = errors.New("invalid email format")
+	ErrInvalidTheme               = errors.New("invalid theme")
+	ErrInvalidEditorMode          = errors.New("invalid editor mode")
+	ErrInvalidAIProvider          = errors.New("invalid AI provider")
+	ErrInvalidAIModel             = errors.New("invalid AI model")
+	ErrInvalidDietaryPreference   = errors.New("invalid dietary preference")
+	ErrInvalidPassword            = errors.New("invalid password")
+	ErrEmailInUse                 = errors.New("email already in use")
+	ErrPasswordTooShort           = errors.New("password must be at least 8 characters")
+	ErrInvalidEmail               = errors.New("invalid email format")
+	ErrInvalidHomeDashboardLayout = errors.New("invalid home dashboard layout")
 )
 
 // Valid theme IDs (must match frontend themes/index.ts)

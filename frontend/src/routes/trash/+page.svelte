@@ -79,7 +79,9 @@
 <div class="h-full overflow-y-auto">
   <div class="max-w-7xl mx-auto px-6 py-8">
     <!-- Header -->
-    <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      class="ui-panel p-4 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <MobileSidebarInlineToggle />
         <Trash2 size={28} class="text-muted-foreground" />
@@ -92,7 +94,7 @@
       {#if trashCount > 0}
         <button
           onclick={handleEmptyTrash}
-          class="self-start sm:self-auto px-4 py-2 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+          class="ui-button ui-button-danger self-start sm:self-auto"
         >
           {$_('page.trash.empty_button')}
         </button>
@@ -111,7 +113,7 @@
       </div>
     {:else if trashedNotes.length === 0}
       <!-- Empty State -->
-      <div class="text-center py-20">
+      <div class="ui-empty-state py-20">
         <Trash2 size={64} class="mx-auto text-muted-foreground/50 mb-4" />
         <h2 class="text-xl font-semibold text-muted-foreground mb-2">
           {$_('page.trash.empty_title')}
@@ -122,9 +124,7 @@
       <!-- Trash List -->
       <div class="space-y-3 overflow-auto" style="max-height: calc(100vh - 250px);">
         {#each trashedNotes as note (note.id)}
-          <div
-            class="border border-border rounded-lg p-4 hover:shadow-md transition-shadow bg-card"
-          >
+          <div class="ui-panel p-4">
             <!-- Note Header -->
             <div class="flex items-start justify-between mb-2">
               <h3 class="font-semibold text-lg line-clamp-2 flex-1">{note.title}</h3>
@@ -150,14 +150,14 @@
             <div class="flex gap-2">
               <button
                 onclick={() => handleRestore(note.id, note.title)}
-                class="flex-1 px-3 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                class="ui-button ui-button-primary flex-1"
               >
                 <RotateCcw size={16} />
                 {$_('page.trash.restore')}
               </button>
               <button
                 onclick={() => handlePermanentDelete(note.id, note.title)}
-                class="px-3 py-2 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors flex items-center justify-center"
+                class="ui-button ui-button-danger px-3"
               >
                 <Trash size={16} />
               </button>

@@ -65,45 +65,47 @@
   }
 </script>
 
-<div class="recipe-preview space-y-6 max-w-2xl mx-auto">
+<div class="recipe-preview mx-auto max-w-3xl space-y-5 sm:space-y-6">
   <!-- Header -->
-  <div class="space-y-2">
-    <h1 class="text-2xl font-bold">{title}</h1>
+  <div class="ui-panel p-4 sm:p-5 space-y-3">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
 
     <!-- Meta info badges -->
-    <div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+    <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
       {#if onServingsChange}
-        <RecipeScaleControl
-          servings={targetServings}
-          baseServings={effectiveBaseServings}
-          onchange={onServingsChange}
-        />
+        <div class="rounded-full border border-border/60 bg-background/40 px-2.5 py-1">
+          <RecipeScaleControl
+            servings={targetServings}
+            baseServings={effectiveBaseServings}
+            onchange={onServingsChange}
+          />
+        </div>
       {:else}
-        <span class="flex items-center gap-1">
+        <span class="recipe-meta-chip">
           <Users size={14} />
           {targetServings}
           {$_('page.recipes.servings')}
         </span>
       {/if}
       {#if metadata?.prep_time_minutes}
-        <span class="flex items-center gap-1">
+        <span class="recipe-meta-chip">
           <Clock size={14} />
           {$_('page.recipes.prep_time')}: {metadata.prep_time_minutes} min
         </span>
       {/if}
       {#if metadata?.cook_time_minutes}
-        <span class="flex items-center gap-1">
+        <span class="recipe-meta-chip">
           <ChefHat size={14} />
           {$_('page.recipes.cook_time')}: {metadata.cook_time_minutes} min
         </span>
       {/if}
       {#if totalTime() > 0}
-        <span class="font-medium">
+        <span class="recipe-meta-chip font-medium">
           {$_('page.recipes.total_time')}: {totalTime()} min
         </span>
       {/if}
       {#if metadata?.difficulty}
-        <span class="px-2 py-0.5 rounded-full text-xs bg-accent">
+        <span class="recipe-meta-chip text-xs">
           {difficultyLabel(metadata.difficulty)}
         </span>
       {/if}
@@ -114,7 +116,7 @@
         href={metadata.source_url}
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        class="inline-flex items-center gap-1 rounded-md border border-border/70 px-2.5 py-1.5 text-sm text-primary hover:bg-accent/60"
       >
         <ExternalLink size={12} />
         {$_('page.recipes.source')}
@@ -124,88 +126,136 @@
 
   <!-- Images -->
   {#if images.length > 0}
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      {#each images as image (image.id)}
-        <div>
-          <img
-            src={image.image_url}
-            alt={image.caption || $_('page.recipes.images')}
-            class="w-full aspect-square object-cover rounded-lg"
-            loading="lazy"
-          />
-          {#if image.caption}
-            <p class="text-xs text-muted-foreground mt-1">{image.caption}</p>
-          {/if}
-        </div>
-      {/each}
+    <div class="ui-panel p-3 sm:p-4">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {#each images as image (image.id)}
+          <div>
+            <img
+              src={image.image_url}
+              alt={image.caption || $_('page.recipes.images')}
+              class="w-full aspect-square object-cover rounded-lg"
+              loading="lazy"
+            />
+            {#if image.caption}
+              <p class="text-xs text-muted-foreground mt-1">{image.caption}</p>
+            {/if}
+          </div>
+        {/each}
+      </div>
     </div>
   {/if}
 
   <!-- Cooking section: ingredients (sticky) + instructions -->
   {#if scaledIngredients.length > 0 || content}
-    <div>
+    <div class="space-y-4">
       {#if scaledIngredients.length > 0}
-        <!-- Sticky ingredients header -->
-        <button
-          onclick={() => (ingredientsOpen = !ingredientsOpen)}
-          class="sticky top-0 z-10 w-full flex items-center justify-between
-                 py-2 px-1 bg-background border-b border-border
-                 text-lg font-semibold cursor-pointer"
-          aria-expanded={ingredientsOpen}
-        >
-          <span>
-            {$_('page.recipes.ingredients')}
-            <span class="text-sm font-normal text-muted-foreground ml-1">
-              ({scaledIngredients.length})
+        <section class="ui-panel overflow-hidden">
+          <!-- Sticky ingredients header -->
+          <button
+            onclick={() => (ingredientsOpen = !ingredientsOpen)}
+            class="sticky top-0 z-10 flex w-full cursor-pointer items-center justify-between border-b border-border/60 bg-background/75 px-4 py-3 text-left text-lg font-semibold backdrop-blur-sm"
+            aria-expanded={ingredientsOpen}
+          >
+            <span>
+              {$_('page.recipes.ingredients')}
+              <span class="ml-1 text-sm font-normal text-muted-foreground">
+                ({scaledIngredients.length})
+              </span>
             </span>
-          </span>
-          <ChevronDown
-            size={20}
-            class="transition-transform duration-200 {ingredientsOpen ? 'rotate-0' : '-rotate-90'}"
-          />
-        </button>
+            <ChevronDown
+              size={20}
+              class="transition-transform duration-200 {ingredientsOpen
+                ? 'rotate-0'
+                : '-rotate-90'}"
+            />
+          </button>
 
-        <!-- Collapsible ingredients list -->
-        {#if ingredientsOpen}
-          <div class="pt-2 pb-4">
-            {#each [...groupedIngredients().entries()] as [groupName, ingredients] (groupName)}
-              {#if groupName}
-                <h3 class="text-sm font-medium text-muted-foreground mt-3 mb-1">{groupName}</h3>
-              {/if}
-              <ul class="space-y-1">
-                {#each ingredients as ing, ii (ii)}
-                  <li class="flex gap-2 text-sm" class:opacity-60={ing.optional}>
-                    <span class="font-medium w-20 text-right shrink-0">
-                      {ing.display_amount}
-                    </span>
-                    <span class="text-muted-foreground w-12 shrink-0">
-                      {ing.unit ?? ''}
-                    </span>
-                    <span>
-                      {ing.name}
-                      {#if ing.optional}
-                        <span class="text-xs text-muted-foreground"
-                          >({$_('page.recipes.optional')})</span
-                        >
-                      {/if}
-                    </span>
-                  </li>
-                {/each}
-              </ul>
-            {/each}
-          </div>
-        {/if}
+          <!-- Collapsible ingredients list -->
+          {#if ingredientsOpen}
+            <div class="p-4">
+              {#each [...groupedIngredients().entries()] as [groupName, ingredients] (groupName)}
+                {#if groupName}
+                  <h3 class="ui-kicker mt-4 mb-2 first:mt-0">
+                    {groupName}
+                  </h3>
+                {/if}
+                <ul class="recipe-ingredient-list">
+                  {#each ingredients as ing, ii (ii)}
+                    <li class="recipe-ingredient-line" class:opacity-60={ing.optional}>
+                      <span class="font-medium text-right shrink-0">
+                        {ing.display_amount}
+                      </span>
+                      <span class="text-muted-foreground shrink-0">
+                        {ing.unit ?? ''}
+                      </span>
+                      <span class="min-w-0">
+                        {ing.name}
+                        {#if ing.optional}
+                          <span class="ml-1 text-xs text-muted-foreground"
+                            >({$_('page.recipes.optional')})</span
+                          >
+                        {/if}
+                      </span>
+                    </li>
+                  {/each}
+                </ul>
+              {/each}
+            </div>
+          {/if}
+        </section>
       {/if}
 
       <!-- Instructions (rendered as markdown-like text) -->
       {#if content}
-        <div>
-          <h2 class="text-lg font-semibold mb-3">{$_('page.recipes.instructions')}</h2>
-          <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+        <section class="ui-panel p-4 sm:p-5">
+          <h2 class="mb-3 text-lg font-semibold tracking-tight">
+            {$_('page.recipes.instructions')}
+          </h2>
+          <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-6">
             {content}
           </div>
-        </div>
+        </section>
       {/if}
     </div>
   {/if}
 </div>
+
+<style>
+  .recipe-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border) / 0.6);
+    background: hsl(var(--background) / 0.4);
+    padding: 0.35rem 0.6rem;
+  }
+
+  .recipe-ingredient-list {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .recipe-ingredient-line {
+    display: grid;
+    grid-template-columns: 4.25rem 3rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.5rem;
+    padding: 0.45rem 0.2rem;
+    border-bottom: 1px dashed hsl(var(--border) / 0.45);
+    font-size: 0.92rem;
+  }
+
+  .recipe-ingredient-line:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 639px) {
+    .recipe-ingredient-line {
+      grid-template-columns: 4rem 2.75rem minmax(0, 1fr);
+      gap: 0.4rem;
+      padding-inline: 0;
+      font-size: 0.9rem;
+    }
+  }
+</style>

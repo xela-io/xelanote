@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/xela-io/xelanote/internal/db"
@@ -10,6 +11,52 @@ import (
 // Returns preferences and a boolean indicating if the row was newly created
 func (s *UserService) GetOrCreatePreferences(userID int) (*db.UserPreferences, bool, error) {
 	return s.db.GetOrCreateUserPreferences(userID)
+}
+
+// UpdateHomeDashboardLayoutPreference validates and stores the home dashboard layout JSON.
+// raw == nil or "null" clears the stored layout.
+func (s *UserService) UpdateHomeDashboardLayoutPreference(userID int, raw json.RawMessage) (*db.UserPreferences, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		if err := s.db.UpdateHomeDashboardLayout(userID, nil); err != nil {
+			return nil, err
+		}
+		return s.db.GetUserPreferences(userID)
+	}
+
+	var layout HomeDashboardLayoutPreferences
+	if err := json.Unmarshal(raw, &layout); err != nil {
+		return nil, ErrInvalidHomeDashboardLayout
+	}
+
+	if layout.Version != 1 {
+		return nil, ErrInvalidHomeDashboardLayout
+	}
+	if len(layout.RightSectionOrder) != 4 {
+		return nil, ErrInvalidHomeDashboardLayout
+	}
+	allowed := map[string]bool{
+		"recent":   true,
+		"activity": true,
+		"created":  true,
+		"all":      true,
+	}
+	seen := map[string]bool{}
+	for _, id := range layout.RightSectionOrder {
+		if !allowed[id] || seen[id] {
+			return nil, ErrInvalidHomeDashboardLayout
+		}
+		seen[id] = true
+	}
+
+	normalized, err := json.Marshal(layout)
+	if err != nil {
+		return nil, err
+	}
+	jsonStr := string(normalized)
+	if err := s.db.UpdateHomeDashboardLayout(userID, &jsonStr); err != nil {
+		return nil, err
+	}
+	return s.db.GetUserPreferences(userID)
 }
 
 // UpdatePreferences updates user preferences with validation

@@ -177,7 +177,7 @@
 
 <div class="h-full flex flex-col">
   <!-- Header -->
-  <div class="border-b border-border shrink-0 px-4 py-2.5 sm:px-6 sm:py-4">
+  <div class="ui-page-header shrink-0 px-4 py-2.5 sm:px-6 sm:py-4">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div
         class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:items-center sm:gap-3"
@@ -188,7 +188,7 @@
       <button
         onclick={handleOpenToday}
         disabled={journalLoading}
-        class="flex items-center justify-center gap-2 self-start sm:self-auto px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+        class="ui-button ui-button-primary self-start sm:self-auto px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm"
       >
         {#if journalLoading}
           <Loader2 size={16} class="animate-spin" />
@@ -207,10 +207,7 @@
     <div class="flex flex-col items-center justify-center flex-1 gap-4 text-muted-foreground">
       <Lock class="w-12 h-12 opacity-50" />
       <p class="text-center max-w-sm">{$_('page.journal.encryptionRequired')}</p>
-      <button
-        onclick={() => notes.signalEncryptionLocked()}
-        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-      >
+      <button onclick={() => notes.signalEncryptionLocked()} class="ui-button ui-button-primary">
         <Lock size={16} />
         {$_('page.journal.unlockButton')}
       </button>
@@ -229,9 +226,9 @@
           {@render entryListBlock()}
 
           <!-- Collapsible Calendar -->
-          <div class="mt-6 border border-border rounded-lg">
+          <div class="ui-panel mt-6">
             <button
-              class="w-full flex items-center justify-between p-3 hover:bg-accent/50 rounded-lg transition-colors"
+              class="w-full flex items-center justify-between p-3 hover:bg-accent/30 rounded-2xl transition-colors"
               onclick={toggleMobileCalendar}
             >
               <span class="flex items-center gap-2 font-medium text-sm">
@@ -263,10 +260,10 @@
         <div class="hidden md:grid md:grid-cols-2 gap-6">
           <!-- Calendar (left) -->
           <div>
-            <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            <h2 class="ui-kicker mb-3">
               {$_('page.journal.title')}
             </h2>
-            <div class="border border-border rounded-lg p-4">
+            <div class="ui-panel p-4">
               {@render calendarBlock()}
             </div>
           </div>
@@ -286,7 +283,7 @@
   <!-- Month Navigation -->
   <div class="flex items-center justify-between mb-3">
     <button
-      class="p-1.5 hover:bg-accent rounded disabled:opacity-50"
+      class="ui-icon-button p-1.5 disabled:opacity-50"
       onclick={() => journal.previousMonth()}
       disabled={calendarLoading}
       title={$_('page.journal.previousMonth')}
@@ -295,7 +292,7 @@
     </button>
     <span class="font-medium text-sm">{monthNames[calendarMonth - 1]} {calendarYear}</span>
     <button
-      class="p-1.5 hover:bg-accent rounded disabled:opacity-50"
+      class="ui-icon-button p-1.5 disabled:opacity-50"
       onclick={() => journal.nextMonth()}
       disabled={calendarLoading}
       title={$_('page.journal.nextMonth')}
@@ -330,7 +327,7 @@
 
 <!-- Entry List Snippet -->
 {#snippet entryListBlock()}
-  <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+  <h2 class="ui-kicker mb-3">
     {$_('page.journal.allEntries')} ({entryList.length})
   </h2>
 
@@ -340,12 +337,9 @@
       <p>{$_('page.journal.noEntries')}</p>
     </div>
   {:else}
-    <div class="space-y-2">
+    <div class="space-y-2.5">
       {#each entryList as entry (entry.id)}
-        <button
-          onclick={() => goto(`/note/${entry.id}`)}
-          class="w-full text-left p-3 rounded-lg border border-border hover:bg-accent transition-colors"
-        >
+        <button onclick={() => goto(`/note/${entry.id}`)} class="ui-list-item w-full text-left p-3">
           <div class="text-xs text-muted-foreground">
             {formatEntryDate(entry.journal_date)}
           </div>

@@ -157,7 +157,7 @@
 
 <div class="h-full flex flex-col">
   <!-- Header -->
-  <div class="border-b border-border shrink-0 px-4 py-3 sm:px-6 sm:py-4">
+  <div class="ui-page-header shrink-0 px-4 py-3 sm:px-6 sm:py-4">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div
         class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-2 sm:flex sm:items-center sm:gap-3"
@@ -174,7 +174,7 @@
               await ensureSuggestionDialog();
               showIngredientSuggestions = true;
             }}
-            class="flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:bg-accent sm:flex-none sm:justify-start sm:py-1.5"
+            class="ui-button ui-button-secondary flex flex-1 items-center justify-center text-sm sm:flex-none sm:justify-start"
           >
             <Sparkles size={16} />
             <span class="leading-tight whitespace-nowrap">
@@ -186,7 +186,7 @@
               await ensureImportDialog();
               showImportDialog = true;
             }}
-            class="flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:bg-accent sm:flex-none sm:justify-start sm:py-1.5"
+            class="ui-button ui-button-secondary flex flex-1 items-center justify-center text-sm sm:flex-none sm:justify-start"
           >
             <Upload size={16} />
             <span class="leading-tight whitespace-nowrap">{$_('page.recipes.import.button')}</span>
@@ -194,7 +194,7 @@
         </div>
         <button
           onclick={() => (showCreateDialog = true)}
-          class="col-span-2 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 sm:col-span-1 sm:w-auto sm:justify-start sm:py-1.5"
+          class="ui-button ui-button-primary col-span-2 flex w-full items-center justify-center text-sm sm:col-span-1 sm:w-auto sm:justify-start"
         >
           <Plus size={16} />
           <span class="leading-tight whitespace-nowrap">{$_('page.recipes.create')}</span>
@@ -219,7 +219,7 @@
             <ArrowLeft size={14} />
             {$_('page.recipes.all_recipes')}
           </button>
-          <div class="rounded-xl border border-border bg-background/50 p-4 sm:p-5">
+          <div class="ui-panel p-4 sm:p-5">
             <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div class="min-w-0">
                 <h2 class="text-lg font-semibold flex items-center gap-2">
@@ -272,11 +272,11 @@
                 <p>{$_('page.recipes.collection_empty')}</p>
               </div>
             {:else}
-              <div class="space-y-2">
+              <div class="space-y-2.5">
                 {#each displayedRecipes as recipe (recipe.id)}
                   <button
                     onclick={() => goto(`/note/${recipe.id}`)}
-                    class="w-full text-left p-3 rounded-lg border border-border bg-background/40 hover:bg-accent transition-colors"
+                    class="ui-list-item group w-full p-3 text-left hover:-translate-y-px"
                   >
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
@@ -309,8 +309,8 @@
       {:else}
         <div class="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 max-w-5xl">
           <!-- Recipe List -->
-          <section class="rounded-xl border border-border bg-background/50 p-4 sm:p-5">
-            <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          <section class="ui-panel p-4 sm:p-5">
+            <h2 class="ui-kicker mb-3">
               {$_('page.recipes.all_recipes')} ({recipeList.length})
             </h2>
 
@@ -326,11 +326,11 @@
                 </button>
               </div>
             {:else}
-              <div class="space-y-2">
+              <div class="space-y-2.5">
                 {#each recipeList as recipe (recipe.id)}
                   <button
                     onclick={() => goto(`/note/${recipe.id}`)}
-                    class="w-full text-left p-3 rounded-lg border border-border bg-background/40 hover:bg-accent transition-colors"
+                    class="ui-list-item group w-full p-3 text-left hover:-translate-y-px"
                   >
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
@@ -361,8 +361,8 @@
           </section>
 
           <!-- Collections -->
-          <section class="rounded-xl border border-border bg-background/50 p-4 sm:p-5">
-            <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          <section class="ui-panel p-4 sm:p-5">
+            <h2 class="ui-kicker mb-3">
               {$_('page.recipes.collections')}
             </h2>
             <RecipeCollectionList
@@ -382,20 +382,16 @@
 
       <!-- Shared Recipes -->
       {#if sharedRecipesList.length > 0}
-        <div
-          class="max-w-5xl mt-6 sm:mt-8 rounded-xl border border-border bg-background/50 p-4 sm:p-5"
-        >
-          <h2
-            class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2"
-          >
+        <div class="ui-panel max-w-5xl mt-6 sm:mt-8 p-4 sm:p-5">
+          <h2 class="ui-kicker mb-3 flex items-center gap-2">
             <UsersIcon size={14} />
             {$_('page.recipes.shared_recipes')} ({sharedRecipesList.length})
           </h2>
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             {#each sharedRecipesList as recipe (recipe.id)}
               <button
                 onclick={() => goto(`/note/${recipe.id}`)}
-                class="w-full text-left p-3 rounded-lg border border-border bg-background/40 hover:bg-accent transition-colors"
+                class="ui-list-item w-full p-3 text-left hover:-translate-y-px"
               >
                 <div class="flex items-center gap-2">
                   <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>

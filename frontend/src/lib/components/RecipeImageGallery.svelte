@@ -80,8 +80,8 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="recipe-image-gallery">
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+<div class="recipe-image-gallery" class:no-images={images.length === 0}>
+  <div class="image-grid grid grid-cols-2 sm:grid-cols-3 gap-2">
     {#each images as image, index (image.id)}
       <div class="image-card">
         <div class="image-wrapper">
@@ -181,7 +181,7 @@
 
 <style>
   .recipe-image-gallery {
-    margin-bottom: 1rem;
+    margin-bottom: 0;
   }
 
   .image-card {
@@ -292,6 +292,21 @@
     transition:
       border-color 0.15s,
       color 0.15s;
+  }
+
+  @media (min-width: 1024px) {
+    .recipe-image-gallery {
+      max-width: 19rem;
+    }
+
+    .recipe-image-gallery.no-images .image-grid {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 8.75rem;
+    }
+
+    .recipe-image-gallery.no-images .upload-card {
+      aspect-ratio: 1;
+    }
   }
 
   .upload-card:hover:not(:disabled) {

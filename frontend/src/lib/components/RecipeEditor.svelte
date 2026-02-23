@@ -125,7 +125,9 @@
   async function saveIngredients() {
     if (!ingredientsDirty || isReadonly || !noteId) return;
     // Filter out empty-name ingredients
-    const valid = localIngredients.filter((ing) => ing.name.trim());
+    const valid = localIngredients
+      .filter((ing) => ing.name.trim())
+      .map((ing) => ({ ...ing, scalable: true }));
     const success = await recipes.updateIngredients(noteId, valid);
     if (success) {
       ingredientsDirty = false;
@@ -196,28 +198,34 @@
 
     <!-- Tabs -->
     <div
-      class="flex items-center gap-2 border-b border-border px-2 sm:px-4 py-1.5 sm:py-2 shrink-0"
+      class="flex items-center gap-2 border-b border-border/70 bg-background/70 px-2 sm:px-4 py-2 sm:py-3 shrink-0 backdrop-blur-sm"
     >
       <MobileSidebarInlineToggle />
-      <div class="flex gap-0 -mb-px">
+      <div class="ui-tablist recipe-tab-group" role="tablist">
         <button
           onclick={() => switchTab('ingredients')}
-          class="tab-button"
+          class="ui-tab tab-button"
           class:active={activeTab === 'ingredients'}
+          role="tab"
+          aria-selected={activeTab === 'ingredients'}
         >
           {$_('page.recipes.tab_ingredients')}
         </button>
         <button
           onclick={() => switchTab('instructions')}
-          class="tab-button"
+          class="ui-tab tab-button"
           class:active={activeTab === 'instructions'}
+          role="tab"
+          aria-selected={activeTab === 'instructions'}
         >
           {$_('page.recipes.tab_instructions')}
         </button>
         <button
           onclick={() => switchTab('preview')}
-          class="tab-button"
+          class="ui-tab tab-button"
           class:active={activeTab === 'preview'}
+          role="tab"
+          aria-selected={activeTab === 'preview'}
         >
           {$_('page.recipes.tab_preview')}
         </button>
@@ -229,7 +237,7 @@
       {#if !isEncrypted && !isReadonly}
         <button
           onclick={() => (showSuggestionDialog = true)}
-          class="flex items-center gap-1 px-2 py-1 text-xs rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          class="ui-button ui-button-ghost px-2 py-1 text-xs"
           title={$_('page.recipes.suggestions.find_similar')}
         >
           <Sparkles size={14} />
@@ -262,77 +270,109 @@
     <!-- Tab Content -->
     <div class="flex-1 overflow-y-auto">
       {#if activeTab === 'ingredients'}
-        <div class="p-4 space-y-4">
-          <!-- Metadata -->
-          <RecipeMetadataForm
-            metadata={currentRecipe.metadata}
-            readonly={isReadonly}
-            onupdate={handleMetadataUpdate}
-          />
+        <div class="p-4 pb-28 sm:p-5 sm:pb-5 max-w-4xl">
+          <div class="ui-panel recipe-pane-shell space-y-4 sm:space-y-5">
+            <div class="recipe-top-grid">
+              <!-- Metadata -->
+              <section class="ui-panel recipe-section-card">
+                <div class="ui-kicker recipe-section-header">
+                  {$_('page.recipes.tab_ingredients')}
+                </div>
+                <RecipeMetadataForm
+                  metadata={currentRecipe.metadata}
+                  readonly={isReadonly}
+                  onupdate={handleMetadataUpdate}
+                />
+              </section>
 
-          <!-- Images -->
-          <RecipeImageGallery images={currentRecipe.images ?? []} {noteId} readonly={isReadonly} />
+              <section class="ui-panel recipe-section-card recipe-image-card space-y-4">
+                <!-- Images -->
+                <div>
+                  <div class="ui-kicker recipe-section-header">{$_('page.recipes.images')}</div>
+                  <RecipeImageGallery
+                    images={currentRecipe.images ?? []}
+                    {noteId}
+                    readonly={isReadonly}
+                  />
+                </div>
 
-          <!-- Scale Control -->
-          <RecipeScaleControl
-            servings={targetServings}
-            baseServings={currentRecipe.metadata?.servings ?? 4}
-            onchange={handleServingsChange}
-            disabled={isReadonly}
-          />
-
-          <!-- Ingredients -->
-          <div>
-            <h3 class="text-sm font-semibold mb-2">{$_('page.recipes.ingredients')}</h3>
-            <RecipeIngredientEditor
-              ingredients={localIngredients}
-              scaledIngredients={targetServings !== (currentRecipe.metadata?.servings ?? 4)
-                ? scaledIngredients
-                : undefined}
-              readonly={isReadonly}
-              onupdate={handleIngredientsChange}
-            />
-          </div>
-
-          <!-- Collections -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-semibold">{$_('page.recipes.collections')}</h3>
-              <button
-                onclick={() => (showAddToCollectionDialog = true)}
-                class="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-              >
-                <Plus size={12} />
-                {$_('page.recipes.add_to_collection')}
-              </button>
+                <!-- Scale Control -->
+                <div class="recipe-subsection">
+                  <div class="ui-kicker recipe-section-header recipe-section-header-plain">
+                    {$_('page.recipes.servings')}
+                  </div>
+                  <RecipeScaleControl
+                    servings={targetServings}
+                    baseServings={currentRecipe.metadata?.servings ?? 4}
+                    onchange={handleServingsChange}
+                    disabled={isReadonly}
+                  />
+                </div>
+              </section>
             </div>
-            {#if currentRecipe.collections.length > 0}
-              <div class="flex flex-wrap gap-1">
-                {#each currentRecipe.collections as coll (coll.id)}
-                  <span
-                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent"
-                  >
-                    {#if coll.color}
-                      <span class="w-2 h-2 rounded-full" style="background-color: {coll.color}"
-                      ></span>
-                    {/if}
-                    {coll.name}
-                    {#if !isReadonly}
-                      <button
-                        onclick={() => handleRemoveFromCollection(coll.id)}
-                        class="hover:text-destructive"
-                      >
-                        <X size={10} />
-                      </button>
-                    {/if}
-                  </span>
-                {/each}
+
+            <!-- Ingredients -->
+            <section class="ui-panel recipe-section-card recipe-collections-card">
+              <div class="ui-section-head mb-3">
+                <h3 class="text-sm font-semibold tracking-tight">
+                  {$_('page.recipes.ingredients')}
+                </h3>
+                <span class="text-xs text-muted-foreground">
+                  {localIngredients.length}
+                </span>
               </div>
-            {:else}
-              <p class="text-xs text-muted-foreground italic">
-                {$_('page.recipes.not_in_collection')}
-              </p>
-            {/if}
+              <RecipeIngredientEditor
+                ingredients={localIngredients}
+                scaledIngredients={targetServings !== (currentRecipe.metadata?.servings ?? 4)
+                  ? scaledIngredients
+                  : undefined}
+                readonly={isReadonly}
+                onupdate={handleIngredientsChange}
+              />
+            </section>
+
+            <!-- Collections -->
+            <section class="ui-panel recipe-section-card">
+              <div class="ui-section-head mb-3">
+                <h3 class="text-sm font-semibold tracking-tight">
+                  {$_('page.recipes.collections')}
+                </h3>
+                <button
+                  onclick={() => (showAddToCollectionDialog = true)}
+                  class="ui-button ui-button-secondary px-2 py-1 text-xs"
+                >
+                  <Plus size={12} />
+                  {$_('page.recipes.add_to_collection')}
+                </button>
+              </div>
+              {#if currentRecipe.collections.length > 0}
+                <div class="flex flex-wrap gap-1.5">
+                  {#each currentRecipe.collections as coll (coll.id)}
+                    <span
+                      class="inline-flex items-center gap-1 rounded-full border border-border/70 bg-accent/50 px-2.5 py-1 text-xs"
+                    >
+                      {#if coll.color}
+                        <span class="w-2 h-2 rounded-full" style="background-color: {coll.color}"
+                        ></span>
+                      {/if}
+                      {coll.name}
+                      {#if !isReadonly}
+                        <button
+                          onclick={() => handleRemoveFromCollection(coll.id)}
+                          class="hover:text-destructive"
+                        >
+                          <X size={10} />
+                        </button>
+                      {/if}
+                    </span>
+                  {/each}
+                </div>
+              {:else}
+                <p class="text-xs text-muted-foreground italic">
+                  {$_('page.recipes.not_in_collection')}
+                </p>
+              {/if}
+            </section>
           </div>
         </div>
       {:else if activeTab === 'instructions'}
@@ -344,7 +384,7 @@
           <EditorComponent {noteId} />
         {/if}
       {:else if activeTab === 'preview'}
-        <div class="p-4">
+        <div class="p-4 sm:p-5">
           <RecipePreview
             title={currentNote?.title ?? ''}
             metadata={currentRecipe.metadata}
@@ -386,20 +426,72 @@
 {/if}
 
 <style>
-  .tab-button {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    color: var(--color-text-muted, hsl(var(--muted-foreground)));
-    border-bottom: 2px solid transparent;
-    transition: all var(--duration-fast) var(--ease-default);
+  .recipe-section-card {
+    padding: 0.9rem;
   }
 
-  .tab-button:hover {
-    color: var(--color-text, hsl(var(--foreground)));
+  .recipe-top-grid {
+    display: grid;
+    gap: 1rem;
   }
 
-  .tab-button.active {
-    color: var(--color-text, hsl(var(--foreground)));
-    border-bottom-color: hsl(var(--primary));
+  .recipe-pane-shell {
+    padding: 0.85rem;
+  }
+
+  .recipe-image-card {
+    align-self: start;
+  }
+
+  .recipe-section-header {
+    margin-bottom: 0.7rem;
+    border-bottom: 1px dashed hsl(var(--border) / 0.7);
+    padding-bottom: 0.45rem;
+  }
+
+  .recipe-subsection {
+    border-top: 1px solid hsl(var(--border) / 0.65);
+    padding-top: 0.75rem;
+  }
+
+  .recipe-section-header-plain {
+    border-bottom: 0;
+    padding-bottom: 0;
+    margin-bottom: 0.6rem;
+  }
+
+  .recipe-collections-card {
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+
+  @media (min-width: 640px) {
+    .recipe-section-card {
+      padding: 1rem;
+    }
+
+    .recipe-collections-card {
+      padding-top: 0.85rem;
+      padding-bottom: 0.85rem;
+    }
+
+    .recipe-pane-shell {
+      padding: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .recipe-top-grid {
+      grid-template-columns: minmax(0, 1.3fr) minmax(16rem, 0.9fr);
+      align-items: start;
+    }
+
+    .recipe-image-card {
+      gap: 0.75rem;
+    }
+
+    .recipe-subsection {
+      padding-top: 0.65rem;
+    }
   }
 </style>

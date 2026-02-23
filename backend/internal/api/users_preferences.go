@@ -1,11 +1,49 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/xela-io/xelanote/internal/llm"
 	"github.com/xela-io/xelanote/internal/service"
 )
+
+func parseHomeDashboardLayoutRaw(raw *string) json.RawMessage {
+	if raw == nil || *raw == "" {
+		return json.RawMessage("null")
+	}
+
+	var parsed json.RawMessage
+	if err := json.Unmarshal([]byte(*raw), &parsed); err != nil {
+		return json.RawMessage("null")
+	}
+	if len(parsed) == 0 {
+		return json.RawMessage("null")
+	}
+	return parsed
+}
+
+func (s *Server) buildPreferencesResponse(userID int, prefs *service.UserPreferences, created bool) preferencesResponse {
+	credentials, err := s.userService.GetWebAuthnCredentials(int64(userID))
+	if err != nil {
+		s.logger().Warn("failed to load webauthn credentials", "user_id", userID, "error", err)
+		credentials = []service.WebAuthnCredential{}
+	}
+
+	return preferencesResponse{
+		Theme:               prefs.Theme,
+		EditorMode:          prefs.EditorMode,
+		KeywordsEnabled:     prefs.KeywordsEnabled,
+		EncryptTitles:       prefs.EncryptTitles,
+		SecurityLevel:       prefs.SecurityLevel,
+		AutoLockTimeout:     prefs.AutoLockTimeout,
+		ActiveAIProvider:    prefs.ActiveAIProvider,
+		DietaryPreference:   prefs.DietaryPreference,
+		Credentials:         convertWebAuthnCredentials(credentials),
+		HomeDashboardLayout: parseHomeDashboardLayoutRaw(prefs.HomeDashboardLayout),
+		Created:             created,
+	}
+}
 
 // getPreferences returns user preferences, creating defaults if not exist
 func (s *Server) getPreferences(w http.ResponseWriter, r *http.Request) {
@@ -22,26 +60,7 @@ func (s *Server) getPreferences(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load WebAuthn credentials
-	credentials, err := s.userService.GetWebAuthnCredentials(int64(userID))
-	if err != nil {
-		s.logger().Error("failed to get webauthn credentials", "error", err)
-		// Non-fatal, continue with empty list
-		credentials = []service.WebAuthnCredential{}
-	}
-
-	respondJSON(w, http.StatusOK, preferencesResponse{
-		Theme:             prefs.Theme,
-		EditorMode:        prefs.EditorMode,
-		KeywordsEnabled:   prefs.KeywordsEnabled,
-		EncryptTitles:     prefs.EncryptTitles,
-		SecurityLevel:     prefs.SecurityLevel,
-		AutoLockTimeout:   prefs.AutoLockTimeout,
-		ActiveAIProvider:  prefs.ActiveAIProvider,
-		DietaryPreference: prefs.DietaryPreference,
-		Credentials:       convertWebAuthnCredentials(credentials),
-		Created:           created,
-	})
+	respondJSON(w, http.StatusOK, s.buildPreferencesResponse(userID, prefs, created))
 }
 
 // updatePreferences updates user preferences
@@ -72,25 +91,40 @@ func (s *Server) updatePreferences(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load WebAuthn credentials
-	credentials, err := s.userService.GetWebAuthnCredentials(int64(userID))
-	if err != nil {
-		s.logger().Warn("failed to load webauthn credentials", "user_id", userID, "error", err)
-		credentials = []service.WebAuthnCredential{}
+	respondJSON(w, http.StatusOK, s.buildPreferencesResponse(userID, prefs, false))
+}
+
+// patchPreferences updates partial user preferences (currently home dashboard layout only).
+func (s *Server) patchPreferences(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
 	}
 
-	respondJSON(w, http.StatusOK, preferencesResponse{
-		Theme:             prefs.Theme,
-		EditorMode:        prefs.EditorMode,
-		KeywordsEnabled:   prefs.KeywordsEnabled,
-		EncryptTitles:     prefs.EncryptTitles,
-		SecurityLevel:     prefs.SecurityLevel,
-		AutoLockTimeout:   prefs.AutoLockTimeout,
-		ActiveAIProvider:  prefs.ActiveAIProvider,
-		DietaryPreference: prefs.DietaryPreference,
-		Credentials:       convertWebAuthnCredentials(credentials),
-		Created:           false,
-	})
+	var req patchPreferencesRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.HomeDashboardLayout == nil {
+		respondError(w, http.StatusBadRequest, "home_dashboard_layout is required")
+		return
+	}
+
+	prefs, err := s.userService.UpdateHomeDashboardLayoutPreference(userID, req.HomeDashboardLayout)
+	if err != nil {
+		switch err {
+		case service.ErrInvalidHomeDashboardLayout:
+			respondError(w, http.StatusBadRequest, "invalid home dashboard layout")
+		default:
+			s.logger().Error("failed to patch preferences", "error", err)
+			respondError(w, http.StatusInternalServerError, "failed to update preferences")
+		}
+		return
+	}
+
+	respondJSON(w, http.StatusOK, s.buildPreferencesResponse(userID, prefs, false))
 }
 
 // getAIProviderPreference returns the currently selected AI provider.

@@ -72,11 +72,11 @@
   ];
 </script>
 
-<div class="space-y-3">
-  <div class="grid grid-cols-2 gap-3">
+<div class="ui-fieldset">
+  <div class="ui-form-grid-2">
     <!-- Servings -->
-    <div>
-      <label for="recipe-servings" class="text-xs text-muted-foreground block mb-1">
+    <div class="ui-form-row">
+      <label for="recipe-servings" class="ui-label text-xs text-muted-foreground mb-0">
         {$_('page.recipes.servings')}
       </label>
       <input
@@ -87,13 +87,13 @@
         disabled={readonly}
         min="1"
         max="999"
-        class="w-full px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+        class="ui-input"
       />
     </div>
 
     <!-- Difficulty -->
-    <div>
-      <label for="recipe-difficulty" class="text-xs text-muted-foreground block mb-1">
+    <div class="ui-form-row">
+      <label for="recipe-difficulty" class="ui-label text-xs text-muted-foreground mb-0">
         {$_('page.recipes.difficulty')}
       </label>
       <select
@@ -101,7 +101,7 @@
         bind:value={difficulty}
         onchange={scheduleUpdate}
         disabled={readonly}
-        class="w-full px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+        class="ui-select"
       >
         {#each difficulties as d (d.value)}
           <option value={d.value}>
@@ -112,10 +112,10 @@
     </div>
 
     <!-- Prep Time -->
-    <div>
+    <div class="ui-form-row">
       <label
         for="recipe-prep-time"
-        class="text-xs text-muted-foreground flex items-center gap-1 mb-1"
+        class="ui-label text-xs text-muted-foreground mb-0 flex items-center gap-1"
       >
         <Clock size={12} />
         {$_('page.recipes.prep_time')}
@@ -129,17 +129,17 @@
           disabled={readonly}
           min="0"
           placeholder="–"
-          class="w-full px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+          class="ui-input w-full text-sm"
         />
-        <span class="text-xs text-muted-foreground">min</span>
+        <span class="text-xs text-muted-foreground min-w-7 text-right">min</span>
       </div>
     </div>
 
     <!-- Cook Time -->
-    <div>
+    <div class="ui-form-row">
       <label
         for="recipe-cook-time"
-        class="text-xs text-muted-foreground flex items-center gap-1 mb-1"
+        class="ui-label text-xs text-muted-foreground mb-0 flex items-center gap-1"
       >
         <ChefHat size={12} />
         {$_('page.recipes.cook_time')}
@@ -153,16 +153,16 @@
           disabled={readonly}
           min="0"
           placeholder="–"
-          class="w-full px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+          class="ui-input w-full text-sm"
         />
-        <span class="text-xs text-muted-foreground">min</span>
+        <span class="text-xs text-muted-foreground min-w-7 text-right">min</span>
       </div>
     </div>
   </div>
 
   <!-- Source URL -->
-  <div>
-    <label class="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+  <div class="ui-form-row">
+    <label class="ui-label text-xs text-muted-foreground mb-0 flex items-center gap-1">
       <ExternalLink size={12} />
       {$_('page.recipes.source_url')}
     </label>
@@ -173,14 +173,14 @@
         oninput={scheduleUpdate}
         disabled={readonly}
         placeholder="https://..."
-        class="w-full px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+        class="ui-input"
       />
       {#if sourceUrl && !readonly}
         <a
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          class="p-1.5 rounded hover:bg-accent shrink-0"
+          class="ui-icon-button shrink-0 p-2"
           title={$_('page.recipes.open_source')}
         >
           <ExternalLink size={14} />

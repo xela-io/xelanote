@@ -7,6 +7,7 @@ import type {
   ClaudeAPIKeyStatus,
   DietaryPreference,
   GeminiAPIKeyStatus,
+  HomeDashboardLayoutPreference,
   Note,
   NoteVersion,
   OpenAIAPIKeyStatus,
@@ -31,6 +32,15 @@ export async function updatePreferences(data: UpdatePreferencesRequest): Promise
   return request('/users/preferences', {
     method: 'PUT',
     body: JSON.stringify(data),
+  });
+}
+
+export async function updateHomeDashboardLayoutPreference(
+  layout: HomeDashboardLayoutPreference | null
+): Promise<UserPreferences> {
+  return request('/users/preferences', {
+    method: 'PATCH',
+    body: JSON.stringify({ home_dashboard_layout: layout }),
   });
 }
 

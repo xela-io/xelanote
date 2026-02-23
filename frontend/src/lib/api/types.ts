@@ -344,6 +344,7 @@ export interface UserPreferences {
   active_ai_provider: AIProvider;
   dietary_preference: DietaryPreference;
   webauthn_credentials: WebAuthnCredentialInfo[];
+  home_dashboard_layout?: HomeDashboardLayoutPreference | null;
   created: boolean;
 }
 
@@ -378,6 +379,19 @@ export interface AIAvailableModelsResponse {
 export interface UpdatePreferencesRequest {
   theme: string;
   editor_mode: 'edit' | 'preview' | 'split' | 'live';
+  home_dashboard_layout?: HomeDashboardLayoutPreference | null;
+}
+
+export interface HomeDashboardLayoutPreference {
+  version: 1;
+  collapsed_sections: {
+    hero: boolean;
+    recent: boolean;
+    activity: boolean;
+    created: boolean;
+    all: boolean;
+  };
+  right_section_order: Array<'recent' | 'activity' | 'created' | 'all'>;
 }
 
 export interface UpdateSecurityPreferencesRequest {

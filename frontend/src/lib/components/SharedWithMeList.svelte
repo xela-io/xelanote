@@ -72,7 +72,7 @@
 </script>
 
 <div class="p-4">
-  <div class="mb-4 flex items-center gap-2 sm:gap-3">
+  <div class="ui-panel mb-4 flex items-center gap-2 sm:gap-3 p-4">
     <MobileSidebarInlineToggle />
     <h1 class="text-2xl font-bold flex items-center gap-2">
       <Users size={24} />
@@ -91,20 +91,20 @@
     <div class="space-y-6">
       <!-- Shared Folders -->
       {#if sharing.getSharedFolders().length > 0}
-        <div>
-          <h2 class="text-sm font-medium text-muted-foreground mb-2">
+        <div class="ui-panel p-4">
+          <h2 class="ui-kicker mb-2">
             {$_('sharing.shared_folders')}
           </h2>
           {#each [...groupedFolders.entries()] as [owner, folders] (owner)}
             <div class="mb-3">
-              <h3 class="text-xs text-muted-foreground mb-1">
+              <h3 class="ui-kicker mb-1 opacity-80">
                 {$_('sharing.shared_by', { values: { name: owner } })}
               </h3>
-              <div class="space-y-1">
+              <div class="space-y-1.5">
                 {#each folders as folder (folder.id)}
                   <button
                     onclick={() => handleFolderClick(folder.id)}
-                    class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors text-left"
+                    class="ui-list-item w-full flex items-center gap-3 px-3 py-2 text-left"
                   >
                     <Folder size={16} class="text-muted-foreground flex-shrink-0" />
                     <div class="flex-1 min-w-0">
@@ -137,20 +137,20 @@
 
       <!-- Shared Collections (Cookbooks) -->
       {#if sharing.getSharedCollections().length > 0}
-        <div>
-          <h2 class="text-sm font-medium text-muted-foreground mb-2">
+        <div class="ui-panel p-4">
+          <h2 class="ui-kicker mb-2">
             {$_('sharing.shared_collections')}
           </h2>
           {#each [...groupedCollections.entries()] as [owner, collections] (owner)}
             <div class="mb-3">
-              <h3 class="text-xs text-muted-foreground mb-1">
+              <h3 class="ui-kicker mb-1 opacity-80">
                 {$_('sharing.shared_by', { values: { name: owner } })}
               </h3>
-              <div class="space-y-1">
+              <div class="space-y-1.5">
                 {#each collections as coll (coll.id)}
                   <button
                     onclick={() => handleCollectionClick(coll.id)}
-                    class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors text-left"
+                    class="ui-list-item w-full flex items-center gap-3 px-3 py-2 text-left"
                   >
                     <BookOpen size={16} class="text-muted-foreground flex-shrink-0" />
                     <div class="flex-1 min-w-0">
@@ -186,14 +186,14 @@
       {#if sharing.getSharedNotes().length > 0}
         {#each [...groupedNotes.entries()] as [owner, notes] (owner)}
           <div>
-            <h2 class="text-sm font-medium text-muted-foreground mb-2">
+            <h2 class="ui-kicker mb-2">
               {$_('sharing.shared_by', { values: { name: owner } })}
             </h2>
-            <div class="space-y-1">
+            <div class="ui-panel p-3 space-y-1.5">
               {#each notes as note (note.id)}
                 <button
                   onclick={() => handleNoteClick(note.id)}
-                  class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors text-left"
+                  class="ui-list-item w-full flex items-center gap-3 px-3 py-2 text-left"
                 >
                   <div class="flex-1 min-w-0">
                     <div class="font-medium truncate">{note.title}</div>

@@ -35,9 +35,7 @@
 <div class="space-y-8">
   <!-- Encryption Locked Warning -->
   {#if !encryption.isEncryptionUnlocked()}
-    <div
-      class="p-4 rounded-lg bg-orange-100/80 dark:bg-orange-900/20 border border-orange-400 dark:border-orange-700"
-    >
+    <div class="ui-alert ui-alert-warning">
       <div class="flex items-start gap-3">
         <AlertTriangle size={20} class="text-orange-700 dark:text-orange-400 mt-0.5" />
         <div class="flex-1">
@@ -62,11 +60,9 @@
       <button
         onclick={() => handleSecurityLevelChange('paranoid')}
         disabled={!encryption.isEncryptionUnlocked() || isSavingSecurityLevel}
-        class="w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left
-				{securityLevel === 'paranoid'
-          ? 'border-success bg-success/10'
-          : 'border-border hover:border-success/50 bg-card'}
-				disabled:opacity-50 disabled:cursor-not-allowed"
+        class="ui-select-card ui-select-card-success {securityLevel === 'paranoid'
+          ? 'is-active'
+          : ''}"
       >
         <div class="mt-1 {securityLevel === 'paranoid' ? 'text-success' : 'text-muted-foreground'}">
           <ShieldCheck size={24} />
@@ -90,11 +86,9 @@
       <button
         onclick={() => handleSecurityLevelChange('balanced')}
         disabled={!encryption.isEncryptionUnlocked() || isSavingSecurityLevel}
-        class="w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left
-				{securityLevel === 'balanced'
-          ? 'border-primary bg-primary/10'
-          : 'border-border hover:border-primary/50 bg-card'}
-				disabled:opacity-50 disabled:cursor-not-allowed"
+        class="ui-select-card ui-select-card-primary {securityLevel === 'balanced'
+          ? 'is-active'
+          : ''}"
       >
         <div class="mt-1 {securityLevel === 'balanced' ? 'text-primary' : 'text-muted-foreground'}">
           <Shield size={24} />
@@ -123,11 +117,9 @@
       <button
         onclick={() => handleSecurityLevelChange('convenient')}
         disabled={!encryption.isEncryptionUnlocked() || isSavingSecurityLevel}
-        class="w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left
-				{securityLevel === 'convenient'
-          ? 'border-orange-500 bg-orange-500/10'
-          : 'border-border hover:border-orange-500/50 bg-card'}
-				disabled:opacity-50 disabled:cursor-not-allowed"
+        class="ui-select-card ui-select-card-warning {securityLevel === 'convenient'
+          ? 'is-active'
+          : ''}"
       >
         <div
           class="mt-1 {securityLevel === 'convenient'
@@ -154,16 +146,14 @@
 
     <!-- Info/Warning boxes -->
     {#if securityLevel === 'balanced'}
-      <div class="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
+      <div class="ui-alert ui-alert-info mt-4">
         <div class="flex items-start gap-2">
           <div class="text-primary mt-0.5">ℹ️</div>
           <div class="text-sm text-foreground">{$_('page.settings.security.balanced_info')}</div>
         </div>
       </div>
     {:else if securityLevel === 'convenient'}
-      <div
-        class="mt-4 p-3 rounded-lg bg-orange-100/80 dark:bg-orange-900/20 border border-orange-400 dark:border-orange-700"
-      >
+      <div class="ui-alert ui-alert-warning mt-4">
         <div class="flex items-start gap-2">
           <AlertTriangle size={16} class="text-orange-700 dark:text-orange-400 mt-0.5" />
           <div class="text-sm text-orange-900 dark:text-orange-300">
@@ -180,9 +170,9 @@
     <h3 class="text-lg font-medium text-foreground mb-4">
       {$_('page.settings.security.autolock_timeout_title')}
     </h3>
-    <div class="space-y-4">
-      <div>
-        <label for="auto-lock-timeout" class="block text-sm font-medium text-foreground mb-2">
+    <div class="ui-fieldset">
+      <div class="ui-form-row">
+        <label for="auto-lock-timeout" class="ui-label mb-0">
           {$_('page.settings.security.autolock_timeout_label')}
         </label>
         <select
@@ -192,8 +182,7 @@
           disabled={securityLevel === 'paranoid' ||
             !encryption.isEncryptionUnlocked() ||
             isSavingAutoLockTimeout}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
-						focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="ui-select"
         >
           <option value={0}>{$_('page.settings.security.autolock_never')}</option>
           <option value={5}>{$_('page.settings.security.autolock_5_min')}</option>
@@ -204,7 +193,7 @@
       </div>
 
       {#if securityLevel === 'paranoid'}
-        <div class="text-sm text-muted-foreground">
+        <div class="ui-form-help">
           {$_('page.settings.security.autolock_paranoid_info')}
         </div>
       {/if}
@@ -212,7 +201,7 @@
   </div>
 
   <!-- Security Keys (FIDO2 2FA) -->
-  <div class="p-6 rounded-lg border border-border bg-card">
+  <div class="ui-panel p-6">
     <h3 class="text-lg font-medium text-foreground mb-1">Security Keys</h3>
     <p class="text-sm text-muted-foreground mb-4">
       Hardware Security Keys (YubiKey etc.) als zweiten Faktor beim Login verwenden.
@@ -221,7 +210,7 @@
   </div>
 
   <!-- Biometric Devices -->
-  <div class="p-6 rounded-lg border border-border bg-card">
+  <div class="ui-panel p-6">
     <WebAuthnDeviceManager credentials={webAuthnCredentials} onUpdate={loadSecurityPreferences} />
   </div>
 
@@ -232,12 +221,12 @@
     </h3>
 
     {#if isLoadingMigrationStats}
-      <div class="p-4 rounded-lg border border-border bg-card flex items-center gap-3">
+      <div class="ui-panel p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
     {:else if migrationStats}
-      <div class="p-4 rounded-lg border border-border bg-card space-y-4">
+      <div class="ui-panel p-4 space-y-4">
         <!-- Statistics Grid -->
         <div class="grid grid-cols-3 gap-3">
           <div class="text-center p-3 rounded-lg bg-muted/50">
@@ -279,9 +268,7 @@
 
         <!-- Status and Action -->
         {#if migrationStats.plaintext > 0}
-          <div
-            class="p-3 rounded-lg bg-orange-100/80 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-800"
-          >
+          <div class="ui-alert ui-alert-warning">
             <div class="flex items-start gap-2 mb-3">
               <AlertTriangle
                 size={16}
@@ -296,8 +283,7 @@
             <button
               onclick={() => goto('/settings/migration')}
               disabled={!encryption.isEncryptionUnlocked()}
-              class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-									font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="ui-button ui-button-primary w-full"
             >
               <RefreshCw size={16} />
               {$_('page.settings.security.migration_button')}
@@ -305,7 +291,7 @@
             </button>
           </div>
         {:else if migrationStats.total > 0}
-          <div class="p-3 rounded-lg bg-success/15 border border-success/30">
+          <div class="ui-alert ui-alert-success">
             <div class="flex items-center gap-2">
               <Check size={16} class="text-success" />
               <span class="text-sm text-success"
@@ -320,7 +306,7 @@
         {/if}
       </div>
     {:else}
-      <div class="p-4 rounded-lg border border-border bg-card text-sm text-muted-foreground">
+      <div class="ui-panel p-4 text-sm text-muted-foreground">
         {$_('page.settings.security.migration_error')}
       </div>
     {/if}

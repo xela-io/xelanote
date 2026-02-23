@@ -63,8 +63,7 @@
       value={activeAIProvider}
       disabled={isSavingAIProvider}
       onchange={(e) => handleAIProviderChange((e.target as HTMLSelectElement).value as AIProvider)}
-      class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
-      focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+      class="ui-select"
     >
       <option value="auto">{$_('page.settings.ai.provider_auto')}</option>
       <option value="claude">{$_('page.settings.ai.provider_claude')}</option>
@@ -86,8 +85,7 @@
       disabled={isSavingDietaryPreference}
       onchange={(e) =>
         handleDietaryPreferenceChange((e.target as HTMLSelectElement).value as DietaryPreference)}
-      class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
-      focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+      class="ui-select"
     >
       <option value="none">{$_('page.settings.ai.dietary_none')}</option>
       <option value="vegetarian">{$_('page.settings.ai.dietary_vegetarian')}</option>
@@ -104,17 +102,16 @@
     <h3 class="text-lg font-medium text-foreground mb-2">{$_('page.settings.ai.models_title')}</h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.models_description')}</p>
 
-    <form onsubmit={handleSaveAIModels} class="space-y-4">
-      <div>
-        <label for="claude-model" class="block text-sm font-medium text-foreground mb-1">
+    <form onsubmit={handleSaveAIModels} class="ui-fieldset">
+      <div class="ui-form-row">
+        <label for="claude-model" class="ui-label mb-0">
           {$_('page.settings.ai.provider_claude')}
         </label>
         <select
           id="claude-model"
           bind:value={aiModels.claude_model}
           disabled={isSavingAIModels || isLoadingAvailableAIModels}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
-          focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          class="ui-select font-mono"
         >
           <option value="">{$_('page.settings.ai.model_default')}</option>
           {#if aiModels.claude_model && availableAIModels && !includesModel(availableAIModels.claude_models, aiModels.claude_model)}
@@ -134,16 +131,15 @@
         </select>
       </div>
 
-      <div>
-        <label for="gemini-model" class="block text-sm font-medium text-foreground mb-1">
+      <div class="ui-form-row">
+        <label for="gemini-model" class="ui-label mb-0">
           {$_('page.settings.ai.provider_gemini')}
         </label>
         <select
           id="gemini-model"
           bind:value={aiModels.gemini_model}
           disabled={isSavingAIModels || isLoadingAvailableAIModels}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
-          focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          class="ui-select font-mono"
         >
           <option value="">{$_('page.settings.ai.model_default')}</option>
           {#if aiModels.gemini_model && availableAIModels && !includesModel(availableAIModels.gemini_models, aiModels.gemini_model)}
@@ -163,16 +159,15 @@
         </select>
       </div>
 
-      <div>
-        <label for="chatgpt-model" class="block text-sm font-medium text-foreground mb-1">
+      <div class="ui-form-row">
+        <label for="chatgpt-model" class="ui-label mb-0">
           {$_('page.settings.ai.provider_chatgpt')}
         </label>
         <select
           id="chatgpt-model"
           bind:value={aiModels.chatgpt_model}
           disabled={isSavingAIModels || isLoadingAvailableAIModels}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
-          focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          class="ui-select font-mono"
         >
           <option value="">{$_('page.settings.ai.model_default')}</option>
           {#if aiModels.chatgpt_model && availableAIModels && !includesModel(availableAIModels.chatgpt_models, aiModels.chatgpt_model)}
@@ -202,12 +197,7 @@
         <p class="text-xs text-muted-foreground">{$_('page.settings.ai.models_hint')}</p>
       {/if}
 
-      <button
-        type="submit"
-        disabled={isSavingAIModels}
-        class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-        font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <button type="submit" disabled={isSavingAIModels} class="ui-button ui-button-primary">
         {#if isSavingAIModels}
           <Loader2 size={16} class="animate-spin" />
           {$_('common.saving')}
@@ -224,12 +214,12 @@
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.claude_description')}</p>
 
     {#if isLoadingClaudeKeyStatus}
-      <div class="p-4 rounded-lg border border-border bg-card flex items-center gap-3">
+      <div class="ui-panel p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
     {:else if claudeApiKeyStatus?.has_key}
-      <div class="p-4 rounded-lg border border-success/30 bg-success/10">
+      <div class="ui-alert ui-alert-success">
         <div class="flex items-start gap-3">
           <Key size={20} class="text-success mt-0.5" />
           <div class="flex-1">
@@ -248,7 +238,7 @@
           <button
             onclick={handleDeleteClaudeApiKey}
             disabled={claudeKeyForm.isDeleting}
-            class="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+            class="ui-icon-button p-2 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             title={$_('page.settings.ai.delete_api_key')}
           >
             {#if claudeKeyForm.isDeleting}
@@ -264,12 +254,9 @@
         <summary class="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
           {$_('page.settings.ai.update_api_key')}
         </summary>
-        <form onsubmit={handleSaveClaudeApiKey} class="mt-4 space-y-4">
-          <div>
-            <label
-              for="claude-api-key-update"
-              class="block text-sm font-medium text-foreground mb-1"
-            >
+        <form onsubmit={handleSaveClaudeApiKey} class="mt-4 ui-fieldset">
+          <div class="ui-form-row">
+            <label for="claude-api-key-update" class="ui-label mb-0">
               {$_('page.settings.ai.new_api_key_label')}
             </label>
             <div class="relative">
@@ -278,14 +265,13 @@
                 type={claudeKeyForm.showKey ? 'text' : 'password'}
                 bind:value={claudeKeyForm.apiKey}
                 disabled={claudeKeyForm.isSaving}
-                class="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-foreground font-mono
-                focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                class="ui-input w-full pr-10 font-mono"
                 placeholder="sk-ant-api03-..."
               />
               <button
                 type="button"
                 onclick={() => (claudeKeyForm.showKey = !claudeKeyForm.showKey)}
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
               >
                 {#if claudeKeyForm.showKey}
                   <EyeOff size={18} />
@@ -303,8 +289,7 @@
           <button
             type="submit"
             disabled={claudeKeyForm.isSaving}
-            class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-            font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="ui-button ui-button-primary"
           >
             {#if claudeKeyForm.isSaving}
               <Loader2 size={16} class="animate-spin" />
@@ -316,9 +301,9 @@
         </form>
       </details>
     {:else}
-      <form onsubmit={handleSaveClaudeApiKey} class="space-y-4">
-        <div>
-          <label for="claude-api-key" class="block text-sm font-medium text-foreground mb-1">
+      <form onsubmit={handleSaveClaudeApiKey} class="ui-fieldset">
+        <div class="ui-form-row">
+          <label for="claude-api-key" class="ui-label mb-0">
             {$_('page.settings.ai.api_key_label')}
           </label>
           <div class="relative">
@@ -327,14 +312,13 @@
               type={claudeKeyForm.showKey ? 'text' : 'password'}
               bind:value={claudeKeyForm.apiKey}
               disabled={claudeKeyForm.isSaving}
-              class="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-foreground font-mono
-              focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              class="ui-input w-full pr-10 font-mono"
               placeholder="sk-ant-api03-..."
             />
             <button
               type="button"
               onclick={() => (claudeKeyForm.showKey = !claudeKeyForm.showKey)}
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+              class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
             >
               {#if claudeKeyForm.showKey}
                 <EyeOff size={18} />
@@ -343,19 +327,14 @@
               {/if}
             </button>
           </div>
-          <p class="text-xs text-muted-foreground mt-1">{$_('page.settings.ai.claude_key_hint')}</p>
+          <p class="ui-form-help mt-1">{$_('page.settings.ai.claude_key_hint')}</p>
         </div>
 
         {#if claudeKeyForm.error}
           <div class="text-sm text-red-500">{claudeKeyForm.error}</div>
         {/if}
 
-        <button
-          type="submit"
-          disabled={claudeKeyForm.isSaving}
-          class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-          font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button type="submit" disabled={claudeKeyForm.isSaving} class="ui-button ui-button-primary">
           {#if claudeKeyForm.isSaving}
             <Loader2 size={16} class="animate-spin" />
             {$_('common.saving')}
@@ -374,12 +353,12 @@
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.gemini_description')}</p>
 
     {#if isLoadingGeminiKeyStatus}
-      <div class="p-4 rounded-lg border border-border bg-card flex items-center gap-3">
+      <div class="ui-panel p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
     {:else if geminiApiKeyStatus?.has_key}
-      <div class="p-4 rounded-lg border border-success/30 bg-success/10">
+      <div class="ui-alert ui-alert-success">
         <div class="flex items-start gap-3">
           <Key size={20} class="text-success mt-0.5" />
           <div class="flex-1">
@@ -398,7 +377,7 @@
           <button
             onclick={handleDeleteGeminiApiKey}
             disabled={geminiKeyForm.isDeleting}
-            class="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+            class="ui-icon-button p-2 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             title={$_('page.settings.ai.delete_api_key')}
           >
             {#if geminiKeyForm.isDeleting}
@@ -414,12 +393,9 @@
         <summary class="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
           {$_('page.settings.ai.update_api_key')}
         </summary>
-        <form onsubmit={handleSaveGeminiApiKey} class="mt-4 space-y-4">
-          <div>
-            <label
-              for="gemini-api-key-update"
-              class="block text-sm font-medium text-foreground mb-1"
-            >
+        <form onsubmit={handleSaveGeminiApiKey} class="mt-4 ui-fieldset">
+          <div class="ui-form-row">
+            <label for="gemini-api-key-update" class="ui-label mb-0">
               {$_('page.settings.ai.new_api_key_label')}
             </label>
             <div class="relative">
@@ -428,14 +404,13 @@
                 type={geminiKeyForm.showKey ? 'text' : 'password'}
                 bind:value={geminiKeyForm.apiKey}
                 disabled={geminiKeyForm.isSaving}
-                class="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-foreground font-mono
-                focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                class="ui-input w-full pr-10 font-mono"
                 placeholder="AIzaSy..."
               />
               <button
                 type="button"
                 onclick={() => (geminiKeyForm.showKey = !geminiKeyForm.showKey)}
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
               >
                 {#if geminiKeyForm.showKey}
                   <EyeOff size={18} />
@@ -453,8 +428,7 @@
           <button
             type="submit"
             disabled={geminiKeyForm.isSaving}
-            class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-            font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="ui-button ui-button-primary"
           >
             {#if geminiKeyForm.isSaving}
               <Loader2 size={16} class="animate-spin" />
@@ -466,9 +440,9 @@
         </form>
       </details>
     {:else}
-      <form onsubmit={handleSaveGeminiApiKey} class="space-y-4">
-        <div>
-          <label for="gemini-api-key" class="block text-sm font-medium text-foreground mb-1">
+      <form onsubmit={handleSaveGeminiApiKey} class="ui-fieldset">
+        <div class="ui-form-row">
+          <label for="gemini-api-key" class="ui-label mb-0">
             {$_('page.settings.ai.api_key_label')}
           </label>
           <div class="relative">
@@ -477,14 +451,13 @@
               type={geminiKeyForm.showKey ? 'text' : 'password'}
               bind:value={geminiKeyForm.apiKey}
               disabled={geminiKeyForm.isSaving}
-              class="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-foreground font-mono
-              focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              class="ui-input w-full pr-10 font-mono"
               placeholder="AIzaSy..."
             />
             <button
               type="button"
               onclick={() => (geminiKeyForm.showKey = !geminiKeyForm.showKey)}
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+              class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
             >
               {#if geminiKeyForm.showKey}
                 <EyeOff size={18} />
@@ -493,19 +466,14 @@
               {/if}
             </button>
           </div>
-          <p class="text-xs text-muted-foreground mt-1">{$_('page.settings.ai.gemini_key_hint')}</p>
+          <p class="ui-form-help mt-1">{$_('page.settings.ai.gemini_key_hint')}</p>
         </div>
 
         {#if geminiKeyForm.error}
           <div class="text-sm text-red-500">{geminiKeyForm.error}</div>
         {/if}
 
-        <button
-          type="submit"
-          disabled={geminiKeyForm.isSaving}
-          class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-          font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button type="submit" disabled={geminiKeyForm.isSaving} class="ui-button ui-button-primary">
           {#if geminiKeyForm.isSaving}
             <Loader2 size={16} class="animate-spin" />
             {$_('common.saving')}
@@ -524,12 +492,12 @@
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.openai_description')}</p>
 
     {#if isLoadingOpenAIKeyStatus}
-      <div class="p-4 rounded-lg border border-border bg-card flex items-center gap-3">
+      <div class="ui-panel p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
     {:else if openAIApiKeyStatus?.has_key}
-      <div class="p-4 rounded-lg border border-success/30 bg-success/10">
+      <div class="ui-alert ui-alert-success">
         <div class="flex items-start gap-3">
           <Key size={20} class="text-success mt-0.5" />
           <div class="flex-1">
@@ -548,7 +516,7 @@
           <button
             onclick={handleDeleteOpenAIApiKey}
             disabled={openAIKeyForm.isDeleting}
-            class="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+            class="ui-icon-button p-2 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             title={$_('page.settings.ai.delete_api_key')}
           >
             {#if openAIKeyForm.isDeleting}
@@ -564,12 +532,9 @@
         <summary class="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
           {$_('page.settings.ai.update_api_key')}
         </summary>
-        <form onsubmit={handleSaveOpenAIApiKey} class="mt-4 space-y-4">
-          <div>
-            <label
-              for="openai-api-key-update"
-              class="block text-sm font-medium text-foreground mb-1"
-            >
+        <form onsubmit={handleSaveOpenAIApiKey} class="mt-4 ui-fieldset">
+          <div class="ui-form-row">
+            <label for="openai-api-key-update" class="ui-label mb-0">
               {$_('page.settings.ai.new_api_key_label')}
             </label>
             <div class="relative">
@@ -578,14 +543,13 @@
                 type={openAIKeyForm.showKey ? 'text' : 'password'}
                 bind:value={openAIKeyForm.apiKey}
                 disabled={openAIKeyForm.isSaving}
-                class="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-foreground font-mono
-                focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                class="ui-input w-full pr-10 font-mono"
                 placeholder="sk-proj-..."
               />
               <button
                 type="button"
                 onclick={() => (openAIKeyForm.showKey = !openAIKeyForm.showKey)}
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
               >
                 {#if openAIKeyForm.showKey}
                   <EyeOff size={18} />
@@ -603,8 +567,7 @@
           <button
             type="submit"
             disabled={openAIKeyForm.isSaving}
-            class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-            font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="ui-button ui-button-primary"
           >
             {#if openAIKeyForm.isSaving}
               <Loader2 size={16} class="animate-spin" />
@@ -616,9 +579,9 @@
         </form>
       </details>
     {:else}
-      <form onsubmit={handleSaveOpenAIApiKey} class="space-y-4">
-        <div>
-          <label for="openai-api-key" class="block text-sm font-medium text-foreground mb-1">
+      <form onsubmit={handleSaveOpenAIApiKey} class="ui-fieldset">
+        <div class="ui-form-row">
+          <label for="openai-api-key" class="ui-label mb-0">
             {$_('page.settings.ai.api_key_label')}
           </label>
           <div class="relative">
@@ -627,14 +590,13 @@
               type={openAIKeyForm.showKey ? 'text' : 'password'}
               bind:value={openAIKeyForm.apiKey}
               disabled={openAIKeyForm.isSaving}
-              class="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-foreground font-mono
-              focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              class="ui-input w-full pr-10 font-mono"
               placeholder="sk-proj-..."
             />
             <button
               type="button"
               onclick={() => (openAIKeyForm.showKey = !openAIKeyForm.showKey)}
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+              class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
             >
               {#if openAIKeyForm.showKey}
                 <EyeOff size={18} />
@@ -643,19 +605,14 @@
               {/if}
             </button>
           </div>
-          <p class="text-xs text-muted-foreground mt-1">{$_('page.settings.ai.openai_key_hint')}</p>
+          <p class="ui-form-help mt-1">{$_('page.settings.ai.openai_key_hint')}</p>
         </div>
 
         {#if openAIKeyForm.error}
           <div class="text-sm text-red-500">{openAIKeyForm.error}</div>
         {/if}
 
-        <button
-          type="submit"
-          disabled={openAIKeyForm.isSaving}
-          class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground
-          font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button type="submit" disabled={openAIKeyForm.isSaving} class="ui-button ui-button-primary">
           {#if openAIKeyForm.isSaving}
             <Loader2 size={16} class="animate-spin" />
             {$_('common.saving')}
@@ -668,7 +625,7 @@
     {/if}
   </div>
 
-  <div class="p-4 rounded-lg bg-primary/10 border border-primary/30">
+  <div class="ui-panel p-4 bg-primary/10 border-primary/30">
     <div class="flex items-start gap-3">
       <Sparkles size={20} class="text-primary mt-0.5" />
       <div class="flex-1 text-sm text-foreground">
@@ -682,9 +639,7 @@
     </div>
   </div>
 
-  <div
-    class="p-4 rounded-lg bg-orange-100/80 dark:bg-orange-900/20 border border-orange-400 dark:border-orange-700"
-  >
+  <div class="ui-alert ui-alert-warning">
     <div class="flex items-start gap-3">
       <AlertTriangle size={20} class="text-orange-700 dark:text-orange-400 mt-0.5" />
       <div class="flex-1">

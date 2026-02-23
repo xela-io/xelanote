@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -15,21 +16,26 @@ type webAuthnCredentialInfo struct {
 }
 
 type preferencesResponse struct {
-	Theme             string                   `json:"theme"`
-	EditorMode        string                   `json:"editor_mode"`
-	KeywordsEnabled   bool                     `json:"keywords_enabled"`
-	EncryptTitles     bool                     `json:"encrypt_titles"`
-	SecurityLevel     string                   `json:"security_level"`
-	AutoLockTimeout   int                      `json:"auto_lock_timeout"`
-	ActiveAIProvider  string                   `json:"active_ai_provider"`
-	DietaryPreference string                   `json:"dietary_preference"`
-	Credentials       []webAuthnCredentialInfo `json:"webauthn_credentials"`
-	Created           bool                     `json:"created"`
+	Theme               string                   `json:"theme"`
+	EditorMode          string                   `json:"editor_mode"`
+	KeywordsEnabled     bool                     `json:"keywords_enabled"`
+	EncryptTitles       bool                     `json:"encrypt_titles"`
+	SecurityLevel       string                   `json:"security_level"`
+	AutoLockTimeout     int                      `json:"auto_lock_timeout"`
+	ActiveAIProvider    string                   `json:"active_ai_provider"`
+	DietaryPreference   string                   `json:"dietary_preference"`
+	Credentials         []webAuthnCredentialInfo `json:"webauthn_credentials"`
+	HomeDashboardLayout json.RawMessage          `json:"home_dashboard_layout"`
+	Created             bool                     `json:"created"`
 }
 
 type updatePreferencesRequest struct {
 	Theme      string `json:"theme"`
 	EditorMode string `json:"editor_mode"`
+}
+
+type patchPreferencesRequest struct {
+	HomeDashboardLayout json.RawMessage `json:"home_dashboard_layout"`
 }
 
 type updateEncryptionPreferencesRequest struct {

@@ -13,6 +13,9 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
+  import { ApiError } from '$lib/api';
+  import { getPreferences, updateHomeDashboardLayoutPreference } from '$lib/api/preferences';
+  import type { HomeDashboardLayoutPreference } from '$lib/api/types';
   import CreateNoteDialog from '$lib/components/CreateNoteDialog.svelte';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as folders from '$lib/stores/folders.svelte';
@@ -43,6 +46,8 @@
   let rightSectionOrder = $state<RightColumnSectionId[]>([...DEFAULT_RIGHT_SECTION_ORDER]);
   let draggingSectionId = $state<RightColumnSectionId | null>(null);
   let dragOverSectionId = $state<RightColumnSectionId | null>(null);
+  let homeLayoutServerSyncSupported = $state<boolean | null>(null);
+  let homeLayoutSyncTimer = $state<ReturnType<typeof setTimeout> | null>(null);
   const recentNotes = $derived(notes.getRecentNotes(5));
   const latestNote = $derived(notes.getRecentNotes(1)[0] ?? null);
   const newlyCreatedNotes = $derived.by(() =>
@@ -128,6 +133,56 @@
     return collapsedSections[id];
   }
 
+  function buildDashboardLayoutPreference(): HomeDashboardLayoutPreference {
+    return {
+      version: 1,
+      collapsed_sections: {
+        hero: collapsedSections.hero,
+        recent: collapsedSections.recent,
+        activity: collapsedSections.activity,
+        created: collapsedSections.created,
+        all: collapsedSections.all,
+      },
+      right_section_order: [...rightSectionOrder],
+    };
+  }
+
+  function applyDashboardLayoutPreference(
+    layout: HomeDashboardLayoutPreference | null | undefined
+  ) {
+    if (!layout || layout.version !== 1) return;
+    collapsedSections = {
+      ...collapsedSections,
+      ...layout.collapsed_sections,
+    };
+
+    const valid = layout.right_section_order.filter((id) =>
+      DEFAULT_RIGHT_SECTION_ORDER.includes(id)
+    );
+    const unique = [...new Set(valid)];
+    if (unique.length === DEFAULT_RIGHT_SECTION_ORDER.length) {
+      rightSectionOrder = unique;
+    }
+  }
+
+  function queueDashboardLayoutServerSync() {
+    if (typeof window === 'undefined') return;
+    if (homeLayoutServerSyncSupported === false) return;
+    if (homeLayoutSyncTimer) clearTimeout(homeLayoutSyncTimer);
+
+    homeLayoutSyncTimer = setTimeout(async () => {
+      homeLayoutSyncTimer = null;
+      try {
+        await updateHomeDashboardLayoutPreference(buildDashboardLayoutPreference());
+        homeLayoutServerSyncSupported = true;
+      } catch (error) {
+        if (error instanceof ApiError && [400, 404, 405, 422].includes(error.status)) {
+          homeLayoutServerSyncSupported = false;
+        }
+      }
+    }, 350);
+  }
+
   function persistCollapsedSections() {
     if (typeof localStorage === 'undefined') return;
     try {
@@ -135,6 +190,7 @@
     } catch (error) {
       console.warn('Could not persist dashboard collapse state', error);
     }
+    queueDashboardLayoutServerSync();
   }
 
   function persistRightSectionOrder() {
@@ -144,11 +200,25 @@
     } catch (error) {
       console.warn('Could not persist dashboard section order', error);
     }
+    queueDashboardLayoutServerSync();
   }
 
   function toggleSection(id: DashboardSectionId) {
     collapsedSections = { ...collapsedSections, [id]: !collapsedSections[id] };
     persistCollapsedSections();
+  }
+
+  function resetDashboardLayout() {
+    collapsedSections = {
+      hero: false,
+      recent: false,
+      activity: false,
+      created: false,
+      all: true,
+    };
+    rightSectionOrder = [...DEFAULT_RIGHT_SECTION_ORDER];
+    persistCollapsedSections();
+    persistRightSectionOrder();
   }
 
   function loadDashboardLayoutPreferences() {
@@ -184,6 +254,20 @@
       }
     } catch (error) {
       console.warn('Could not load dashboard section order', error);
+    }
+  }
+
+  async function loadDashboardLayoutFromServer() {
+    try {
+      const prefs = await getPreferences();
+      if (Object.prototype.hasOwnProperty.call(prefs, 'home_dashboard_layout')) {
+        homeLayoutServerSyncSupported = true;
+        applyDashboardLayoutPreference(prefs.home_dashboard_layout ?? undefined);
+      } else {
+        homeLayoutServerSyncSupported = false;
+      }
+    } catch {
+      // Non-blocking: localStorage remains the primary fallback
     }
   }
 
@@ -237,6 +321,10 @@
 
   onMount(() => {
     loadDashboardLayoutPreferences();
+    void loadDashboardLayoutFromServer();
+    return () => {
+      if (homeLayoutSyncTimer) clearTimeout(homeLayoutSyncTimer);
+    };
   });
 
   async function handleCreateNoteConfirm(title: string) {
@@ -400,14 +488,20 @@
           </section>
 
           <div class="flex flex-col gap-5">
+            <div class="flex justify-end">
+              <button
+                type="button"
+                onclick={resetDashboardLayout}
+                class="rounded-lg border border-border/60 bg-background/35 px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-accent/25"
+              >
+                Layout zurücksetzen
+              </button>
+            </div>
             <section
               role="group"
               aria-label="Zuletzt bearbeitet Bereich"
-              draggable="true"
-              ondragstart={(event) => handleSectionDragStart(event, 'recent')}
               ondragover={(event) => handleSectionDragOver(event, 'recent')}
               ondrop={(event) => handleSectionDrop(event, 'recent')}
-              ondragend={handleSectionDragEnd}
               style={`order: ${getRightSectionOrder('recent')}`}
               class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
                 dragOverSectionId === 'recent'
@@ -427,6 +521,9 @@
                 <div class="flex items-center gap-1">
                   <button
                     type="button"
+                    draggable="true"
+                    ondragstart={(event) => handleSectionDragStart(event, 'recent')}
+                    ondragend={handleSectionDragEnd}
                     class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
                     title="Reihenfolge ändern (ziehen)"
                     aria-label="Reihenfolge ändern (ziehen)"
@@ -498,11 +595,8 @@
             <section
               role="group"
               aria-label="Aktivitätsbereich"
-              draggable="true"
-              ondragstart={(event) => handleSectionDragStart(event, 'activity')}
               ondragover={(event) => handleSectionDragOver(event, 'activity')}
               ondrop={(event) => handleSectionDrop(event, 'activity')}
-              ondragend={handleSectionDragEnd}
               style={`order: ${getRightSectionOrder('activity')}`}
               class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
                 dragOverSectionId === 'activity'
@@ -520,6 +614,9 @@
                 <div class="flex items-center gap-1">
                   <button
                     type="button"
+                    draggable="true"
+                    ondragstart={(event) => handleSectionDragStart(event, 'activity')}
+                    ondragend={handleSectionDragEnd}
                     class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
                     title="Reihenfolge ändern (ziehen)"
                     aria-label="Reihenfolge ändern (ziehen)"
@@ -602,11 +699,8 @@
             <section
               role="group"
               aria-label="Zuletzt erstellt Bereich"
-              draggable="true"
-              ondragstart={(event) => handleSectionDragStart(event, 'created')}
               ondragover={(event) => handleSectionDragOver(event, 'created')}
               ondrop={(event) => handleSectionDrop(event, 'created')}
-              ondragend={handleSectionDragEnd}
               style={`order: ${getRightSectionOrder('created')}`}
               class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
                 dragOverSectionId === 'created'
@@ -626,6 +720,9 @@
                 <div class="flex items-center gap-1">
                   <button
                     type="button"
+                    draggable="true"
+                    ondragstart={(event) => handleSectionDragStart(event, 'created')}
+                    ondragend={handleSectionDragEnd}
                     class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
                     title="Reihenfolge ändern (ziehen)"
                     aria-label="Reihenfolge ändern (ziehen)"
@@ -686,11 +783,8 @@
             <section
               role="group"
               aria-label="Alle Notizen Bereich"
-              draggable="true"
-              ondragstart={(event) => handleSectionDragStart(event, 'all')}
               ondragover={(event) => handleSectionDragOver(event, 'all')}
               ondrop={(event) => handleSectionDrop(event, 'all')}
-              ondragend={handleSectionDragEnd}
               style={`order: ${getRightSectionOrder('all')}`}
               class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
                 dragOverSectionId === 'all'
@@ -710,6 +804,9 @@
                 <div class="flex items-center gap-1">
                   <button
                     type="button"
+                    draggable="true"
+                    ondragstart={(event) => handleSectionDragStart(event, 'all')}
+                    ondragend={handleSectionDragEnd}
                     class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
                     title="Reihenfolge ändern (ziehen)"
                     aria-label="Reihenfolge ändern (ziehen)"

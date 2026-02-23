@@ -16,16 +16,14 @@
   const { collections, onEdit, onDelete, onCreate, onSelect, onShare }: Props = $props();
 </script>
 
-<div class="space-y-2">
+<div class="space-y-2.5">
   {#if collections.length === 0}
     <p class="text-sm text-muted-foreground italic py-4 text-center">
       {$_('page.recipes.no_collections')}
     </p>
   {:else}
     {#each collections as coll (coll.id)}
-      <div
-        class="group flex items-center gap-2 rounded-lg border border-border bg-background/40 px-3 py-2 transition-colors hover:bg-accent/60"
-      >
+      <div class="ui-list-item group flex items-center gap-2 px-3 py-2.5 hover:-translate-y-px">
         <button
           onclick={() => onSelect(coll.id)}
           class="flex min-w-0 flex-1 items-center gap-2 text-left py-0.5"
@@ -75,7 +73,7 @@
 
   <button
     onclick={onCreate}
-    class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent border border-dashed border-border"
+    class="flex w-full items-center gap-2 rounded-xl border border-dashed border-border/60 bg-background/20 px-3 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/30"
   >
     <Plus size={14} />
     {$_('page.recipes.create_collection')}

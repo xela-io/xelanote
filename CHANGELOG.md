@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mobile: Sidebar now pushes content to the right with blur effect instead of overlaying with dark backdrop
 - Mobile: Replace fixed floating sidebar toggle with inline MobileSidebarInlineToggle component in each page header for contextual positioning
 - Home: Redesign home page with activity stats, continue-working section, recently created notes, and full all-notes listing with search, sort, and mobile-friendly collapsible view
+- Frontend: Introduce shared UI component classes (ui-panel, ui-list-item, ui-button, ui-page-header, etc.) in app.css for consistent frosted-glass design language across all pages
+- Recipes: Overhaul ingredient editor with inline editing, drag-and-drop reordering, smart ingredient parsing, and polished preview layout
+- Settings: Refresh Account, AI, and Security tabs with new surface tokens and consistent card styling
+- Pages: Apply unified design system to journal, recipes, search, trash, and shared-with-me views
+- Backend: Add home dashboard layout preferences API endpoint for persisting user layout customization
 
 ### Fixed
 

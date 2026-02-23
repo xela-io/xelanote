@@ -72,16 +72,34 @@ func (db *DB) GetUserStats(userID int) (*AdminUser, error) {
 	return &u, nil
 }
 
-// SetUserAdmin sets the admin status of a user
+// SetUserAdmin sets the admin status of a user.
+// Because idx_single_admin enforces at most one admin, promotions
+// atomically demote the current admin first.
 func (db *DB) SetUserAdmin(userID int, isAdmin bool) error {
-	result, err := db.Exec(`
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("set user admin: begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	if isAdmin {
+		// Demote any existing admin before promoting the new one.
+		if _, err := tx.Exec(`UPDATE users SET is_admin = 0, updated_at = datetime('now') WHERE is_admin = 1`); err != nil {
+			return fmt.Errorf("set user admin: demote existing: %w", err)
+		}
+	}
+
+	result, err := tx.Exec(`
 		UPDATE users SET is_admin = ?, updated_at = datetime('now')
 		WHERE id = ?
 	`, isAdmin, userID)
 	if err != nil {
 		return fmt.Errorf("set user admin: %w", err)
 	}
-	return ensureRowsAffected(result)
+	if err := ensureRowsAffected(result); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // DeleteUserByAdmin deletes a user and all their data

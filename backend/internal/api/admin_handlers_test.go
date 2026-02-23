@@ -123,12 +123,13 @@ func TestAdminToggleAdmin(t *testing.T) {
 	target := ts.createUser(t, "target", "target@example.com", "password123")
 	token := ts.getAuthToken(t, admin.User)
 
-	// Promote target to admin
+	// Promote target to admin (demotes current admin due to single-admin constraint)
 	rec := doJSON(t, r, http.MethodPut, fmt.Sprintf("/api/admin/users/%d/admin", target.User.ID), SetAdminRequest{IsAdmin: true}, token)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 
-	// Verify target is now admin
-	rec = doJSON(t, r, http.MethodGet, fmt.Sprintf("/api/admin/users/%d", target.User.ID), nil, token)
+	// Verify target is now admin (use target's token since original admin was demoted)
+	targetToken := ts.getAuthToken(t, target.User)
+	rec = doJSON(t, r, http.MethodGet, fmt.Sprintf("/api/admin/users/%d", target.User.ID), nil, targetToken)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	var resp AdminUserResponse
 	decodeResponse(t, rec, &resp)

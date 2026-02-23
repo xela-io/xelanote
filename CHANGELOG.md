@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Backend: Fix admin promotion violating single-admin unique constraint (atomically demote existing admin before promoting new one)
+- Backend: Fix admin promotion violating single-admin unique constraint (atomically demote existing admin before promoting new one, update API test accordingly)
 - Backend: Fix build failure in service package — `cache.NewCache` renamed to `cache.New` but `graph_test.go` was missed
 - Recipes: Sidebar toggle button now vertically aligned with tab bar (Ingredients/Instructions/Preview) on mobile
 - Editor: Live preview now keeps consistent font styling when clicking on a line (no more sans-serif → monospace switch on active lines)

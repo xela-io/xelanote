@@ -951,7 +951,10 @@
   });
 </script>
 
-<div class="editor-shell flex h-full flex-col">
+<div
+  class="editor-shell flex h-full flex-col"
+  data-note-type={notes.getCurrentNote()?.note_type ?? 'note'}
+>
   <!-- Toolbar (fixed header, not in scroll container) -->
   {#if notes.getCurrentNote()}
     <EditorToolbar

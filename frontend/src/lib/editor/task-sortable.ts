@@ -115,10 +115,16 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
   function refresh() {
     const mode = options.mode ?? 'preview';
     const enabled = options.enabled ?? true;
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+    // Live-mode drag explicitly disabled on touch: long-press conflicts
+    // with text selection in contenteditable.
+    const effectiveEnabled = enabled && !(mode === 'live' && isTouch);
+
     const containers =
-      enabled && mode === 'live'
+      effectiveEnabled && mode === 'live'
         ? (Array.from(container.querySelectorAll('.cm-content')) as HTMLElement[])
-        : enabled
+        : effectiveEnabled
           ? (Array.from(container.querySelectorAll('ul.contains-task-list')) as HTMLElement[])
           : [];
     const activeContainers = new Set(containers);
@@ -139,7 +145,11 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
 
       const sortable = Sortable.create(sortableContainer, {
         animation: 150,
-        handle: mode === 'live' ? '.cm-live-task-drag-handle' : '.drag-handle',
+        handle: isTouch
+          ? undefined
+          : mode === 'live'
+            ? '.cm-live-task-drag-handle'
+            : '.drag-handle',
         draggable: mode === 'live' ? liveDraggableSelector : '.task-list-item',
         // Long-press delay for touch devices (prevents accidental drags)
         delay: 200,

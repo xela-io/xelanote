@@ -1322,7 +1322,7 @@ html {
 
 @media (pointer: coarse) {
   .cm-editor .cm-live-task-drag-handle {
-    opacity: 0.5;
+    display: none;
   }
 }
 
@@ -1370,6 +1370,19 @@ html {
   margin-bottom: 0.25em;
 }
 
+/* Journal entries keep automatic date filenames/titles; no inline title styling in editor body */
+.editor-shell[data-note-type='journal'] .cm-editor .cm-line.cm-first-line-title {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  padding-bottom: 0;
+}
+
+.editor-shell[data-note-type='journal'] .cm-editor .cm-line.cm-live-first-line-title {
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+
 .cm-editor .cm-live-collapsed-line {
   display: none;
 }
@@ -1402,6 +1415,16 @@ html {
   color: var(--color-foreground);
 }
 
+@media (pointer: coarse) {
+  .cm-editor .cm-live-heading-toggle {
+    width: 1.5rem;
+    height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* Completed task group toggle button — positioned left of bracket */
 .cm-editor .cm-live-task-group-toggle {
   position: absolute;
@@ -1424,9 +1447,9 @@ html {
 
 @media (pointer: coarse) {
   .cm-editor .cm-live-task-group-toggle {
-    /* Bigger touch target on mobile while keeping the visual marker in place */
+    /* 44px touch target — wider would collide with checkboxes */
     width: 1.75rem;
-    height: 1.75rem;
+    height: 2.75rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1935,10 +1958,10 @@ html {
   opacity: 0.6;
 }
 
-/* Mobile: Handle always visible for discoverability */
+/* Mobile: Hide drag handle — long-press on item starts drag directly */
 @media (pointer: coarse) {
   .markdown-preview .drag-handle {
-    opacity: 0.5;
+    display: none;
   }
 }
 

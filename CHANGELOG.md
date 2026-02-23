@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Recipes: Delete button on recipe list items with confirmation dialog, trash integration, and state refresh
 - Recipes: Automatic Fahrenheit→Celsius conversion in recipe instructions during AI import (image and URL), rounded to nearest 5°C
 
 ### Security

@@ -400,6 +400,7 @@
       "image_caption_placeholder": "Caption...",
       "max_images_reached": "Maximum photos reached",
       "upload_failed": "Upload failed",
+      "delete_failed": "Failed to delete recipe.",
       "suggestions": {
         "find_similar": "Find similar recipes",
         "what_can_i_cook": "What can I cook?",

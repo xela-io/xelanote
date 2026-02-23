@@ -7,11 +7,17 @@
 
   import { goto } from '$app/navigation';
   import type { RecipeCollection } from '$lib/api';
+  import { deleteNote } from '$lib/api/notes';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
+  import * as dialog from '$lib/stores/dialog.svelte';
   import * as features from '$lib/stores/features.svelte';
+  import * as notes from '$lib/stores/notes.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
+  import * as trash from '$lib/stores/trash.svelte';
+  import * as tree from '$lib/stores/tree.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   let showCreateDialog = $state(false);
@@ -145,6 +151,29 @@
     recipes.selectCollection(id);
   }
 
+  async function handleDeleteRecipe(id: string, event: MouseEvent) {
+    event.stopPropagation();
+    const confirmed = await dialog.confirm({
+      title: $_('dialog.confirm_title'),
+      message: $_('dialog.delete_note_confirm'),
+      confirmText: $_('common.delete'),
+      cancelText: $_('dialog.cancel'),
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+    try {
+      await deleteNote(id);
+      trash.incrementTrashCount();
+      await Promise.all([recipes.loadRecipes(), notes.loadNotes(), tree.loadTree()]);
+      if (selectedCollectionId) {
+        await recipes.selectCollection(selectedCollectionId);
+      }
+      toast.success($_('component.editor.note_trashed'));
+    } catch {
+      toast.error($_('page.recipes.delete_failed'));
+    }
+  }
+
   async function handleShareCollection(collectionId: number) {
     await ensureShareDialog();
     sharingCollectionId = collectionId;
@@ -274,33 +303,44 @@
             {:else}
               <div class="space-y-2.5">
                 {#each displayedRecipes as recipe (recipe.id)}
-                  <button
-                    onclick={() => goto(`/note/${recipe.id}`)}
-                    class="ui-list-item group w-full p-3 text-left hover:-translate-y-px"
+                  <div
+                    class="ui-list-item group flex w-full items-center p-3 text-left hover:-translate-y-px"
                   >
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
-                      {#if recipe.content_encrypted}
-                        <Lock size={12} class="text-muted-foreground shrink-0" />
-                      {/if}
-                    </div>
-                    <div
-                      class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                    <button
+                      onclick={() => goto(`/note/${recipe.id}`)}
+                      class="flex-1 min-w-0 text-left"
                     >
-                      {#if recipe.servings}
-                        <span>{recipe.servings} {$_('page.recipes.servings')}</span>
-                      {/if}
-                      {#if recipe.prep_time_minutes}
-                        <span class="flex items-center gap-0.5">
-                          <Clock size={10} />
-                          {recipe.prep_time_minutes} min
-                        </span>
-                      {/if}
-                      {#if recipe.difficulty}
-                        <span>{difficultyLabel(recipe.difficulty)}</span>
-                      {/if}
-                    </div>
-                  </button>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
+                        {#if recipe.content_encrypted}
+                          <Lock size={12} class="text-muted-foreground shrink-0" />
+                        {/if}
+                      </div>
+                      <div
+                        class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                      >
+                        {#if recipe.servings}
+                          <span>{recipe.servings} {$_('page.recipes.servings')}</span>
+                        {/if}
+                        {#if recipe.prep_time_minutes}
+                          <span class="flex items-center gap-0.5">
+                            <Clock size={10} />
+                            {recipe.prep_time_minutes} min
+                          </span>
+                        {/if}
+                        {#if recipe.difficulty}
+                          <span>{difficultyLabel(recipe.difficulty)}</span>
+                        {/if}
+                      </div>
+                    </button>
+                    <button
+                      onclick={(e) => handleDeleteRecipe(recipe.id, e)}
+                      class="shrink-0 p-1.5 rounded opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity"
+                      aria-label={$_('common.delete')}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 {/each}
               </div>
             {/if}
@@ -328,33 +368,44 @@
             {:else}
               <div class="space-y-2.5">
                 {#each recipeList as recipe (recipe.id)}
-                  <button
-                    onclick={() => goto(`/note/${recipe.id}`)}
-                    class="ui-list-item group w-full p-3 text-left hover:-translate-y-px"
+                  <div
+                    class="ui-list-item group flex w-full items-center p-3 text-left hover:-translate-y-px"
                   >
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
-                      {#if recipe.content_encrypted}
-                        <Lock size={12} class="text-muted-foreground shrink-0" />
-                      {/if}
-                    </div>
-                    <div
-                      class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                    <button
+                      onclick={() => goto(`/note/${recipe.id}`)}
+                      class="flex-1 min-w-0 text-left"
                     >
-                      {#if recipe.servings}
-                        <span>{recipe.servings} {$_('page.recipes.servings')}</span>
-                      {/if}
-                      {#if recipe.prep_time_minutes}
-                        <span class="flex items-center gap-0.5">
-                          <Clock size={10} />
-                          {recipe.prep_time_minutes} min
-                        </span>
-                      {/if}
-                      {#if recipe.difficulty}
-                        <span>{difficultyLabel(recipe.difficulty)}</span>
-                      {/if}
-                    </div>
-                  </button>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm flex-1 truncate">{recipe.title}</span>
+                        {#if recipe.content_encrypted}
+                          <Lock size={12} class="text-muted-foreground shrink-0" />
+                        {/if}
+                      </div>
+                      <div
+                        class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                      >
+                        {#if recipe.servings}
+                          <span>{recipe.servings} {$_('page.recipes.servings')}</span>
+                        {/if}
+                        {#if recipe.prep_time_minutes}
+                          <span class="flex items-center gap-0.5">
+                            <Clock size={10} />
+                            {recipe.prep_time_minutes} min
+                          </span>
+                        {/if}
+                        {#if recipe.difficulty}
+                          <span>{difficultyLabel(recipe.difficulty)}</span>
+                        {/if}
+                      </div>
+                    </button>
+                    <button
+                      onclick={(e) => handleDeleteRecipe(recipe.id, e)}
+                      class="shrink-0 p-1.5 rounded opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity"
+                      aria-label={$_('common.delete')}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 {/each}
               </div>
             {/if}

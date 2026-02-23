@@ -400,6 +400,7 @@
       "image_caption_placeholder": "Bildunterschrift...",
       "max_images_reached": "Maximale Fotoanzahl erreicht",
       "upload_failed": "Upload fehlgeschlagen",
+      "delete_failed": "Rezept konnte nicht gelöscht werden.",
       "suggestions": {
         "find_similar": "Ähnliche Rezepte finden",
         "what_can_i_cook": "Was kann ich kochen?",

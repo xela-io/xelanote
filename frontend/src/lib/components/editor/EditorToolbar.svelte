@@ -10,8 +10,10 @@
     Minimize2,
     MoreVertical,
     Plus,
+    Redo2,
     RefreshCw,
     Save,
+    Undo2,
     Wand2,
     WifiOff,
   } from 'lucide-svelte';
@@ -46,8 +48,12 @@
     focusModeActive?: boolean;
     showSpellCheck?: boolean;
     showInsertMenu?: boolean;
+    canUndo?: boolean;
+    canRedo?: boolean;
     onSetEditorMode: (mode: EditorMode) => void;
     onSave: () => void;
+    onUndo: () => void;
+    onRedo: () => void;
     onShowHistory: () => void;
     onToggleFocus: () => void;
     onAIActions: (rect: DOMRect) => void;
@@ -74,8 +80,12 @@
     focusModeActive = false,
     showSpellCheck = false,
     showInsertMenu = false,
+    canUndo = false,
+    canRedo = false,
     onSetEditorMode,
     onSave,
+    onUndo,
+    onRedo,
     onShowHistory,
     onToggleFocus,
     onAIActions,
@@ -219,6 +229,30 @@
             <div class="toolbar-group-pill">
               {#if FEATURE_FLAGS.livePreview}
                 <EditorModeSelector {editorMode} {isMobile} {onSetEditorMode} />
+              {/if}
+
+              {#if isMobile}
+                <button
+                  type="button"
+                  onclick={onUndo}
+                  disabled={!canUndo}
+                  class="p-2 hover:bg-accent rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
+                  aria-label={$_('component.editor.toolbar.undo')}
+                  title={$_('component.editor.toolbar.undo')}
+                >
+                  <Undo2 size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onclick={onRedo}
+                  disabled={!canRedo}
+                  class="p-2 hover:bg-accent rounded-md disabled:opacity-50 flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
+                  aria-label={$_('component.editor.toolbar.redo')}
+                  title={$_('component.editor.toolbar.redo')}
+                >
+                  <Redo2 size={16} />
+                </button>
               {/if}
 
               <button

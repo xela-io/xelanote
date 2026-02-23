@@ -334,7 +334,9 @@
         "delete": "Delete",
         "autosave": "Auto-save",
         "ai_enabled": "Claude API enabled",
-        "ai_disabled": "Claude API disabled"
+        "ai_disabled": "Claude API disabled",
+        "undo": "Undo",
+        "redo": "Redo"
       },
       "title_input": "Edit title",
       "status": {

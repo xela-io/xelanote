@@ -334,7 +334,9 @@
         "delete": "Löschen",
         "autosave": "Automatisches Speichern",
         "ai_enabled": "Claude API aktiviert",
-        "ai_disabled": "Claude API deaktiviert"
+        "ai_disabled": "Claude API deaktiviert",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen"
       },
       "title_input": "Titel bearbeiten",
       "status": {

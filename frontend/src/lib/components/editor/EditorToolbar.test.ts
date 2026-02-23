@@ -60,6 +60,8 @@ function mockCallbacks() {
   return {
     onSetEditorMode: vi.fn(),
     onSave: vi.fn(),
+    onUndo: vi.fn(),
+    onRedo: vi.fn(),
     onShowHistory: vi.fn(),
     onToggleFocus: vi.fn(),
     onAIActions: vi.fn(),
@@ -205,6 +207,44 @@ describe('EditorToolbar', () => {
       props: { note: baseNote, isMobile: true, ...cbs },
     });
     expect(queryByLabelText('component.editor.toolbar.focus_mode')).not.toBeInTheDocument();
+  });
+
+  it('shows undo button on mobile and calls onUndo', async () => {
+    const cbs = mockCallbacks();
+    const { getByLabelText } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: true, canUndo: true, ...cbs },
+    });
+
+    await fireEvent.click(getByLabelText('component.editor.toolbar.undo'));
+    expect(cbs.onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables undo button on mobile when no undo is available', () => {
+    const cbs = mockCallbacks();
+    const { getByLabelText } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: true, canUndo: false, ...cbs },
+    });
+
+    expect(getByLabelText('component.editor.toolbar.undo')).toBeDisabled();
+  });
+
+  it('shows redo button on mobile and calls onRedo', async () => {
+    const cbs = mockCallbacks();
+    const { getByLabelText } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: true, canRedo: true, ...cbs },
+    });
+
+    await fireEvent.click(getByLabelText('component.editor.toolbar.redo'));
+    expect(cbs.onRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables redo button on mobile when no redo is available', () => {
+    const cbs = mockCallbacks();
+    const { getByLabelText } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: true, canRedo: false, ...cbs },
+    });
+
+    expect(getByLabelText('component.editor.toolbar.redo')).toBeDisabled();
   });
 
   it('shows AI actions button only when aiEnabled and in edit-compatible mode', () => {

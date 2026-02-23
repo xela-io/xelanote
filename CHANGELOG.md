@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Mobile: Add undo/redo buttons to mobile editor toolbar with CodeMirror state integration (disabled when no undo/redo available)
 - Editor: Streamline toolbar — extract mode selector into dedicated component (segmented control on desktop, dropdown on mobile), consolidate insert actions (task, table, upload) behind a single "+" menu, move autosave toggle to more menu, add section headers to more menu
 - Editor: Polish toolbar with grouped pill containers, custom mobile mode dropdown with checkmarks, enhanced save button with primary highlight and spinner, i18n for all section headers
 - Editor: Note title is now edited inline as the first line of the editor content (Bear/Apple Notes style) instead of a separate toolbar input. Title and content remain separate in the API/DB. Journal notes retain their read-only date title in the toolbar.

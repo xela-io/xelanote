@@ -1,4 +1,10 @@
 <script lang="ts">
+  import {
+    redo as codeMirrorRedo,
+    redoDepth,
+    undo as codeMirrorUndo,
+    undoDepth,
+  } from '@codemirror/commands';
   import type { EditorView } from '@codemirror/view';
   import { tick } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
@@ -758,6 +764,24 @@
     withEditor(insertTask);
   }
 
+  function canMobileUndo(): boolean {
+    return Boolean(editorView && undoDepth(editorView.state) > 0);
+  }
+
+  function canMobileRedo(): boolean {
+    return Boolean(editorView && redoDepth(editorView.state) > 0);
+  }
+
+  function handleMobileUndo() {
+    if (!editorView) return;
+    codeMirrorUndo(editorView);
+  }
+
+  function handleMobileRedo() {
+    if (!editorView) return;
+    codeMirrorRedo(editorView);
+  }
+
   function handleInsertTable() {
     showTableInsertDialog = true;
   }
@@ -952,8 +976,12 @@
         (ui.getEditorMode() === 'edit' ||
           ui.getEditorMode() === 'split' ||
           ui.getEditorMode() === 'live')}
+      canUndo={canMobileUndo()}
+      canRedo={canMobileRedo()}
       onSetEditorMode={settings.setEditorModePreference}
       onSave={handleSave}
+      onUndo={handleMobileUndo}
+      onRedo={handleMobileRedo}
       onShowHistory={() => (showVersionHistory = true)}
       onToggleFocus={focusMode.toggle}
       onAIActions={handleAIActionsClick}

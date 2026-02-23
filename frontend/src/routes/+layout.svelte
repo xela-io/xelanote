@@ -1,7 +1,6 @@
 <script lang="ts">
   import '../app.css';
 
-  import { PanelLeft } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
   import { onMount, untrack } from 'svelte';
   import { get } from 'svelte/store';
@@ -111,7 +110,6 @@
 
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/register', '/about'];
-
   // Navigation guard: Only runs when URL changes (not when auth state changes)
   // This prevents race conditions during login/register operations
   $effect(() => {
@@ -591,22 +589,6 @@
             enabled: () => ui.getIsMobile(),
           }}
         ></div>
-      {/if}
-
-      <!-- Mobile sidebar toggle button -->
-      {#if ui.getIsMobile()}
-        <button
-          type="button"
-          onclick={() => ui.setSidebarOpen(!ui.getSidebarOpen())}
-          class="fixed top-[calc(var(--safe-area-inset-top)+0.625rem)] p-2 rounded-md active:scale-95 transition-all duration-200 toolbar-btn
-            {ui.getSidebarOpen()
-            ? 'left-[calc(min(85vw,20rem)+0.5rem)] z-[55] bg-background border border-border text-foreground shadow-sm'
-            : 'left-[0.5rem] z-20 text-muted-foreground hover:bg-accent'}"
-          style="-webkit-tap-highlight-color: transparent"
-          aria-label={ui.getSidebarOpen() ? $_('page.sidebar.close_drawer') : $_('nav.notes_tree')}
-        >
-          <PanelLeft size={18} />
-        </button>
       {/if}
     </div>
 

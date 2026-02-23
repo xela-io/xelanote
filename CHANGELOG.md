@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mobile: Replace top MobileHeader with fixed bottom navigation bar (Notes, Search, More tabs). Sidebar toggle button always visible and visually integrated into editor toolbars. Mobile sidebar uses two-column layout matching desktop (icon strip + tree panel). Editor toolbars use single-row layout with horizontal scroll overflow
 - PWA: Lock orientation to portrait to respect Android rotation lock, add `display_override` for window-controls-overlay, add `mobile-web-app-capable` meta tag, add manifest screenshots for richer Android install prompt
 - Mobile: Sidebar now pushes content to the right with blur effect instead of overlaying with dark backdrop
+- Mobile: Replace fixed floating sidebar toggle with inline MobileSidebarInlineToggle component in each page header for contextual positioning
 
 ### Fixed
 

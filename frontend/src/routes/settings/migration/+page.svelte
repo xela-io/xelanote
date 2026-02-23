@@ -4,6 +4,7 @@
 
   import type { Note } from '$lib/api';
   import * as api from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
 
   let notes = $state<Note[]>([]);
@@ -109,7 +110,8 @@
 <div class="max-w-4xl mx-auto p-6">
   <!-- Header -->
   <div class="mb-8">
-    <div class="flex items-center gap-3 mb-2">
+    <div class="flex items-center gap-2 sm:gap-3 mb-2">
+      <MobileSidebarInlineToggle />
       <RefreshCw class="w-8 h-8 text-primary" />
       <h1 class="text-3xl font-bold">Notiz-Migration</h1>
     </div>

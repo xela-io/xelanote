@@ -3,6 +3,7 @@
   import { AlertTriangle, Eye, Key, Lock, Shield } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
 
   const settings = $derived(encryption.getSettings());
@@ -50,7 +51,8 @@
 <div class="max-w-4xl mx-auto p-6">
   <!-- Header -->
   <div class="mb-8">
-    <div class="flex items-center gap-3 mb-2">
+    <div class="flex items-center gap-2 sm:gap-3 mb-2">
+      <MobileSidebarInlineToggle />
       <Shield class="w-8 h-8 text-primary" />
       <h1 class="text-3xl font-bold">{$_('page.settings.encryption.title')}</h1>
     </div>

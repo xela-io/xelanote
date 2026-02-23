@@ -106,9 +106,9 @@
 
 <!-- Menu: Bottom sheet on mobile, fixed-positioned near button on desktop -->
 <div
-  class="fixed z-50 bg-background p-4
-		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
-		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
+  class="fixed z-50 bg-background p-4 flex flex-col overflow-hidden
+		bottom-0 left-0 right-0 max-h-[80vh] rounded-t-2xl animate-bottom-sheet
+		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:max-h-[calc(100vh-6rem)] sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
   style={desktopStyle}
   role="menu"
   aria-label={$_('component.editor.toolbar.more_options')}
@@ -120,7 +120,7 @@
   <!-- Mobile handle -->
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
 
-  <div class="space-y-1">
+  <div class="space-y-1 flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
     <div class="px-3 pt-1 pb-2 text-xs font-semibold tracking-wide text-muted-foreground sm:hidden">
       {$_('component.editor.toolbar.more_options')}
     </div>

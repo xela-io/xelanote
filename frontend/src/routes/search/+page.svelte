@@ -8,6 +8,7 @@
   import { page } from '$app/stores';
   import type { SearchResult } from '$lib/api';
   import { search } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import {
     buildIndex,
@@ -149,7 +150,10 @@
 
 <div class="h-full overflow-auto p-6">
   <div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">{$_('page.search.title')}</h1>
+    <div class="mb-6 flex items-center gap-2 sm:gap-3">
+      <MobileSidebarInlineToggle />
+      <h1 class="text-2xl font-bold">{$_('page.search.title')}</h1>
+    </div>
 
     <form onsubmit={handleSubmit} class="mb-6">
       <div class="flex gap-2">

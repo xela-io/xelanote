@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import GraphSkeleton from '$lib/components/skeletons/GraphSkeleton.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
@@ -16,12 +17,13 @@
 </script>
 
 <div class="flex flex-col h-screen-safe bg-background">
-  <header class="flex items-center gap-4 p-4 border-b border-border">
+  <header class="flex items-center gap-2 sm:gap-4 p-4 border-b border-border">
+    <MobileSidebarInlineToggle />
     <a href="/" class="p-2 hover:bg-accent rounded-md transition-colors">
       <ArrowLeft size={18} />
     </a>
     <h1 class="text-xl font-semibold">{$_('page.graph.title')}</h1>
-    <div class="text-sm text-muted-foreground">
+    <div class="text-sm text-muted-foreground hidden sm:block">
       {$_('page.graph.hint')}
     </div>
   </header>

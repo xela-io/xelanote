@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as toast from '$lib/stores/toast.svelte';
@@ -78,8 +79,9 @@
 <div class="h-full overflow-y-auto">
   <div class="max-w-7xl mx-auto px-6 py-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
+    <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <MobileSidebarInlineToggle />
         <Trash2 size={28} class="text-muted-foreground" />
         <h1 class="text-2xl font-bold">{$_('page.trash.title')}</h1>
         {#if trashCount > 0}
@@ -90,7 +92,7 @@
       {#if trashCount > 0}
         <button
           onclick={handleEmptyTrash}
-          class="px-4 py-2 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+          class="self-start sm:self-auto px-4 py-2 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
         >
           {$_('page.trash.empty_button')}
         </button>

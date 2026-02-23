@@ -7,6 +7,7 @@
 
   import { goto } from '$app/navigation';
   import type { RecipeCollection } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
   import * as features from '$lib/stores/features.svelte';
@@ -158,11 +159,12 @@
   <!-- Header -->
   <div class="border-b border-border shrink-0 px-4 py-3 sm:px-6 sm:py-4">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1
-        class="text-xl font-bold pl-[calc(var(--safe-area-inset-left)+2.75rem)] mt-2 sm:mt-0 sm:pl-0"
+      <div
+        class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-2 sm:flex sm:items-center sm:gap-3"
       >
-        {$_('page.recipes.title')}
-      </h1>
+        <MobileSidebarInlineToggle />
+        <h1 class="text-xl font-bold min-w-0 truncate">{$_('page.recipes.title')}</h1>
+      </div>
       <div class="grid grid-cols-2 gap-2 min-w-0 sm:flex sm:items-center sm:min-w-auto">
         <div
           class="col-span-2 flex min-w-0 gap-2 overflow-x-auto pb-1 -mb-1 sm:col-span-1 sm:mb-0 sm:pb-0 sm:overflow-visible sm:flex-none scrollbar-none"

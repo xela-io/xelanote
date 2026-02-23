@@ -22,6 +22,7 @@
   import * as api from '$lib/api';
   import { getExportUrl } from '$lib/api';
   import BackupCodesDisplay from '$lib/components/BackupCodesDisplay.svelte';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import TwoFactorDisable from '$lib/components/TwoFactorDisable.svelte';
   import TwoFactorSetup from '$lib/components/TwoFactorSetup.svelte';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
@@ -805,7 +806,8 @@
 <div class="h-full bg-background overflow-y-auto overflow-x-hidden scrollbar-none">
   <div class="max-w-3xl mx-auto p-4 md:p-8">
     <!-- Header -->
-    <div class="flex items-center gap-4 mb-8">
+    <div class="flex items-center gap-2 sm:gap-4 mb-8">
+      <MobileSidebarInlineToggle />
       <button
         onclick={() => goto('/')}
         class="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"

@@ -5,6 +5,7 @@
 
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as sharing from '$lib/stores/sharing.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
@@ -42,13 +43,16 @@
 <div class="p-4">
   <!-- Header -->
   <div class="mb-4">
-    <button
-      onclick={handleBack}
-      class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
-    >
-      <ArrowLeft size={16} />
-      {$_('sharing.back_to_shared')}
-    </button>
+    <div class="flex items-center gap-2 mb-2">
+      <MobileSidebarInlineToggle />
+      <button
+        onclick={handleBack}
+        class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft size={16} />
+        {$_('sharing.back_to_shared')}
+      </button>
+    </div>
 
     {#if folderInfo}
       <h1 class="text-2xl font-bold">{folderInfo.name}</h1>

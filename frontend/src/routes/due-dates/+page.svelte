@@ -4,6 +4,7 @@
 
   import { goto } from '$app/navigation';
   import { type DueDateItem, getDueDates } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import { getDueDateStatus } from '$lib/editor/markdown';
 
   let dueDates = $state<DueDateItem[]>([]);
@@ -62,8 +63,9 @@
 <div class="h-full overflow-y-auto">
   <div class="max-w-4xl mx-auto px-6 py-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
+    <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <MobileSidebarInlineToggle />
         <CalendarClock size={28} class="text-muted-foreground" />
         <h1 class="text-2xl font-bold">{$_('page.due_dates.title')}</h1>
         {#if dueDates.length > 0}
@@ -71,7 +73,9 @@
         {/if}
       </div>
 
-      <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+      <label
+        class="flex items-center gap-2 text-sm cursor-pointer select-none self-start sm:self-auto"
+      >
         <input
           type="checkbox"
           bind:checked={showCompleted}

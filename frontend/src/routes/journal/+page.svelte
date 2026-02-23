@@ -14,6 +14,7 @@
   import { goto } from '$app/navigation';
   import JournalActivityWidget from '$lib/components/JournalActivityWidget.svelte';
   import JournalHeatmap from '$lib/components/JournalHeatmap.svelte';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as journal from '$lib/stores/journal.svelte';
@@ -176,18 +177,26 @@
 
 <div class="h-full flex flex-col">
   <!-- Header -->
-  <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-    <h1 class="text-xl font-bold">{$_('page.journal.title')}</h1>
-    <button
-      onclick={handleOpenToday}
-      disabled={journalLoading}
-      class="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
-    >
-      {#if journalLoading}
-        <Loader2 size={16} class="animate-spin" />
-      {/if}
-      {$_('page.journal.openToday')}
-    </button>
+  <div class="border-b border-border shrink-0 px-4 py-2.5 sm:px-6 sm:py-4">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:items-center sm:gap-3"
+      >
+        <MobileSidebarInlineToggle />
+        <h1 class="text-xl font-bold min-w-0 truncate">{$_('page.journal.title')}</h1>
+      </div>
+      <button
+        onclick={handleOpenToday}
+        disabled={journalLoading}
+        class="flex items-center justify-center gap-2 self-start sm:self-auto px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+      >
+        {#if journalLoading}
+          <Loader2 size={16} class="animate-spin" />
+        {/if}
+        <span class="sm:hidden">Heute öffnen</span>
+        <span class="hidden sm:inline">{$_('page.journal.openToday')}</span>
+      </button>
+    </div>
   </div>
 
   {#if !featureLoaded || loading}

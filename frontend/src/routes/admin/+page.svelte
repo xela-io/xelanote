@@ -3,6 +3,7 @@
   import { _, locale } from 'svelte-i18n';
 
   import type { ActivityLogsOptions, AdminUser, SystemSettings } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
   import * as admin from '$lib/stores/admin.svelte';
   import * as auth from '$lib/stores/auth.svelte';
@@ -165,7 +166,10 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-2xl font-bold text-foreground">{$_('page.admin.title')}</h1>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <MobileSidebarInlineToggle />
+        <h1 class="text-2xl font-bold text-foreground">{$_('page.admin.title')}</h1>
+      </div>
       <p class="text-muted-foreground">{$_('page.admin.subtitle')}</p>
     </div>
 

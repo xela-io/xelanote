@@ -16,6 +16,7 @@
   import { _ } from 'svelte-i18n';
 
   import type { Note } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import { formatRelativeTime } from '$lib/utils/time';
 
   interface Props {
@@ -88,10 +89,10 @@
   <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
     class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-1.5 sm:py-2 gap-1 sm:gap-2"
-    style:padding-left={isMobile ? '3.5rem' : undefined}
   >
     <!-- Left: Title + Last Updated + Sync status -->
     <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+      <MobileSidebarInlineToggle />
       <input
         type="text"
         value={note?.title ?? ''}

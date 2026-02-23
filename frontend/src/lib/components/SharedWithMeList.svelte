@@ -5,6 +5,7 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as sharing from '$lib/stores/sharing.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
@@ -71,10 +72,13 @@
 </script>
 
 <div class="p-4">
-  <h1 class="text-2xl font-bold mb-4 flex items-center gap-2">
-    <Users size={24} />
-    {$_('sharing.shared_with_me')}
-  </h1>
+  <div class="mb-4 flex items-center gap-2 sm:gap-3">
+    <MobileSidebarInlineToggle />
+    <h1 class="text-2xl font-bold flex items-center gap-2">
+      <Users size={24} />
+      {$_('sharing.shared_with_me')}
+    </h1>
+  </div>
 
   {#if sharing.getIsLoading()}
     <div class="flex items-center gap-2 text-muted-foreground">

@@ -130,6 +130,16 @@ html {
   html {
     touch-action: manipulation;
   }
+
+  /* Android Chrome PWA can stop panning nested editor scroll containers when
+     the root uses touch-action: manipulation. Explicitly re-enable vertical
+     panning for editor/preview scrollers. */
+  .editor-scroll-container,
+  .cm-editor,
+  .cm-scroller,
+  .preview-pane-shell {
+    touch-action: pan-y pinch-zoom;
+  }
 }
 
 /* Explicitly allow all touch gestures for drag handles */

@@ -5,9 +5,9 @@
   import { _ } from 'svelte-i18n';
 
   import type { RecipeCollection, RecipeIngredient } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
-  import * as ui from '$lib/stores/ui.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
   import { formatRelativeTime } from '$lib/utils/time';
 
@@ -196,9 +196,9 @@
 
     <!-- Tabs -->
     <div
-      class="flex items-center border-b border-border px-2 sm:px-4 py-1.5 sm:py-2 shrink-0"
-      style:padding-left={ui.getIsMobile() ? '3.5rem' : undefined}
+      class="flex items-center gap-2 border-b border-border px-2 sm:px-4 py-1.5 sm:py-2 shrink-0"
     >
+      <MobileSidebarInlineToggle />
       <div class="flex gap-0 -mb-px">
         <button
           onclick={() => switchTab('ingredients')}

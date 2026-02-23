@@ -18,6 +18,7 @@
   import { _ } from 'svelte-i18n';
 
   import type { Note } from '$lib/api';
+  import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import { FEATURE_FLAGS } from '$lib/config';
   import { formatRelativeTime } from '$lib/utils/time';
 
@@ -133,10 +134,10 @@
   <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
     class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-2 sm:py-2.5 gap-1 sm:gap-2"
-    style:padding-left={isMobile ? '3.5rem' : undefined}
   >
     <!-- Left: metadata (desktop only shows full info, mobile shows compact) -->
     <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0 sm:shrink">
+      <MobileSidebarInlineToggle />
       {#if note?.note_type === 'journal' && !isMobile}
         <span
           class="text-lg font-semibold px-1 min-w-0 flex-1 truncate cursor-default opacity-70"

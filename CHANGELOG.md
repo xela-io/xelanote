@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Editor: Improve live preview gutter layout — increase left padding to prevent toggle/drag-handle overlap, enlarge toggle icons, hide drag handles on completed task group lines, switch expanded indicator from triangle to dash
 - PWA: Fix iOS viewport height jumps on keyboard open/close, app switching, and orientation changes via JS-corrected `--app-viewport-height` CSS variable (replaces raw `100vh`/`100dvh` in dropdowns, search, trash, and root layout)
 - Mobile: Add WCAG AA compliant 44px touch targets for buttons, tabs, and icon buttons; enable momentum scrolling in editor/preview panes on mobile WebKit/PWA
 - Mobile: Hide drag handles on touch devices and use long-press for task reordering; enlarge heading and task-group toggle buttons to 44px (WCAG AA); disable live-mode drag on touch to avoid text selection conflicts

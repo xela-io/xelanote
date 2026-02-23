@@ -1141,7 +1141,7 @@ html {
 }
 
 .cm-editor .cm-content {
-  padding: 1rem 1rem 1rem 1.5rem;
+  padding: 1rem 1rem 1rem 2.2rem;
   /* Fallback, falls EditorView.lineWrapping fehlt */
   white-space: pre-wrap;
 }
@@ -1282,7 +1282,7 @@ html {
 
 .cm-editor .cm-live-task-drag-handle {
   position: absolute;
-  left: -1.5rem;
+  left: -2.2rem;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
@@ -1293,6 +1293,7 @@ html {
   cursor: grab;
   padding: 2px 4px;
   border-radius: var(--radius-xs);
+  z-index: 2;
   transition:
     opacity var(--duration-fast) var(--ease-default),
     color var(--duration-fast) var(--ease-default);
@@ -1324,6 +1325,13 @@ html {
   .cm-editor .cm-live-task-drag-handle {
     display: none;
   }
+}
+
+/* Hide drag handles on completed task group lines — group toggle occupies same gutter */
+.cm-editor .cm-line.cm-live-task-group-first .cm-live-task-drag-handle,
+.cm-editor .cm-line.cm-live-task-group-middle .cm-live-task-drag-handle,
+.cm-editor .cm-line.cm-live-task-group-last .cm-live-task-drag-handle {
+  display: none;
 }
 
 .cm-editor .cm-line.task-drag-ghost {
@@ -1404,7 +1412,7 @@ html {
   background: transparent;
   color: var(--color-muted-foreground);
   cursor: pointer;
-  font-size: 0.65em;
+  font-size: 0.95em;
   line-height: 1;
   width: auto;
   height: auto;
@@ -1428,7 +1436,7 @@ html {
 /* Completed task group toggle button — positioned left of bracket */
 .cm-editor .cm-live-task-group-toggle {
   position: absolute;
-  left: calc(var(--live-preview-task-group-indent) - 1.8rem);
+  left: calc(var(--live-preview-task-group-indent) - 2.3rem);
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
@@ -1436,7 +1444,7 @@ html {
   background: transparent;
   color: var(--color-muted-foreground);
   cursor: pointer;
-  font-size: 0.65em;
+  font-size: 1.75em;
   line-height: 1;
   padding: 0;
 }

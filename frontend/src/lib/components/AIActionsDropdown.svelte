@@ -136,7 +136,7 @@
 <!-- Dropdown: Bottom sheet on mobile, fixed-positioned near button on desktop -->
 <div
   class="fixed z-50 bg-background border border-border shadow-lg flex flex-col
-		md:w-72 md:rounded-lg md:max-h-[calc(100vh-6rem)]
+		md:w-72 md:rounded-lg md:max-h-[calc(var(--app-viewport-height,100dvh)-6rem)]
 		bottom-0 left-0 right-0 max-h-[80vh] rounded-t-2xl animate-slide-up md:animate-none
 		md:bottom-auto md:left-auto md:rounded-lg"
   style={desktopStyle}

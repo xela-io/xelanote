@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- PWA: Fix iOS viewport height jumps on keyboard open/close, app switching, and orientation changes via JS-corrected `--app-viewport-height` CSS variable (replaces raw `100vh`/`100dvh` in dropdowns, search, trash, and root layout)
 - Mobile: Add WCAG AA compliant 44px touch targets for buttons, tabs, and icon buttons; enable momentum scrolling in editor/preview panes on mobile WebKit/PWA
 - Backend: Fix admin promotion violating single-admin unique constraint (atomically demote existing admin before promoting new one, update API test accordingly)
 - Backend: Fix build failure in service package — `cache.NewCache` renamed to `cache.New` but `graph_test.go` was missed

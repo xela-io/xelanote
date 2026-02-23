@@ -108,7 +108,7 @@
 <div
   class="fixed z-50 bg-background p-4 flex flex-col overflow-hidden
 		bottom-0 left-0 right-0 max-h-[80vh] rounded-t-2xl animate-bottom-sheet
-		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:max-h-[calc(100vh-6rem)] sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
+		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:max-h-[calc(var(--app-viewport-height,100dvh)-6rem)] sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
   style={desktopStyle}
   role="menu"
   aria-label={$_('component.editor.toolbar.more_options')}

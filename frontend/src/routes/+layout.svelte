@@ -302,9 +302,23 @@
       window.visualViewport.addEventListener('resize', viewportHandlers.handleVisualViewportResize);
     }
 
+    const syncViewportHeight = () => {
+      viewportHandlers.handleResize();
+      viewportHandlers.handleVisualViewportResize();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // iOS PWA can restore with stale viewport units after app switching.
+        setTimeout(syncViewportHeight, 0);
+      }
+    };
+
     document.addEventListener('focusin', viewportHandlers.handleFocusIn);
     document.addEventListener('focusout', viewportHandlers.handleFocusOut);
     document.addEventListener('touchstart', viewportHandlers.handleTouchStart, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', syncViewportHeight);
+    window.addEventListener('orientationchange', syncViewportHeight);
 
     const { handleKeydown, handleActivity } = createLayoutInteractions({
       isAuthenticated: () => auth.isAuthenticated(),
@@ -346,6 +360,9 @@
     return () => {
       document.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('resize', viewportHandlers.debouncedHandleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', syncViewportHeight);
+      window.removeEventListener('orientationchange', syncViewportHeight);
       viewportHandlers.cleanup();
       websocket.disconnect();
 

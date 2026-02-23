@@ -219,7 +219,11 @@
       </div>
 
       <!-- Virtual scrolling container -->
-      <div bind:this={scrollElement} class="overflow-auto" style="max-height: calc(100vh - 300px);">
+      <div
+        bind:this={scrollElement}
+        class="overflow-auto"
+        style="max-height: calc(var(--app-viewport-height, 100dvh) - 300px);"
+      >
         <div style="height: {totalSize}px; width: 100%; position: relative;">
           {#each virtualItems as virtualRow (virtualRow.key)}
             {@const result = results[virtualRow.index]}

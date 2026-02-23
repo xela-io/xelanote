@@ -13,12 +13,14 @@
     height: -webkit-fill-available; /* iOS Safari fallback before svh/dvh support */
     height: 100svh; /* Stable viewport (prevents iOS toolbar jumps) */
     height: 100dvh; /* Modern browsers */
+    height: var(--app-viewport-height, 100dvh); /* JS-corrected iOS PWA viewport */
   }
   .min-h-screen-safe {
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: 100svh;
     min-height: 100dvh;
+    min-height: var(--app-viewport-height, 100dvh); /* JS-corrected iOS PWA viewport */
   }
 }
 
@@ -30,6 +32,7 @@ body {
 
 /* Safe-area insets only for standalone/fullscreen web app mode */
 :root {
+  --app-viewport-height: 100dvh;
   --safe-area-inset-top: 0px;
   --safe-area-inset-bottom: 0px;
   --safe-area-inset-left: 0px;

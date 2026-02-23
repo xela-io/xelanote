@@ -30,6 +30,31 @@ export function createViewportHandlers(
 ): ViewportHandlers {
   const { windowObj, documentObj } = options;
   let inputFocused = false;
+  let lastNonKeyboardViewportHeight = 0;
+
+  const setViewportHeightCssVar = () => {
+    const style = documentObj.documentElement.style;
+    const windowHeight = windowObj.innerHeight;
+    const visualViewportHeight = windowObj.visualViewport?.height ?? windowHeight;
+    const keyboardOpen = windowHeight - visualViewportHeight > 150;
+
+    // Keep a stable "full app" height while the keyboard is open to avoid
+    // shrinking the root layout and causing large reflows/jumps in editors.
+    if (!keyboardOpen) {
+      lastNonKeyboardViewportHeight = Math.round(visualViewportHeight);
+    }
+
+    const targetHeight = Math.max(
+      1,
+      Math.round(
+        keyboardOpen
+          ? lastNonKeyboardViewportHeight || windowHeight
+          : lastNonKeyboardViewportHeight || visualViewportHeight || windowHeight
+      )
+    );
+
+    style.setProperty('--app-viewport-height', `${targetHeight}px`);
+  };
 
   const updateKeyboardState = () => {
     let viewportKeyboard = false;
@@ -44,6 +69,8 @@ export function createViewportHandlers(
   };
 
   const handleResize = () => {
+    setViewportHeightCssVar();
+
     const mobile = windowObj.innerWidth < 768;
     const wasMobile = deps.getIsMobile();
     deps.setIsMobile(mobile);
@@ -66,6 +93,7 @@ export function createViewportHandlers(
   };
 
   const handleVisualViewportResize = () => {
+    setViewportHeightCssVar();
     updateKeyboardState();
   };
 

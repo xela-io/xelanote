@@ -122,7 +122,10 @@
       </div>
     {:else}
       <!-- Trash List -->
-      <div class="space-y-3 overflow-auto" style="max-height: calc(100vh - 250px);">
+      <div
+        class="space-y-3 overflow-auto"
+        style="max-height: calc(var(--app-viewport-height, 100dvh) - 250px);"
+      >
         {#each trashedNotes as note (note.id)}
           <div class="ui-panel p-4">
             <!-- Note Header -->

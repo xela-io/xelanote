@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Mobile: Add WCAG AA compliant 44px touch targets for buttons, tabs, and icon buttons; enable momentum scrolling in editor/preview panes on mobile WebKit/PWA
 - Backend: Fix admin promotion violating single-admin unique constraint (atomically demote existing admin before promoting new one, update API test accordingly)
 - Backend: Fix build failure in service package — `cache.NewCache` renamed to `cache.New` but `graph_test.go` was missed
 - Recipes: Sidebar toggle button now vertically aligned with tab bar (Ingredients/Instructions/Preview) on mobile

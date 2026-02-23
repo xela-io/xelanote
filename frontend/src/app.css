@@ -88,6 +88,17 @@ html {
     align-items: center;
     justify-content: center;
   }
+
+  /* Baseline touch targets for shared button styles (WCAG AA: 44px). */
+  .ui-button,
+  .ui-tab {
+    min-height: 44px;
+  }
+
+  .ui-icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* Scrollable toolbar with fade indicator */
@@ -139,6 +150,14 @@ html {
   .cm-scroller,
   .preview-pane-shell {
     touch-action: pan-y pinch-zoom;
+  }
+
+  /* Ensure momentum/inertial scrolling in nested editor/preview scrollers on
+     mobile WebKit/PWA contexts (live preview uses CodeMirror's .cm-scroller). */
+  .editor-scroll-container,
+  .cm-scroller,
+  .preview-pane-shell {
+    -webkit-overflow-scrolling: touch;
   }
 }
 

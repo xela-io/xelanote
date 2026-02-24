@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/base64"
+	"errors"
 	"net/http"
 
 	"github.com/xela-io/xelanote/internal/service"
@@ -83,7 +84,7 @@ func (s *Server) getRecoveryKeySalt(w http.ResponseWriter, r *http.Request) {
 
 	salt, err := s.userService.GetRecoveryKeySalt(userID)
 	if err != nil {
-		if err == service.ErrNotFound {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "no recovery key set")
 			return
 		}

@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -49,7 +50,7 @@ func (db *DB) DeleteFolderShare(ownerUserID, folderID, sharedWithUserID int) err
 
 	// Placement cleanup: remove placements for notes in this folder
 	// Only if the user doesn't still have access via a direct note_share
-	db.Exec(`
+	if _, err := db.Exec(`
 		DELETE FROM shared_note_placements
 		WHERE user_id = ? AND note_id IN (
 			SELECT n.id FROM notes n
@@ -61,7 +62,9 @@ func (db *DB) DeleteFolderShare(ownerUserID, folderID, sharedWithUserID int) err
 			WHERE ns.note_id = shared_note_placements.note_id
 			  AND ns.shared_with_user_id = ?
 		)
-	`, sharedWithUserID, folderID, sharedWithUserID)
+	`, sharedWithUserID, folderID, sharedWithUserID); err != nil {
+		slog.Warn("failed to cleanup folder share placements", slog.Int("folderID", folderID), slog.String("error", err.Error()))
+	}
 
 	return nil
 }

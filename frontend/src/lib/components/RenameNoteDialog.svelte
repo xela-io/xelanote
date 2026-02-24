@@ -3,6 +3,8 @@
 
   import * as api from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as tree from '$lib/stores/tree.svelte';
 
@@ -70,40 +72,37 @@
         <span class="font-mono">{currentTitle}</span>
       </div>
 
-      <div class="space-y-2">
-        <label for="new-title-input" class="text-sm font-medium"
-          >{$_('component.rename_note_dialog.new_title')}:</label
-        >
+      <DialogField
+        forId="new-title-input"
+        label={$_('component.rename_note_dialog.new_title') + ':'}
+        error={errorMessage}
+      >
         <input
           id="new-title-input"
           type="text"
           bind:value={newTitle}
           placeholder={$_('component.rename_note_dialog.placeholder')}
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          class="ui-input"
         />
-      </div>
-
-      {#if errorMessage}
-        <div class="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-          {errorMessage}
-        </div>
-      {/if}
+      </DialogField>
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('common.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleRename}
-      disabled={isRenaming}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-    >
-      {isRenaming
-        ? $_('component.rename_note_dialog.renaming')
-        : $_('component.rename_note_dialog.rename')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('common.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleRename}
+        disabled={isRenaming}
+        class="ui-button ui-button-primary text-sm"
+      >
+        {isRenaming
+          ? $_('component.rename_note_dialog.renaming')
+          : $_('component.rename_note_dialog.rename')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

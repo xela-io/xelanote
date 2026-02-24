@@ -10,7 +10,7 @@ const config = {
       pages: 'build',
       assets: 'build',
       fallback: 'index.html',
-      precompress: false,
+      precompress: process.env.NODE_ENV === 'production',
       strict: true,
     }),
     // Use relative paths for Electron/Tauri desktop builds (file:// protocol)

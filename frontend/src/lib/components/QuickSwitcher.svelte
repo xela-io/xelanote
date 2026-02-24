@@ -27,6 +27,7 @@
   import * as notes from '$lib/stores/notes.svelte';
   import * as searchStore from '$lib/stores/search.svelte';
   import { searchEncrypted } from '$lib/stores/search-index.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
   import FilterBar from './FilterBar.svelte';
@@ -262,6 +263,7 @@
       selectedIndex = 0;
     } catch (e) {
       console.error('Search failed:', e);
+      toast.error($_('component.search.search_failed'));
       results = [];
     } finally {
       loading = false;
@@ -325,6 +327,7 @@
       goto(`/note/${note.id}`);
     } catch (e) {
       console.error('Failed to create note:', e);
+      toast.error($_('common.error'));
     }
   }
 

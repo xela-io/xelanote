@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -70,7 +71,7 @@ func (s *Server) getSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	snippet, err := s.snippetService.GetSnippet(userID, snippetID)
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		respondError(w, http.StatusNotFound, "snippet not found")
 		return
 	}
@@ -137,7 +138,7 @@ func (s *Server) updateSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.snippetService.UpdateSnippet(userID, snippetID, req.Name, req.Description, req.Content, req.Shortcut)
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		respondError(w, http.StatusNotFound, "snippet not found")
 		return
 	}
@@ -170,7 +171,7 @@ func (s *Server) deleteSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.snippetService.DeleteSnippet(userID, snippetID)
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		respondError(w, http.StatusNotFound, "snippet not found")
 		return
 	}

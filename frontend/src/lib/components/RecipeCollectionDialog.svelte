@@ -4,6 +4,8 @@
 
   import type { RecipeCollection } from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
 
   interface Props {
     open: boolean;
@@ -49,46 +51,42 @@
 >
   {#snippet content()}
     <div class="space-y-4">
-      <div class="space-y-2">
-        <label for="coll-name" class="text-sm font-medium"
-          >{$_('page.recipes.collection_name')}</label
-        >
+      <DialogField forId="coll-name" label={$_('page.recipes.collection_name')}>
         <input
           id="coll-name"
           type="text"
           bind:value={name}
           bind:this={nameInput}
           placeholder={$_('page.recipes.collection_name_placeholder')}
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          class="ui-input"
         />
-      </div>
+      </DialogField>
 
-      <div class="space-y-2">
-        <label for="coll-desc" class="text-sm font-medium"
-          >{$_('page.recipes.collection_description')}</label
-        >
+      <DialogField forId="coll-desc" label={$_('page.recipes.collection_description')}>
         <textarea
           id="coll-desc"
           bind:value={description}
           placeholder={$_('page.recipes.collection_description_placeholder')}
           rows="2"
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+          class="ui-textarea resize-none"
         ></textarea>
-      </div>
+      </DialogField>
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleSave}
-      disabled={!name.trim()}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-    >
-      {collection ? $_('common.save') : $_('common.create')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('dialog.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleSave}
+        disabled={!name.trim()}
+        class="ui-button ui-button-primary text-sm"
+      >
+        {collection ? $_('common.save') : $_('common.create')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

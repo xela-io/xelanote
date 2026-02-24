@@ -61,63 +61,14 @@ func (s *NoteService) UpdateNote(userID int, id, title, content, folderPath stri
 		return nil, db.ErrNotFound
 	}
 
-	// Check if content or title changed
-	contentChanged := existingNote.Content != content || existingNote.Title != title
-
-	if contentChanged {
-		// Check if we should create a snapshot
-		lastSnapshot, err := s.db.GetLatestVersionSnapshot(userID, id)
-		if err != nil {
-			s.logger.Warn("failed to load latest snapshot", "err", err, "note_id", id, "user_id", userID)
-		}
-		shouldSnapshot := err != nil || lastSnapshot == nil ||
-			time.Since(lastSnapshot.SnapshotAt) > snapshotThreshold
-
-		if shouldSnapshot {
-			// Create snapshot of the state BEFORE the update
-			if err := s.db.CreateNoteVersion(userID, id, existingNote.Version, existingNote.Title, existingNote.Content); err != nil {
-				// Log but don't fail - note update is more important
-				s.logger.Error("failed to create version snapshot", "err", err, "note_id", id, "user_id", userID)
-			}
-		}
+	// Create a version snapshot if content or title changed
+	if existingNote.Content != content || existingNote.Title != title {
+		s.createSnapshotIfNeeded(userID, id, existingNote)
 	}
 
-	// If title changed on a non-journal note, update wikilinks in all linking notes
-	// BEFORE writing the new title so oldTitle is still correct.
-	titleChanged := existingNote.Title != title && existingNote.NoteType != db.NoteTypeJournal
-	if titleChanged {
-		oldTitle := existingNote.Title
-		linkingNoteIDs, linkErr := s.db.GetNotesLinkingTo(userID, id, oldTitle)
-		if linkErr != nil {
-			s.logger.Error("failed to get notes linking to during title update", "err", linkErr, "note_id", id, "user_id", userID)
-		} else if len(linkingNoteIDs) > 0 {
-			linkingNotes, batchErr := s.db.GetNotesByIDs(userID, linkingNoteIDs)
-			if batchErr != nil {
-				s.logger.Error("failed to batch-load linking notes during title update", "err", batchErr, "note_id", id, "user_id", userID)
-			} else {
-				for _, linkingID := range linkingNoteIDs {
-					sourceNote, ok := linkingNotes[linkingID]
-					if !ok || sourceNote == nil {
-						continue
-					}
-					newContent := replaceWikilinkTitle(sourceNote.Content, oldTitle, title)
-					if newContent != sourceNote.Content {
-						updatedSourceNote, updErr := s.db.UpdateNote(userID, sourceNote.ID, sourceNote.Title, newContent, "", sourceNote.Version)
-						if updErr != nil {
-							s.logger.Error("failed to update backlink content during title update", "err", updErr, "note_id", sourceNote.ID, "user_id", userID)
-							continue
-						}
-						if err := s.updateLinks(userID, sourceNote.ID, newContent); err != nil {
-							s.logger.Error("failed to update links after backlink content update", "err", err, "note_id", sourceNote.ID)
-						}
-						if updatedSourceNote != nil {
-							s.cache.Set(noteCacheKey(userID, updatedSourceNote.ID), updatedSourceNote)
-							s.invalidateNotesByFolderCache(userID, updatedSourceNote.FolderPath)
-						}
-					}
-				}
-			}
-		}
+	// Update wikilinks in all notes that link to this note (before writing the new title)
+	if existingNote.Title != title && existingNote.NoteType != db.NoteTypeJournal {
+		s.updateTitleBacklinks(userID, id, existingNote.Title, title)
 	}
 
 	// Normalize folder path (remove trailing slash)
@@ -143,7 +94,69 @@ func (s *NoteService) UpdateNote(userID int, id, title, content, folderPath stri
 		s.updateDueDates(userID, id, content)
 	}
 
-	s.cache.Set(noteCacheKey(userID, id), note)
+	s.invalidateNoteCaches(userID, id, note, existingNote)
+	return note, nil
+}
+
+// createSnapshotIfNeeded creates a version snapshot if enough time has passed since the last one.
+func (s *NoteService) createSnapshotIfNeeded(userID int, id string, existingNote *db.Note) {
+	lastSnapshot, err := s.db.GetLatestVersionSnapshot(userID, id)
+	if err != nil {
+		s.logger.Warn("failed to load latest snapshot", "err", err, "note_id", id, "user_id", userID)
+	}
+	shouldSnapshot := err != nil || lastSnapshot == nil ||
+		time.Since(lastSnapshot.SnapshotAt) > snapshotThreshold
+
+	if shouldSnapshot {
+		if err := s.db.CreateNoteVersion(userID, id, existingNote.Version, existingNote.Title, existingNote.Content); err != nil {
+			s.logger.Error("failed to create version snapshot", "err", err, "note_id", id, "user_id", userID)
+		}
+	}
+}
+
+// updateTitleBacklinks updates wikilinks in all notes that reference oldTitle to use newTitle.
+func (s *NoteService) updateTitleBacklinks(userID int, noteID, oldTitle, newTitle string) {
+	linkingNoteIDs, linkErr := s.db.GetNotesLinkingTo(userID, noteID, oldTitle)
+	if linkErr != nil {
+		s.logger.Error("failed to get notes linking to during title update", "err", linkErr, "note_id", noteID, "user_id", userID)
+		return
+	}
+	if len(linkingNoteIDs) == 0 {
+		return
+	}
+
+	linkingNotes, batchErr := s.db.GetNotesByIDs(userID, linkingNoteIDs)
+	if batchErr != nil {
+		s.logger.Error("failed to batch-load linking notes during title update", "err", batchErr, "note_id", noteID, "user_id", userID)
+		return
+	}
+
+	for _, linkingID := range linkingNoteIDs {
+		sourceNote, ok := linkingNotes[linkingID]
+		if !ok || sourceNote == nil {
+			continue
+		}
+		newContent := replaceWikilinkTitle(sourceNote.Content, oldTitle, newTitle)
+		if newContent != sourceNote.Content {
+			updatedSourceNote, updErr := s.db.UpdateNote(userID, sourceNote.ID, sourceNote.Title, newContent, "", sourceNote.Version)
+			if updErr != nil {
+				s.logger.Error("failed to update backlink content during title update", "err", updErr, "note_id", sourceNote.ID, "user_id", userID)
+				continue
+			}
+			if err := s.updateLinks(userID, sourceNote.ID, newContent); err != nil {
+				s.logger.Error("failed to update links after backlink content update", "err", err, "note_id", sourceNote.ID)
+			}
+			if updatedSourceNote != nil {
+				s.cache.Set(noteCacheKey(userID, updatedSourceNote.ID), updatedSourceNote)
+				s.invalidateNotesByFolderCache(userID, updatedSourceNote.FolderPath)
+			}
+		}
+	}
+}
+
+// invalidateNoteCaches clears all relevant caches after a note update.
+func (s *NoteService) invalidateNoteCaches(userID int, noteID string, note *db.Note, existingNote *db.Note) {
+	s.cache.Set(noteCacheKey(userID, noteID), note)
 	if existingNote != nil {
 		s.invalidateNotesByFolderCache(userID, existingNote.FolderPath)
 	}
@@ -152,8 +165,6 @@ func (s *NoteService) UpdateNote(userID int, id, title, content, folderPath stri
 	if s.graphService != nil {
 		s.graphService.InvalidateGraphCache(userID)
 	}
-
-	return note, nil
 }
 
 // GetNote retrieves a note by ID.

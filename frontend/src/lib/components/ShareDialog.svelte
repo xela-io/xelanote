@@ -126,6 +126,7 @@
       shares = await apiGetShares();
     } catch (err) {
       console.error('Failed to load shares:', err);
+      toast.error($_('common.error'));
     } finally {
       loadingShares = false;
     }
@@ -148,6 +149,7 @@
         searchResults = await api.searchUsers(query);
       } catch (err) {
         console.error('User search failed:', err);
+        toast.error($_('common.error'));
         searchResults = [];
       } finally {
         searching = false;

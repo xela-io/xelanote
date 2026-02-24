@@ -28,8 +28,8 @@ func setupFIDO2Test(t *testing.T) (*db.DB, *FIDO2Service, *db.User) {
 		t.Fatalf("failed to create fido2 manager: %v", err)
 	}
 
-	tfaSvc := NewTwoFactorService(database, logger)
-	svc := NewFIDO2Service(database, manager, tfaSvc, logger)
+	tfaService := NewTwoFactorService(database, logger)
+	svc := NewFIDO2Service(database, manager, tfaService, logger)
 
 	user, err := database.CreateUser("fido2user", "fido2@example.com", "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5aeKXJ8F3xJPi")
 	if err != nil {

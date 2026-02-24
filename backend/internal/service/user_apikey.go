@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/xela-io/xelanote/internal/crypto"
 	"github.com/xela-io/xelanote/internal/db"
 )
@@ -29,7 +31,7 @@ func getClaudeAPIKeyImpl(database *db.DB, userID int) (string, error) {
 	// Get encrypted key from database
 	encryptedKey, err := database.GetClaudeAPIKey(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return "", ErrNoClaudeAPIKey
 		}
 		return "", err
@@ -68,7 +70,7 @@ func getGeminiAPIKeyImpl(database *db.DB, userID int) (string, error) {
 	// Get encrypted key from database
 	encryptedKey, err := database.GetGeminiAPIKey(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return "", ErrNoGeminiAPIKey
 		}
 		return "", err
@@ -107,7 +109,7 @@ func getOpenAIAPIKeyImpl(database *db.DB, userID int) (string, error) {
 	// Get encrypted key from database
 	encryptedKey, err := database.GetOpenAIAPIKey(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return "", ErrNoOpenAIAPIKey
 		}
 		return "", err

@@ -11,16 +11,19 @@
 
   const { servings, baseServings, onchange, disabled = false }: Props = $props();
 
+  const MIN_SERVINGS = 1;
+  const MAX_SERVINGS = 999;
+
   const isScaled = $derived(servings !== baseServings);
 
   function decrease() {
-    if (servings > 1) {
+    if (servings > MIN_SERVINGS) {
       onchange(servings - 1);
     }
   }
 
   function increase() {
-    if (servings < 999) {
+    if (servings < MAX_SERVINGS) {
       onchange(servings + 1);
     }
   }
@@ -31,7 +34,7 @@
 
   function handleInput(e: Event) {
     const value = parseInt((e.target as HTMLInputElement).value);
-    if (!isNaN(value) && value >= 1 && value <= 999) {
+    if (!isNaN(value) && value >= MIN_SERVINGS && value <= MAX_SERVINGS) {
       onchange(value);
     }
   }

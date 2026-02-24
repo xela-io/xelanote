@@ -17,8 +17,10 @@
   import type { NoteVersion } from '$lib/api';
   import * as api from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
   import type { EncryptedPayload } from '$lib/crypto/e2e';
   import * as encryption from '$lib/stores/encryption.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import { formatRelativeTime } from '$lib/utils/time';
 
@@ -167,6 +169,7 @@
       nextCursor = response.next_cursor || null;
     } catch (e) {
       console.error('Failed to load more versions:', e);
+      toast.error($_('component.version_history.load_error'));
     } finally {
       loadingMore = false;
     }
@@ -354,32 +357,35 @@
   <div
     class="bg-background border border-border shadow-lg flex flex-col {isMobile
       ? 'h-full w-full rounded-none'
-      : 'rounded-lg w-full max-w-5xl h-[80vh]'}"
+      : 'ui-panel rounded-2xl w-full max-w-5xl h-[80vh]'}"
     onclick={(e) => e.stopPropagation()}
     role="presentation"
   >
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
-      <h2
-        id="version-history-title"
-        class="text-lg font-semibold flex items-center gap-2 truncate min-w-0"
-      >
-        <History size={20} class="flex-shrink-0" />
-        <span class="truncate"
-          >{isMobile
-            ? $_('component.version_history.versions_tab')
-            : `${$_('component.version_history.title')}: ${noteTitle}`}</span
-        >
-      </h2>
+    <div class="ui-page-header flex items-center justify-between p-4 flex-shrink-0">
+      <div class="ui-page-title-group min-w-0">
+        <div class="ui-panel-soft flex h-9 w-9 items-center justify-center rounded-full">
+          <History size={18} class="flex-shrink-0 text-primary" />
+        </div>
+        <div class="ui-page-title-stack">
+          <h2 id="version-history-title" class="ui-page-title truncate">
+            {isMobile
+              ? $_('component.version_history.versions_tab')
+              : `${$_('component.version_history.title')}: ${noteTitle}`}
+          </h2>
+          {#if !isMobile}
+            <div class="ui-page-subtitle">
+              {$_('component.version_history.preview')} / {$_('component.version_history.compare')}
+            </div>
+          {/if}
+        </div>
+      </div>
       <div class="flex items-center gap-2 flex-shrink-0">
         <!-- Mode toggle -->
         <button
           type="button"
           onclick={toggleMode}
-          class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-accent {mode ===
-          'compare'
-            ? 'bg-accent'
-            : ''}"
+          class="ui-tab {mode === 'compare' ? 'is-active' : ''}"
           title={mode === 'preview'
             ? $_('component.version_history.compare')
             : $_('component.version_history.preview')}
@@ -395,7 +401,7 @@
         <button
           type="button"
           onclick={onClose}
-          class="p-1 hover:bg-accent rounded-md"
+          class="ui-icon-button ui-icon-button-sm"
           aria-label={$_('common.close')}
         >
           <X size={18} />
@@ -405,22 +411,16 @@
 
     <!-- Mobile Tab Navigation -->
     {#if isMobile}
-      <div class="flex border-b border-border flex-shrink-0">
+      <div class="flex border-b border-border/80 flex-shrink-0 p-2">
         <button
           onclick={() => (mobileTab = 'versions')}
-          class="flex-1 py-3 text-sm font-medium text-center transition-colors {mobileTab ===
-          'versions'
-            ? 'text-primary border-b-2 border-primary'
-            : 'text-muted-foreground hover:text-foreground'}"
+          class="ui-tab flex-1 justify-center {mobileTab === 'versions' ? 'is-active' : ''}"
         >
           {$_('component.version_history.versions_tab')}
         </button>
         <button
           onclick={() => (mobileTab = 'content')}
-          class="flex-1 py-3 text-sm font-medium text-center transition-colors {mobileTab ===
-          'content'
-            ? 'text-primary border-b-2 border-primary'
-            : 'text-muted-foreground hover:text-foreground'}"
+          class="ui-tab flex-1 justify-center {mobileTab === 'content' ? 'is-active' : ''}"
         >
           {mode === 'compare'
             ? $_('component.version_history.compare')
@@ -440,7 +440,7 @@
           ? 'hidden'
           : ''}"
       >
-        <div class="p-3 text-sm text-muted-foreground border-b border-border">
+        <div class="ui-panel-section text-sm text-muted-foreground border-b border-border/70">
           {total + 1}
           {total !== 0
             ? $_('component.version_history.versions_tab')
@@ -451,7 +451,7 @@
 
         <!-- Compare mode hint on mobile -->
         {#if isMobile && mode === 'compare'}
-          <div class="p-3 text-xs bg-primary/10 border-b border-border">
+          <div class="ui-panel-section text-xs bg-primary/10 border-b border-border/70">
             {#if selectedVersion && !compareVersion}
               <span class="font-medium">{getVersionLabel(selectedVersion)}</span>
             {:else if selectedVersion && compareVersion}
@@ -462,17 +462,15 @@
         {/if}
 
         {#if loading}
-          <div class="flex-1 flex items-center justify-center">
+          <div class="ui-empty-state flex-1">
             <Loader2 size={24} class="animate-spin text-muted-foreground" />
           </div>
         {:else if error}
-          <div class="flex-1 flex items-center justify-center p-4 text-sm text-destructive">
-            {error}
+          <div class="ui-empty-state flex-1 p-4">
+            <div class="ui-alert ui-alert-danger w-full max-w-sm">{error}</div>
           </div>
         {:else if encryptionLocked}
-          <div
-            class="flex-1 flex flex-col items-center justify-center p-4 text-sm text-muted-foreground gap-3"
-          >
+          <div class="ui-empty-state flex-1 gap-3 text-sm">
             <Lock size={32} class="text-amber-500" />
             <div class="text-center">
               <p class="font-medium">{$_('component.version_history.encryption_locked')}</p>
@@ -554,7 +552,7 @@
               <button
                 onclick={loadMore}
                 disabled={loadingMore}
-                class="w-full p-3 text-sm text-muted-foreground hover:bg-accent disabled:opacity-50"
+                class="ui-button ui-button-ghost m-2 w-[calc(100%-1rem)] justify-center"
               >
                 {#if loadingMore}
                   <Loader2 size={16} class="animate-spin inline mr-2" />
@@ -579,7 +577,7 @@
               <button
                 onclick={() => navigateVersion('prev')}
                 disabled={allItems.findIndex((v) => v.id === selectedVersion?.id) === 0}
-                class="p-1.5 rounded-md hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+                class="ui-icon-button ui-icon-button-sm disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Neuere Version"
               >
                 <ChevronLeft size={16} />
@@ -594,7 +592,7 @@
                 onclick={() => navigateVersion('next')}
                 disabled={allItems.findIndex((v) => v.id === selectedVersion?.id) ===
                   allItems.length - 1}
-                class="p-1.5 rounded-md hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+                class="ui-icon-button ui-icon-button-sm disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Ältere Version"
               >
                 <ChevronRight size={16} />
@@ -610,7 +608,7 @@
                 {/if}
                 <button
                   onclick={() => (showRestoreConfirm = true)}
-                  class="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"
+                  class="ui-button ui-button-primary"
                 >
                   <RotateCcw size={14} />
                   {$_('component.version_history.restore')}
@@ -630,7 +628,7 @@
               <div class="space-y-4">
                 <div class="text-lg font-semibold">{selectedVersion.title}</div>
                 <pre
-                  class="whitespace-pre-wrap font-mono text-sm bg-muted/30 p-4 rounded-md overflow-x-auto">{selectedVersion.content}</pre>
+                  class="ui-panel-soft whitespace-pre-wrap overflow-x-auto p-4 font-mono text-sm">{selectedVersion.content}</pre>
               </div>
             {:else if mode === 'compare' && diffResult}
               <!-- Compare mode: show diff -->
@@ -640,7 +638,7 @@
                     diffResult.newer
                   )}
                 </div>
-                <div class="font-mono text-sm bg-muted/30 p-4 rounded-md overflow-x-auto">
+                <div class="ui-panel-soft overflow-x-auto p-4 font-mono text-sm">
                   {#each diffResult.changes as change, i (i)}
                     {#if change.added}
                       <div class="bg-green-500/20 border-l-4 border-green-500 pl-2 -ml-2">
@@ -714,24 +712,26 @@
       </p>
     {/snippet}
     {#snippet footer()}
-      <button
-        type="button"
-        onclick={() => (showRestoreConfirm = false)}
-        class="px-4 py-2 text-sm hover:bg-accent rounded-md"
-      >
-        {$_('common.cancel')}
-      </button>
-      <button
-        type="button"
-        onclick={handleRestore}
-        disabled={restoring}
-        class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-      >
-        {#if restoring}
-          <Loader2 size={16} class="animate-spin inline mr-2" />
-        {/if}
-        {$_('component.version_history.restore')}
-      </button>
+      <DialogActions>
+        <button
+          type="button"
+          onclick={() => (showRestoreConfirm = false)}
+          class="ui-button ui-button-secondary"
+        >
+          {$_('common.cancel')}
+        </button>
+        <button
+          type="button"
+          onclick={handleRestore}
+          disabled={restoring}
+          class="ui-button ui-button-primary"
+        >
+          {#if restoring}
+            <Loader2 size={16} class="animate-spin inline mr-2" />
+          {/if}
+          {$_('component.version_history.restore')}
+        </button>
+      </DialogActions>
     {/snippet}
   </BaseDialog>
 {/if}

@@ -11,7 +11,7 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import type { AIAction } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
@@ -66,7 +66,6 @@
     handleUrlHighlight,
     openFindReplace as openFindReplaceUI,
   } from '$lib/editor/find-replace-ui';
-  import { imageResize } from '$lib/editor/image-resize';
   import {
     handleEditorDragOver,
     handleEditorDrop,
@@ -74,17 +73,16 @@
   } from '$lib/editor/image-upload';
   import { indentSelection, outdentSelection } from '$lib/editor/indentation';
   import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
+  import { renderMarkdownAsync } from '$lib/editor/markdown-worker-client';
   import {
     exportNoteMarkdown,
     handleDeleteNote,
     handleWikilinkClick as handleWikilinkAction,
   } from '$lib/editor/note-actions';
-  import { highlightSearchTerms } from '$lib/editor/preview-highlight';
   import { handlePreviewClick, handleTocClick } from '$lib/editor/preview-interactions';
-  import { setupScrollSync, syncPreviewToEditor } from '$lib/editor/scroll-sync';
   import { createSplitResizeController } from '$lib/editor/split-resize';
   import { insertTable } from '$lib/editor/table-insert';
-  import { taskCollapse, type TaskCollapseOptions } from '$lib/editor/task-collapse';
+  import type { TaskCollapseOptions } from '$lib/editor/task-collapse';
   import { insertTask } from '$lib/editor/task-insert';
   import { taskSortable, type TaskSortableOptions } from '$lib/editor/task-sortable';
   import { toggleTaskByIndex, toggleTaskByLine } from '$lib/editor/task-toggle';
@@ -106,6 +104,7 @@
   import { getTasksInDocument } from '$lib/utils/task-reorder';
 
   import EditorDialogs from './editor/EditorDialogs.svelte';
+  import EditorPreview from './editor/EditorPreview.svelte';
   import EditorStatusBar from './editor/EditorStatusBar.svelte';
   import EditorToolbar from './editor/EditorToolbar.svelte';
   import FindReplaceBar from './FindReplaceBar.svelte';
@@ -190,7 +189,6 @@
   // Split resize state
   let isSplitResizing = $state(false);
   let splitContainerRef: HTMLDivElement | null = $state(null);
-  let previewScrollRef: HTMLDivElement | null = $state(null);
   const splitResizeController = createSplitResizeController(
     {
       getContainerRect: () => splitContainerRef?.getBoundingClientRect() ?? null,
@@ -229,6 +227,7 @@
 
   // Reactive: update rendered content when note changes.
   // In split mode, debounce to avoid expensive DOM recreation on every keystroke.
+  // When workerMarkdown is enabled, use web worker for split mode rendering.
   $effect(() => {
     const note = notes.getCurrentNote();
     if (!note) return;
@@ -239,9 +238,18 @@
 
     if (mode === 'split') {
       const timer = setTimeout(() => {
-        renderedContent = renderMarkdown(composedContent, { titleToIdMap: map });
-        taskCollapseOptions.revision = renderedContent;
-        taskSortableOptions.revision = renderedContent;
+        if (FEATURE_FLAGS.workerMarkdown) {
+          renderMarkdownAsync(composedContent, { titleToIdMap: map }).then((html) => {
+            if (!html) return; // Cancelled request
+            renderedContent = html;
+            taskCollapseOptions.revision = renderedContent;
+            taskSortableOptions.revision = renderedContent;
+          });
+        } else {
+          renderedContent = renderMarkdown(composedContent, { titleToIdMap: map });
+          taskCollapseOptions.revision = renderedContent;
+          taskSortableOptions.revision = renderedContent;
+        }
       }, 150);
       return () => clearTimeout(timer);
     } else {
@@ -803,7 +811,7 @@
     getEditorView: () => editorView,
     getEditorMode: () => ui.getEditorMode(),
     getNoteId: () => noteId,
-    getUrlHighlight: () => $page.url.searchParams.get('highlight'),
+    getUrlHighlight: () => page.url.searchParams.get('highlight'),
     setUrlHighlight: (value: string | null) => {
       const url = new URL(window.location.href);
       if (value) {
@@ -885,27 +893,6 @@
     const nextState = closeFindReplaceUI(getFindReplaceState(), findReplaceHandlers);
     setFindReplaceState(nextState);
   }
-
-  $effect(() => {
-    const isDesktopSplit = !ui.getIsMobile() && ui.getEditorMode() === 'split';
-    const previewScroller = previewScrollRef;
-    const editorScroller = editorView?.scrollDOM;
-    if (!isDesktopSplit || !previewScroller || !editorScroller) return;
-    return setupScrollSync(editorScroller, previewScroller);
-  });
-
-  $effect(() => {
-    const isDesktopSplit = !ui.getIsMobile() && ui.getEditorMode() === 'split';
-    const previewScroller = previewScrollRef;
-    const editorScroller = editorView?.scrollDOM;
-    const renderedContentSnapshot = renderedContent;
-    if (!isDesktopSplit || !previewScroller || !editorScroller) return;
-
-    requestAnimationFrame(() => {
-      void renderedContentSnapshot;
-      syncPreviewToEditor(previewScroller, editorScroller);
-    });
-  });
 
   $effect(() => {
     maybeLoadDialog(showMoveDialog, dialogLoaders, loadMoveToFolderDialog, (next) => {
@@ -1082,38 +1069,23 @@
 
         <!-- Preview -->
         {#if ui.getEditorMode() === 'preview' || ui.getEditorMode() === 'split'}
-          <!-- Theme wrapper for preview (overflow-auto for internal scrolling) -->
-          <div
-            class="preview-pane-shell relative {ui.getIsMobile()
-              ? ''
-              : 'overflow-auto'} {ui.getEffectivePreviewThemeClass()}"
-            class:flex-1={ui.getEditorMode() !== 'split'}
-            style={ui.getEditorMode() === 'split' ? `width: ${100 - ui.getSplitPosition()}%;` : ''}
-            bind:this={previewScrollRef}
-          >
-            <!-- Floating Table of Contents -->
-            {#if headings.length > 0}
-              <TableOfContents {headings} onHeadingClick={handleTocClickLocal} />
-            {/if}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-            <!-- Intentional: Click handler delegates to interactive elements (wikilinks, checkboxes) in rendered markdown. These elements are natively interactive in the HTML output. -->
-            <div
-              class="markdown-preview"
-              role="region"
-              aria-label={$_('component.editor.preview_area')}
-              onclick={handlePreviewClickLocal}
-              use:taskCollapse={taskCollapseOptions}
-              use:taskSortable={taskSortableOptions}
-              use:imageResize={{ onResize: handleImageResize }}
-              use:highlightSearchTerms={{
-                query: showFindReplace ? findReplaceQuery : '',
-                caseSensitive: findReplaceCaseSensitive,
-              }}
-            >
-              {@html renderedContent}
-            </div>
-          </div>
+          <EditorPreview
+            {renderedContent}
+            {headings}
+            {editorView}
+            editorMode={ui.getEditorMode()}
+            isMobile={ui.getIsMobile()}
+            splitPosition={ui.getSplitPosition()}
+            previewThemeClass={ui.getEffectivePreviewThemeClass()}
+            {taskCollapseOptions}
+            {taskSortableOptions}
+            {showFindReplace}
+            {findReplaceQuery}
+            {findReplaceCaseSensitive}
+            onPreviewClick={handlePreviewClickLocal}
+            onHeadingClick={handleTocClickLocal}
+            onImageResize={handleImageResize}
+          />
         {/if}
       </div>
 

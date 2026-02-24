@@ -5,6 +5,8 @@
 
   import * as api from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
 
   interface Props {
     onClose: () => void;
@@ -94,7 +96,7 @@
   {#snippet content()}
     <div class="space-y-6">
       <!-- Warning -->
-      <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+      <div class="ui-alert ui-alert-warning flex items-start gap-3">
         <AlertTriangle size={20} class="text-amber-500 flex-shrink-0 mt-0.5" />
         <div class="text-sm text-amber-700 dark:text-amber-400">
           {@html DOMPurify.sanitize($_('dialog.twofa_disable.warning'))}
@@ -102,20 +104,16 @@
       </div>
 
       <!-- Password -->
-      <div class="space-y-2">
-        <label for="disable-password" class="block text-sm font-medium text-foreground">
-          {$_('dialog.twofa_disable.label_password')}
-        </label>
+      <DialogField forId="disable-password" label={$_('dialog.twofa_disable.label_password')}>
         <input
           bind:this={passwordInput}
           id="disable-password"
           type="password"
           bind:value={password}
           disabled={isLoading}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
-						focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          class="ui-input w-full"
         />
-      </div>
+      </DialogField>
 
       <!-- Code Type Toggle -->
       <div class="flex items-center gap-2">
@@ -125,10 +123,10 @@
       </div>
 
       <!-- Code Input -->
-      <div class="space-y-2">
-        <label for="disable-code" class="block text-sm font-medium text-foreground">
-          {useBackupCode ? $_('page.login.backup_code') : $_('page.login.totp_code')}
-        </label>
+      <DialogField
+        forId="disable-code"
+        label={useBackupCode ? $_('page.login.backup_code') : $_('page.login.totp_code')}
+      >
         <input
           id="disable-code"
           type="text"
@@ -138,41 +136,36 @@
           oninput={handleCodeInput}
           placeholder={useBackupCode ? 'XXXX-XXXX' : '000000'}
           disabled={isLoading}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground font-mono
-						focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50
-						{useBackupCode ? '' : 'text-center text-lg tracking-widest'}"
+          class="ui-input w-full font-mono {useBackupCode
+            ? ''
+            : 'text-center text-lg tracking-widest'}"
         />
-      </div>
+      </DialogField>
 
       {#if error}
-        <div class="text-sm text-red-500">{error}</div>
+        <div class="ui-alert ui-alert-danger text-sm">{error}</div>
       {/if}
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button
-      type="button"
-      onclick={onClose}
-      class="flex-1 px-4 py-2 rounded-lg border border-border text-foreground
-				hover:bg-muted transition-colors"
-    >
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleDisable}
-      disabled={isLoading}
-      class="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white font-medium
-				hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors
-				flex items-center justify-center gap-2"
-    >
-      {#if isLoading}
-        <Loader2 size={16} class="animate-spin" />
-        {$_('dialog.twofa_disable.disabling')}
-      {:else}
-        {$_('dialog.twofa_disable.title')}
-      {/if}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary flex-1">
+        {$_('dialog.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleDisable}
+        disabled={isLoading}
+        class="ui-button ui-button-danger flex-1"
+      >
+        {#if isLoading}
+          <Loader2 size={16} class="animate-spin" />
+          {$_('dialog.twofa_disable.disabling')}
+        {:else}
+          {$_('dialog.twofa_disable.title')}
+        {/if}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

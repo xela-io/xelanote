@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as tree from '$lib/stores/tree.svelte';
 
@@ -61,9 +62,7 @@
   {#snippet content()}
     <div class="space-y-4">
       <!-- Warning -->
-      <div
-        class="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-3 rounded-md"
-      >
+      <div class="ui-alert ui-alert-warning flex items-start gap-2">
         <AlertTriangle size={20} class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
         <div class="text-sm">
           <p class="font-semibold text-amber-800 dark:text-amber-200">
@@ -82,7 +81,7 @@
       </div>
 
       <!-- Folder Info -->
-      <div class="space-y-2 text-sm">
+      <div class="ui-panel-soft space-y-2 p-3 text-sm">
         <div>
           <span class="text-muted-foreground">{$_('dialog.delete_folder.label_folder')}:</span>
           <span class="font-mono ml-2 font-semibold">{folderName}</span>
@@ -107,9 +106,7 @@
       </p>
 
       {#if errorMessage}
-        <div
-          class="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-700"
-        >
+        <div class="ui-alert ui-alert-danger text-sm">
           {errorMessage}
         </div>
       {/if}
@@ -117,21 +114,23 @@
   {/snippet}
 
   {#snippet footer()}
-    <button
-      type="button"
-      onclick={onClose}
-      class="px-4 py-2 text-sm hover:bg-accent rounded-md"
-      disabled={isDeleting}
-    >
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleDelete}
-      disabled={isDeleting}
-      class="px-4 py-2 text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md disabled:opacity-50 font-medium"
-    >
-      {isDeleting ? $_('dialog.delete_folder.deleting') : $_('dialog.delete_folder.title')}
-    </button>
+    <DialogActions>
+      <button
+        type="button"
+        onclick={onClose}
+        class="ui-button ui-button-secondary text-sm"
+        disabled={isDeleting}
+      >
+        {$_('dialog.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleDelete}
+        disabled={isDeleting}
+        class="ui-button ui-button-danger text-sm"
+      >
+        {isDeleting ? $_('dialog.delete_folder.deleting') : $_('dialog.delete_folder.title')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

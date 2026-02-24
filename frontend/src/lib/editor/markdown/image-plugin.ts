@@ -70,10 +70,10 @@ export function register(md: MarkdownIt, escapeHtml: (s: string) => string): voi
     if (width && WIDTH_VALUE_REGEX.test(width)) {
       const widthValue = width.includes('%') ? width : `${width}px`;
       html += ` width="${escapeHtml(width)}"`;
-      html += ` style="width: ${escapeHtml(widthValue)}"`;
+      html += ` style="width: ${escapeHtml(widthValue)}; aspect-ratio: auto"`;
     }
 
-    html += `>`;
+    html += ` loading="lazy" decoding="async">`;
     html += `<span class="resize-handle"></span>`;
     html += `</span>`;
 

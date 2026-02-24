@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as notes from '$lib/stores/notes.svelte';
@@ -86,53 +88,44 @@
 
       {#if !showNewFolder}
         <!-- Existing folders -->
-        <div class="space-y-2">
-          <label for="folder-select" class="text-sm font-medium"
-            >{$_('component.move_dialog.select_target')}:</label
-          >
-          <select
-            id="folder-select"
-            bind:value={selectedFolder}
-            class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-          >
+        <DialogField forId="folder-select" label={$_('component.move_dialog.select_target') + ':'}>
+          <select id="folder-select" bind:value={selectedFolder} class="ui-select">
             {#each folderList as folder (folder)}
               <option value={folder}>
                 {folder === '/' ? $_('component.move_dialog.root_folder') : folder}
               </option>
             {/each}
           </select>
-        </div>
+        </DialogField>
 
         <button
           type="button"
           onclick={() => (showNewFolder = true)}
-          class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          class="ui-button ui-button-ghost text-sm px-0 py-0"
         >
           <FolderPlus size={16} />
           {$_('component.move_dialog.create_new_folder')}
         </button>
       {:else}
         <!-- New folder input -->
-        <div class="space-y-2">
-          <label for="new-folder-input" class="text-sm font-medium"
-            >{$_('component.move_dialog.new_folder_path')}:</label
-          >
+        <DialogField
+          forId="new-folder-input"
+          label={$_('component.move_dialog.new_folder_path') + ':'}
+          help={$_('component.move_dialog.path_example')}
+        >
           <input
             id="new-folder-input"
             type="text"
             bind:value={newFolderPath}
             placeholder={$_('component.move_dialog.path_placeholder')}
-            class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            class="ui-input"
           />
-          <p class="text-xs text-muted-foreground">
-            {$_('component.move_dialog.path_example')}
-          </p>
-        </div>
+        </DialogField>
 
         <button
           type="button"
           onclick={() => (showNewFolder = false)}
-          class="text-sm text-muted-foreground hover:text-foreground"
+          class="ui-button ui-button-ghost text-sm px-0 py-0"
         >
           {$_('component.move_dialog.select_existing')}
         </button>
@@ -141,16 +134,18 @@
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('common.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleMove}
-      disabled={isMoving}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-    >
-      {isMoving ? $_('component.move_dialog.moving') : $_('component.move_dialog.move')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('common.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleMove}
+        disabled={isMoving}
+        class="ui-button ui-button-primary text-sm"
+      >
+        {isMoving ? $_('component.move_dialog.moving') : $_('component.move_dialog.move')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

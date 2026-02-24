@@ -4,7 +4,7 @@
   import { _ } from 'svelte-i18n';
 
   import { beforeNavigate, goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { deleteNote, permanentlyDeleteNote } from '$lib/api';
   import * as journal from '$lib/stores/journal.svelte';
   import * as notes from '$lib/stores/notes.svelte';
@@ -13,8 +13,8 @@
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   // Get note ID from URL params
-  // $page.params.id ist immer definiert bei [id] route, aber TypeScript kennt das nicht
-  const noteId = $derived($page.params.id);
+  // page.params.id ist immer definiert bei [id] route, aber TypeScript kennt das nicht
+  const noteId = $derived(page.params.id);
 
   // Dynamic import state
   let EditorComponent = $state<ComponentType | null>(null);

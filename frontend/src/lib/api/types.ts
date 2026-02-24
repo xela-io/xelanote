@@ -495,14 +495,12 @@ export interface ActivityLogsOptions {
   date_to?: string;
 }
 
-export interface SummarizeRequest {
-  // For encrypted notes: decrypted content from frontend
-  plaintext_content?: string;
-  // For E2E notes: hash of plaintext (computed by frontend before encryption)
-  plaintext_content_hash?: string;
-  // For E2E notes: already encrypted summary (encrypted by frontend)
-  encrypted_summary?: string;
-}
+// SummarizeRequest is a discriminated union:
+// - Plaintext mode: optionally send decrypted content for summarization
+// - Encrypted mode: send pre-encrypted summary with content hash for storage
+export type SummarizeRequest =
+  | { plaintext_content?: string }
+  | { plaintext_content_hash: string; encrypted_summary: string };
 
 export interface SummarizeResponse {
   summary: string;

@@ -8,7 +8,7 @@
 
   import { browser } from '$app/environment';
   import { beforeNavigate, goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
   import * as api from '$lib/api';
@@ -113,7 +113,7 @@
   // Navigation guard: Only runs when URL changes (not when auth state changes)
   // This prevents race conditions during login/register operations
   $effect(() => {
-    const currentPath = $page.url.pathname;
+    const currentPath = page.url.pathname;
     const isPublicRoute = publicRoutes.some((route) => currentPath.startsWith(route));
 
     // Don't redirect before auth is initialized - initAuth() restores session from cookies
@@ -392,7 +392,7 @@
   // Determine if we should show the app layout (sidebar, etc.)
   // Show public layout if: on public route OR not authenticated
   const isPublic = $derived(
-    publicRoutes.some((route) => $page.url.pathname.startsWith(route)) || !auth.isAuthenticated()
+    publicRoutes.some((route) => page.url.pathname.startsWith(route)) || !auth.isAuthenticated()
   );
 
   async function loadQuickSwitcher() {

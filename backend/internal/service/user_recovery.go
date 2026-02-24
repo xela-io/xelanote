@@ -96,7 +96,7 @@ func (s *UserService) RecoverPasswordWithRecoveryKeyByEmail(email, recoveryKey, 
 	// Get user by email
 	user, err := s.db.GetUserByEmail(email)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			// Don't reveal whether user exists (timing attack mitigation)
 			// Perform a dummy bcrypt comparison to maintain constant time
 			bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(recoveryKey))
@@ -108,7 +108,7 @@ func (s *UserService) RecoverPasswordWithRecoveryKeyByEmail(email, recoveryKey, 
 	// Get user preferences to retrieve recovery key hash
 	prefs, err := s.db.GetUserPreferences(user.ID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return errors.New("invalid recovery request")
 		}
 		return err
@@ -157,7 +157,7 @@ func (s *UserService) GetRecoveryKeySaltByEmail(email string) ([]byte, error) {
 	// Get user by email
 	user, err := s.db.GetUserByEmail(email)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			// Don't reveal whether user exists - use generic error
 			return nil, errors.New("recovery key not available")
 		}

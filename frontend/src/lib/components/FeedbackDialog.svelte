@@ -2,6 +2,8 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
   import * as errorReporter from '$lib/stores/error-reporter.svelte';
   import * as toast from '$lib/stores/toast.svelte';
 
@@ -50,36 +52,32 @@
 <BaseDialog {open} title={$_('feedback.dialog_title')} {onClose} size="md">
   {#snippet content()}
     <div class="space-y-4">
-      <div class="space-y-2">
-        <label for="feedback-description" class="text-sm font-medium"
-          >{$_('feedback.description_label')}</label
-        >
+      <DialogField forId="feedback-description" label={$_('feedback.description_label')}>
         <textarea
           id="feedback-description"
           bind:value={description}
           placeholder={$_('feedback.description_placeholder')}
           rows="4"
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+          class="ui-textarea resize-y"
         ></textarea>
-      </div>
+      </DialogField>
 
-      <div class="space-y-2">
-        <label for="feedback-steps" class="text-sm font-medium">{$_('feedback.steps_label')}</label>
+      <DialogField forId="feedback-steps" label={$_('feedback.steps_label')}>
         <textarea
           id="feedback-steps"
           bind:value={steps}
           placeholder={$_('feedback.steps_placeholder')}
           rows="3"
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+          class="ui-textarea resize-y"
         ></textarea>
-      </div>
+      </DialogField>
 
-      <div class="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
+      <div class="ui-panel-soft text-xs text-muted-foreground p-3">
         {$_('feedback.privacy_notice')}
       </div>
 
       {#if errorMessage}
-        <div class="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+        <div class="ui-alert ui-alert-danger text-sm">
           {errorMessage}
         </div>
       {/if}
@@ -87,16 +85,18 @@
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('feedback.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleSubmit}
-      disabled={isSending}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-    >
-      {isSending ? $_('feedback.sending') : $_('feedback.submit')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('feedback.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleSubmit}
+        disabled={isSending}
+        class="ui-button ui-button-primary text-sm"
+      >
+        {isSending ? $_('feedback.sending') : $_('feedback.submit')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

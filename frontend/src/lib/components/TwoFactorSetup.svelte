@@ -125,7 +125,7 @@
     {#if step === 'intro'}
       <!-- Step 1: Introduction -->
       <div class="text-center space-y-6">
-        <div class="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+        <div class="ui-panel-soft mx-auto flex h-16 w-16 items-center justify-center rounded-full">
           <Shield size={32} class="text-primary" />
         </div>
         <div class="space-y-2">
@@ -135,7 +135,7 @@
             deiner Authenticator-App benötigt.
           </p>
         </div>
-        <div class="space-y-3 text-left">
+        <div class="ui-panel-soft space-y-3 p-4 text-left">
           <div class="flex items-start gap-3">
             <Smartphone size={20} class="text-primary mt-0.5 flex-shrink-0" />
             <div>
@@ -159,9 +159,7 @@
           type="button"
           onclick={startSetup}
           disabled={isLoading}
-          class="w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium
-						hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors
-						flex items-center justify-center gap-2"
+          class="ui-button ui-button-primary w-full"
         >
           {#if isLoading}
             <Loader2 size={16} class="animate-spin" />
@@ -182,29 +180,24 @@
 
         <!-- QR Code -->
         <div class="flex justify-center">
-          <div class="p-4 bg-white rounded-lg">
+          <div class="ui-panel-soft rounded-xl bg-white p-4">
             <img src={qrCodeDataUrl} alt="2FA QR Code" class="w-48 h-48" />
           </div>
         </div>
 
         <!-- Manual Secret -->
-        <div class="space-y-2">
+        <div class="ui-panel-soft space-y-2 p-4">
           <div class="text-sm text-muted-foreground text-center">
             Oder gib diesen Code manuell ein:
           </div>
           <div
-            class="px-4 py-3 bg-muted rounded-lg font-mono text-sm text-center select-all break-all text-foreground"
+            class="ui-list-item select-all break-all px-4 py-3 text-center font-mono text-sm text-foreground"
           >
             {secret}
           </div>
         </div>
 
-        <button
-          type="button"
-          onclick={goToVerify}
-          class="w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium
-						hover:bg-primary/90 transition-colors"
-        >
+        <button type="button" onclick={goToVerify} class="ui-button ui-button-primary w-full">
           Weiter
         </button>
       </div>
@@ -227,22 +220,18 @@
             oninput={handleCodeInput}
             placeholder="000000"
             disabled={isLoading}
-            class="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest
-							border border-border rounded-lg bg-background text-foreground
-							focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+            class="ui-input w-full px-4 py-3 text-center text-2xl font-mono tracking-widest"
           />
 
           {#if error}
-            <div class="text-sm text-red-500 text-center">{error}</div>
+            <div class="ui-alert ui-alert-danger text-center">{error}</div>
           {/if}
 
           <button
             type="button"
             onclick={verifySetup}
             disabled={isLoading || verifyCode.length !== 6}
-            class="w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium
-							hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors
-							flex items-center justify-center gap-2"
+            class="ui-button ui-button-primary w-full"
           >
             {#if isLoading}
               <Loader2 size={16} class="animate-spin" />
@@ -255,8 +244,7 @@
           <button
             type="button"
             onclick={() => (step = 'qr')}
-            class="w-full px-4 py-2 rounded-lg border border-border text-foreground
-							hover:bg-muted transition-colors"
+            class="ui-button ui-button-secondary w-full"
           >
             Zurück
           </button>
@@ -267,7 +255,7 @@
       <div class="space-y-6">
         <div class="text-center space-y-2">
           <div
-            class="mx-auto w-12 h-12 rounded-full bg-success/10 flex items-center justify-center"
+            class="ui-panel-soft mx-auto flex h-12 w-12 items-center justify-center rounded-full"
           >
             <CheckCircle size={24} class="text-success" />
           </div>
@@ -279,9 +267,7 @@
     {/if}
 
     {#if error && step !== 'verify'}
-      <div
-        class="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-600 dark:text-red-400"
-      >
+      <div class="ui-alert ui-alert-danger mt-4">
         {error}
       </div>
     {/if}

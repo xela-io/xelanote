@@ -6,6 +6,7 @@ import (
 
 	"errors"
 
+	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -39,6 +40,23 @@ type AdminUserResponse struct {
 	TOTPVerifiedAt     string  `json:"totp_verified_at,omitempty"`
 	TOTPDisabledAt     string  `json:"totp_disabled_at,omitempty"`
 	TOTPSetupStartedAt string  `json:"totp_setup_started_at,omitempty"`
+}
+
+// toAdminUserResponse converts a db.AdminUser to an API AdminUserResponse.
+func toAdminUserResponse(u db.AdminUser) AdminUserResponse {
+	return AdminUserResponse{
+		ID:                 u.ID,
+		Username:           u.Username,
+		Email:              u.Email,
+		IsAdmin:            u.IsAdmin,
+		NoteCount:          u.NoteCount,
+		StorageMB:          u.StorageMB,
+		CreatedAt:          u.CreatedAt,
+		TOTPEnabled:        u.TOTPEnabled,
+		TOTPVerifiedAt:     u.TOTPVerifiedAt,
+		TOTPDisabledAt:     u.TOTPDisabledAt,
+		TOTPSetupStartedAt: u.TOTPSetupStartedAt,
+	}
 }
 
 // SetAdminRequest represents the request to set admin status
@@ -108,19 +126,7 @@ func (s *Server) listAllUsers(w http.ResponseWriter, r *http.Request) {
 	// Convert to response type
 	var response []AdminUserResponse
 	for _, u := range users {
-		response = append(response, AdminUserResponse{
-			ID:                 u.ID,
-			Username:           u.Username,
-			Email:              u.Email,
-			IsAdmin:            u.IsAdmin,
-			NoteCount:          u.NoteCount,
-			StorageMB:          u.StorageMB,
-			CreatedAt:          u.CreatedAt,
-			TOTPEnabled:        u.TOTPEnabled,
-			TOTPVerifiedAt:     u.TOTPVerifiedAt,
-			TOTPDisabledAt:     u.TOTPDisabledAt,
-			TOTPSetupStartedAt: u.TOTPSetupStartedAt,
-		})
+		response = append(response, toAdminUserResponse(u))
 	}
 
 	respondJSON(w, http.StatusOK, response)
@@ -135,7 +141,7 @@ func (s *Server) getUserDetails(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.adminService.GetUserDetails(id)
 	if err != nil {
-		if err == service.ErrNotFound {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -143,19 +149,7 @@ func (s *Server) getUserDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, AdminUserResponse{
-		ID:                 user.ID,
-		Username:           user.Username,
-		Email:              user.Email,
-		IsAdmin:            user.IsAdmin,
-		NoteCount:          user.NoteCount,
-		StorageMB:          user.StorageMB,
-		CreatedAt:          user.CreatedAt,
-		TOTPEnabled:        user.TOTPEnabled,
-		TOTPVerifiedAt:     user.TOTPVerifiedAt,
-		TOTPDisabledAt:     user.TOTPDisabledAt,
-		TOTPSetupStartedAt: user.TOTPSetupStartedAt,
-	})
+	respondJSON(w, http.StatusOK, toAdminUserResponse(*user))
 }
 
 // toggleUserAdmin sets the admin status of a user
@@ -192,7 +186,7 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "cannot demote yourself")
 			return
 		}
-		if err == service.ErrNotFound {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}
@@ -239,7 +233,7 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusForbidden, "cannot delete yourself")
 			return
 		}
-		if err == service.ErrNotFound {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}

@@ -3,8 +3,64 @@ name: quality
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      run_target:
+        description: "Which visual workflow to run"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - visual
+          - ui-review
+      visual_locale:
+        description: "Visual regression locale override (workflow_dispatch only)"
+        required: false
+        default: "de"
+        type: choice
+        options:
+          - de
+          - en
+      visual_theme:
+        description: "Visual regression theme override (workflow_dispatch only)"
+        required: false
+        default: "matrix"
+        type: choice
+        options:
+          - matrix
+          - gruvbox-light
+          - gruvbox-dark
 
 jobs:
+  frontend-visual-regression-scope:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.scope.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch origin "$BASE_REF" --depth=1
+          CHANGED="$(git diff --name-only "origin/$BASE_REF"...HEAD)"
+          echo "$CHANGED"
+
+          if echo "$CHANGED" | grep -qE '^(frontend/|\.github/workflows/quality\.yml$)'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -27,13 +83,127 @@ jobs:
           npm run build
           bash ../scripts/check-bundle-size.sh
 
+  frontend-visual-regression:
+    needs: [frontend-visual-regression-scope]
+    if: |
+      needs.frontend-visual-regression-scope.outputs.should_run == 'true' &&
+      (
+        github.event_name != 'workflow_dispatch' ||
+        github.event.inputs.run_target == 'all' ||
+        github.event.inputs.run_target == 'visual'
+      )
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        visual_variant:
+          - slug: de-gruvbox-light
+            locale: de
+            theme: gruvbox-light
+          - slug: de-gruvbox-dark
+            locale: de
+            theme: gruvbox-dark
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VISUAL_LOCALE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.visual_locale || matrix.visual_variant.locale }}
+      VISUAL_THEME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.visual_theme != 'matrix' && github.event.inputs.visual_theme || matrix.visual_variant.theme }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: "1.25.x"
+          cache: true
+          cache-dependency-path: backend/go.sum
+      - name: Install sqlite3 dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - name: Pre-build backend for Playwright
+        working-directory: backend
+        run: CGO_ENABLED=1 go build -tags "fts5" -o /tmp/xelanote-test ./cmd/server
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run UI visual regression snapshots
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.visual_theme == 'matrix' || matrix.visual_variant.theme == github.event.inputs.visual_theme
+        run: npm run test:e2e:visual
+      - name: Skip non-selected visual matrix row
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.visual_theme != 'matrix' && matrix.visual_variant.theme != github.event.inputs.visual_theme
+        run: echo "Skipping matrix row ${{ matrix.visual_variant.slug }} for selected theme ${{ github.event.inputs.visual_theme }}"
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-visual-report-${{ matrix.visual_variant.slug }}
+          path: frontend/playwright-report/
+          retention-days: 7
+      - name: Upload Playwright visual diffs
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-visual-test-results-${{ matrix.visual_variant.slug }}
+          path: frontend/test-results/
+          retention-days: 7
+
+  frontend-ui-review-screenshots:
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (
+        github.event.inputs.run_target == 'all' ||
+        github.event.inputs.run_target == 'ui-review'
+      )
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: "1.25.x"
+          cache: true
+          cache-dependency-path: backend/go.sum
+      - name: Install sqlite3 dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - name: Pre-build backend for Playwright
+        working-directory: backend
+        run: CGO_ENABLED=1 go build -tags "fts5" -o /tmp/xelanote-test ./cmd/server
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Capture UI review screenshots
+        run: npm run test:e2e:ui-review
+      - name: Upload UI review screenshots
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ui-review-screenshots
+          path: frontend/tests/e2e/test-results/ui-review/
+          retention-days: 14
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-ui-review-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
   backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version: '1.25.x'
+          go-version: "1.25.x"
           cache: true
           cache-dependency-path: backend/go.sum
       - name: Install sqlite3 dev headers
@@ -88,12 +258,12 @@ jobs:
   golangci-lint:
     runs-on: ubuntu-latest
     env:
-      CGO_ENABLED: '1'
+      CGO_ENABLED: "1"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version: '1.25.x'
+          go-version: "1.25.x"
           cache: true
           cache-dependency-path: backend/go.sum
       - name: Install sqlite3 dev headers

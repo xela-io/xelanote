@@ -4,6 +4,8 @@
 
   import * as api from '$lib/api';
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
   import { fromBase64Standard } from '$lib/crypto/sodium';
   import {
     authenticateWithWebAuthn,
@@ -193,7 +195,7 @@
     <div class="space-y-6">
       <div class="flex items-start gap-3">
         <div
-          class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center"
+          class="ui-panel-soft flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
         >
           <Lock size={20} class="text-amber-500" />
         </div>
@@ -205,12 +207,7 @@
       {#if showWebAuthn}
         <button
           type="button"
-          class="w-full flex items-center justify-center gap-3 px-4 py-3
-						bg-gradient-to-r from-indigo-500 to-purple-600 text-white
-						rounded-lg font-medium
-						hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/40
-						disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0
-						transition-[transform,box-shadow,opacity] duration-200"
+          class="ui-button ui-button-primary w-full py-3"
           onclick={handleWebAuthnUnlock}
           disabled={isWebAuthnUnlocking || isUnlocking}
         >
@@ -240,25 +237,19 @@
         </div>
       {/if}
 
-      <div class="space-y-2">
-        <label for="unlock-password" class="block text-sm font-medium text-foreground">
-          {$_('common.password')}
-        </label>
+      <DialogField forId="unlock-password" label={$_('common.password')}>
         <input
           id="unlock-password"
           type="password"
           bind:value={password}
           placeholder={$_('component.unlock_encryption.password_placeholder')}
           disabled={isUnlocking || isWebAuthnUnlocking}
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground
-						focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          class="ui-input w-full"
         />
-      </div>
+      </DialogField>
 
       {#if error}
-        <div
-          class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-600 dark:text-red-400"
-        >
+        <div class="ui-alert ui-alert-danger">
           {error}
         </div>
       {/if}
@@ -266,29 +257,28 @@
   {/snippet}
 
   {#snippet footer()}
-    <button
-      type="button"
-      class="px-4 py-2 rounded-lg border border-border text-foreground
-				hover:bg-muted transition-colors disabled:opacity-50"
-      onclick={handleCancel}
-      disabled={isUnlocking || isWebAuthnUnlocking}
-    >
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium
-				hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors
-				flex items-center justify-center gap-2"
-      onclick={handleUnlock}
-      disabled={isUnlocking || isWebAuthnUnlocking}
-    >
-      {#if isUnlocking}
-        <Loader2 size={16} class="animate-spin" />
-        {$_('component.unlock_encryption.unlocking')}
-      {:else}
-        {$_('component.unlock_encryption.unlock')}
-      {/if}
-    </button>
+    <DialogActions>
+      <button
+        type="button"
+        class="ui-button ui-button-secondary"
+        onclick={handleCancel}
+        disabled={isUnlocking || isWebAuthnUnlocking}
+      >
+        {$_('dialog.cancel')}
+      </button>
+      <button
+        type="button"
+        class="ui-button ui-button-primary"
+        onclick={handleUnlock}
+        disabled={isUnlocking || isWebAuthnUnlocking}
+      >
+        {#if isUnlocking}
+          <Loader2 size={16} class="animate-spin" />
+          {$_('component.unlock_encryption.unlocking')}
+        {:else}
+          {$_('component.unlock_encryption.unlock')}
+        {/if}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

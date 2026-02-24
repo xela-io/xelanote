@@ -12,6 +12,14 @@ import (
 	"github.com/xela-io/xelanote/internal/llm"
 )
 
+// Validation limits for generated recipe fields.
+const (
+	MaxRecipeServings     = 999
+	MaxRecipeSourceURLLen = 2048
+	MaxIngredientNameLen  = 200
+	MaxIngredientUnitLen  = 50
+)
+
 // fahrenheitPattern matches temperature values in Fahrenheit within recipe text.
 // Matches patterns like: 350°F, 350 °F, 350 degrees F, 350 degrees Fahrenheit, 350 Grad Fahrenheit.
 var fahrenheitPattern = regexp.MustCompile(`(\d+)\s*(?:°\s*|degrees?\s+|Grad\s+)[Ff](?:ahrenheit)?(?:\b|(?:[^a-zA-Z]))`)
@@ -98,8 +106,8 @@ func validateGeneratedRecipe(r *GeneratedRecipe) {
 	if r.Servings < 1 {
 		r.Servings = 4
 	}
-	if r.Servings > 999 {
-		r.Servings = 999
+	if r.Servings > MaxRecipeServings {
+		r.Servings = MaxRecipeServings
 	}
 	r.Title = strings.TrimSpace(r.Title)
 	r.Instructions = strings.TrimSpace(r.Instructions)
@@ -114,21 +122,21 @@ func validateGeneratedRecipe(r *GeneratedRecipe) {
 		if trimmed == "" {
 			r.SourceURL = nil
 		} else {
-			if len(trimmed) > 2048 {
-				trimmed = trimmed[:2048]
+			if len(trimmed) > MaxRecipeSourceURLLen {
+				trimmed = trimmed[:MaxRecipeSourceURLLen]
 			}
 			r.SourceURL = &trimmed
 		}
 	}
 	for i := range r.Ingredients {
 		r.Ingredients[i].Name = strings.TrimSpace(r.Ingredients[i].Name)
-		if len(r.Ingredients[i].Name) > 200 {
-			r.Ingredients[i].Name = r.Ingredients[i].Name[:200]
+		if len(r.Ingredients[i].Name) > MaxIngredientNameLen {
+			r.Ingredients[i].Name = r.Ingredients[i].Name[:MaxIngredientNameLen]
 		}
 		if r.Ingredients[i].Unit != nil {
 			trimmed := strings.TrimSpace(*r.Ingredients[i].Unit)
-			if len(trimmed) > 50 {
-				trimmed = trimmed[:50]
+			if len(trimmed) > MaxIngredientUnitLen {
+				trimmed = trimmed[:MaxIngredientUnitLen]
 			}
 			r.Ingredients[i].Unit = &trimmed
 		}

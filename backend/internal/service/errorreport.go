@@ -1,31 +1,26 @@
 package service
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
 )
 
+const reportQueueSize = 64
+
 // ErrorReportService handles error reporting to Forgejo issues.
 type ErrorReportService struct {
-	forgejoURL          string
-	repoOwner           string
-	repoName            string
-	apiToken            string
-	httpClient          *http.Client
+	client              *ForgejoClient
 	log                 *slog.Logger
 	enabled             bool
 	autoReportLabelID   int64
 	userFeedbackLabelID int64
 	mu                  sync.RWMutex // protects label IDs
+	reportChan          chan ErrorReport
+	done                chan struct{}
 }
 
 // ErrorReport represents an incoming error report.
@@ -76,16 +71,59 @@ func NewErrorReportService(forgejoURL, repoOwner, repoName, apiToken string, log
 		log.Info("Error reporting disabled (missing FORGEJO_URL, FORGEJO_REPO, or FORGEJO_API_TOKEN)")
 	}
 
+	var client *ForgejoClient
+	if enabled {
+		client = NewForgejoClient(strings.TrimRight(forgejoURL, "/"), repoOwner, repoName, apiToken, log)
+	}
+
 	return &ErrorReportService{
-		forgejoURL: strings.TrimRight(forgejoURL, "/"),
-		repoOwner:  repoOwner,
-		repoName:   repoName,
-		apiToken:   apiToken,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
-		log:     log,
-		enabled: enabled,
+		client:     client,
+		log:        log,
+		enabled:    enabled,
+		reportChan: make(chan ErrorReport, reportQueueSize),
+		done:       make(chan struct{}),
+	}
+}
+
+// Start launches the background worker that processes queued error reports.
+// Call Close() to shut down gracefully.
+func (s *ErrorReportService) Start() {
+	if !s.enabled {
+		return
+	}
+	go s.processQueue()
+}
+
+// Close drains the report queue and stops the background worker.
+func (s *ErrorReportService) Close() {
+	close(s.reportChan)
+	<-s.done
+}
+
+// EnqueueReport accepts an error report for async processing.
+// Returns immediately. Reports are dropped if the queue is full.
+func (s *ErrorReportService) EnqueueReport(report ErrorReport) ErrorReportResult {
+	if !s.enabled {
+		return ErrorReportResult{Accepted: false}
+	}
+
+	select {
+	case s.reportChan <- report:
+		return ErrorReportResult{Accepted: true}
+	default:
+		s.log.Warn("error report queue full, dropping report", "fingerprint", report.Fingerprint)
+		return ErrorReportResult{Accepted: false}
+	}
+}
+
+func (s *ErrorReportService) processQueue() {
+	defer close(s.done)
+	for report := range s.reportChan {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		if _, err := s.SubmitReport(ctx, report); err != nil {
+			s.log.Error("async error report failed", "error", err, "fingerprint", report.Fingerprint)
+		}
+		cancel()
 	}
 }
 
@@ -143,7 +181,7 @@ func (s *ErrorReportService) SubmitReport(ctx context.Context, report ErrorRepor
 	if existingIssue != nil {
 		// Add comment to existing issue
 		commentBody := s.buildCommentBody(report)
-		if err := s.addComment(ctx, existingIssue.Number, commentBody); err != nil {
+		if err := s.client.AddComment(ctx, existingIssue.Number, commentBody); err != nil {
 			s.log.Error("failed to add comment to existing issue", "error", err, "issue", existingIssue.Number)
 			return ErrorReportResult{Accepted: false}, err
 		}
@@ -164,7 +202,7 @@ func (s *ErrorReportService) SubmitReport(ctx context.Context, report ErrorRepor
 	labelIDs := []int64{typeLabelID, fpLabelID}
 
 	for attempt := 0; attempt < 2; attempt++ {
-		err = s.createIssue(ctx, title, body, labelIDs)
+		err = s.client.CreateIssue(ctx, title, body, labelIDs)
 		if err == nil {
 			break
 		}
@@ -199,10 +237,7 @@ func (s *ErrorReportService) searchExistingIssue(ctx context.Context, fingerprin
 	fpLabelName := "fp:" + fingerprint
 
 	// Primary: search by fingerprint label
-	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/%s/issues?state=open&labels=%s&page=1&limit=1",
-		s.forgejoURL, s.repoOwner, s.repoName, url.QueryEscape(fpLabelName))
-
-	issues, err := s.fetchIssues(ctx, apiURL)
+	issues, err := s.client.SearchIssuesByLabel(ctx, fpLabelName)
 	if err != nil {
 		return nil, err
 	}
@@ -212,10 +247,7 @@ func (s *ErrorReportService) searchExistingIssue(ctx context.Context, fingerprin
 
 	// Fallback: search by fingerprint marker in body
 	searchQuery := fmt.Sprintf("fingerprint:%s", fingerprint)
-	apiURL = fmt.Sprintf("%s/api/v1/repos/%s/%s/issues?state=open&q=%s&page=1&limit=1",
-		s.forgejoURL, s.repoOwner, s.repoName, url.QueryEscape(searchQuery))
-
-	issues, err = s.fetchIssues(ctx, apiURL)
+	issues, err = s.client.SearchIssuesByQuery(ctx, searchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -226,144 +258,10 @@ func (s *ErrorReportService) searchExistingIssue(ctx context.Context, fingerprin
 	return nil, nil
 }
 
-func (s *ErrorReportService) fetchIssues(ctx context.Context, apiURL string) ([]forgejoIssue, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+s.apiToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch issues: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		s.log.Error("forgejo auth error during issue search", "status", resp.StatusCode)
-		return nil, fmt.Errorf("forgejo auth error: %d", resp.StatusCode)
-	}
-	if resp.StatusCode == http.StatusNotFound {
-		s.log.Error("forgejo repo not found", "repo", s.repoOwner+"/"+s.repoName)
-		return nil, fmt.Errorf("forgejo repo not found: 404")
-	}
-	if resp.StatusCode >= 500 {
-		return nil, fmt.Errorf("forgejo server error: %d", resp.StatusCode)
-	}
-
-	var issues []forgejoIssue
-	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
-		return nil, fmt.Errorf("failed to decode issues response: %w", err)
-	}
-	return issues, nil
-}
-
-func (s *ErrorReportService) createIssue(ctx context.Context, title, body string, labelIDs []int64) error {
-	payload := map[string]interface{}{
-		"title":  title,
-		"body":   body,
-		"labels": labelIDs,
-	}
-	jsonBody, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal issue payload: %w", err)
-	}
-
-	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/%s/issues", s.forgejoURL, s.repoOwner, s.repoName)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(jsonBody))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+s.apiToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to create issue: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("forgejo auth error: %d", resp.StatusCode)
-	}
-	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnprocessableEntity {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("forgejo create issue error: %d (failed to read body: %w)", resp.StatusCode, err)
-		}
-		return fmt.Errorf("forgejo create issue error: %d: %s", resp.StatusCode, string(body))
-	}
-	if resp.StatusCode >= 500 {
-		return fmt.Errorf("forgejo server error: %d", resp.StatusCode)
-	}
-	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("unexpected status creating issue: %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
-func (s *ErrorReportService) addComment(ctx context.Context, issueNumber int64, body string) error {
-	payload := map[string]string{"body": body}
-	jsonBody, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal comment payload: %w", err)
-	}
-
-	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/%s/issues/%d/comments",
-		s.forgejoURL, s.repoOwner, s.repoName, issueNumber)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(jsonBody))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+s.apiToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to add comment: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("forgejo auth error: %d", resp.StatusCode)
-	}
-	if resp.StatusCode >= 500 {
-		return fmt.Errorf("forgejo server error: %d", resp.StatusCode)
-	}
-	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("unexpected status adding comment: %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
 func (s *ErrorReportService) resolveOrCreateLabel(ctx context.Context, name, color string) (int64, error) {
-	// Try to find existing label
-	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/%s/labels?page=1&limit=50",
-		s.forgejoURL, s.repoOwner, s.repoName)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+	labels, err := s.client.FetchLabels(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+s.apiToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return 0, fmt.Errorf("failed to fetch labels: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("failed to fetch labels: status %d", resp.StatusCode)
-	}
-
-	var labels []forgejoLabel
-	if err := json.NewDecoder(resp.Body).Decode(&labels); err != nil {
-		return 0, fmt.Errorf("failed to decode labels: %w", err)
+		return 0, err
 	}
 
 	for _, l := range labels {
@@ -373,76 +271,23 @@ func (s *ErrorReportService) resolveOrCreateLabel(ctx context.Context, name, col
 	}
 
 	// Label not found — create it
-	return s.createLabel(ctx, name, color)
-}
-
-func (s *ErrorReportService) createLabel(ctx context.Context, name, color string) (int64, error) {
-	payload := map[string]string{
-		"name":  name,
-		"color": color,
-	}
-	jsonBody, err := json.Marshal(payload)
+	label, err := s.client.CreateLabel(ctx, name, color)
 	if err != nil {
-		return 0, fmt.Errorf("failed to marshal label payload: %w", err)
+		return 0, err
 	}
-
-	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/%s/labels", s.forgejoURL, s.repoOwner, s.repoName)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(jsonBody))
-	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+s.apiToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return 0, fmt.Errorf("failed to create label: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnprocessableEntity {
-		// Label might have been created concurrently — try to resolve it again
+	if label == nil {
+		// Concurrent creation — resolve again
 		s.log.Warn("label creation conflict, attempting to resolve", "name", name)
 		return s.resolveLabel(ctx, name)
 	}
-
-	if resp.StatusCode != http.StatusCreated {
-		return 0, fmt.Errorf("failed to create label: status %d", resp.StatusCode)
-	}
-
-	var label forgejoLabel
-	if err := json.NewDecoder(resp.Body).Decode(&label); err != nil {
-		return 0, fmt.Errorf("failed to decode created label: %w", err)
-	}
-
 	return label.ID, nil
 }
 
 // resolveLabel finds a label by name (used as fallback after create conflict).
 func (s *ErrorReportService) resolveLabel(ctx context.Context, name string) (int64, error) {
-	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/%s/labels?page=1&limit=50",
-		s.forgejoURL, s.repoOwner, s.repoName)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+	labels, err := s.client.FetchLabels(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+s.apiToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return 0, fmt.Errorf("failed to fetch labels: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("failed to fetch labels: status %d", resp.StatusCode)
-	}
-
-	var labels []forgejoLabel
-	if err := json.NewDecoder(resp.Body).Decode(&labels); err != nil {
-		return 0, fmt.Errorf("failed to decode labels: %w", err)
+		return 0, err
 	}
 
 	for _, l := range labels {
@@ -457,7 +302,15 @@ func (s *ErrorReportService) resolveLabel(ctx context.Context, name string) (int
 // createFingerprintLabel creates a fingerprint label (fp:xxxx) for dedup.
 func (s *ErrorReportService) createFingerprintLabel(ctx context.Context, fingerprint string) (int64, error) {
 	name := "fp:" + fingerprint
-	return s.createLabel(ctx, name, "#6b7280")
+	label, err := s.client.CreateLabel(ctx, name, "#6b7280")
+	if err != nil {
+		return 0, err
+	}
+	if label == nil {
+		// Concurrent creation — resolve
+		return s.resolveLabel(ctx, name)
+	}
+	return label.ID, nil
 }
 
 func (s *ErrorReportService) buildIssueTitle(report ErrorReport) string {

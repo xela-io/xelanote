@@ -41,18 +41,20 @@ Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 
 ## Features
 
+-   **[Editor-Funktionen](./editor-features.md)** — Live Preview, Wikilinks, Fokus-Modi, Task Drag&Drop, Inline Title
 -   **[Admin Panel](./admin-panel.md)** — Benutzerverwaltung und Systemeinstellungen
 -   **[Desktop-App](./desktop-app.md)** — Electron-App (Linux)
--   **[LLM Features](./llm-features.md)** — KI-Features: Tags, Links, Rechtschreibung, Zusammenfassungen
+-   **[LLM Features](./llm-features.md)** — KI-Features: Tags, Links, Rechtschreibung, Zusammenfassungen, AI Recipe Import
 -   **[Accessibility](./accessibility.md)** — WCAG 2.1, Keyboard-Navigation, Screen-Reader
--   **[Mobile Versionshistorie](./mobile-version-history.md)** — Mobile-optimierte Versionsansicht
--   **[Titlebar Modernisierung](./titlebar-modernization.md)** — Desktop-Titlebar-Design
 -   **[Offline-Modus](./offline-mode.md)** — Offline Read + Write Mode mit IndexedDB-Queue und Konfliktloesung
 -   **[Error Reporting](./error-reporting.md)** — Automatische Fehlerberichte und User-Feedback als Forgejo-Issues
+-   **Rezepte** — Strukturiertes Rezept-Management mit Zutaten, Portionen, AI-Import, Kochbuch-Collections, Sharing; siehe [API Dokumentation](./api.md)
+-   **Infinite Canvas** — Raeumliches Board (JSON Canvas spec v1.0) mit Text-Cards, eingebetteten Notizen, Links und Gruppen; siehe [Canvas RFC](./planning/canvas.md)
+-   **Journal** — Dedizierte Journal-Seite mit Kalender und Eintraege-Liste
 -   **Note Sharing** — Notizen mit anderen Benutzern teilen (Viewer/Editor-Rollen), siehe [API Dokumentation](./api.md#note-sharing)
--   **Folder Sharing** — Ganze Ordner teilen mit impliziter Permission-Vererbung fuer alle Notizen, siehe [API Dokumentation](./api.md#folder-sharing)
--   **Shared Note Placements** — Geteilte Notizen in eigene Ordner einordnen, siehe [API Dokumentation](./api.md#shared-note-placements)
--   **Encryption Toggle** — Einzelne Notizen entschluesseln/verschluesseln, Folder Encryption Default, siehe [E2E-Verschluesselung](./e2e-encryption.md) und [API Dokumentation](./api.md#post-apinotesiddecrypt)
+-   **Folder Sharing** — Ganze Ordner teilen mit impliziter Permission-Vererbung, siehe [API Dokumentation](./api.md#folder-sharing)
+-   **Collection Sharing** — Kochbuecher mit 3-Tier Prioritaets-Permission-Chain teilen
+-   **Encryption Toggle** — Einzelne Notizen entschluesseln/verschluesseln, Folder Encryption Default, siehe [E2E-Verschluesselung](./e2e-encryption.md)
 
 ## Performance
 
@@ -68,14 +70,19 @@ Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 
 ## Planung
 
-Dokumente in `docs/planning/` beschreiben geplante, noch nicht implementierte Features:
+Dokumente in `docs/planning/` beschreiben geplante oder kuerzlich implementierte Features:
 
+-   **[Live Preview Optimization](./planning/live-preview-optimization.md)** — Shiki, KaTeX, Mermaid, Web Worker, Idiomorph, Scroll Sync (aktuell in Arbeit)
+-   **[Design Improvements](./planning/design-improvements.md)** — UI-Redesign-Plan (grossteils umgesetzt)
+-   **[Refactoring Report](./planning/refactoring-report.md)** — Ergebnisse des Refactoring-Sprints (2026-02-21)
+-   **[Canvas RFC](./planning/canvas.md)** — Obsidian-Canvas-aehnliches Board-Feature (implementiert)
+-   **[Claude API Integration](./planning/claude-api-integration.md)** — Claude API fuer KI-Features (implementiert)
+-   **[Layer Violations Cleanup](./planning/layer-violations-cleanup.md)** — API->DB Layer-Bereinigung (abgeschlossen)
+-   **[Modernization Plan](./planning/modernization-plan.md)** — Technische Modernisierung
 -   **[Mobile App](./planning/mobile-app.md)** — Native Mobile App mit Capacitor
--   **[Claude API Integration](./planning/claude-api-integration.md)** — Claude API für KI-Features
 -   **[Mobile Improvements](./planning/mobile-improvements.md)** — Mobile UI-Verbesserungen
 -   **[P0 Optimization Plan](./planning/p0-optimization.md)** — Performance-Optimierungsplan
 -   **[List Types](./planning/list-types.md)** — Generisches Listenarten-System
--   **[Canvas RFC](./planning/canvas.md)** — Obsidian-Canvas-aehnliches Board-Feature (Architektur + API + Rollout)
 
 ## Postmortems & Incident Reports
 

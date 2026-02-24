@@ -128,7 +128,7 @@ func (r *ProviderRouter) getClaudeClient(userID int) (*ClaudeClient, error) {
 	// Get encrypted API key from database
 	encryptedKey, err := r.db.GetClaudeAPIKey(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return nil, ErrClaudeNotConfigured
 		}
 		return nil, fmt.Errorf("failed to get API key: %w", err)
@@ -183,7 +183,7 @@ func (r *ProviderRouter) getGeminiClient(userID int) (*GeminiClient, error) {
 	// Get encrypted API key from database
 	encryptedKey, err := r.db.GetGeminiAPIKey(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return nil, ErrGeminiNotConfigured
 		}
 		return nil, fmt.Errorf("failed to get API key: %w", err)
@@ -235,7 +235,7 @@ func (r *ProviderRouter) getChatGPTClient(userID int) (*ChatGPTClient, error) {
 
 	encryptedKey, err := r.db.GetOpenAIAPIKey(userID)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return nil, ErrChatGPTNotConfigured
 		}
 		return nil, fmt.Errorf("failed to get API key: %w", err)

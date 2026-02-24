@@ -81,7 +81,7 @@ type Server struct {
 type ServerConfig struct {
 	NoteService      *service.NoteService
 	AuthService      *service.AuthService
-	TFAService       *service.TwoFactorService
+	TwoFactorService *service.TwoFactorService
 	FIDO2Service     *service.FIDO2Service
 	GraphService     *service.GraphService
 	TemplateService  *service.TemplateService

@@ -47,11 +47,11 @@ func TestSaltOverwritePrevention(t *testing.T) {
 
 	// Create test server with noteService (important for the check!)
 	server := NewServer(ServerConfig{
-		NoteService: noteService,
-		AuthService: authService,
-		TFAService:  tfaService,
-		Logger:      logger,
-		JWTSecret:   jwtSecret,
+		NoteService:      noteService,
+		AuthService:      authService,
+		TwoFactorService: tfaService,
+		Logger:           logger,
+		JWTSecret:        jwtSecret,
 	})
 
 	// 1. Create a user
@@ -135,11 +135,11 @@ func TestSaltGenerationAllowedForNewUsers(t *testing.T) {
 
 	// Create test server
 	server := NewServer(ServerConfig{
-		NoteService: noteService,
-		AuthService: authService,
-		TFAService:  tfaService,
-		Logger:      logger,
-		JWTSecret:   jwtSecret,
+		NoteService:      noteService,
+		AuthService:      authService,
+		TwoFactorService: tfaService,
+		Logger:           logger,
+		JWTSecret:        jwtSecret,
 	})
 
 	// 1. Create a user

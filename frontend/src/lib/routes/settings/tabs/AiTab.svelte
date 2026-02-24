@@ -54,8 +54,8 @@
 </script>
 
 <div class="space-y-8">
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-2">
+  <section class="ui-panel-soft p-4 sm:p-5">
+    <h3 class="ui-form-section-title mb-2">
       {$_('page.settings.ai.provider_title')}
     </h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.provider_description')}</p>
@@ -73,10 +73,10 @@
     {#if isSavingAIProvider}
       <div class="text-xs text-muted-foreground mt-2">{$_('common.saving')}</div>
     {/if}
-  </div>
+  </section>
 
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-2">
+  <section class="ui-panel-soft p-4 sm:p-5">
+    <h3 class="ui-form-section-title mb-2">
       {$_('page.settings.ai.dietary_title')}
     </h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.dietary_description')}</p>
@@ -96,10 +96,10 @@
     {#if isSavingDietaryPreference}
       <div class="text-xs text-muted-foreground mt-2">{$_('common.saving')}</div>
     {/if}
-  </div>
+  </section>
 
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-2">{$_('page.settings.ai.models_title')}</h3>
+  <section class="ui-panel p-4 sm:p-5">
+    <h3 class="ui-form-section-title mb-2">{$_('page.settings.ai.models_title')}</h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.models_description')}</p>
 
     <form onsubmit={handleSaveAIModels} class="ui-fieldset">
@@ -206,15 +206,15 @@
         {/if}
       </button>
     </form>
-  </div>
+  </section>
 
   <!-- Claude API Key (BYOK) -->
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-2">{$_('page.settings.ai.claude_title')}</h3>
+  <section class="ui-panel p-4 sm:p-5">
+    <h3 class="ui-form-section-title mb-2">{$_('page.settings.ai.claude_title')}</h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.claude_description')}</p>
 
     {#if isLoadingClaudeKeyStatus}
-      <div class="ui-panel p-4 flex items-center gap-3">
+      <div class="ui-panel-soft p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
@@ -238,7 +238,7 @@
           <button
             onclick={handleDeleteClaudeApiKey}
             disabled={claudeKeyForm.isDeleting}
-            class="ui-icon-button p-2 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            class="ui-icon-button ui-icon-button-sm text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             title={$_('page.settings.ai.delete_api_key')}
           >
             {#if claudeKeyForm.isDeleting}
@@ -271,7 +271,7 @@
               <button
                 type="button"
                 onclick={() => (claudeKeyForm.showKey = !claudeKeyForm.showKey)}
-                class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
+                class="ui-icon-button ui-icon-button-sm absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent"
               >
                 {#if claudeKeyForm.showKey}
                   <EyeOff size={18} />
@@ -318,7 +318,7 @@
             <button
               type="button"
               onclick={() => (claudeKeyForm.showKey = !claudeKeyForm.showKey)}
-              class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
+              class="ui-icon-button ui-icon-button-sm absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent"
             >
               {#if claudeKeyForm.showKey}
                 <EyeOff size={18} />
@@ -345,15 +345,15 @@
         </button>
       </form>
     {/if}
-  </div>
+  </section>
 
   <!-- Gemini API Key (BYOK) -->
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-2">{$_('page.settings.ai.gemini_title')}</h3>
+  <section class="ui-panel p-4 sm:p-5">
+    <h3 class="ui-form-section-title mb-2">{$_('page.settings.ai.gemini_title')}</h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.gemini_description')}</p>
 
     {#if isLoadingGeminiKeyStatus}
-      <div class="ui-panel p-4 flex items-center gap-3">
+      <div class="ui-panel-soft p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
@@ -377,7 +377,7 @@
           <button
             onclick={handleDeleteGeminiApiKey}
             disabled={geminiKeyForm.isDeleting}
-            class="ui-icon-button p-2 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            class="ui-icon-button ui-icon-button-sm text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             title={$_('page.settings.ai.delete_api_key')}
           >
             {#if geminiKeyForm.isDeleting}
@@ -410,7 +410,7 @@
               <button
                 type="button"
                 onclick={() => (geminiKeyForm.showKey = !geminiKeyForm.showKey)}
-                class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
+                class="ui-icon-button ui-icon-button-sm absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent"
               >
                 {#if geminiKeyForm.showKey}
                   <EyeOff size={18} />
@@ -457,7 +457,7 @@
             <button
               type="button"
               onclick={() => (geminiKeyForm.showKey = !geminiKeyForm.showKey)}
-              class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
+              class="ui-icon-button ui-icon-button-sm absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent"
             >
               {#if geminiKeyForm.showKey}
                 <EyeOff size={18} />
@@ -484,15 +484,15 @@
         </button>
       </form>
     {/if}
-  </div>
+  </section>
 
   <!-- ChatGPT API Key (BYOK) -->
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-2">{$_('page.settings.ai.openai_title')}</h3>
+  <section class="ui-panel p-4 sm:p-5">
+    <h3 class="ui-form-section-title mb-2">{$_('page.settings.ai.openai_title')}</h3>
     <p class="text-sm text-muted-foreground mb-4">{$_('page.settings.ai.openai_description')}</p>
 
     {#if isLoadingOpenAIKeyStatus}
-      <div class="ui-panel p-4 flex items-center gap-3">
+      <div class="ui-panel-soft p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
@@ -516,7 +516,7 @@
           <button
             onclick={handleDeleteOpenAIApiKey}
             disabled={openAIKeyForm.isDeleting}
-            class="ui-icon-button p-2 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            class="ui-icon-button ui-icon-button-sm text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             title={$_('page.settings.ai.delete_api_key')}
           >
             {#if openAIKeyForm.isDeleting}
@@ -549,7 +549,7 @@
               <button
                 type="button"
                 onclick={() => (openAIKeyForm.showKey = !openAIKeyForm.showKey)}
-                class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
+                class="ui-icon-button ui-icon-button-sm absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent"
               >
                 {#if openAIKeyForm.showKey}
                   <EyeOff size={18} />
@@ -596,7 +596,7 @@
             <button
               type="button"
               onclick={() => (openAIKeyForm.showKey = !openAIKeyForm.showKey)}
-              class="ui-icon-button absolute right-2 top-1/2 -translate-y-1/2 p-1 border-0 bg-transparent"
+              class="ui-icon-button ui-icon-button-sm absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent"
             >
               {#if openAIKeyForm.showKey}
                 <EyeOff size={18} />
@@ -623,9 +623,9 @@
         </button>
       </form>
     {/if}
-  </div>
+  </section>
 
-  <div class="ui-panel p-4 bg-primary/10 border-primary/30">
+  <div class="ui-panel-soft p-4 bg-primary/10 border-primary/30">
     <div class="flex items-start gap-3">
       <Sparkles size={20} class="text-primary mt-0.5" />
       <div class="flex-1 text-sm text-foreground">

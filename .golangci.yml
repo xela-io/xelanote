@@ -19,6 +19,7 @@ linters:
     - bodyclose
     - gocritic
     - unused
+    - gosec
   settings:
     revive:
       rules:
@@ -39,8 +40,6 @@ linters:
     errcheck:
       exclude-functions:
         - (*database/sql.Tx).Rollback
-        - (*database/sql.Row).Scan
-        - (*database/sql.DB).Exec
         - (net/http.ResponseWriter).Write
         - (*github.com/gorilla/websocket.Conn).SetReadDeadline
         - (*github.com/gorilla/websocket.Conn).SetWriteDeadline
@@ -77,6 +76,7 @@ linters:
           - errcheck
           - gocritic
           - bodyclose
+          - gosec
       # Intentional misspellings in spell-check prompt examples
       - path: internal/llm/prompts\.go
         linters:

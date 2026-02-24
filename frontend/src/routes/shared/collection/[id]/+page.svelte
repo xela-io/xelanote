@@ -4,12 +4,12 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as recipes from '$lib/stores/recipes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
-  const collectionId = $derived(Number($page.params.id));
+  const collectionId = $derived(Number(page.params.id));
 
   // Find the collection info from loaded shared collections
   const collectionInfo = $derived(

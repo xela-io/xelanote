@@ -45,18 +45,16 @@
 
 <div class="space-y-4">
   {#if showWarning}
-    <div
-      class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm text-amber-700 dark:text-amber-400"
-    >
+    <div class="ui-alert ui-alert-warning">
       <strong>Wichtig:</strong> Diese Codes werden nur einmal angezeigt. Speichere sie jetzt an einem
       sicheren Ort! Jeder Code kann nur einmal verwendet werden.
     </div>
   {/if}
 
   <!-- Codes Grid -->
-  <div class="grid grid-cols-2 gap-2">
+  <div class="ui-panel-soft grid grid-cols-2 gap-2 p-3">
     {#each codes as code (code)}
-      <div class="px-3 py-2 bg-muted rounded-lg font-mono text-sm text-center text-foreground">
+      <div class="ui-list-item px-3 py-2 font-mono text-sm text-center text-foreground">
         {code}
       </div>
     {/each}
@@ -64,11 +62,7 @@
 
   <!-- Action Buttons -->
   <div class="flex gap-2">
-    <button
-      onclick={copyAllCodes}
-      class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border
-				bg-background text-foreground hover:bg-muted transition-colors"
-    >
+    <button onclick={copyAllCodes} class="ui-button ui-button-secondary flex-1">
       {#if copied}
         <Check size={16} class="text-success" />
         Kopiert!
@@ -77,11 +71,7 @@
         Alle kopieren
       {/if}
     </button>
-    <button
-      onclick={downloadCodes}
-      class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border
-				bg-background text-foreground hover:bg-muted transition-colors"
-    >
+    <button onclick={downloadCodes} class="ui-button ui-button-secondary flex-1">
       <Download size={16} />
       Als Datei speichern
     </button>
@@ -89,7 +79,7 @@
 
   <!-- Confirmation -->
   {#if onConfirm}
-    <div class="pt-4 border-t border-border space-y-4">
+    <div class="ui-panel-soft space-y-4 border-t-0 p-4">
       <label class="flex items-start gap-3 cursor-pointer">
         <input
           type="checkbox"
@@ -104,8 +94,7 @@
       <button
         onclick={handleConfirm}
         disabled={!confirmed}
-        class="w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium
-					hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        class="ui-button ui-button-primary w-full"
       >
         Fertig
       </button>

@@ -97,29 +97,19 @@
 <BaseDialog {open} title={$_('page.recipes.import.title')} {onClose} size="lg" scrollable>
   {#snippet content()}
     <div class="space-y-4">
-      <div class="inline-flex rounded-md border border-border p-1 bg-accent/40">
-        <button
-          onclick={() => (tab = 'image')}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded"
-          class:bg-background={tab === 'image'}
-          class:shadow-sm={tab === 'image'}
-        >
+      <div class="ui-tablist">
+        <button onclick={() => (tab = 'image')} class="ui-tab" class:is-active={tab === 'image'}>
           <Camera size={14} />
           {$_('page.recipes.import.from_image')}
         </button>
-        <button
-          onclick={() => (tab = 'url')}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded"
-          class:bg-background={tab === 'url'}
-          class:shadow-sm={tab === 'url'}
-        >
+        <button onclick={() => (tab = 'url')} class="ui-tab" class:is-active={tab === 'url'}>
           <Globe size={14} />
           {$_('page.recipes.import.from_url')}
         </button>
       </div>
 
       {#if error}
-        <div class="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+        <div class="ui-alert ui-alert-danger text-sm">
           {error}
         </div>
       {/if}
@@ -127,7 +117,7 @@
       {#if tab === 'image'}
         <div class="space-y-3">
           <label
-            class="block rounded-md border border-dashed border-border p-6 text-center cursor-pointer hover:bg-accent/40 transition-colors"
+            class="ui-panel-soft block border-dashed p-6 text-center cursor-pointer hover:bg-accent/40 transition-colors"
           >
             <input
               type="file"
@@ -144,13 +134,13 @@
           </label>
 
           {#if imagePreview}
-            <img src={imagePreview} alt="Preview" class="w-40 h-40 rounded-md object-cover" />
+            <img src={imagePreview} alt="Preview" class="w-40 h-40 rounded-lg object-cover" />
           {/if}
 
           <button
             onclick={extractFromImage}
             disabled={!imageFile || loading}
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            class="ui-button ui-button-primary text-sm"
           >
             {#if loading}
               <Loader2 size={14} class="animate-spin" />
@@ -167,13 +157,13 @@
             type="url"
             bind:value={sourceURL}
             placeholder={$_('page.recipes.import.url_placeholder')}
-            class="w-full px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            class="ui-input text-sm"
           />
 
           <button
             onclick={extractFromURL}
             disabled={!sourceURL.trim() || loading}
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            class="ui-button ui-button-primary text-sm"
           >
             {#if loading}
               <Loader2 size={14} class="animate-spin" />

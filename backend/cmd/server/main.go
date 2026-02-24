@@ -130,7 +130,7 @@ func main() {
 	server := api.NewServer(api.ServerConfig{
 		NoteService:      core.note,
 		AuthService:      core.auth,
-		TFAService:       core.tfa,
+		TwoFactorService: core.tfa,
 		FIDO2Service:     fido2Service,
 		GraphService:     graphService,
 		TemplateService:  core.template,
@@ -181,6 +181,7 @@ func main() {
 		core.template.Close()
 		core.admin.Close()
 		recipeSuggestionService.Close()
+		errorReportService.Close()
 	}
 	setupGracefulShutdown(srv, pruneCancel, cleanup)
 

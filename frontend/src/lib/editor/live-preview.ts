@@ -55,6 +55,17 @@ interface LivePreviewStaticData {
   treeFeatures: ReturnType<typeof collectTreeFeatures>;
 }
 
+/** Get the visible line range with a buffer for viewport-aware computations. */
+function getViewportLineRange(view: EditorView, buffer = 50): { from: number; to: number } {
+  const ranges = view.visibleRanges;
+  if (ranges.length === 0) return { from: 1, to: view.state.doc.lines };
+  const firstPos = ranges[0].from;
+  const lastPos = ranges[ranges.length - 1].to;
+  const fromLine = Math.max(1, view.state.doc.lineAt(firstPos).number - buffer);
+  const toLine = Math.min(view.state.doc.lines, view.state.doc.lineAt(lastPos).number + buffer);
+  return { from: fromLine, to: toLine };
+}
+
 interface LivePreviewPersistenceOptions {
   noteId?: string;
 }
@@ -557,9 +568,19 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       this.collapsedTaskGroups = loadCollapsedTaskGroups(this.persistenceOptions.noteId);
       this.staticData = this.computeStaticData(view, 'init');
       this.headingInfo = profile('structured', 'init', () =>
-        collectHeadingInfo(view, this.collapsedHeadingSections)
+        collectHeadingInfo(
+          view,
+          this.collapsedHeadingSections,
+          getViewportLineRange(view).from,
+          getViewportLineRange(view).to
+        )
       );
-      this.completedTaskGroupInfo = collectCompletedTaskGroups(view, this.collapsedTaskGroups);
+      this.completedTaskGroupInfo = collectCompletedTaskGroups(
+        view,
+        this.collapsedTaskGroups,
+        getViewportLineRange(view).from,
+        getViewportLineRange(view).to
+      );
       this.activeLines = getActiveLines(view);
       this.activeLinesSignature = activeLinesKey(this.activeLines);
       this.decorations = buildDecorations(
@@ -596,10 +617,20 @@ const livePreviewPlugin = ViewPlugin.fromClass(
           treeFeatures: profile('tree', reason, () => collectTreeFeatures(update.view)),
         };
         this.headingInfo = profile('structured', reason, () =>
-          collectHeadingInfo(update.view, this.collapsedHeadingSections)
+          collectHeadingInfo(
+            update.view,
+            this.collapsedHeadingSections,
+            getViewportLineRange(update.view).from,
+            getViewportLineRange(update.view).to
+          )
         );
         this.headingInfoDirty = false;
-        const nextTaskGroupInfo = collectCompletedTaskGroups(update.view, this.collapsedTaskGroups);
+        const nextTaskGroupInfo = collectCompletedTaskGroups(
+          update.view,
+          this.collapsedTaskGroups,
+          getViewportLineRange(update.view).from,
+          getViewportLineRange(update.view).to
+        );
         const remappedCollapsedTaskGroups = remapCollapsedTaskGroups(
           previousTaskGroupInfo,
           nextTaskGroupInfo,
@@ -622,14 +653,22 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       } else if (this.headingInfoDirty || this.taskGroupInfoDirty) {
         if (this.headingInfoDirty) {
           this.headingInfo = profile('structured', reason, () =>
-            collectHeadingInfo(update.view, this.collapsedHeadingSections)
+            collectHeadingInfo(
+              update.view,
+              this.collapsedHeadingSections,
+              getViewportLineRange(update.view).from,
+              getViewportLineRange(update.view).to
+            )
           );
           this.headingInfoDirty = false;
         }
         if (this.taskGroupInfoDirty) {
+          const vp = getViewportLineRange(update.view);
           this.completedTaskGroupInfo = collectCompletedTaskGroups(
             update.view,
-            this.collapsedTaskGroups
+            this.collapsedTaskGroups,
+            vp.from,
+            vp.to
           );
           this.taskGroupInfoDirty = false;
         }

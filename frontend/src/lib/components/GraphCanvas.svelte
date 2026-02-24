@@ -41,6 +41,7 @@
   let focusNeighborsOnly = $state(false);
   let zoomLevel = $state(1);
   let loading = $state(true);
+  let initError = $state<string | null>(null);
   let themeColors = $state<GraphThemeColors>({
     canvas: 'rgb(245, 245, 245)',
     nodeResolved: 'rgb(59, 130, 246)',
@@ -71,7 +72,11 @@
 
   onMount(() => {
     // Initialize graph asynchronously
-    initGraph();
+    initGraph().catch((err) => {
+      console.error('[GraphCanvas]', err);
+      initError = err instanceof Error ? err.message : String(err);
+      loading = false;
+    });
 
     // Cleanup on destroy
     return () => {
@@ -495,7 +500,14 @@
 </script>
 
 <div class="absolute inset-0 graph-canvas-wrapper">
-  {#if loading}
+  {#if initError}
+    <div class="w-full h-full flex items-center justify-center text-muted-foreground">
+      <div class="text-center">
+        <p class="text-destructive mb-2">Failed to load graph</p>
+        <p class="text-sm">{initError}</p>
+      </div>
+    </div>
+  {:else if loading}
     <div class="w-full h-full flex items-center justify-center text-muted-foreground">
       <div class="text-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>

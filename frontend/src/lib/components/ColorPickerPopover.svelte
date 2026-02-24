@@ -92,7 +92,7 @@
 
 <!-- Popover: Bottom sheet on mobile, centered on desktop -->
 <div
-  class="fixed z-50 bg-background border border-border shadow-lg flex flex-col
+  class="fixed z-50 ui-panel shadow-lg flex flex-col
 		md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-80 md:rounded-lg md:max-h-[calc(var(--app-viewport-height,100dvh)-6rem)]
 		bottom-0 left-0 right-0 max-h-[60vh] rounded-t-2xl animate-bottom-sheet"
   onkeydown={handleKeydown}
@@ -113,7 +113,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="p-1 hover:bg-accent rounded-md"
+      class="ui-icon-button ui-icon-button-sm border-0 bg-transparent"
       aria-label="Schließen"
     >
       <X size={16} />
@@ -121,31 +121,27 @@
   </div>
 
   <!-- Tabs -->
-  <div class="flex border-b border-border">
-    <button
-      type="button"
-      onclick={() => (activeTab = 'palette')}
-      class="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors"
-      class:border-primary={activeTab === 'palette'}
-      class:text-primary={activeTab === 'palette'}
-      class:border-transparent={activeTab !== 'palette'}
-      class:text-muted-foreground={activeTab !== 'palette'}
-    >
-      <Palette size={16} />
-      Palette
-    </button>
-    <button
-      type="button"
-      onclick={() => (activeTab = 'custom')}
-      class="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors"
-      class:border-primary={activeTab === 'custom'}
-      class:text-primary={activeTab === 'custom'}
-      class:border-transparent={activeTab !== 'custom'}
-      class:text-muted-foreground={activeTab !== 'custom'}
-    >
-      <Hash size={16} />
-      Eigene
-    </button>
+  <div class="px-4 py-2 border-b border-border">
+    <div class="ui-tablist w-full">
+      <button
+        type="button"
+        onclick={() => (activeTab = 'palette')}
+        class="ui-tab flex-1"
+        class:is-active={activeTab === 'palette'}
+      >
+        <Palette size={16} />
+        Palette
+      </button>
+      <button
+        type="button"
+        onclick={() => (activeTab = 'custom')}
+        class="ui-tab flex-1"
+        class:is-active={activeTab === 'custom'}
+      >
+        <Hash size={16} />
+        Eigene
+      </button>
+    </div>
   </div>
 
   <!-- Content -->
@@ -155,7 +151,7 @@
         {#each namedColors as color (color.name)}
           <button
             onclick={() => selectNamedColor(color.name)}
-            class="flex items-center gap-3 p-3 hover:bg-accent rounded-md transition-colors text-left"
+            class="ui-list-item flex items-center gap-3 p-3 transition-colors text-left"
           >
             <div
               class="w-6 h-6 rounded-full border border-border flex-shrink-0"
@@ -172,7 +168,7 @@
       <div class="space-y-4">
         <!-- Hex Input -->
         <div>
-          <label for="hex-input" class="block text-sm font-medium mb-2"> Hex-Farbcode </label>
+          <label for="hex-input" class="ui-label mb-0">Hex-Farbcode</label>
           <div class="flex gap-2">
             <input
               id="hex-input"
@@ -181,12 +177,12 @@
               oninput={handleHexInput}
               onkeydown={handleHexKeydown}
               placeholder="#ff0000"
-              class="flex-1 px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring font-mono"
+              class="ui-input flex-1 text-sm font-mono"
             />
             <button
               onclick={handleHexSubmit}
               disabled={hexError !== '' || customHex === '#' || customHex === ''}
-              class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+              class="ui-button ui-button-primary text-sm font-medium"
             >
               OK
             </button>
@@ -198,7 +194,7 @@
 
         <!-- Native Color Picker -->
         <div>
-          <label for="color-picker" class="block text-sm font-medium mb-2"> Farbwähler </label>
+          <label for="color-picker" class="ui-label mb-0">Farbwähler</label>
           <div class="flex gap-2 items-center">
             <input
               id="color-picker"
@@ -207,16 +203,14 @@
               oninput={handleColorPickerChange}
               class="w-12 h-10 p-0 border border-border rounded cursor-pointer"
             />
-            <span class="text-sm text-muted-foreground">
-              Wähle eine Farbe aus der Systempalette
-            </span>
+            <span class="ui-form-help"> Wähle eine Farbe aus der Systempalette </span>
           </div>
         </div>
 
         <!-- Preview -->
         {#if customHex !== '#' && !hexError}
           <div class="pt-2 border-t border-border">
-            <span class="text-sm font-medium">Vorschau:</span>
+            <span class="ui-label mb-0">Vorschau:</span>
             <p class="mt-2 text-lg" style="color: {sanitizeColor(customHex) || 'inherit'};">
               Dies ist ein Beispieltext in der gewählten Farbe.
             </p>

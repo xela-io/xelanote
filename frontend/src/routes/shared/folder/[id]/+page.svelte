@@ -4,12 +4,12 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import * as sharing from '$lib/stores/sharing.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
-  const folderId = $derived(Number($page.params.id));
+  const folderId = $derived(Number(page.params.id));
 
   // Find the folder info from loaded shared folders
   const folderInfo = $derived(sharing.getSharedFolders().find((f) => f.id === folderId));

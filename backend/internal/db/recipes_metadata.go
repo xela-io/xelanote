@@ -69,9 +69,9 @@ func (db *DB) SetRecipeMetadata(noteID string, ownerUserID int, m *RecipeMetadat
 			return err
 		}
 		if rows == 0 {
-			// Check if metadata exists at all
+			// Check if metadata exists at all (scan error means no rows → exists stays false)
 			var exists bool
-			db.QueryRow("SELECT 1 FROM recipe_metadata WHERE note_id = ?", noteID).Scan(&exists)
+			_ = db.QueryRow("SELECT 1 FROM recipe_metadata WHERE note_id = ?", noteID).Scan(&exists) //nolint:errcheck
 			if !exists {
 				return fmt.Errorf("recipe metadata not found")
 			}

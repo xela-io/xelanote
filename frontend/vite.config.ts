@@ -177,6 +177,7 @@ export default defineConfig({
     },
   },
   build: {
+    // Intentional: targets PWA, Electron, and Tauri (modern browsers only)
     target: 'esnext',
     // Chunk-size warning increased (we know CodeMirror is large)
     chunkSizeWarningLimit: 1000,
@@ -214,14 +215,19 @@ export default defineConfig({
               return 'markdown';
             }
 
+            // Shiki syntax highlighting (lazy-loaded)
+            if (id.includes('shiki')) {
+              return 'shiki';
+            }
+
+            // Mermaid diagrams (lazy-loaded)
+            if (id.includes('mermaid')) {
+              return 'mermaid';
+            }
+
             // Icons
             if (id.includes('lucide-svelte')) {
               return 'icons';
-            }
-
-            // UI vendors (rest)
-            if (id.includes('bits-ui')) {
-              return 'vendor';
             }
           }
         },

@@ -21,6 +21,22 @@
     CANVAS_TREE_ITEM_MIME,
     parseDroppedSidebarNote,
   } from '$lib/components/canvas/canvas-note-drop';
+  import {
+    clientToFlowPosition,
+    type ClipboardState,
+    copySelection,
+    deleteSelection,
+    duplicateNodes,
+    flowToContainerPosition,
+    isEditingText,
+    isImagePasteTarget,
+    normalizeLinkUrl,
+    pasteClipboard,
+    renameGroupNode,
+    setNodeColor,
+    validateLinkUrl,
+    type Viewport,
+  } from '$lib/components/canvas/canvas-operations';
   import { TOOL_DRAG_MIME, type ToolbarAction } from '$lib/components/canvas/canvas-toolbar-tools';
   import CanvasContextMenu from '$lib/components/canvas/CanvasContextMenu.svelte';
   import CanvasDragPreview from '$lib/components/canvas/CanvasDragPreview.svelte';
@@ -89,12 +105,10 @@
   let saveStatus = $state<'saved' | 'saving' | 'unsaved'>('saved');
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let lastSavedContent = '';
-  let copiedNodes: FlowNode[] = [];
-  let copiedEdges: FlowEdge[] = [];
-  let pasteCount = 0;
+  let clipboard = $state<ClipboardState | null>(null);
 
   // Viewport state for coordinate conversion (bound to SvelteFlow)
-  let viewport = $state<{ x: number; y: number; zoom: number } | undefined>(undefined);
+  let viewport = $state<Viewport | undefined>(undefined);
   let containerEl: HTMLDivElement | undefined = $state();
   let draggingOver = $state(false);
   let toolDragPreview = $state<{ action: ToolbarAction; x: number; y: number } | null>(null);
@@ -200,7 +214,8 @@
       notes.updateCurrentNoteContent(json);
       return true;
     } catch (err) {
-      console.error('Failed to save canvas:', err);
+      console.error('[CanvasEditor] Failed to save canvas:', err);
+      toast.error('Failed to save canvas');
       return false;
     }
   }
@@ -293,26 +308,21 @@
   // Context menu actions
   function handleDeleteNode() {
     if (!contextMenu) return;
-    flowNodes = flowNodes.filter((n) => n.id !== contextMenu!.nodeId);
-    flowEdges = flowEdges.filter(
-      (e) => e.source !== contextMenu!.nodeId && e.target !== contextMenu!.nodeId
-    );
+    const nodeIds = new Set([contextMenu.nodeId]);
+    flowNodes = flowNodes.filter((n) => !nodeIds.has(n.id));
+    flowEdges = flowEdges.filter((e) => !nodeIds.has(e.source) && !nodeIds.has(e.target));
     scheduleSave();
   }
 
   function handleDuplicateNode() {
     if (!contextMenu) return;
-    duplicateNodes([contextMenu.nodeId]);
+    flowNodes = duplicateNodes(flowNodes, [contextMenu.nodeId]);
+    scheduleSave();
   }
 
   function handleColorChange(color: string) {
     if (!contextMenu) return;
-    flowNodes = flowNodes.map((n) => {
-      if (n.id === contextMenu!.nodeId) {
-        return { ...n, data: { ...n.data, color: color || undefined } };
-      }
-      return n;
-    });
+    flowNodes = setNodeColor(flowNodes, contextMenu.nodeId, color);
     scheduleSave();
   }
 
@@ -324,33 +334,23 @@
     const currentLabel = (node.data.label as string) || 'Group';
     const newLabel = prompt('Group name:', currentLabel);
     if (newLabel !== null && newLabel.trim() && newLabel.trim() !== currentLabel) {
-      flowNodes = flowNodes.map((n) => {
-        if (n.id === nodeId) {
-          return { ...n, data: { ...n.data, label: newLabel.trim() } };
-        }
-        return n;
-      });
+      flowNodes = renameGroupNode(flowNodes, nodeId, newLabel.trim());
       scheduleSave();
     }
   }
 
-  // Convert client coordinates to flow coordinates using bound viewport
-  function clientToFlowPosition(clientX: number, clientY: number): { x: number; y: number } {
-    const rect = containerEl?.getBoundingClientRect();
-    if (!rect) return { x: clientX, y: clientY };
-    const vp = viewport ?? { x: 0, y: 0, zoom: 1 };
-    return {
-      x: (clientX - rect.left - vp.x) / vp.zoom,
-      y: (clientY - rect.top - vp.y) / vp.zoom,
-    };
+  // Convenience wrappers for coordinate conversion using bound viewport/container
+  function toFlowPosition(clientX: number, clientY: number): { x: number; y: number } {
+    return clientToFlowPosition(
+      clientX,
+      clientY,
+      containerEl?.getBoundingClientRect(),
+      viewport ?? { x: 0, y: 0, zoom: 1 }
+    );
   }
 
-  function flowToContainerPosition(flowX: number, flowY: number): { x: number; y: number } {
-    const vp = viewport ?? { x: 0, y: 0, zoom: 1 };
-    return {
-      x: flowX * vp.zoom + vp.x,
-      y: flowY * vp.zoom + vp.y,
-    };
+  function toContainerPosition(flowX: number, flowY: number): { x: number; y: number } {
+    return flowToContainerPosition(flowX, flowY, viewport ?? { x: 0, y: 0, zoom: 1 });
   }
 
   // Upload image files and create file nodes at given position
@@ -358,7 +358,7 @@
     const imageFiles = files.filter((f) => allowedImageTypes.includes(f.type));
     if (imageFiles.length === 0) return;
 
-    const basePos = clientToFlowPosition(clientX, clientY);
+    const basePos = toFlowPosition(clientX, clientY);
 
     for (let i = 0; i < imageFiles.length; i++) {
       try {
@@ -368,7 +368,8 @@
         const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
         flowNodes = [...flowNodes, ...nodes];
       } catch (err) {
-        console.error('Failed to upload image:', err);
+        console.error('[CanvasEditor] Failed to upload image:', err);
+        toast.error('Failed to upload image');
       }
     }
     scheduleSave();
@@ -391,7 +392,7 @@
     if (isToolDrag) {
       const action = parseDroppedToolAction(e);
       if (action) {
-        const pos = clientToFlowPosition(e.clientX, e.clientY);
+        const pos = toFlowPosition(e.clientX, e.clientY);
         toolDragPreview = { action, x: pos.x, y: pos.y };
       }
       return;
@@ -432,7 +433,7 @@
     const droppedTool = parseDroppedToolAction(e);
     if (droppedTool) {
       e.preventDefault();
-      const cursorPos = clientToFlowPosition(e.clientX, e.clientY);
+      const cursorPos = toFlowPosition(e.clientX, e.clientY);
       const originPos = getDropOriginForTool(droppedTool, cursorPos);
       handleToolbarAction(droppedTool, originPos);
       toolDragPreview = null;
@@ -442,7 +443,7 @@
     if (droppedNote) {
       e.preventDefault();
       e.stopPropagation();
-      const pos = clientToFlowPosition(e.clientX, e.clientY);
+      const pos = toFlowPosition(e.clientX, e.clientY);
       const node = createFileNode(pos.x, pos.y, droppedNote.title, droppedNote.id);
       const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
       flowNodes = [...flowNodes, ...nodes];
@@ -464,34 +465,22 @@
     pendingLinkNodePosition = null;
   }
 
-  function normalizeLinkUrl(raw: string): string {
-    const trimmed = raw.trim();
-    if (!trimmed) return '';
-    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmed)) return trimmed;
-    return `https://${trimmed}`;
-  }
-
   function submitLinkDialog() {
     const normalized = normalizeLinkUrl(linkUrl);
     if (!normalized) {
       linkUrlError = $_('component.canvas.link_dialog.error_empty');
       return;
     }
-    try {
-      const parsed = new URL(normalized);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        linkUrlError = $_('component.canvas.link_dialog.error_invalid');
-        return;
-      }
-      const pos = pendingLinkNodePosition ?? { x: 200, y: 200 };
-      const node = createLinkNode(pos.x, pos.y, normalized);
-      const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
-      flowNodes = [...flowNodes, ...nodes];
-      scheduleSave();
-      closeLinkDialog();
-    } catch {
+    if (!validateLinkUrl(normalized)) {
       linkUrlError = $_('component.canvas.link_dialog.error_invalid');
+      return;
     }
+    const pos = pendingLinkNodePosition ?? { x: 200, y: 200 };
+    const node = createLinkNode(pos.x, pos.y, normalized);
+    const { nodes } = canvasToFlow({ nodes: [node], edges: [] });
+    flowNodes = [...flowNodes, ...nodes];
+    scheduleSave();
+    closeLinkDialog();
   }
 
   function handleDragLeave(e: DragEvent) {
@@ -504,10 +493,7 @@
 
   // Clipboard paste for images (only when not editing text)
   function handlePaste(e: ClipboardEvent) {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-      return;
-    }
+    if (isImagePasteTarget(e.target as HTMLElement)) return;
     if (!e.clipboardData?.files.length) return;
     const files = Array.from(e.clipboardData.files);
     if (!files.some((f) => allowedImageTypes.includes(f.type))) return;
@@ -519,115 +505,30 @@
     handleImageFiles(files, centerX, centerY);
   }
 
-  function duplicateNodes(nodeIds: string[]) {
-    const idSet = new Set(nodeIds);
-    const originals = flowNodes.filter((n) => idSet.has(n.id));
-    if (originals.length === 0) return;
-
-    const duplicates = originals.map((original, index) => {
-      const offset = 40 * (index + 1);
-      const newNode: FlowNode = {
-        ...original,
-        id: `node-${crypto.randomUUID().slice(0, 8)}`,
-        position: { x: original.position.x + offset, y: original.position.y + offset },
-        selected: false,
-        data: { ...original.data },
-      };
-      return newNode;
-    });
-
-    flowNodes = [...flowNodes, ...duplicates];
+  function handleDuplicateSelection(nodeIds: string[]) {
+    flowNodes = duplicateNodes(flowNodes, nodeIds);
     scheduleSave();
   }
 
   function copySelectionToClipboard(): boolean {
-    const selectedNodes = flowNodes.filter((n) => n.selected);
-    if (selectedNodes.length === 0) return false;
-
-    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
-    const connectedEdges = flowEdges.filter(
-      (e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target)
-    );
-
-    copiedNodes = selectedNodes.map((node) => ({
-      ...node,
-      selected: false,
-      data: { ...node.data },
-      position: { ...node.position },
-    }));
-    copiedEdges = connectedEdges.map((edge) => ({
-      ...edge,
-      selected: false,
-      data: edge.data ? { ...edge.data } : edge.data,
-    }));
-    pasteCount = 0;
+    const result = copySelection(flowNodes, flowEdges);
+    if (!result) return false;
+    clipboard = result;
     return true;
   }
 
   function pasteCopiedSelection() {
-    if (copiedNodes.length === 0) return;
-
-    pasteCount += 1;
-    const offset = 40 * pasteCount;
-    const idMap: Record<string, string> = {};
-
-    const newNodes: FlowNode[] = copiedNodes.map((node) => {
-      const newId = `node-${crypto.randomUUID().slice(0, 8)}`;
-      idMap[node.id] = newId;
-      return {
-        ...node,
-        id: newId,
-        selected: true,
-        position: {
-          x: node.position.x + offset,
-          y: node.position.y + offset,
-        },
-        data: { ...node.data },
-      };
-    });
-
-    // Keep group-child relations when both were copied; otherwise detach from old parent.
-    const remappedNodes = newNodes.map((node) => {
-      if (!node.parentId) return node;
-      const newParentId = idMap[node.parentId];
-      return {
-        ...node,
-        parentId: newParentId,
-      };
-    });
-
-    const newEdges: FlowEdge[] = copiedEdges
-      .map((edge) => {
-        const source = idMap[edge.source];
-        const target = idMap[edge.target];
-        if (!source || !target) return null;
-        return {
-          ...edge,
-          id: generateEdgeId(),
-          source,
-          target,
-          selected: true,
-          data: edge.data
-            ? {
-                ...edge.data,
-                fromNode: source,
-                toNode: target,
-              }
-            : edge.data,
-        } as FlowEdge;
-      })
-      .filter((edge): edge is FlowEdge => edge !== null);
-
-    flowNodes = flowNodes
-      .map((node): FlowNode => ({ ...node, selected: false }))
-      .concat(remappedNodes);
-    flowEdges = flowEdges.map((edge): FlowEdge => ({ ...edge, selected: false })).concat(newEdges);
+    if (!clipboard || clipboard.nodes.length === 0) return;
+    const result = pasteClipboard(flowNodes, flowEdges, clipboard);
+    flowNodes = result.nodes;
+    flowEdges = result.edges;
+    clipboard = { ...clipboard, pasteCount: result.pasteCount };
     scheduleSave();
   }
 
   // Handle keyboard shortcuts
   function handleKeydown(e: KeyboardEvent) {
-    if (isEditingText(e)) return;
+    if (isEditingText(e.target as HTMLElement)) return;
 
     const key = e.key.toLowerCase();
     const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
@@ -655,7 +556,7 @@
     }
 
     if ((e.ctrlKey || e.metaKey) && key === 'v') {
-      if (copiedNodes.length > 0) {
+      if (clipboard && clipboard.nodes.length > 0) {
         e.preventDefault();
         pasteCopiedSelection();
       }
@@ -663,19 +564,11 @@
     }
 
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      const selectedNodes = flowNodes.filter((n) => n.selected);
-      const selectedEdges = flowEdges.filter((ed) => ed.selected);
-      if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+      const result = deleteSelection(flowNodes, flowEdges);
+      if (result.changed) {
         e.preventDefault();
-        const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
-        const selectedEdgeIds = new Set(selectedEdges.map((ed) => ed.id));
-        flowNodes = flowNodes.filter((n) => !selectedNodeIds.has(n.id));
-        flowEdges = flowEdges.filter(
-          (e) =>
-            !selectedEdgeIds.has(e.id) &&
-            !selectedNodeIds.has(e.source) &&
-            !selectedNodeIds.has(e.target)
-        );
+        flowNodes = result.nodes;
+        flowEdges = result.edges;
         scheduleSave();
       }
     }
@@ -684,7 +577,7 @@
       const selectedIds = flowNodes.filter((n) => n.selected).map((n) => n.id);
       if (selectedIds.length > 0) {
         e.preventDefault();
-        duplicateNodes(selectedIds);
+        handleDuplicateSelection(selectedIds);
       }
       return;
     }
@@ -709,16 +602,6 @@
         handleToolbarAction('add-group');
         return;
     }
-  }
-
-  function isEditingText(e: KeyboardEvent): boolean {
-    const target = e.target as HTMLElement;
-    return (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.isContentEditable ||
-      !!target.closest('.cm-editor')
-    );
   }
 
   // Export as .canvas file
@@ -916,7 +799,7 @@
         x: toolDragPreview.x,
         y: toolDragPreview.y,
       })}
-      {@const previewPos = flowToContainerPosition(previewOrigin.x, previewOrigin.y)}
+      {@const previewPos = toContainerPosition(previewOrigin.x, previewOrigin.y)}
       <CanvasDragPreview
         action={toolDragPreview.action}
         containerX={previewPos.x}

@@ -18,6 +18,9 @@
 
   const { metadata, readonly = false, onupdate }: Props = $props();
 
+  const MIN_SERVINGS = 1;
+  const MAX_SERVINGS = 999;
+
   let servings = $state(4);
   let prepTime = $state('');
   let cookTime = $state('');
@@ -58,7 +61,7 @@
 
   function handleServingsChange(e: Event) {
     const val = parseInt((e.target as HTMLInputElement).value);
-    if (!isNaN(val) && val >= 1 && val <= 999) {
+    if (!isNaN(val) && val >= MIN_SERVINGS && val <= MAX_SERVINGS) {
       servings = val;
       scheduleUpdate();
     }
@@ -76,7 +79,7 @@
   <div class="ui-form-grid-2">
     <!-- Servings -->
     <div class="ui-form-row">
-      <label for="recipe-servings" class="ui-label text-xs text-muted-foreground mb-0">
+      <label for="recipe-servings" class="ui-label">
         {$_('page.recipes.servings')}
       </label>
       <input
@@ -93,7 +96,7 @@
 
     <!-- Difficulty -->
     <div class="ui-form-row">
-      <label for="recipe-difficulty" class="ui-label text-xs text-muted-foreground mb-0">
+      <label for="recipe-difficulty" class="ui-label">
         {$_('page.recipes.difficulty')}
       </label>
       <select
@@ -113,14 +116,11 @@
 
     <!-- Prep Time -->
     <div class="ui-form-row">
-      <label
-        for="recipe-prep-time"
-        class="ui-label text-xs text-muted-foreground mb-0 flex items-center gap-1"
-      >
+      <label for="recipe-prep-time" class="ui-label mb-0 flex items-center gap-1">
         <Clock size={12} />
         {$_('page.recipes.prep_time')}
       </label>
-      <div class="flex items-center gap-1">
+      <div class="ui-control-row">
         <input
           id="recipe-prep-time"
           type="number"
@@ -131,20 +131,17 @@
           placeholder="–"
           class="ui-input w-full text-sm"
         />
-        <span class="text-xs text-muted-foreground min-w-7 text-right">min</span>
+        <span class="ui-form-help min-w-7 text-right">min</span>
       </div>
     </div>
 
     <!-- Cook Time -->
     <div class="ui-form-row">
-      <label
-        for="recipe-cook-time"
-        class="ui-label text-xs text-muted-foreground mb-0 flex items-center gap-1"
-      >
+      <label for="recipe-cook-time" class="ui-label mb-0 flex items-center gap-1">
         <ChefHat size={12} />
         {$_('page.recipes.cook_time')}
       </label>
-      <div class="flex items-center gap-1">
+      <div class="ui-control-row">
         <input
           id="recipe-cook-time"
           type="number"
@@ -155,14 +152,14 @@
           placeholder="–"
           class="ui-input w-full text-sm"
         />
-        <span class="text-xs text-muted-foreground min-w-7 text-right">min</span>
+        <span class="ui-form-help min-w-7 text-right">min</span>
       </div>
     </div>
   </div>
 
   <!-- Source URL -->
   <div class="ui-form-row">
-    <label class="ui-label text-xs text-muted-foreground mb-0 flex items-center gap-1">
+    <label class="ui-label mb-0 flex items-center gap-1">
       <ExternalLink size={12} />
       {$_('page.recipes.source_url')}
     </label>

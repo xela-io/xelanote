@@ -5,7 +5,7 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import type { SearchResult } from '$lib/api';
   import { search } from '$lib/api';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
@@ -80,7 +80,7 @@
     return merged;
   }
 
-  const query = $derived($page.url.searchParams.get('q') ?? '');
+  const query = $derived(page.url.searchParams.get('q') ?? '');
   let results = $state<SearchResult[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);

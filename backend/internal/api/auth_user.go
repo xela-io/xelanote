@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"time"
 
@@ -21,7 +22,7 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	// Get user from database
 	user, err := s.authService.GetUserByID(userID)
 	if err != nil {
-		if err == service.ErrNotFound {
+		if errors.Is(err, service.ErrNotFound) {
 			respondError(w, http.StatusNotFound, "user not found")
 			return
 		}

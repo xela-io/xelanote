@@ -15,6 +15,7 @@
   import JournalActivityWidget from '$lib/components/JournalActivityWidget.svelte';
   import JournalHeatmap from '$lib/components/JournalHeatmap.svelte';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
+  import PageHeader from '$lib/components/ui/PageHeader.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as journal from '$lib/stores/journal.svelte';
@@ -177,14 +178,19 @@
 
 <div class="h-full flex flex-col">
   <!-- Header -->
-  <div class="ui-page-header shrink-0 px-4 py-2.5 sm:px-6 sm:py-4">
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+  <PageHeader
+    title={$_('page.journal.title')}
+    class="shrink-0 px-4 py-2.5 sm:px-6 sm:py-4"
+    titleClass="min-w-0 truncate text-xl font-bold"
+  >
+    {#snippet leading()}
       <div
         class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:items-center sm:gap-3"
       >
         <MobileSidebarInlineToggle />
-        <h1 class="text-xl font-bold min-w-0 truncate">{$_('page.journal.title')}</h1>
       </div>
+    {/snippet}
+    {#snippet actions()}
       <button
         onclick={handleOpenToday}
         disabled={journalLoading}
@@ -196,8 +202,8 @@
         <span class="sm:hidden">Heute öffnen</span>
         <span class="hidden sm:inline">{$_('page.journal.openToday')}</span>
       </button>
-    </div>
-  </div>
+    {/snippet}
+  </PageHeader>
 
   {#if !featureLoaded || loading}
     <div class="flex items-center justify-center flex-1">
@@ -283,7 +289,7 @@
   <!-- Month Navigation -->
   <div class="flex items-center justify-between mb-3">
     <button
-      class="ui-icon-button p-1.5 disabled:opacity-50"
+      class="ui-icon-button ui-icon-button-sm disabled:opacity-50"
       onclick={() => journal.previousMonth()}
       disabled={calendarLoading}
       title={$_('page.journal.previousMonth')}
@@ -292,7 +298,7 @@
     </button>
     <span class="font-medium text-sm">{monthNames[calendarMonth - 1]} {calendarYear}</span>
     <button
-      class="ui-icon-button p-1.5 disabled:opacity-50"
+      class="ui-icon-button ui-icon-button-sm disabled:opacity-50"
       onclick={() => journal.nextMonth()}
       disabled={calendarLoading}
       title={$_('page.journal.nextMonth')}
@@ -327,32 +333,39 @@
 
 <!-- Entry List Snippet -->
 {#snippet entryListBlock()}
-  <h2 class="ui-kicker mb-3">
-    {$_('page.journal.allEntries')} ({entryList.length})
-  </h2>
+  <div>
+    <h2 class="ui-kicker mb-3">
+      {$_('page.journal.allEntries')} ({entryList.length})
+    </h2>
 
-  {#if entryList.length === 0}
-    <div class="text-center py-12 text-muted-foreground">
-      <Calendar class="w-12 h-12 mx-auto mb-3 opacity-50" />
-      <p>{$_('page.journal.noEntries')}</p>
+    <div class="ui-panel p-4">
+      {#if entryList.length === 0}
+        <div class="ui-empty-state ui-empty-state-compact">
+          <Calendar class="w-10 h-10 opacity-50" />
+          <p class="text-sm">{$_('page.journal.noEntries')}</p>
+        </div>
+      {:else}
+        <div class="space-y-2.5">
+          {#each entryList as entry (entry.id)}
+            <button
+              onclick={() => goto(`/note/${entry.id}`)}
+              class="ui-list-item w-full text-left p-3"
+            >
+              <div class="text-xs text-muted-foreground">
+                {formatEntryDate(entry.journal_date)}
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="font-medium text-sm flex-1 truncate">{entry.title}</span>
+                {#if entry.content_encrypted}
+                  <Lock size={12} class="text-muted-foreground shrink-0" />
+                {/if}
+              </div>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
-  {:else}
-    <div class="space-y-2.5">
-      {#each entryList as entry (entry.id)}
-        <button onclick={() => goto(`/note/${entry.id}`)} class="ui-list-item w-full text-left p-3">
-          <div class="text-xs text-muted-foreground">
-            {formatEntryDate(entry.journal_date)}
-          </div>
-          <div class="flex items-center gap-2 mt-1">
-            <span class="font-medium text-sm flex-1 truncate">{entry.title}</span>
-            {#if entry.content_encrypted}
-              <Lock size={12} class="text-muted-foreground shrink-0" />
-            {/if}
-          </div>
-        </button>
-      {/each}
-    </div>
-  {/if}
+  </div>
 {/snippet}
 
 <style>

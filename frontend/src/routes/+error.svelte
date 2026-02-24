@@ -2,12 +2,12 @@
   import { AlertTriangle, FileQuestion, Home, RefreshCw } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import Logo from '$lib/components/Logo.svelte';
 
-  const status = $derived($page.status);
-  const errorMessage = $derived($page.error?.message ?? '');
-  const errorId = $derived(($page.error as { errorId?: string } | null)?.errorId);
+  const status = $derived(page.status);
+  const errorMessage = $derived(page.error?.message ?? '');
+  const errorId = $derived((page.error as { errorId?: string } | null)?.errorId);
   const isNotFound = $derived(status === 404);
 </script>
 

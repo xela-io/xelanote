@@ -46,25 +46,91 @@ SQLite database file.
 
 ## Features
 
+**Editor & Knowledge Management**
+
+- Markdown editor with live preview (Obsidian-style WYSIWYG with syntax visible on active line)
 - Wikilinks and backlinks with automatic reference tracking
-- Full-text search (server-side FTS5 and optional client-side search for encrypted notes)
-- Folder hierarchy, tags, and version history
-- Optional end-to-end encryption (AES-256-GCM)
-- Two-factor authentication (TOTP and WebAuthn)
-- Offline-first sync with conflict handling
-- Responsive UI with multiple themes
-- Docker-first deployment and single-binary builds
+- Interactive graph visualization of notes and connections
+- Full-text search (server-side FTS5 + client-side search for encrypted notes)
+- Folder hierarchy, tags, drag-and-drop reordering, and version history (up to 100 versions)
+- Inline title editing (Bear/Apple Notes style), table of contents, collapsible task groups
+- Find-in-note (Ctrl+F) and search-and-replace (Ctrl+H) with VS Code-style UI
+- Due date syntax (`@due(YYYY-MM-DD)`) with colored badges and dedicated due dates page
+- Command Palette (Ctrl+K) with extensible command registry
+
+**Recipes**
+
+- Structured recipe management with ingredients, portions, difficulty, and prep time
+- AI-powered recipe import from URLs and images (with automatic F-to-C temperature conversion)
+- Portion scaling, cookbook collections, recipe sharing, and dietary preference support
+- Multi-provider AI integration (Claude, Gemini, ChatGPT) with per-provider model selection
+
+**Infinite Canvas**
+
+- Free-form spatial board (JSON Canvas spec v1.0) with text cards, embedded notes, links, and groups
+- Drag-and-drop from sidebar, keyboard shortcuts, copy/paste, and 6 Gruvbox color presets
+
+**Security & Encryption**
+
+- Optional end-to-end encryption (AES-256-GCM, Argon2id KDF, zero-knowledge architecture)
+- Per-note encryption toggle, folder encryption defaults, and encrypted search via client-side index
+- Two-factor authentication (TOTP + WebAuthn/FIDO2 hardware keys + backup codes)
+- Account lockout with rate limiting, CSRF protection, CSP headers, and security event logging
+
+**Collaboration & Sharing**
+
+- Note sharing (Viewer/Editor roles) with user search and permission management
+- Folder sharing with implicit permission inheritance for all contained notes
+- Cookbook/collection sharing with 3-tier priority permission chain
+
+**Mobile & PWA**
+
+- Progressive Web App with offline read/write mode (IndexedDB queue, conflict resolution)
+- Responsive UI with bottom navigation bar, touch-optimized controls (WCAG AA 44px targets)
+- iOS/Android install coach, dark mode splash screens, and portrait orientation lock
+- Delta-sync with field projection for efficient mobile data transfer
+
+**Customization & i18n**
+
+- 23 themes (Gruvbox, One Dark/Light, Monokai, Ayu, Rose Pine, Kanagawa, Everforest, and more)
+- Full internationalization (German + English, ~604 i18n keys per locale)
+- AI text transformations (format, summarize, expand, translate, formal/informal)
+
+**Infrastructure**
+
+- Single Go binary with embedded SvelteKit frontend, SQLite database
+- Docker-first deployment with auto-rollback, health checks, and CI/CD via Forgejo Actions
+- Strict backend layering (API -> Service -> DB) enforced by CI guardrails
 
 ---
 
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Go 1.25, Chi v5.2.5, SQLite (FTS5, WAL mode) |
+| Frontend | SvelteKit (Svelte 5 Runes), TypeScript, Tailwind CSS v4, CodeMirror 6 |
+| Desktop | Electron (Linux AppImage/.deb) |
+| Auth | JWT (access + refresh rotation), HttpOnly cookies, Argon2id, WebAuthn |
+| AI | Claude, Gemini, ChatGPT APIs (text transformation, recipe import, suggestions) |
+| CI/CD | GitHub Actions (CI, quality, security), Forgejo Actions (staging/production deploy) |
+| Infra | Docker (Alpine), Cloudflare Turnstile CAPTCHA |
+
 ## Architecture
 
-- `backend/`: Go API server (`cmd/server`) with layered modules:
-  - `internal/api` (HTTP routing/handlers)
-  - `internal/service` (business logic)
-  - `internal/db` (SQLite persistence)
-- `frontend/`: SvelteKit web app with state stores, API client modules, and component UI.
-- `frontend/src-electron/`, `frontend/src-tauri/`: Desktop wrappers for Electron and Tauri.
+- `backend/`: Go API server (`cmd/server`) with strict layered modules:
+  - `internal/api` — HTTP routing, handlers, middleware (CORS, CSRF, rate limiting, auth)
+  - `internal/service` — Business logic, encryption, sharing, AI integration
+  - `internal/db` — SQLite persistence, migrations (52+), FTS5 search
+  - `internal/llm` — Multi-provider LLM client (Claude, Gemini, ChatGPT)
+- `frontend/`: SvelteKit web app (Svelte 5 Runes only, no Svelte 4 stores):
+  - `src/lib/stores/` — Reactive state (notes, tree, encryption, recipes, sharing, journal)
+  - `src/lib/editor/` — CodeMirror 6 plugins (live preview, markdown, task sortable, scroll sync)
+  - `src/lib/components/` — UI components (editor, dialogs, sidebar, canvas, recipes)
+  - `src/lib/offline/` — IndexedDB queue, sync manager, conflict resolution
+  - `src/lib/crypto/` — Client-side encryption (AES-256-GCM, Argon2id via @noble/hashes)
+- `frontend/src-electron/`: Electron desktop wrapper (Linux)
+- `docs/`: Comprehensive documentation (architecture, API, security, deployment, planning)
 
 ---
 
@@ -73,7 +139,7 @@ SQLite database file.
 **Prerequisites**
 
 - Go 1.25+
-- Node.js 20+
+- Node.js 22+
 - GCC (for SQLite CGO)
 
 **Local Development**
@@ -97,8 +163,8 @@ export JWT_SECRET="$(openssl rand -hex 32)"
 **Run locally**
 
 ```bash
-# Terminal 1: Start backend (port 8080)
-make run-backend
+# Terminal 1: Start backend with hot-reload (port 8080)
+make dev
 
 # Terminal 2: Start frontend dev server (port 5173)
 make run-frontend
@@ -145,30 +211,34 @@ Full API documentation: `docs/api.md`.
 
 | Variable               | Default              | Description                                                  |
 | ---------------------- | -------------------- | ------------------------------------------------------------ |
-| `XELANOTE_DB`          | `./data/xelanote.db` | Path to SQLite database                                      |
-| `XELANOTE_ENV`         | `development`        | Set to `production` for secure cookies and hardened defaults |
-| `XELANOTE_DB_KEY`      | —                    | SQLCipher encryption key for database-at-rest encryption     |
-| `XELANOTE_DB_KEY_FILE` | —                    | Path to file containing the SQLCipher key                    |
-| `TURNSTILE_SECRET_KEY` | —                    | Cloudflare Turnstile CAPTCHA secret                          |
-| `TURNSTILE_SITE_KEY`   | —                    | Cloudflare Turnstile CAPTCHA site key                        |
-| `PPROF_ENABLED`        | `false`              | Enable Go pprof profiling endpoint                           |
+| `XELANOTE_DB`            | `./data/xelanote.db` | Path to SQLite database                                      |
+| `XELANOTE_ENV`           | `development`        | Set to `production` for secure cookies and hardened defaults |
+| `XELANOTE_JOURNAL_MODE`  | `wal`                | SQLite journal mode (`wal` or `delete`)                      |
+| `XELANOTE_DB_KEY`        | —                    | SQLCipher encryption key for database-at-rest encryption     |
+| `XELANOTE_DB_KEY_FILE`   | —                    | Path to file containing the SQLCipher key                    |
+| `TURNSTILE_SECRET_KEY`   | —                    | Cloudflare Turnstile CAPTCHA secret                          |
+| `TURNSTILE_SITE_KEY`     | —                    | Cloudflare Turnstile CAPTCHA site key                        |
+| `CLAUDE_API_KEY`         | —                    | Anthropic Claude API key for AI features                     |
+| `GEMINI_API_KEY`         | —                    | Google Gemini API key for AI features                        |
+| `OPENAI_API_KEY`         | —                    | OpenAI ChatGPT API key for AI features                       |
+| `PPROF_ENABLED`          | `false`              | Enable Go pprof profiling endpoint                           |
 
 ---
 
 ## Development Scripts
 
 - `make init`: install frontend/backend dependencies and hooks
-- `make run-backend`: run Go backend on `:8080`
-- `make run-frontend`: run Vite dev server on `:5173` (forced local mode, no Prod proxy vars)
-- `cd frontend && npm run dev:local`: browser dev against local backend (`http://localhost:8080`)
-- `cd frontend && npm run dev:prod`: browser dev against production backend (`https://xelanote.com`) via local `/api` proxy
-- `cd frontend && npm run electron:dev`: Electron desktop app in dev (against local backend)
-- `cd frontend && npm run electron:dev:prod`: Electron desktop app in dev (against `https://xelanote.com` via local `/api` proxy)
+- `make dev`: run Go backend with hot-reload on `:8080` (via Air)
+- `make run-frontend`: run Vite dev server on `:5173`
+- `make build`: production build (backend binary + frontend static)
 - `make test`: backend tests
-- `make test-frontend`: frontend unit tests
-- `make test-e2e`: Playwright tests
-- `make quality`: format/lint/typecheck checks
+- `make test-frontend`: frontend unit tests (Vitest)
+- `make test-e2e`: Playwright end-to-end tests
+- `make test-coverage`: backend + frontend coverage reports
+- `make quality`: format/lint/typecheck checks (gofmt, eslint, prettier, svelte-check)
 - `make check-policy`: architecture/security guardrails (layering, Svelte 5-only imports, auth-storage checks)
+- `make docker`: build Docker image
+- `make demo-db`: generate demo database with sample data
 
 Full list: `docs/environment-variables.md`.
 

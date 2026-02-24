@@ -140,7 +140,7 @@
 </script>
 
 <!-- Toolbar (fixed header, not in scroll container) -->
-<div class="flex-shrink-0 z-10 border-b border-border/70 bg-background/85 backdrop-blur-md">
+<div class="ui-page-header flex-shrink-0 z-10">
   <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
     class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-2 sm:py-2.5 gap-1 sm:gap-2"
@@ -150,7 +150,7 @@
       <MobileSidebarInlineToggle />
       {#if note?.note_type === 'journal' && !isMobile}
         <span
-          class="text-lg font-semibold px-1 min-w-0 flex-1 truncate cursor-default opacity-70"
+          class="ui-page-title px-1 min-w-0 flex-1 truncate cursor-default opacity-80"
           aria-label={$_('component.editor.title_input')}
         >
           {note.title}
@@ -189,7 +189,7 @@
           <span
             >{syncProgress.total > 0
               ? `${syncProgress.current}/${syncProgress.total}`
-              : 'Sync...'}</span
+              : $_('component.editor.toolbar.syncing')}</span
           >
         </div>
       {:else if !isOnline && !isEncryptionUnlocked}
@@ -197,7 +197,7 @@
           class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
         >
           <Lock size={12} />
-          <span>Gesperrt</span>
+          <span>{$_('component.editor.toolbar.locked_short')}</span>
         </div>
       {:else if !isOnline && pendingCount > 0}
         <div
@@ -211,7 +211,7 @@
           class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
         >
           <WifiOff size={12} />
-          <span>Offline</span>
+          <span>{$_('component.editor.toolbar.offline_short')}</span>
         </div>
       {/if}
     </div>
@@ -389,11 +389,29 @@
   }
 
   :global(.toolbar-btn) {
+    border: 1px solid color-mix(in oklch, var(--color-border), transparent 42%);
+    background: color-mix(in oklch, var(--color-background), transparent 55%);
     transition:
       background-color var(--duration-fast) var(--ease-default),
       color var(--duration-fast) var(--ease-default),
-      border-color var(--duration-fast) var(--ease-default);
+      border-color var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default);
     border-radius: 0.55rem;
+  }
+
+  :global(.toolbar-btn:hover:not(:disabled)) {
+    border-color: color-mix(in oklch, var(--color-border), transparent 24%);
+    color: var(--color-foreground);
+  }
+
+  :global(.toolbar-btn.bg-accent) {
+    border-color: color-mix(in oklch, var(--color-border), transparent 28%);
+    background: color-mix(in oklch, var(--color-accent), transparent 68%);
+  }
+
+  :global(.toolbar-btn.bg-primary) {
+    border-color: color-mix(in oklch, var(--color-primary), transparent 36%);
+    box-shadow: inset 0 1px 0 color-mix(in oklch, white, transparent 88%);
   }
 
   @media (max-width: 639px) {

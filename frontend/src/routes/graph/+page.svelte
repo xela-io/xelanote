@@ -6,6 +6,7 @@
 
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import GraphSkeleton from '$lib/components/skeletons/GraphSkeleton.svelte';
+  import PageHeader from '$lib/components/ui/PageHeader.svelte';
   import { loadSvelteComponentFromModule } from '$lib/utils/lazy-component';
 
   let GraphComponent = $state<ComponentType | null>(null);
@@ -16,17 +17,20 @@
   });
 </script>
 
-<div class="flex flex-col h-screen-safe bg-background">
-  <header class="flex items-center gap-2 sm:gap-4 p-4 border-b border-border">
-    <MobileSidebarInlineToggle />
-    <a href="/" class="p-2 hover:bg-accent rounded-md transition-colors">
-      <ArrowLeft size={18} />
-    </a>
-    <h1 class="text-xl font-semibold">{$_('page.graph.title')}</h1>
-    <div class="text-sm text-muted-foreground hidden sm:block">
-      {$_('page.graph.hint')}
-    </div>
-  </header>
+<div class="ui-page-shell h-screen-safe">
+  <PageHeader
+    title={$_('page.graph.title')}
+    subtitle={$_('page.graph.hint')}
+    class="shrink-0 px-4 py-2.5 sm:px-6 sm:py-4"
+    subtitleClass="hidden sm:block"
+  >
+    {#snippet leading()}
+      <MobileSidebarInlineToggle />
+      <a href="/" class="ui-icon-button ui-icon-button-md" aria-label="Zurück">
+        <ArrowLeft size={18} />
+      </a>
+    {/snippet}
+  </PageHeader>
 
   <main class="flex-1 overflow-hidden">
     {#if GraphComponent}

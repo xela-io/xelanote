@@ -69,7 +69,7 @@ func newTestServer(t *testing.T) *testServer {
 
 	server := NewServer(ServerConfig{
 		AuthService:      authService,
-		TFAService:       tfaService,
+		TwoFactorService: tfaService,
 		NoteService:      noteService,
 		AdminService:     adminService,
 		SettingsService:  settingsService,

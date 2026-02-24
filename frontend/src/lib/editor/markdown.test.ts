@@ -13,7 +13,8 @@ describe('renderMarkdown', () => {
   describe('basic markdown', () => {
     it('renders paragraphs', () => {
       const result = renderMarkdown('Hello World');
-      expect(result).toContain('<p>Hello World</p>');
+      expect(result).toContain('Hello World</p>');
+      expect(result).toContain('data-source-line="1"');
     });
 
     it('renders bold text', () => {
@@ -28,8 +29,10 @@ describe('renderMarkdown', () => {
 
     it('renders headings', () => {
       const result = renderMarkdown('# Heading');
-      // Markdown library adds ID attributes for anchor links
-      expect(result).toContain('<h1 id="heading">Heading</h1>');
+      // Markdown library adds ID and data-source-line attributes
+      expect(result).toContain('id="heading"');
+      expect(result).toContain('data-source-line="1"');
+      expect(result).toContain('>Heading</h1>');
     });
 
     it('renders links', () => {
@@ -193,8 +196,8 @@ This is a paragraph with [[a link]].
 - List item with [[another link|alias]]
 `;
       const result = renderMarkdown(content);
-      // Heading has ID attribute for anchor links
-      expect(result).toContain('<h1 id="heading">');
+      // Heading has ID and data-source-line attributes
+      expect(result).toContain('id="heading"');
       expect(result).toContain('>a link</a>');
       expect(result).toContain('>alias</a>');
     });
@@ -508,8 +511,8 @@ describe('color syntax', () => {
 
     it('handles color in heading', () => {
       const result = renderMarkdown('# {color:primary}Colored Heading{/color}');
-      // Heading has ID attribute for anchor links
-      expect(result).toContain('<h1 id="colored-heading">');
+      // Heading has ID and data-source-line attributes
+      expect(result).toContain('id="colored-heading"');
       expect(result).toContain('class="text-color-primary"');
     });
 
@@ -707,13 +710,13 @@ describe('image resize', () => {
     it('renders image with pixel width', () => {
       const result = renderMarkdown('![Alt text](https://example.com/image.png){width=300}');
       expect(result).toContain('width="300"');
-      expect(result).toContain('style="width: 300px"');
+      expect(result).toContain('style="width: 300px; aspect-ratio: auto"');
     });
 
     it('renders image with percentage width', () => {
       const result = renderMarkdown('![Alt text](https://example.com/image.png){width=50%}');
       expect(result).toContain('width="50%"');
-      expect(result).toContain('style="width: 50%"');
+      expect(result).toContain('style="width: 50%; aspect-ratio: auto"');
     });
 
     it('renders multiple images with correct indices', () => {

@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
 
   interface Props {
     open: boolean;
@@ -60,42 +62,37 @@
 <BaseDialog {open} title={$_('dialog.create_folder.title')} {onClose} size="sm">
   {#snippet content()}
     <div class="space-y-4">
-      <div class="space-y-2">
-        <label for="folder-path-input" class="text-sm font-medium"
-          >{$_('dialog.create_folder.label')}:</label
-        >
+      <DialogField
+        forId="folder-path-input"
+        label={$_('dialog.create_folder.label') + ':'}
+        help={$_('dialog.create_folder.hint')}
+        error={errorMessage}
+      >
         <input
           id="folder-path-input"
           type="text"
           bind:value={path}
           bind:this={pathInput}
           placeholder="/Projects/Work"
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
+          class="ui-input font-mono"
         />
-        <p class="text-xs text-muted-foreground">
-          {$_('dialog.create_folder.hint')}
-        </p>
-      </div>
-
-      {#if errorMessage}
-        <div class="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-          {errorMessage}
-        </div>
-      {/if}
+      </DialogField>
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleCreate}
-      disabled={!path.trim()}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-    >
-      {$_('common.create')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('dialog.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleCreate}
+        disabled={!path.trim()}
+        class="ui-button ui-button-primary text-sm"
+      >
+        {$_('common.create')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

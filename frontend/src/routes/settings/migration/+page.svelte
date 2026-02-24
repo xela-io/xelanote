@@ -1,10 +1,12 @@
 <script lang="ts">
   import { AlertTriangle, Check, Lock, RefreshCw, Unlock } from 'lucide-svelte';
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
 
   import type { Note } from '$lib/api';
   import * as api from '$lib/api';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
+  import PageHeader from '$lib/components/ui/PageHeader.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
 
   let notes = $state<Note[]>([]);
@@ -107,211 +109,216 @@
   <title>Notiz-Migration - xelanote</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto p-6">
-  <!-- Header -->
-  <div class="mb-8">
-    <div class="flex items-center gap-2 sm:gap-3 mb-2">
+<div class="ui-page-shell overflow-y-auto">
+  <PageHeader
+    title="Notiz-Migration"
+    subtitle="Migriere bestehende Klartext-Notizen zu Ende-zu-Ende verschlüsselten Notizen"
+    class="sticky top-0 z-10 px-4 py-3 sm:px-6 sm:py-4"
+    containerClass="mx-auto max-w-4xl"
+    subtitleClass="hidden sm:block"
+  >
+    {#snippet leading()}
       <MobileSidebarInlineToggle />
-      <RefreshCw class="w-8 h-8 text-primary" />
-      <h1 class="text-3xl font-bold">Notiz-Migration</h1>
-    </div>
-    <p class="text-muted-foreground">
-      Migriere deine bestehenden Klartext-Notizen zu Ende-zu-Ende verschlüsselten Notizen
-    </p>
-  </div>
+      <RefreshCw class="w-5 h-5 text-primary" />
+    {/snippet}
+  </PageHeader>
 
-  <!-- Encryption Status Warning -->
-  {#if !isUnlocked}
-    <div
-      class="mb-6 p-4 rounded-lg border bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"
-    >
-      <div class="flex items-center gap-2 mb-2">
-        <AlertTriangle class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-        <span class="font-semibold text-yellow-800 dark:text-yellow-300">
-          Verschlüsselung gesperrt
-        </span>
+  <div class="mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-6">
+    <!-- Encryption Status Warning -->
+    {#if !isUnlocked}
+      <div
+        class="ui-panel-soft mb-6 p-4 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <AlertTriangle class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <span class="font-semibold text-yellow-800 dark:text-yellow-300">
+            Verschlüsselung gesperrt
+          </span>
+        </div>
+        <p class="text-sm text-yellow-800 dark:text-yellow-300">
+          Melde dich an, um die Migration durchzuführen. Dein Passwort wird benötigt, um die
+          Verschlüsselung zu aktivieren.
+        </p>
       </div>
-      <p class="text-sm text-yellow-800 dark:text-yellow-300">
-        Melde dich an, um die Migration durchzuführen. Dein Passwort wird benötigt, um die
-        Verschlüsselung zu aktivieren.
-      </p>
-    </div>
-  {/if}
+    {/if}
 
-  <!-- Loading State -->
-  {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <RefreshCw class="w-8 h-8 animate-spin text-primary" />
-      <span class="ml-3 text-muted-foreground">Lade Notizen...</span>
-    </div>
-  {:else}
-    <!-- Statistics -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-card p-6 rounded-lg border border-border">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-muted-foreground mb-1">Gesamt</p>
-            <p class="text-3xl font-bold text-foreground">{notes.length}</p>
+    <!-- Loading State -->
+    {#if loading}
+      <div class="ui-panel-soft flex items-center justify-center py-12">
+        <RefreshCw class="w-8 h-8 animate-spin text-primary" />
+        <span class="ml-3 text-muted-foreground">Lade Notizen...</span>
+      </div>
+    {:else}
+      <!-- Statistics -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="ui-panel p-5 sm:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground mb-1">Gesamt</p>
+              <p class="text-3xl font-bold text-foreground">{notes.length}</p>
+            </div>
+            <RefreshCw class="w-8 h-8 text-muted-foreground" />
           </div>
-          <RefreshCw class="w-8 h-8 text-muted-foreground" />
+        </div>
+
+        <div class="ui-panel p-5 sm:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground mb-1">Verschlüsselt</p>
+              <p class="text-3xl font-bold text-success">
+                {encryptedNotes.length}
+              </p>
+            </div>
+            <Lock class="w-8 h-8 text-success" />
+          </div>
+        </div>
+
+        <div class="ui-panel p-5 sm:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground mb-1">Klartext</p>
+              <p class="text-3xl font-bold text-warning">
+                {plaintextNotes.length}
+              </p>
+            </div>
+            <Unlock class="w-8 h-8 text-warning" />
+          </div>
         </div>
       </div>
 
-      <div class="bg-card p-6 rounded-lg border border-border">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-muted-foreground mb-1">Verschlüsselt</p>
-            <p class="text-3xl font-bold text-success">
-              {encryptedNotes.length}
-            </p>
+      <!-- Migration Section -->
+      {#if plaintextNotes.length > 0}
+        <div class="ui-panel p-5 sm:p-6 mb-6">
+          <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+            <RefreshCw class="w-6 h-6 text-primary" />
+            Migration starten
+          </h2>
+
+          <div class="space-y-4">
+            <div class="ui-panel-soft p-4 bg-primary/10 border-primary/30">
+              <p class="text-sm text-foreground mb-3">
+                <strong>{plaintextNotes.length} Notiz(en)</strong> werden von Klartext zu verschlüsseltem
+                Format migriert.
+              </p>
+              <ul class="space-y-1 text-sm text-muted-foreground">
+                <li>• Alle Notizen werden Ende-zu-Ende verschlüsselt</li>
+                <li>• Die Migration kann einige Minuten dauern</li>
+                <li>• Du kannst während der Migration weiterarbeiten</li>
+                <li>
+                  • <strong class="text-foreground">WICHTIG:</strong> Stelle sicher, dass du einen Recovery-Key
+                  hast!
+                </li>
+              </ul>
+            </div>
+
+            {#if migrating}
+              <!-- Progress Bar -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Migration läuft...</span>
+                  <span>{migratedNotes} / {totalNotes}</span>
+                </div>
+                <div class="w-full bg-muted rounded-full h-3 overflow-hidden">
+                  <div
+                    class="bg-primary h-3 rounded-full transition-all duration-300"
+                    style="width: {migrationProgress}%"
+                  ></div>
+                </div>
+              </div>
+            {:else if completed}
+              <!-- Completion Message -->
+              <div class="ui-panel-soft p-4 bg-success/10 border-success/30">
+                <div class="flex items-center gap-2 mb-2">
+                  <Check class="w-5 h-5 text-success" />
+                  <span class="font-semibold text-success"> Migration abgeschlossen! </span>
+                </div>
+                <p class="text-sm text-success">
+                  {migratedNotes} Notiz(en) erfolgreich verschlüsselt.
+                </p>
+                {#if failedNotes.length > 0}
+                  <p class="text-sm text-red-800 dark:text-red-300 mt-2">
+                    {failedNotes.length} Notiz(en) konnten nicht migriert werden.
+                  </p>
+                {/if}
+              </div>
+            {:else}
+              <!-- Start Migration Button -->
+              <button
+                class="ui-button ui-button-primary w-full justify-center font-semibold px-6 py-3 disabled:cursor-not-allowed"
+                disabled={!isUnlocked || migrating}
+                onclick={migrateNotes}
+              >
+                <RefreshCw class="w-5 h-5" />
+                {isUnlocked ? 'Migration starten' : 'Melde dich an, um zu migrieren'}
+              </button>
+            {/if}
           </div>
-          <Lock class="w-8 h-8 text-success" />
         </div>
-      </div>
-
-      <div class="bg-card p-6 rounded-lg border border-border">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-muted-foreground mb-1">Klartext</p>
-            <p class="text-3xl font-bold text-warning">
-              {plaintextNotes.length}
-            </p>
+      {:else if notes.length > 0}
+        <!-- All Notes Encrypted -->
+        <div class="ui-panel-soft p-5 sm:p-6 bg-success/10 border-success/30">
+          <div class="flex items-center gap-3 mb-3">
+            <Check class="w-8 h-8 text-success" />
+            <h2 class="text-xl font-semibold text-success">Alle Notizen verschlüsselt!</h2>
           </div>
-          <Unlock class="w-8 h-8 text-warning" />
+          <p class="text-sm text-success">
+            Alle deine {notes.length} Notiz(en) sind bereits verschlüsselt. Es gibt nichts zu migrieren.
+          </p>
         </div>
-      </div>
-    </div>
+      {:else}
+        <!-- No Notes -->
+        <div class="ui-panel-soft ui-empty-state py-12">
+          <Lock class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <p class="text-muted-foreground">Keine Notizen gefunden.</p>
+        </div>
+      {/if}
 
-    <!-- Migration Section -->
-    {#if plaintextNotes.length > 0}
-      <div class="bg-card p-6 rounded-lg border border-border mb-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-          <RefreshCw class="w-6 h-6 text-primary" />
-          Migration starten
-        </h2>
-
-        <div class="space-y-4">
-          <div class="p-4 bg-primary/10 rounded-lg border border-primary/30">
-            <p class="text-sm text-foreground mb-3">
-              <strong>{plaintextNotes.length} Notiz(en)</strong> werden von Klartext zu verschlüsseltem
-              Format migriert.
-            </p>
-            <ul class="space-y-1 text-sm text-muted-foreground">
-              <li>• Alle Notizen werden Ende-zu-Ende verschlüsselt</li>
-              <li>• Die Migration kann einige Minuten dauern</li>
-              <li>• Du kannst während der Migration weiterarbeiten</li>
+      <!-- Important Notes -->
+      <div
+        class="ui-panel-soft bg-yellow-50 dark:bg-yellow-900/20 p-5 sm:p-6 border-yellow-200 dark:border-yellow-800 mt-6"
+      >
+        <div class="flex items-start gap-3">
+          <AlertTriangle
+            class="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"
+          />
+          <div>
+            <h3 class="text-lg font-semibold mb-2 text-yellow-800 dark:text-yellow-300">
+              ⚠️ Wichtige Hinweise
+            </h3>
+            <ul class="space-y-2 text-sm text-yellow-800 dark:text-yellow-300">
               <li>
-                • <strong class="text-foreground">WICHTIG:</strong> Stelle sicher, dass du einen Recovery-Key
-                hast!
+                • <strong>Recovery Key:</strong> Stelle sicher, dass du einen Recovery-Key erstellt und
+                sicher aufbewahrt hast, bevor du die Migration startest!
+              </li>
+              <li>
+                • <strong>Backup:</strong> Erstelle ein Backup deiner Notizen vor der Migration (optional,
+                aber empfohlen).
+              </li>
+              <li>
+                • <strong>Irreversibel:</strong> Nach der Migration können die Notizen nur noch mit deinem
+                Passwort oder Recovery-Key entschlüsselt werden.
+              </li>
+              <li>
+                • <strong>Geschwindigkeit:</strong> Die Migration kann je nach Anzahl der Notizen mehrere
+                Minuten dauern.
               </li>
             </ul>
           </div>
+        </div>
+      </div>
 
-          {#if migrating}
-            <!-- Progress Bar -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Migration läuft...</span>
-                <span>{migratedNotes} / {totalNotes}</span>
-              </div>
-              <div class="w-full bg-muted rounded-full h-3 overflow-hidden">
-                <div
-                  class="bg-primary h-3 rounded-full transition-all duration-300"
-                  style="width: {migrationProgress}%"
-                ></div>
-              </div>
-            </div>
-          {:else if completed}
-            <!-- Completion Message -->
-            <div class="p-4 bg-success/10 rounded-lg border border-success/30">
-              <div class="flex items-center gap-2 mb-2">
-                <Check class="w-5 h-5 text-success" />
-                <span class="font-semibold text-success"> Migration abgeschlossen! </span>
-              </div>
-              <p class="text-sm text-success">
-                {migratedNotes} Notiz(en) erfolgreich verschlüsselt.
-              </p>
-              {#if failedNotes.length > 0}
-                <p class="text-sm text-red-800 dark:text-red-300 mt-2">
-                  {failedNotes.length} Notiz(en) konnten nicht migriert werden.
-                </p>
-              {/if}
-            </div>
-          {:else}
-            <!-- Start Migration Button -->
-            <button
-              class="w-full px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold"
-              disabled={!isUnlocked || migrating}
-              onclick={migrateNotes}
-            >
-              <RefreshCw class="w-5 h-5" />
-              {isUnlocked ? 'Migration starten' : 'Melde dich an, um zu migrieren'}
-            </button>
-          {/if}
+      <!-- Error Display -->
+      {#if error}
+        <div
+          class="ui-panel-soft mt-6 p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+        >
+          <div class="flex items-center gap-2">
+            <AlertTriangle class="w-5 h-5 text-red-600 dark:text-red-400" />
+            <span class="font-semibold text-red-800 dark:text-red-300">Fehler:</span>
+          </div>
+          <p class="text-sm text-red-800 dark:text-red-300 mt-2">{error}</p>
         </div>
-      </div>
-    {:else if notes.length > 0}
-      <!-- All Notes Encrypted -->
-      <div class="bg-success/10 p-6 rounded-lg border border-success/30">
-        <div class="flex items-center gap-3 mb-3">
-          <Check class="w-8 h-8 text-success" />
-          <h2 class="text-xl font-semibold text-success">Alle Notizen verschlüsselt!</h2>
-        </div>
-        <p class="text-sm text-success">
-          Alle deine {notes.length} Notiz(en) sind bereits verschlüsselt. Es gibt nichts zu migrieren.
-        </p>
-      </div>
-    {:else}
-      <!-- No Notes -->
-      <div class="text-center py-12">
-        <Lock class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <p class="text-muted-foreground">Keine Notizen gefunden.</p>
-      </div>
+      {/if}
     {/if}
-
-    <!-- Important Notes -->
-    <div
-      class="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg border border-yellow-200 dark:border-yellow-800 mt-6"
-    >
-      <div class="flex items-start gap-3">
-        <AlertTriangle class="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 class="text-lg font-semibold mb-2 text-yellow-800 dark:text-yellow-300">
-            ⚠️ Wichtige Hinweise
-          </h3>
-          <ul class="space-y-2 text-sm text-yellow-800 dark:text-yellow-300">
-            <li>
-              • <strong>Recovery Key:</strong> Stelle sicher, dass du einen Recovery-Key erstellt und
-              sicher aufbewahrt hast, bevor du die Migration startest!
-            </li>
-            <li>
-              • <strong>Backup:</strong> Erstelle ein Backup deiner Notizen vor der Migration (optional,
-              aber empfohlen).
-            </li>
-            <li>
-              • <strong>Irreversibel:</strong> Nach der Migration können die Notizen nur noch mit deinem
-              Passwort oder Recovery-Key entschlüsselt werden.
-            </li>
-            <li>
-              • <strong>Geschwindigkeit:</strong> Die Migration kann je nach Anzahl der Notizen mehrere
-              Minuten dauern.
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Error Display -->
-    {#if error}
-      <div
-        class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
-      >
-        <div class="flex items-center gap-2">
-          <AlertTriangle class="w-5 h-5 text-red-600 dark:text-red-400" />
-          <span class="font-semibold text-red-800 dark:text-red-300">Fehler:</span>
-        </div>
-        <p class="text-sm text-red-800 dark:text-red-300 mt-2">{error}</p>
-      </div>
-    {/if}
-  {/if}
+  </div>
 </div>

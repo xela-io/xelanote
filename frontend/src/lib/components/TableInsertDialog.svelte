@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
 
   interface Props {
     open: boolean;
@@ -46,10 +48,10 @@
 <BaseDialog {open} title={$_('component.editor.table_insert.title')} {onClose} size="sm">
   {#snippet content()}
     <div class="space-y-4">
-      <div class="space-y-2">
-        <label for="table-cols-input" class="text-sm font-medium"
-          >{$_('component.editor.table_insert.columns')}:</label
-        >
+      <DialogField
+        forId="table-cols-input"
+        label={$_('component.editor.table_insert.columns') + ':'}
+      >
         <input
           id="table-cols-input"
           type="number"
@@ -57,35 +59,30 @@
           bind:this={colsInput}
           min="1"
           max="20"
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          class="ui-input"
         />
-      </div>
-      <div class="space-y-2">
-        <label for="table-rows-input" class="text-sm font-medium"
-          >{$_('component.editor.table_insert.rows')}:</label
-        >
+      </DialogField>
+      <DialogField forId="table-rows-input" label={$_('component.editor.table_insert.rows') + ':'}>
         <input
           id="table-rows-input"
           type="number"
           bind:value={rows}
           min="1"
           max="50"
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          class="ui-input"
         />
-      </div>
+      </DialogField>
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleInsert}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"
-    >
-      {$_('component.editor.table_insert.insert')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('dialog.cancel')}
+      </button>
+      <button type="button" onclick={handleInsert} class="ui-button ui-button-primary text-sm">
+        {$_('component.editor.table_insert.insert')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

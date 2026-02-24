@@ -171,10 +171,9 @@
             scopeAll = true;
             if (mode === 'similar') searchSimilar();
           }}
-          class="px-3 py-1 text-sm rounded-md transition-colors"
-          class:bg-primary={scopeAll}
-          class:text-primary-foreground={scopeAll}
-          class:bg-accent={!scopeAll}
+          class="ui-button text-sm"
+          class:ui-button-primary={scopeAll}
+          class:ui-button-secondary={!scopeAll}
         >
           {$_('page.recipes.suggestions.scope_all')}
         </button>
@@ -183,10 +182,9 @@
             scopeAll = false;
             if (mode === 'similar') searchSimilar();
           }}
-          class="px-3 py-1 text-sm rounded-md transition-colors"
-          class:bg-primary={!scopeAll}
-          class:text-primary-foreground={!scopeAll}
-          class:bg-accent={scopeAll}
+          class="ui-button text-sm"
+          class:ui-button-primary={!scopeAll}
+          class:ui-button-secondary={scopeAll}
         >
           {$_('page.recipes.suggestions.scope_collection')}
         </button>
@@ -195,7 +193,7 @@
 
     <!-- Error -->
     {#if error}
-      <div class="p-3 mb-4 bg-destructive/10 text-destructive rounded-md text-sm">
+      <div class="ui-alert ui-alert-danger mb-4 text-sm">
         <p>{error}</p>
         <button
           onclick={() => {
@@ -230,7 +228,7 @@
           {#each similarResults as result (result.note_id)}
             <button
               onclick={() => handleNavigate(result.note_id)}
-              class="w-full text-left p-3 rounded-md hover:bg-accent transition-colors border border-border"
+              class="ui-list-item w-full text-left p-3"
             >
               <div class="flex items-center justify-between">
                 <span class="font-medium">{result.title}</span>
@@ -256,7 +254,7 @@
             <textarea
               bind:value={ingredientText}
               placeholder={$_('page.recipes.suggestions.enter_ingredients')}
-              class="w-full min-h-[120px] p-3 bg-background border border-border rounded-md text-sm resize-y focus:outline-none focus:ring-1 focus:ring-primary"
+              class="ui-textarea w-full min-h-[120px] p-3 text-sm resize-y"
               onkeydown={(e) => {
                 if (e.key === 'Enter' && e.ctrlKey) searchByIngredients();
               }}
@@ -265,9 +263,7 @@
 
           <!-- Photo upload -->
           <div class="flex items-center gap-2">
-            <label
-              class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-accent hover:bg-accent/80 cursor-pointer transition-colors"
-            >
+            <label class="ui-button ui-button-secondary text-sm cursor-pointer">
               <Camera size={14} />
               {$_('page.recipes.suggestions.upload_photo')}
               <input
@@ -290,13 +286,13 @@
           {/if}
 
           {#if photoPreview}
-            <img src={photoPreview} alt="Uploaded" class="w-32 h-32 object-cover rounded-md" />
+            <img src={photoPreview} alt="Uploaded" class="w-32 h-32 object-cover rounded-lg" />
           {/if}
 
           <button
             onclick={searchByIngredients}
             disabled={!ingredientText.trim() || loading}
-            class="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            class="ui-button ui-button-primary text-sm"
           >
             <Search size={14} />
             {$_('page.recipes.suggestions.search')}
@@ -316,7 +312,7 @@
               {#each matchResults as match (match.note_id)}
                 <button
                   onclick={() => handleNavigate(match.note_id)}
-                  class="w-full text-left p-3 rounded-md hover:bg-accent transition-colors border border-border"
+                  class="ui-list-item w-full text-left p-3"
                 >
                   <div class="flex items-center justify-between">
                     <span class="font-medium">{match.title}</span>
@@ -354,7 +350,7 @@
             </h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {#each generatedRecipes as recipe (recipe.title)}
-                <div class="p-3 border border-border rounded-md">
+                <div class="ui-panel-soft p-3">
                   <h4 class="font-medium text-sm">{recipe.title}</h4>
                   <p class="text-xs text-muted-foreground mt-1">
                     {recipe.servings}
@@ -368,7 +364,7 @@
                   </p>
                   <button
                     onclick={() => (previewRecipe = recipe)}
-                    class="mt-2 text-xs text-primary hover:underline"
+                    class="ui-button ui-button-ghost mt-2 px-0 py-0 text-xs text-primary"
                   >
                     {$_('page.recipes.suggestions.preview_save')}
                   </button>
@@ -380,7 +376,7 @@
 
         <!-- No results -->
         {#if matchResults.length === 0 && generatedRecipes.length === 0 && !error}
-          <div class="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <div class="ui-empty-state ui-empty-state-compact py-8">
             <ChefHat class="w-10 h-10 mb-2 opacity-50" />
             <p class="text-sm">{$_('page.recipes.suggestions.no_matches')}</p>
           </div>
@@ -393,7 +389,7 @@
             matchResults = [];
             generatedRecipes = [];
           }}
-          class="mt-3 text-xs text-muted-foreground hover:text-foreground underline"
+          class="ui-button ui-button-ghost mt-3 px-0 py-0 text-xs"
         >
           {$_('common.back')}
         </button>

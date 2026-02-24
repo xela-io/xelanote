@@ -4,6 +4,7 @@
   import type { FolderNode } from '$lib/stores/folders.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as toast from '$lib/stores/toast.svelte';
 
   import FolderTree from './FolderTree.svelte';
 
@@ -88,6 +89,7 @@
       await folders.loadFolders();
     } catch (err) {
       console.error('Failed to move note:', err);
+      toast.error('Failed to move note');
     }
   }
 </script>

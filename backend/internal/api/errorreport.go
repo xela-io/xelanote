@@ -123,13 +123,6 @@ func (s *Server) submitErrorReport(w http.ResponseWriter, r *http.Request) {
 		StepsToReproduce: req.StepsToReproduce,
 	}
 
-	result, err := s.errorReportService.SubmitReport(r.Context(), report)
-	if err != nil {
-		s.logger().Error("error report submission failed", "error", err)
-		// Return accepted: false but don't expose internal errors
-		respondJSON(w, http.StatusOK, service.ErrorReportResult{Accepted: false})
-		return
-	}
-
+	result := s.errorReportService.EnqueueReport(report)
 	respondJSON(w, http.StatusOK, result)
 }

@@ -51,8 +51,8 @@
   {/if}
 
   <!-- Security Level -->
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-4">
+  <section class="ui-form-section">
+    <h3 class="ui-form-section-title">
       {$_('page.settings.security.security_level_title')}
     </h3>
     <div class="space-y-3">
@@ -163,11 +163,11 @@
         </div>
       </div>
     {/if}
-  </div>
+  </section>
 
   <!-- Auto-Lock Timeout -->
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-4">
+  <section class="ui-form-section">
+    <h3 class="ui-form-section-title">
       {$_('page.settings.security.autolock_timeout_title')}
     </h3>
     <div class="ui-fieldset">
@@ -198,30 +198,30 @@
         </div>
       {/if}
     </div>
-  </div>
+  </section>
 
   <!-- Security Keys (FIDO2 2FA) -->
-  <div class="ui-panel p-6">
-    <h3 class="text-lg font-medium text-foreground mb-1">Security Keys</h3>
+  <div class="ui-panel p-5 sm:p-6">
+    <h3 class="ui-form-section-title mb-2">{$_('page.settings.security.security_keys_title')}</h3>
     <p class="text-sm text-muted-foreground mb-4">
-      Hardware Security Keys (YubiKey etc.) als zweiten Faktor beim Login verwenden.
+      {$_('page.settings.security.security_keys_description')}
     </p>
     <SecurityKeyManager onUpdate={load2FAStatus} />
   </div>
 
   <!-- Biometric Devices -->
-  <div class="ui-panel p-6">
+  <div class="ui-panel p-5 sm:p-6">
     <WebAuthnDeviceManager credentials={webAuthnCredentials} onUpdate={loadSecurityPreferences} />
   </div>
 
   <!-- Note Encryption Migration -->
-  <div>
-    <h3 class="text-lg font-medium text-foreground mb-4">
+  <section class="ui-form-section">
+    <h3 class="ui-form-section-title">
       {$_('page.settings.security.encryption_migration_title')}
     </h3>
 
     {#if isLoadingMigrationStats}
-      <div class="ui-panel p-4 flex items-center gap-3">
+      <div class="ui-panel-soft p-4 flex items-center gap-3">
         <Loader2 size={20} class="animate-spin text-muted-foreground" />
         <span class="text-muted-foreground">{$_('common.loading')}</span>
       </div>
@@ -306,9 +306,9 @@
         {/if}
       </div>
     {:else}
-      <div class="ui-panel p-4 text-sm text-muted-foreground">
+      <div class="ui-panel-soft p-4 text-sm text-muted-foreground">
         {$_('page.settings.security.migration_error')}
       </div>
     {/if}
-  </div>
+  </section>
 </div>

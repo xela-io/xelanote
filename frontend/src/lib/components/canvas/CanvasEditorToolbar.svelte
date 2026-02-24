@@ -137,7 +137,7 @@
           <span
             >{syncProgress.total > 0
               ? `${syncProgress.current}/${syncProgress.total}`
-              : 'Sync...'}</span
+              : $_('component.editor.toolbar.syncing')}</span
           >
         </div>
       {:else if !isOnline && !isEncryptionUnlocked}
@@ -145,7 +145,7 @@
           class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
         >
           <Lock size={12} />
-          <span>Gesperrt</span>
+          <span>{$_('component.editor.toolbar.locked_short')}</span>
         </div>
       {:else if !isOnline && pendingCount > 0}
         <div
@@ -159,7 +159,7 @@
           class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
         >
           <WifiOff size={12} />
-          <span>Offline</span>
+          <span>{$_('component.editor.toolbar.offline_short')}</span>
         </div>
       {/if}
     </div>

@@ -96,7 +96,7 @@
       <div class="space-y-4">
         <!-- Bulk resolution progress -->
         {#if isResolving && resolvedCount > 0}
-          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <div class="ui-panel-soft flex items-center gap-2 p-3 text-sm text-muted-foreground">
             <div
               class="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
             ></div>
@@ -109,18 +109,18 @@
 
         <!-- Bulk actions (when multiple conflicts) -->
         {#if conflicts.length > 1 && !isResolving}
-          <div class="flex gap-2 p-3 rounded-md bg-muted/50 border border-border">
+          <div class="ui-panel-soft flex gap-2 p-3">
             <span class="text-sm text-muted-foreground self-center mr-auto">
               {conflicts.length} Konflikte
             </span>
             <button
-              class="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              class="ui-button ui-button-primary text-sm px-3 py-1.5"
               onclick={() => handleBulkResolution('keep_local')}
             >
               Alle: Lokal behalten
             </button>
             <button
-              class="px-3 py-1.5 rounded-md text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+              class="ui-button ui-button-secondary text-sm px-3 py-1.5"
               onclick={() => handleBulkResolution('keep_remote')}
             >
               Alle: Server behalten
@@ -130,13 +130,11 @@
 
         <!-- Conflict list (tabs for multiple) -->
         {#if conflicts.length > 1}
-          <div class="flex gap-1 overflow-x-auto pb-1">
+          <div class="ui-tablist w-full overflow-x-auto pb-1">
             {#each conflicts as conflict, i (conflict.operationId)}
               <button
-                class="px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors {expandedIndex ===
-                i
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50'}"
+                class="ui-tab whitespace-nowrap"
+                class:is-active={expandedIndex === i}
                 onclick={() => (expandedIndex = i)}
               >
                 {conflict.localTitle || conflict.remoteTitle || `Konflikt ${i + 1}`}
@@ -151,7 +149,7 @@
             <p class="text-foreground">
               Diese Notiz wurde lokal geloescht, aber auf dem Server bearbeitet.
             </p>
-            <div class="rounded-md border border-border p-3">
+            <div class="ui-panel-soft p-3">
               <h4 class="text-sm font-medium text-muted-foreground mb-2">Server-Version</h4>
               <p class="font-medium text-foreground">{current.remoteTitle}</p>
               <pre
@@ -170,9 +168,7 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <h4 class="text-sm font-medium text-green-400 mb-1">Lokale Version</h4>
-                <div
-                  class="rounded-md border border-border bg-muted/50 p-2 max-h-64 overflow-y-auto"
-                >
+                <div class="ui-panel-soft bg-muted/50 p-2 max-h-64 overflow-y-auto">
                   <pre class="text-xs whitespace-pre-wrap font-mono">{current.localContent.slice(
                       0,
                       1000
@@ -181,9 +177,7 @@
               </div>
               <div>
                 <h4 class="text-sm font-medium text-blue-400 mb-1">Server-Version</h4>
-                <div
-                  class="rounded-md border border-border bg-muted/50 p-2 max-h-64 overflow-y-auto"
-                >
+                <div class="ui-panel-soft bg-muted/50 p-2 max-h-64 overflow-y-auto">
                   <pre class="text-xs whitespace-pre-wrap font-mono">{current.remoteContent.slice(
                       0,
                       1000
@@ -199,7 +193,7 @@
                   Diff anzeigen ({diff.filter((d) => d.type !== 'same').length} Aenderungen)
                 </summary>
                 <div
-                  class="mt-2 rounded-md border border-border bg-muted/30 p-2 max-h-48 overflow-y-auto font-mono text-xs"
+                  class="ui-panel-soft mt-2 bg-muted/30 p-2 max-h-48 overflow-y-auto font-mono text-xs"
                 >
                   {#each diff as line, i (i)}
                     <div class={lineClass(line.type)}>
@@ -221,14 +215,14 @@
       <div class="flex gap-2 justify-end w-full">
         {#if current.isDelete}
           <button
-            class="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            class="ui-button ui-button-secondary"
             onclick={() => handleResolution(current.operationId, 'keep_remote')}
             disabled={isResolving}
           >
             Server behalten
           </button>
           <button
-            class="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+            class="ui-button ui-button-danger"
             onclick={() => handleResolution(current.operationId, 'keep_local')}
             disabled={isResolving}
           >
@@ -236,21 +230,21 @@
           </button>
         {:else}
           <button
-            class="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            class="ui-button ui-button-secondary"
             onclick={() => handleResolution(current.operationId, 'keep_remote')}
             disabled={isResolving}
           >
             Server behalten
           </button>
           <button
-            class="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            class="ui-button ui-button-primary"
             onclick={() => handleResolution(current.operationId, 'keep_local')}
             disabled={isResolving}
           >
             Lokal behalten
           </button>
           <button
-            class="px-4 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/80 transition-colors"
+            class="ui-button ui-button-secondary"
             onclick={() => handleResolution(current.operationId, 'keep_both')}
             disabled={isResolving}
           >

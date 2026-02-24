@@ -32,6 +32,7 @@
       credentials = await listFIDO2Credentials();
     } catch (err) {
       console.error('Failed to load FIDO2 credentials:', err);
+      showError('Laden der Security Keys fehlgeschlagen');
     } finally {
       isLoading = false;
     }

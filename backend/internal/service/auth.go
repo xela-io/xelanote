@@ -154,7 +154,7 @@ func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password strin
 	// Get user by username or email
 	user, err := s.db.GetUserByUsernameOrEmail(usernameOrEmail)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			// Constant-time: run bcrypt even for non-existent users to prevent timing attacks
 			bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(password))
 			return "", "", false, nil, errors.New("invalid credentials")
@@ -213,7 +213,7 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 	// Validate refresh token in database
 	userID, err := s.db.ValidateRefreshToken(refreshToken)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			return "", "", errors.New("invalid refresh token")
 		}
 		if err == db.ErrRefreshTokenReuse {
@@ -275,7 +275,7 @@ func (s *AuthService) LoginWithTwoFactor(ctx context.Context, usernameOrEmail, p
 	// Get user by username or email
 	user, err := s.db.GetUserByUsernameOrEmail(usernameOrEmail)
 	if err != nil {
-		if err == db.ErrNotFound {
+		if errors.Is(err, db.ErrNotFound) {
 			// Constant-time: run bcrypt even for non-existent users to prevent timing attacks
 			bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(password))
 			return "", "", errors.New("invalid credentials")

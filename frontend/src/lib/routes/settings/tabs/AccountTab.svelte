@@ -13,6 +13,7 @@
   } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
+  import SettingsSection from '$lib/components/ui/SettingsSection.svelte';
   import type { EmailFormState } from '$lib/routes/settings/account-forms';
   import type { PasswordFormState } from '$lib/routes/settings/password-change';
 
@@ -35,7 +36,7 @@
 <div class="space-y-8">
   <!-- Current User Info -->
   {#if auth.getCurrentUser()}
-    <div class="ui-panel-soft p-4">
+    <SettingsSection variant="soft" class="p-4">
       <div class="text-sm text-muted-foreground">{$_('page.settings.account.logged_in_as')}</div>
       <div class="flex items-center gap-2 mt-1">
         <User size={16} class="text-muted-foreground" />
@@ -46,18 +47,14 @@
           </span>
         {/if}
       </div>
-    </div>
+    </SettingsSection>
   {/if}
 
   <!-- Change Email -->
-  <div class="ui-panel p-6">
-    <h3 class="text-lg font-medium text-foreground mb-1">
-      {$_('page.settings.account.change_email_title')}
-    </h3>
-    <p class="text-sm text-muted-foreground mb-4">
-      {$_('page.settings.account.change_email_description')}
-    </p>
-
+  <SettingsSection
+    title={$_('page.settings.account.change_email_title')}
+    description={$_('page.settings.account.change_email_description')}
+  >
     <form class="ui-fieldset" onsubmit={handleEmailSubmit}>
       {#if emailForm.error}
         <div class="ui-alert ui-alert-danger">
@@ -98,17 +95,13 @@
         {$_('page.settings.account.change_email_button')}
       </button>
     </form>
-  </div>
+  </SettingsSection>
 
   <!-- Change Password -->
-  <div class="ui-panel p-6">
-    <h3 class="text-lg font-medium text-foreground mb-1">
-      {$_('page.settings.account.change_password_title')}
-    </h3>
-    <p class="text-sm text-muted-foreground mb-4">
-      {$_('page.settings.account.change_password_description')}
-    </p>
-
+  <SettingsSection
+    title={$_('page.settings.account.change_password_title')}
+    description={$_('page.settings.account.change_password_description')}
+  >
     <form class="ui-fieldset" onsubmit={handlePasswordSubmit}>
       {#if passwordForm.error}
         <div class="ui-alert ui-alert-danger">
@@ -173,13 +166,13 @@
         <div class="text-sm text-muted-foreground">{passwordForm.reWrappingProgress}</div>
       {/if}
     </form>
-  </div>
+  </SettingsSection>
 
   <!-- Two-Factor Authentication -->
-  <div class="ui-panel p-6">
+  <SettingsSection>
     <div class="flex items-start justify-between gap-4 mb-4">
       <div>
-        <h3 class="text-lg font-medium text-foreground mb-1">
+        <h3 class="ui-form-section-title mb-2">
           {$_('page.settings.account.two_factor_title')}
         </h3>
         <p class="text-sm text-muted-foreground">
@@ -226,7 +219,7 @@
         </button>
       {/if}
     </div>
-  </div>
+  </SettingsSection>
 
   {#if tfaStatus?.backup_code_regenerated_at}
     <div class="text-xs text-muted-foreground">
@@ -236,12 +229,14 @@
     </div>
   {/if}
 
-  <div class="ui-panel p-6 border-destructive/40 bg-destructive/5">
-    <h3 class="text-lg font-medium text-foreground mb-1">{$_('common.logout')}</h3>
-    <p class="text-sm text-muted-foreground mb-4">{$_('page.sidebar.confirm_logout')}</p>
+  <SettingsSection
+    title={$_('common.logout')}
+    description={$_('page.sidebar.confirm_logout')}
+    class="border-destructive/40 bg-destructive/5"
+  >
     <button onclick={handleSettingsLogout} class="ui-button ui-button-danger w-full">
       <LogOut size={16} />
       {$_('common.logout')}
     </button>
-  </div>
+  </SettingsSection>
 </div>

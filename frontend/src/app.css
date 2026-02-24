@@ -478,6 +478,72 @@ body {
     backdrop-filter: blur(10px);
   }
 
+  .ui-page-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-background);
+  }
+
+  .ui-page-body {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .ui-page-body {
+      padding: 1.25rem 1.5rem;
+    }
+  }
+
+  .ui-page-body-narrow {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 64rem;
+  }
+
+  .ui-page-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .ui-page-title-group {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ui-page-title-stack {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .ui-page-title {
+    font-size: 1.125rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--color-foreground);
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .ui-page-title {
+      font-size: 1.25rem;
+    }
+  }
+
+  .ui-page-subtitle {
+    font-size: 0.8rem;
+    color: var(--color-muted-foreground);
+    min-width: 0;
+  }
+
   .ui-panel {
     border: 1px solid color-mix(in oklch, var(--color-border), transparent 40%);
     border-radius: var(--radius-2xl);
@@ -492,6 +558,22 @@ body {
     border: 1px solid color-mix(in oklch, var(--color-border), transparent 42%);
     border-radius: var(--radius-xl);
     background: color-mix(in oklch, var(--color-background), transparent 70%);
+  }
+
+  .ui-panel-section {
+    padding: 0.9rem;
+  }
+
+  @media (min-width: 640px) {
+    .ui-panel-section {
+      padding: 1rem;
+    }
+  }
+
+  .ui-control-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 
   .ui-list-item {
@@ -553,6 +635,18 @@ body {
       background-color var(--duration-fast) var(--ease-default),
       border-color var(--duration-fast) var(--ease-default),
       color var(--duration-fast) var(--ease-default);
+  }
+
+  .ui-icon-button-sm {
+    width: 2rem;
+    height: 2rem;
+    padding: 0.35rem;
+  }
+
+  .ui-icon-button-md {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.45rem;
   }
 
   .ui-icon-button:hover {
@@ -696,6 +790,20 @@ body {
   .ui-form-help {
     font-size: 0.75rem;
     line-height: 1.35;
+    color: var(--color-muted-foreground);
+  }
+
+  .ui-form-section {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .ui-form-section-title {
+    font-size: 0.75rem;
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--color-muted-foreground);
   }
 
@@ -1692,6 +1800,55 @@ html {
   padding: 0;
 }
 
+/* Shiki syntax highlighting — CSS variables theme integration */
+.markdown-preview pre.shiki {
+  background-color: var(--color-muted) !important;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+.markdown-preview pre.shiki code {
+  background: none;
+  padding: 0;
+}
+/* Base styles for pending code blocks (visible before Shiki loads) */
+.markdown-preview pre.shiki-pending,
+.markdown-preview pre.shiki-processing {
+  background-color: var(--color-muted);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+/* Shiki css-variables theme — map to Gruvbox palette */
+:root {
+  --shiki-foreground: var(--color-foreground);
+  --shiki-background: var(--color-muted);
+  --shiki-token-constant: #d65d0e;
+  --shiki-token-string: #98971a;
+  --shiki-token-comment: #928374;
+  --shiki-token-keyword: #cc241d;
+  --shiki-token-parameter: #458588;
+  --shiki-token-function: #b16286;
+  --shiki-token-string-expression: #98971a;
+  --shiki-token-punctuation: #a89984;
+  --shiki-token-link: #458588;
+}
+.theme-gruvbox-dark {
+  --shiki-foreground: var(--color-foreground);
+  --shiki-background: var(--color-muted);
+  --shiki-token-constant: #fe8019;
+  --shiki-token-string: #b8bb26;
+  --shiki-token-comment: #928374;
+  --shiki-token-keyword: #fb4934;
+  --shiki-token-parameter: #83a598;
+  --shiki-token-function: #d3869b;
+  --shiki-token-string-expression: #b8bb26;
+  --shiki-token-punctuation: #bdae93;
+  --shiki-token-link: #83a598;
+}
+
 .markdown-preview ul,
 .markdown-preview ol {
   margin-left: 1.5rem;
@@ -1987,6 +2144,70 @@ html {
 
 .markdown-preview .task-drag-active {
   cursor: grabbing !important;
+}
+
+/* ===== Mermaid diagrams ===== */
+.markdown-preview .mermaid-diagram {
+  text-align: center;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+.markdown-preview .mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+.markdown-preview pre.mermaid-processing {
+  opacity: 0.6;
+}
+
+/* ===== KaTeX math rendering ===== */
+.markdown-preview .math-inline {
+  display: inline;
+}
+.markdown-preview .math-block {
+  display: block;
+  text-align: center;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+.markdown-preview .math-pending,
+.markdown-preview .math-processing {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--color-muted-foreground);
+}
+.markdown-preview .katex-error {
+  color: var(--color-destructive);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* ===== Preview content-visibility optimization ===== */
+/* Skips rendering of off-screen blocks. Safari 17.0+, graceful degradation. */
+.markdown-preview > h1,
+.markdown-preview > h2,
+.markdown-preview > h3,
+.markdown-preview > h4,
+.markdown-preview > h5,
+.markdown-preview > h6,
+.markdown-preview > p,
+.markdown-preview > blockquote,
+.markdown-preview > hr {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 2lh;
+}
+.markdown-preview > pre {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 8lh;
+}
+.markdown-preview > table {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 10lh;
+}
+.markdown-preview > ul,
+.markdown-preview > ol {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 4lh;
 }
 
 /* ===== Completed Tasks Collapsible Group ===== */

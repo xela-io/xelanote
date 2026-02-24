@@ -9,6 +9,13 @@ export const FEATURE_FLAGS = {
   tagSuggestions: true,
   linkSuggestions: true,
   spellCheck: true,
+  // Preview optimizations
+  elementScrollSync: true,
+  workerMarkdown: true,
+  morphPreview: true,
+  shikiHighlight: true,
+  mathRendering: false, // opt-in: $ conflicts with currency symbols
+  mermaidDiagrams: false, // opt-in: large dependency
 };
 
 // ===== Desktop App Configuration =====

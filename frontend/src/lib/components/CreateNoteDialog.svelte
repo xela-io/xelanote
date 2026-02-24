@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
+  import DialogField from '$lib/components/ui/DialogField.svelte';
   import * as features from '$lib/stores/features.svelte';
 
   interface Props {
@@ -54,25 +56,19 @@
       </div>
 
       {#if canvasEnabled}
-        <div class="flex gap-2">
+        <div class="ui-tablist">
           <button
             type="button"
-            class="px-3 py-1.5 text-sm rounded-md border transition-colors"
-            class:bg-primary={noteType === 'note'}
-            class:text-primary-foreground={noteType === 'note'}
-            class:border-primary={noteType === 'note'}
-            class:border-border={noteType !== 'note'}
+            class="ui-tab"
+            class:is-active={noteType === 'note'}
             onclick={() => (noteType = 'note')}
           >
             {$_('dialog.create_note.type_note')}
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 text-sm rounded-md border transition-colors"
-            class:bg-primary={noteType === 'canvas'}
-            class:text-primary-foreground={noteType === 'canvas'}
-            class:border-primary={noteType === 'canvas'}
-            class:border-border={noteType !== 'canvas'}
+            class="ui-tab"
+            class:is-active={noteType === 'canvas'}
             onclick={() => (noteType = 'canvas')}
           >
             {$_('dialog.create_note.type_canvas')}
@@ -80,33 +76,32 @@
         </div>
       {/if}
 
-      <div class="space-y-2">
-        <label for="note-title-input" class="text-sm font-medium"
-          >{$_('dialog.create_note.label')}:</label
-        >
+      <DialogField forId="note-title-input" label={$_('dialog.create_note.label') + ':'}>
         <input
           id="note-title-input"
           type="text"
           bind:value={title}
           bind:this={titleInput}
           placeholder={$_('dialog.create_note.placeholder')}
-          class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          class="ui-input"
         />
-      </div>
+      </DialogField>
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-      {$_('dialog.cancel')}
-    </button>
-    <button
-      type="button"
-      onclick={handleCreate}
-      disabled={!title.trim()}
-      class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
-    >
-      {$_('common.create')}
-    </button>
+    <DialogActions>
+      <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+        {$_('dialog.cancel')}
+      </button>
+      <button
+        type="button"
+        onclick={handleCreate}
+        disabled={!title.trim()}
+        class="ui-button ui-button-primary text-sm"
+      >
+        {$_('common.create')}
+      </button>
+    </DialogActions>
   {/snippet}
 </BaseDialog>

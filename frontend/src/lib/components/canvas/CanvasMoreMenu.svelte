@@ -63,7 +63,7 @@
 
 <!-- Menu: Bottom sheet on mobile, fixed-positioned near button on desktop -->
 <div
-  class="fixed z-50 bg-background p-4
+  class="fixed z-50 ui-panel p-4
 		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
 		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
   style={desktopStyle}
@@ -78,6 +78,9 @@
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
 
   <div class="space-y-1">
+    <div class="px-3 pt-1 pb-1 ui-form-section-title sm:hidden">
+      {$_('component.editor.toolbar.more_options')}
+    </div>
     <button
       type="button"
       onclick={() => {
@@ -121,6 +124,9 @@
     </button>
 
     <hr class="my-2 border-border" />
+    <div class="px-3 pt-1 pb-1 ui-form-section-title">
+      {$_('component.editor.toolbar.section_danger')}
+    </div>
 
     <button
       type="button"

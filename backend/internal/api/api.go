@@ -32,7 +32,7 @@ func NewServer(cfg ServerConfig) *Server {
 	s := &Server{
 		noteService:             cfg.NoteService,
 		authService:             cfg.AuthService,
-		tfaService:              cfg.TFAService,
+		tfaService:              cfg.TwoFactorService,
 		graphService:            cfg.GraphService,
 		templateService:         cfg.TemplateService,
 		snippetService:          cfg.SnippetService,

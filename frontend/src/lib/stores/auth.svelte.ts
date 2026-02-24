@@ -6,11 +6,7 @@ import { fromBase64Standard } from '$lib/crypto/sodium';
 import { type DesktopBridge, getDesktopBridge } from '$lib/desktop';
 
 import * as encryption from './encryption.svelte';
-import * as features from './features.svelte';
-import * as journal from './journal.svelte';
-import * as recipes from './recipes.svelte';
-import * as settings from './settings.svelte';
-import * as ui from './ui.svelte';
+import { resetAllStores } from './logout-cleanup';
 
 export type User = ApiUser;
 
@@ -508,31 +504,8 @@ export function logout() {
   // Listener in +layout.svelte detects exp=0 and calls tokenRefresh.stop()
   clearTokenUpdateListeners();
 
-  // Clear encryption KEK from memory
-  encryption.lockEncryption();
-
-  // CRITICAL FIX: Reset stores to prevent User A's settings from leaking to User B
-  try {
-    settings.resetSettings();
-  } catch (err) {
-    console.error('[AUTH] Failed to reset settings:', err);
-  }
-
-  try {
-    ui.resetToDefaults();
-  } catch (err) {
-    console.error('[AUTH] Failed to reset UI:', err);
-  }
-
-  try {
-    features.resetJournalFeature();
-    journal.resetJournalState();
-    features.resetRecipeFeature();
-    recipes.resetRecipeState();
-    features.resetCanvasFeature();
-  } catch (err) {
-    console.error('[AUTH] Failed to reset feature state:', err);
-  }
+  // Reset all user-specific stores (encryption KEK, settings, UI, features)
+  resetAllStores();
 
   // Clear desktop tokens (async, fire-and-forget)
   if (isDesktop()) {

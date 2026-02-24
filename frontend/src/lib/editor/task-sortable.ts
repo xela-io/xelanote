@@ -127,19 +127,17 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
         : effectiveEnabled
           ? (Array.from(container.querySelectorAll('ul.contains-task-list')) as HTMLElement[])
           : [];
-    const activeContainers = new Set(containers);
+    const _activeContainers = new Set(containers);
 
-    // Remove instances for containers that no longer exist
-    for (const [sortableContainer, instance] of instancesByContainer) {
-      if (!activeContainers.has(sortableContainer)) {
-        instance.destroy();
-        instancesByContainer.delete(sortableContainer);
-      }
+    // Destroy all existing instances and recreate from scratch.
+    // This handles recycled containers (e.g. after DOM morphing) where
+    // the element reference persists but content has changed.
+    for (const [, instance] of instancesByContainer) {
+      instance.destroy();
     }
+    instancesByContainer.clear();
 
     containers.forEach((sortableContainer) => {
-      if (instancesByContainer.has(sortableContainer)) return;
-
       // Track boundary listeners added during drag so we can clean up.
       let boundaryCleanup: (() => void) | null = null;
 

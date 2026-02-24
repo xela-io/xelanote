@@ -88,7 +88,7 @@
 >
   {#snippet content()}
     {#if error}
-      <div class="p-3 mb-4 bg-destructive/10 text-destructive rounded-md text-sm">
+      <div class="ui-alert ui-alert-danger mb-4 text-sm">
         {error}
       </div>
     {/if}
@@ -96,21 +96,16 @@
     <div class="space-y-4">
       <!-- Title -->
       <div>
-        <label for="gen-title" class="block text-sm font-medium mb-1">
+        <label for="gen-title" class="ui-label mb-1">
           {$_('page.recipes.suggestions.edit_title')}
         </label>
-        <input
-          id="gen-title"
-          type="text"
-          bind:value={title}
-          class="w-full px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+        <input id="gen-title" type="text" bind:value={title} class="ui-input text-sm" />
       </div>
 
       <!-- Metadata row -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div>
-          <label for="gen-servings" class="block text-xs text-muted-foreground mb-1">
+          <label for="gen-servings" class="ui-label text-xs mb-1">
             {$_('page.recipes.suggestions.edit_servings')}
           </label>
           <input
@@ -119,11 +114,11 @@
             min="1"
             max="999"
             bind:value={servings}
-            class="w-full px-2 py-1.5 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            class="ui-input text-sm px-2 py-1.5"
           />
         </div>
         <div>
-          <label for="gen-prep" class="block text-xs text-muted-foreground mb-1">
+          <label for="gen-prep" class="ui-label text-xs mb-1">
             {$_('page.recipes.suggestions.edit_prep_time')}
           </label>
           <input
@@ -131,11 +126,11 @@
             type="number"
             min="0"
             bind:value={prepTime}
-            class="w-full px-2 py-1.5 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            class="ui-input text-sm px-2 py-1.5"
           />
         </div>
         <div>
-          <label for="gen-cook" class="block text-xs text-muted-foreground mb-1">
+          <label for="gen-cook" class="ui-label text-xs mb-1">
             {$_('page.recipes.suggestions.edit_cook_time')}
           </label>
           <input
@@ -143,18 +138,14 @@
             type="number"
             min="0"
             bind:value={cookTime}
-            class="w-full px-2 py-1.5 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            class="ui-input text-sm px-2 py-1.5"
           />
         </div>
         <div>
-          <label for="gen-difficulty" class="block text-xs text-muted-foreground mb-1">
+          <label for="gen-difficulty" class="ui-label text-xs mb-1">
             {$_('page.recipes.suggestions.edit_difficulty')}
           </label>
-          <select
-            id="gen-difficulty"
-            bind:value={difficulty}
-            class="w-full px-2 py-1.5 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-          >
+          <select id="gen-difficulty" bind:value={difficulty} class="ui-select text-sm px-2 py-1.5">
             <option value={null}>–</option>
             <option value="easy">{$_('page.recipes.difficulty_easy')}</option>
             <option value="medium">{$_('page.recipes.difficulty_medium')}</option>
@@ -169,10 +160,7 @@
           <div class="block text-sm font-medium">
             {$_('page.recipes.suggestions.edit_ingredients')}
           </div>
-          <button
-            onclick={addIngredient}
-            class="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-          >
+          <button onclick={addIngredient} class="ui-button ui-button-ghost text-xs px-2 py-1">
             <Plus size={12} />
             {$_('page.recipes.add_ingredient')}
           </button>
@@ -185,23 +173,23 @@
                 step="any"
                 placeholder="–"
                 bind:value={ing.amount}
-                class="w-16 px-2 py-1 bg-background border border-border rounded text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                class="ui-input w-16 px-2 py-1 text-sm text-right"
               />
               <input
                 type="text"
                 placeholder={$_('page.recipes.unit')}
                 bind:value={ing.unit}
-                class="w-16 px-2 py-1 bg-background border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                class="ui-input w-16 px-2 py-1 text-sm"
               />
               <input
                 type="text"
                 placeholder={$_('page.recipes.ingredient_name')}
                 bind:value={ing.name}
-                class="flex-1 px-2 py-1 bg-background border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                class="ui-input flex-1 px-2 py-1 text-sm"
               />
               <button
                 onclick={() => removeIngredient(i)}
-                class="p-1 text-muted-foreground hover:text-destructive"
+                class="ui-icon-button ui-icon-button-sm text-muted-foreground hover:text-destructive"
               >
                 <Trash2 size={14} />
               </button>
@@ -212,29 +200,26 @@
 
       <!-- Instructions -->
       <div>
-        <label for="gen-instructions" class="block text-sm font-medium mb-1">
+        <label for="gen-instructions" class="ui-label mb-1">
           {$_('page.recipes.suggestions.edit_instructions')}
         </label>
         <textarea
           id="gen-instructions"
           bind:value={instructions}
-          class="w-full min-h-[200px] p-3 bg-background border border-border rounded-md text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-primary"
+          class="ui-textarea min-h-[200px] p-3 text-sm font-mono resize-y"
         ></textarea>
       </div>
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <button
-      onclick={onClose}
-      class="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors"
-    >
+    <button onclick={onClose} class="ui-button ui-button-secondary text-sm">
       {$_('common.cancel')}
     </button>
     <button
       onclick={handleSave}
       disabled={saving || !title.trim()}
-      class="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+      class="ui-button ui-button-primary text-sm"
     >
       {#if saving}
         <Loader2 size={14} class="animate-spin" />

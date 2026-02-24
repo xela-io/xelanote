@@ -197,9 +197,7 @@
     {/if}
 
     <!-- Tabs -->
-    <div
-      class="flex items-center gap-2 border-b border-border/70 bg-background/70 px-2 sm:px-4 py-2 sm:py-3 shrink-0 backdrop-blur-sm"
-    >
+    <div class="ui-page-header flex items-center gap-2 px-2 py-2 sm:px-4 sm:py-3 shrink-0">
       <MobileSidebarInlineToggle />
       <div class="ui-tablist recipe-tab-group" role="tablist">
         <button
@@ -237,7 +235,7 @@
       {#if !isEncrypted && !isReadonly}
         <button
           onclick={() => (showSuggestionDialog = true)}
-          class="ui-button ui-button-ghost px-2 py-1 text-xs"
+          class="ui-button ui-button-secondary px-2 py-1 text-xs"
           title={$_('page.recipes.suggestions.find_similar')}
         >
           <Sparkles size={14} />
@@ -270,11 +268,11 @@
     <!-- Tab Content -->
     <div class="flex-1 overflow-y-auto">
       {#if activeTab === 'ingredients'}
-        <div class="p-4 pb-28 sm:p-5 sm:pb-5 max-w-4xl">
+        <div class="max-w-4xl p-4 pb-28 sm:p-5 sm:pb-5">
           <div class="ui-panel recipe-pane-shell space-y-4 sm:space-y-5">
             <div class="recipe-top-grid">
               <!-- Metadata -->
-              <section class="ui-panel recipe-section-card">
+              <section class="ui-panel-soft recipe-section-card">
                 <div class="ui-kicker recipe-section-header">
                   {$_('page.recipes.tab_ingredients')}
                 </div>
@@ -285,7 +283,7 @@
                 />
               </section>
 
-              <section class="ui-panel recipe-section-card recipe-image-card space-y-4">
+              <section class="ui-panel-soft recipe-section-card recipe-image-card space-y-4">
                 <!-- Images -->
                 <div>
                   <div class="ui-kicker recipe-section-header">{$_('page.recipes.images')}</div>
@@ -312,7 +310,7 @@
             </div>
 
             <!-- Ingredients -->
-            <section class="ui-panel recipe-section-card recipe-collections-card">
+            <section class="ui-panel-soft recipe-section-card recipe-collections-card">
               <div class="ui-section-head mb-3">
                 <h3 class="text-sm font-semibold tracking-tight">
                   {$_('page.recipes.ingredients')}
@@ -332,7 +330,7 @@
             </section>
 
             <!-- Collections -->
-            <section class="ui-panel recipe-section-card">
+            <section class="ui-panel-soft recipe-section-card">
               <div class="ui-section-head mb-3">
                 <h3 class="text-sm font-semibold tracking-tight">
                   {$_('page.recipes.collections')}
@@ -436,7 +434,7 @@
   }
 
   .recipe-pane-shell {
-    padding: 0.85rem;
+    padding: 0.95rem;
   }
 
   .recipe-image-card {
@@ -445,12 +443,12 @@
 
   .recipe-section-header {
     margin-bottom: 0.7rem;
-    border-bottom: 1px dashed hsl(var(--border) / 0.7);
+    border-bottom: 1px dashed color-mix(in oklch, var(--color-border), transparent 26%);
     padding-bottom: 0.45rem;
   }
 
   .recipe-subsection {
-    border-top: 1px solid hsl(var(--border) / 0.65);
+    border-top: 1px solid color-mix(in oklch, var(--color-border), transparent 26%);
     padding-top: 0.75rem;
   }
 
@@ -476,7 +474,7 @@
     }
 
     .recipe-pane-shell {
-      padding: 1rem;
+      padding: 1.1rem;
     }
   }
 

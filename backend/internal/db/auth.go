@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/xela-io/xelanote/internal/auth"
@@ -70,11 +71,7 @@ func (db *DB) GetUserByID(id int) (*User, error) {
 		return nil, fmt.Errorf("query user by id: %w", err)
 	}
 
-	// Convert encryption_salt BLOB to base64 string if present
-	if len(encryptionSaltBytes) > 0 {
-		encoded := base64.StdEncoding.EncodeToString(encryptionSaltBytes)
-		user.EncryptionSalt = &encoded
-	}
+	user.EncryptionSalt = decodeEncryptionSalt(encryptionSaltBytes)
 
 	return &user, nil
 }
@@ -98,11 +95,7 @@ func (db *DB) GetUserByUsernameOrEmail(usernameOrEmail string) (*User, error) {
 		return nil, fmt.Errorf("query user by username or email: %w", err)
 	}
 
-	// Convert encryption_salt BLOB to base64 string if present
-	if len(encryptionSaltBytes) > 0 {
-		encoded := base64.StdEncoding.EncodeToString(encryptionSaltBytes)
-		user.EncryptionSalt = &encoded
-	}
+	user.EncryptionSalt = decodeEncryptionSalt(encryptionSaltBytes)
 
 	return &user, nil
 }
@@ -156,7 +149,9 @@ func (db *DB) ValidateRefreshToken(token string) (int, error) {
 	}
 
 	if time.Now().After(expiresTime) {
-		_, _ = db.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE token = ?`, tokenHash)
+		if _, err := db.Exec(`UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE token = ?`, tokenHash); err != nil {
+			slog.Warn("failed to revoke expired refresh token", slog.String("error", err.Error()))
+		}
 		return 0, errors.New("refresh token expired")
 	}
 
@@ -278,6 +273,16 @@ func (db *DB) CleanupExpiredRefreshTokens() (int64, error) {
 		return 0, fmt.Errorf("get cleanup rows affected: %w", err)
 	}
 	return n, nil
+}
+
+// decodeEncryptionSalt converts a raw encryption_salt BLOB to a base64 string pointer.
+// Returns nil if the salt is empty.
+func decodeEncryptionSalt(raw []byte) *string {
+	if len(raw) == 0 {
+		return nil
+	}
+	encoded := base64.StdEncoding.EncodeToString(raw)
+	return &encoded
 }
 
 func hashRefreshToken(token string) string {

@@ -229,7 +229,7 @@ export class HeadingToggleWidget extends WidgetType {
       'aria-label',
       this.collapsed ? 'Expand heading section' : 'Collapse heading section'
     );
-    button.textContent = this.collapsed ? '▷' : '-';
+    button.textContent = this.collapsed ? '+' : '-';
     return button;
   }
 

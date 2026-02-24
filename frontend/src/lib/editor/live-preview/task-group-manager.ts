@@ -33,13 +33,23 @@ export function buildTaskGroupKey(view: EditorView, startLine: number, endLine: 
   return `tasks:${(hash >>> 0).toString(36)}`;
 }
 
+/**
+ * Collect completed task groups with viewport-optimized groupByLine population.
+ * Full document is scanned for task runs, but groupByLine is only populated
+ * for lines within the visible range.
+ */
 export function collectCompletedTaskGroups(
   view: EditorView,
-  collapsedTaskGroups: Set<string>
+  collapsedTaskGroups: Set<string>,
+  visibleFrom?: number,
+  visibleTo?: number
 ): CompletedTaskGroupInfo {
   const groups: CompletedTaskGroup[] = [];
   const groupByLine = new Map<number, CompletedTaskGroup>();
   const keys = new Set<string>();
+
+  const viewportStartLine = visibleFrom ?? 1;
+  const viewportEndLine = visibleTo ?? view.state.doc.lines;
 
   let runStart = -1;
   let runCount = 0;
@@ -56,7 +66,10 @@ export function collectCompletedTaskGroups(
         collapsed: collapsedTaskGroups.has(key),
       };
       groups.push(group);
-      for (let l = runStart; l <= endLine; l++) {
+      // Only populate groupByLine for visible lines
+      const populateStart = Math.max(runStart, viewportStartLine);
+      const populateEnd = Math.min(endLine, viewportEndLine);
+      for (let l = populateStart; l <= populateEnd; l++) {
         groupByLine.set(l, group);
       }
     }

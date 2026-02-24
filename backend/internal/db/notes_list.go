@@ -29,9 +29,9 @@ func selectColumns(slim bool) string {
 	return fullSelectColumns
 }
 
-// scanNote scans a single row from a notes query into a Note struct.
-// The slim parameter controls whether content/encrypted_content are populated.
-func scanNote(rows *sql.Rows, slim bool, userID int) (Note, error) {
+// scanNoteBase scans the common note columns from a SQL row into a Note struct.
+// extraDests are additional scan destinations appended after the standard columns.
+func scanNoteBase(rows *sql.Rows, slim bool, userID int, extraDests ...any) (Note, error) {
 	var note Note
 	var createdAt, updatedAt string
 	var content, encryptedTitle, wrappedDEK, encryptionMetadata sql.NullString
@@ -39,12 +39,15 @@ func scanNote(rows *sql.Rows, slim bool, userID int) (Note, error) {
 	var noteType, journalDate sql.NullString
 	var isDeleted int
 
-	if err := rows.Scan(
+	dests := []any{
 		&note.ID, &note.Title, &content, &note.FolderPath, &note.Version, &note.DisplayOrder, &note.Color, &createdAt, &updatedAt,
 		&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
 		&wrappedDEK, &note.EncryptionVersion, &encryptionMetadata,
 		&noteType, &journalDate, &note.AIEnabled, &isDeleted,
-	); err != nil {
+	}
+	dests = append(dests, extraDests...)
+
+	if err := rows.Scan(dests...); err != nil {
 		return Note{}, fmt.Errorf("failed to scan note: %w", err)
 	}
 	parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
@@ -79,52 +82,19 @@ func scanNote(rows *sql.Rows, slim bool, userID int) (Note, error) {
 	return note, nil
 }
 
+// scanNote scans a single row from a notes query into a Note struct.
+// The slim parameter controls whether content/encrypted_content are populated.
+func scanNote(rows *sql.Rows, slim bool, userID int) (Note, error) {
+	return scanNoteBase(rows, slim, userID)
+}
+
 // scanNoteWithShared scans a single row that includes an is_shared column (after is_deleted).
 func scanNoteWithShared(rows *sql.Rows, slim bool, userID int) (Note, error) {
-	var note Note
-	var createdAt, updatedAt string
-	var content, encryptedTitle, wrappedDEK, encryptionMetadata sql.NullString
-	var encryptedContent []byte
-	var noteType, journalDate sql.NullString
-	var isDeleted, isShared int
-
-	if err := rows.Scan(
-		&note.ID, &note.Title, &content, &note.FolderPath, &note.Version, &note.DisplayOrder, &note.Color, &createdAt, &updatedAt,
-		&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
-		&wrappedDEK, &note.EncryptionVersion, &encryptionMetadata,
-		&noteType, &journalDate, &note.AIEnabled, &isDeleted, &isShared,
-	); err != nil {
-		return Note{}, fmt.Errorf("failed to scan note: %w", err)
-	}
-	parsedCreatedAt, err := parseRFC3339Timestamp(createdAt)
+	var isShared int
+	note, err := scanNoteBase(rows, slim, userID, &isShared)
 	if err != nil {
-		return Note{}, fmt.Errorf("failed to parse created_at for note %s: %w", note.ID, err)
+		return Note{}, err
 	}
-	parsedUpdatedAt, err := parseRFC3339Timestamp(updatedAt)
-	if err != nil {
-		return Note{}, fmt.Errorf("failed to parse updated_at for note %s: %w", note.ID, err)
-	}
-	note.CreatedAt = parsedCreatedAt
-	note.UpdatedAt = parsedUpdatedAt
-	if !slim {
-		note.Content = content.String
-		note.EncryptedContent = encryptedContent
-	}
-	if encryptedTitle.Valid {
-		note.EncryptedTitle = &encryptedTitle.String
-	}
-	note.WrappedDEK = wrappedDEK.String
-	note.EncryptionMetadata = encryptionMetadata.String
-	if noteType.Valid {
-		note.NoteType = noteType.String
-	} else {
-		note.NoteType = NoteTypeNote
-	}
-	if journalDate.Valid {
-		note.JournalDate = &journalDate.String
-	}
-	note.UserID = userID
-	note.IsDeleted = isDeleted == 1
 	note.IsShared = isShared == 1
 	return note, nil
 }

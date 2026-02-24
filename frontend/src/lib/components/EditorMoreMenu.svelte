@@ -106,7 +106,7 @@
 
 <!-- Menu: Bottom sheet on mobile, fixed-positioned near button on desktop -->
 <div
-  class="fixed z-50 bg-background p-4 flex flex-col overflow-hidden
+  class="fixed z-50 ui-panel p-4 flex flex-col overflow-hidden
 		bottom-0 left-0 right-0 max-h-[80vh] rounded-t-2xl animate-bottom-sheet
 		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:max-h-[calc(var(--app-viewport-height,100dvh)-6rem)] sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
   style={desktopStyle}
@@ -121,12 +121,12 @@
   <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
 
   <div class="space-y-1 flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
-    <div class="px-3 pt-1 pb-2 text-xs font-semibold tracking-wide text-muted-foreground sm:hidden">
+    <div class="px-3 pt-1 pb-2 ui-form-section-title sm:hidden">
       {$_('component.editor.toolbar.more_options')}
     </div>
 
     {#if onSetEditorMode}
-      <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+      <div class="px-3 pt-1 pb-1 ui-form-section-title">
         {$_('component.editor.toolbar.section_view_mode')}
       </div>
       <button
@@ -190,7 +190,7 @@
       <hr class="my-2 border-border" />
     {/if}
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+    <div class="px-3 pt-1 pb-1 ui-form-section-title">
       {$_('component.editor.toolbar.section_formatting')}
     </div>
     <button
@@ -221,7 +221,7 @@
 
     <hr class="my-2 border-border" />
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+    <div class="px-3 pt-1 pb-1 ui-form-section-title">
       {$_('component.editor.toolbar.section_note')}
     </div>
     {#if FEATURE_FLAGS.colorSyntax}
@@ -303,7 +303,7 @@
 
     <hr class="my-2 border-border" />
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+    <div class="px-3 pt-1 pb-1 ui-form-section-title">
       {$_('component.editor.toolbar.section_features_help')}
     </div>
 
@@ -353,7 +353,7 @@
 
     <hr class="my-2 border-border" />
 
-    <div class="px-3 pt-1 pb-1 text-xs font-medium text-muted-foreground">
+    <div class="px-3 pt-1 pb-1 ui-form-section-title">
       {$_('component.editor.toolbar.section_danger')}
     </div>
     <button

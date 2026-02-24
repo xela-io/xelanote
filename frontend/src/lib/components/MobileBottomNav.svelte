@@ -14,7 +14,7 @@
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { bottomsheet } from '$lib/actions/bottomsheet';
   import * as features from '$lib/stores/features.svelte';
   import * as sharing from '$lib/stores/sharing.svelte';
@@ -24,7 +24,7 @@
   let showMoreSheet = $state(false);
 
   const isNotesActive = $derived(
-    $page.url.pathname === '/' || $page.url.pathname.startsWith('/note/')
+    page.url.pathname === '/' || page.url.pathname.startsWith('/note/')
   );
 
   const journalEnabled = $derived(

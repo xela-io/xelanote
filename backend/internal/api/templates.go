@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -74,7 +75,7 @@ func (s *Server) getTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	template, err := s.templateService.GetTemplate(userID, templateID)
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
 	}
@@ -141,7 +142,7 @@ func (s *Server) updateTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.templateService.UpdateTemplate(userID, templateID, req.Name, req.Description, req.Title, req.Content)
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
 	}
@@ -174,7 +175,7 @@ func (s *Server) deleteTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.templateService.DeleteTemplate(userID, templateID)
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		respondError(w, http.StatusNotFound, "template not found")
 		return
 	}

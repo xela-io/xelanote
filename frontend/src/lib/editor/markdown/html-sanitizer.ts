@@ -48,7 +48,29 @@ export function sanitizeRenderedHtml(html: string): string {
       'td',
       // Images
       'img',
-      // SVG for drag handles
+      // Div (for math blocks)
+      'div',
+      // KaTeX / MathML
+      'math',
+      'mrow',
+      'mi',
+      'mo',
+      'mn',
+      'msup',
+      'msub',
+      'mfrac',
+      'msqrt',
+      'mtext',
+      'mspace',
+      'mover',
+      'munder',
+      'munderover',
+      'mtable',
+      'mtr',
+      'mtd',
+      'annotation',
+      'semantics',
+      // SVG for drag handles and Mermaid diagrams
       'svg',
       'circle',
       'path',
@@ -57,6 +79,13 @@ export function sanitizeRenderedHtml(html: string): string {
       'polyline',
       'polygon',
       'g',
+      'text',
+      'tspan',
+      'defs',
+      'clipPath',
+      'marker',
+      'foreignObject',
+      'use',
     ],
     ALLOWED_ATTR: [
       'href',
@@ -76,9 +105,27 @@ export function sanitizeRenderedHtml(html: string): string {
       'alt',
       'width',
       'height',
+      'loading',
+      'decoding',
       // Span attributes (for color syntax)
       'style',
       'id',
+      // MathML attributes
+      'encoding',
+      'mathvariant',
+      'stretchy',
+      'fence',
+      'separator',
+      'lspace',
+      'rspace',
+      'accent',
+      'accentunder',
+      'columnalign',
+      'columnspacing',
+      'rowspacing',
+      'depth',
+      'minsize',
+      'maxsize',
       // SVG attributes for drag handle icons
       'xmlns',
       'viewBox',
@@ -103,5 +150,28 @@ export function sanitizeRenderedHtml(html: string): string {
       /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|#):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
     ALLOW_DATA_ATTR: true,
     KEEP_CONTENT: true,
+  });
+}
+
+/**
+ * Sanitize SVG output from Mermaid diagrams.
+ * Mermaid renders user input, so we must sanitize the SVG to prevent XSS.
+ */
+export function sanitizeSvg(svg: string): string {
+  return DOMPurify.sanitize(svg, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    ADD_TAGS: ['foreignObject', 'style'],
+    ADD_ATTR: [
+      'dominant-baseline',
+      'text-anchor',
+      'transform',
+      'marker-end',
+      'marker-start',
+      'font-size',
+      'font-family',
+      'font-weight',
+      'alignment-baseline',
+    ],
+    ALLOW_DATA_ATTR: true,
   });
 }

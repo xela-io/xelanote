@@ -25,7 +25,7 @@ pre-commit:
 
     markdownlint:
       glob: "**/*.md"
-      exclude: "node_modules|archive|.cache|SALT_BUG_FIX.md|ENCRYPTION_DEBUG_LOG.md|LIBSODIUM_ROLLBACK.md"
+      exclude: "node_modules|archive|.cache"
       run: cd frontend && npx markdownlint-cli2 {staged_files}
 
     layer-check:

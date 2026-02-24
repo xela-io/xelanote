@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -47,7 +48,7 @@ func (s *Server) getOrGenerateUserSalt(userID int) ([]byte, error) {
 	salt, err := s.authService.GetUserEncryptionSalt(userID)
 
 	// If salt doesn't exist, check if user has encrypted notes
-	if err == service.ErrNotFound {
+	if errors.Is(err, service.ErrNotFound) {
 		// CRITICAL: Check if user has encrypted notes before generating new salt
 		// If they do, generating a new salt would make all encrypted notes permanently unreadable
 		// Skip check if noteService is nil (happens in tests)

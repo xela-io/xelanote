@@ -23,6 +23,7 @@ func initErrorReportService(logger *slog.Logger) *service.ErrorReportService {
 		if err := errorReportService.EnsureLabels(context.Background()); err != nil {
 			logger.Warn("failed to ensure error report labels", "error", err)
 		}
+		errorReportService.Start()
 	}
 	return errorReportService
 }

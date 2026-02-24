@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import BaseDialog from '$lib/components/ui/BaseDialog.svelte';
+  import DialogActions from '$lib/components/ui/DialogActions.svelte';
 
   interface Props {
     currentColor: string | null | undefined;
@@ -62,8 +63,8 @@
     <div class="space-y-4">
       <!-- Preview -->
       <div class="flex items-center gap-3">
-        <span class="text-sm font-medium">{$_('component.color_picker.preview')}:</span>
-        <div class="flex items-center gap-2 px-3 py-2 bg-secondary rounded-md">
+        <span class="ui-label mb-0">{$_('component.color_picker.preview')}:</span>
+        <div class="ui-panel-soft flex items-center gap-2 px-3 py-2">
           {#if selectedColor}
             <div class="w-1 h-6 rounded-sm" style="background-color: {selectedColor}"></div>
           {:else}
@@ -75,7 +76,7 @@
 
       <!-- Preset Colors -->
       <div class="space-y-2">
-        <span class="text-sm font-medium">{$_('component.color_picker.presets')}:</span>
+        <span class="ui-label mb-0">{$_('component.color_picker.presets')}:</span>
         <div class="grid grid-cols-5 gap-2">
           {#each presetColors as color (color)}
             <button
@@ -96,7 +97,7 @@
 
       <!-- Custom Color -->
       <div class="space-y-2">
-        <label for="custom-color" class="text-sm font-medium">
+        <label for="custom-color" class="ui-label mb-0">
           {$_('component.color_picker.custom')}:
         </label>
         <div class="flex items-center gap-2">
@@ -111,7 +112,7 @@
             type="text"
             value={customColorInput}
             readonly
-            class="flex-1 px-3 py-2 bg-secondary border border-border rounded-md text-sm font-mono"
+            class="ui-input flex-1 text-sm font-mono"
           />
         </div>
       </div>
@@ -119,25 +120,23 @@
   {/snippet}
 
   {#snippet footer()}
-    <button
-      type="button"
-      onclick={handleRemove}
-      class="px-4 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md"
-    >
-      {$_('component.color_picker.remove')}
-    </button>
-    <div class="flex gap-2">
-      <button type="button" onclick={onClose} class="px-4 py-2 text-sm hover:bg-accent rounded-md">
-        {$_('common.cancel')}
-      </button>
+    <DialogActions align="between" wrap={false}>
       <button
         type="button"
-        onclick={handleConfirm}
-        class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"
+        onclick={handleRemove}
+        class="ui-button ui-button-ghost text-sm text-destructive hover:bg-destructive/10"
       >
-        {$_('component.color_picker.set')}
+        {$_('component.color_picker.remove')}
       </button>
-    </div>
+      <div class="flex gap-2">
+        <button type="button" onclick={onClose} class="ui-button ui-button-secondary text-sm">
+          {$_('common.cancel')}
+        </button>
+        <button type="button" onclick={handleConfirm} class="ui-button ui-button-primary text-sm">
+          {$_('component.color_picker.set')}
+        </button>
+      </div>
+    </DialogActions>
   {/snippet}
 </BaseDialog>
 

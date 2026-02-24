@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -53,7 +54,7 @@ func (db *DB) DeleteNoteShare(ownerUserID int, noteID string, sharedWithUserID i
 
 	// Placement cleanup: remove placement for this note+user
 	// Only if the user doesn't still have access via a folder share
-	db.Exec(`
+	if _, err := db.Exec(`
 		DELETE FROM shared_note_placements
 		WHERE note_id = ? AND user_id = ?
 		  AND NOT EXISTS (
@@ -62,7 +63,9 @@ func (db *DB) DeleteNoteShare(ownerUserID int, noteID string, sharedWithUserID i
 		    JOIN notes n ON n.folder_path = f.path AND n.id = ?
 		    WHERE fs.shared_with_user_id = ? AND n.is_deleted = 0
 		  )
-	`, noteID, sharedWithUserID, noteID, sharedWithUserID)
+	`, noteID, sharedWithUserID, noteID, sharedWithUserID); err != nil {
+		slog.Warn("failed to cleanup shared note placement", slog.String("noteID", noteID), slog.String("error", err.Error()))
+	}
 
 	return nil
 }
@@ -337,7 +340,7 @@ func (db *DB) UpdateNoteShareRole(ownerUserID int, noteID string, sharedWithUser
 // DeleteAllSharesForNote removes all shares for a note.
 func (db *DB) DeleteAllSharesForNote(noteID string) error {
 	// Also clean up placements for all users who had note-level shares
-	db.Exec(`
+	if _, err := db.Exec(`
 		DELETE FROM shared_note_placements
 		WHERE note_id = ?
 		  AND NOT EXISTS (
@@ -346,7 +349,9 @@ func (db *DB) DeleteAllSharesForNote(noteID string) error {
 		    JOIN notes n ON n.folder_path = f.path AND n.id = ?
 		    WHERE fs.shared_with_user_id = shared_note_placements.user_id AND n.is_deleted = 0
 		  )
-	`, noteID, noteID)
+	`, noteID, noteID); err != nil {
+		slog.Warn("failed to cleanup shared note placements", slog.String("noteID", noteID), slog.String("error", err.Error()))
+	}
 
 	_, err := db.Exec(`DELETE FROM note_shares WHERE note_id = ?`, noteID)
 	return err
@@ -398,9 +403,9 @@ func (db *DB) UpdateSharedNote(noteID string, title, content string, expectedVer
 		return nil, err
 	}
 	if rows == 0 {
-		// Check if note exists
+		// Check if note exists (scan error means no rows → exists stays 0)
 		var exists int
-		db.QueryRow(`SELECT 1 FROM notes WHERE id = ? AND is_deleted = 0`, noteID).Scan(&exists)
+		_ = db.QueryRow(`SELECT 1 FROM notes WHERE id = ? AND is_deleted = 0`, noteID).Scan(&exists) //nolint:errcheck
 		if exists == 0 {
 			return nil, ErrNotFound
 		}

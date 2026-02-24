@@ -11,7 +11,7 @@ services:
       - xelanote-data:/app/data
     environment:
       - XELANOTE_DB=/app/data/xelanote.db
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]

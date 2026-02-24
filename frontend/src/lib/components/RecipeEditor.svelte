@@ -199,10 +199,18 @@
     <!-- Tabs -->
     <div class="ui-page-header flex items-center gap-2 px-2 py-2 sm:px-4 sm:py-3 shrink-0">
       <MobileSidebarInlineToggle />
-      <div class="ui-tablist recipe-tab-group" role="tablist">
+      <div class="recipe-tab-slider" role="tablist">
+        <div
+          class="recipe-tab-slider-indicator"
+          style="transform: translateX({activeTab === 'ingredients'
+            ? 0
+            : activeTab === 'instructions'
+              ? 100
+              : 200}%)"
+        ></div>
         <button
           onclick={() => switchTab('ingredients')}
-          class="ui-tab tab-button"
+          class="recipe-tab-slider-tab"
           class:active={activeTab === 'ingredients'}
           role="tab"
           aria-selected={activeTab === 'ingredients'}
@@ -211,7 +219,7 @@
         </button>
         <button
           onclick={() => switchTab('instructions')}
-          class="ui-tab tab-button"
+          class="recipe-tab-slider-tab"
           class:active={activeTab === 'instructions'}
           role="tab"
           aria-selected={activeTab === 'instructions'}
@@ -220,7 +228,7 @@
         </button>
         <button
           onclick={() => switchTab('preview')}
-          class="ui-tab tab-button"
+          class="recipe-tab-slider-tab"
           class:active={activeTab === 'preview'}
           role="tab"
           aria-selected={activeTab === 'preview'}

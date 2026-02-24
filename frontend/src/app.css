@@ -715,6 +715,61 @@ body {
     filter: brightness(1.03);
   }
 
+  /* Recipe tab slider */
+  .recipe-tab-slider {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid color-mix(in oklch, var(--color-border), transparent 60%);
+    background: color-mix(in oklch, var(--color-foreground), transparent 94%);
+  }
+
+  .recipe-tab-slider-indicator {
+    position: absolute;
+    top: 0.25rem;
+    left: 0.25rem;
+    width: calc((100% - 0.5rem) / 3);
+    height: calc(100% - 0.5rem);
+    border-radius: calc(var(--radius-xl) - 0.15rem);
+    background: color-mix(in oklch, var(--color-foreground), transparent 88%);
+    border: none;
+    box-shadow: none;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .recipe-tab-slider-tab {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-radius: calc(var(--radius-xl) - 0.15rem);
+    border: 1px solid transparent;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    min-height: 44px;
+    color: var(--color-muted-foreground);
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.2s var(--ease-default);
+    white-space: nowrap;
+  }
+
+  .recipe-tab-slider-tab:hover {
+    color: var(--color-foreground);
+  }
+
+  .recipe-tab-slider-tab[aria-selected='true'] {
+    color: var(--color-foreground);
+  }
+
   .ui-tablist {
     display: inline-flex;
     align-items: center;

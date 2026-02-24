@@ -107,10 +107,14 @@ plugins.push(
 
     workbox: {
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-      globIgnores: ['**/splash/**'], // Splash screens are only fetched by iOS via <link> media queries
+      globIgnores: [
+        '**/splash/**', // Splash screens are only fetched by iOS via <link> media queries
+        '**/shiki-*', // Lazy-loaded (~5MB) — fetched on demand when code blocks appear
+        '**/mermaid-*', // Lazy-loaded (~4.5MB) — fetched on demand when diagrams appear
+      ],
       navigateFallback: '/', // ← Enable SPA routing for offline deep links
       navigateFallbackDenylist: [/^\/api/],
-      maximumFileSizeToCacheInBytes: 2 * 1024 * 1024, // 2MB - largest chunk is ~931KB
+      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB — covers codemirror chunk (~1.5MB)
 
       // NOTE: No runtime caching for /api/notes, /api/notes/:id, /api/folders.
       // These are user-specific endpoints — caching them in a shared SW cache

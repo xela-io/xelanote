@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Docker build: increase Node.js heap limit to 4GB for Vite production build to prevent OOM crash with large module count
 - Docker build: add missing new source files (UI components, editor preview, settings tabs, markdown plugins) that broke CI build
 - PWA: increase workbox precache size limit to 6MB to accommodate shiki/mermaid chunks (hash-based filenames prevent glob exclusion)
 - i18n: Replace ~30 hardcoded German strings on dashboard with `$_()` calls and add corresponding en/de keys under `page.home.*` and `component.dashboard_section.*`

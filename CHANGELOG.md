@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Docker build: add missing new source files (UI components, editor preview, settings tabs, markdown plugins) that broke CI build
-- PWA: exclude lazy-loaded shiki and mermaid chunks from precache to fix workbox size limit error during Docker build
+- PWA: increase workbox precache size limit to 6MB to accommodate shiki/mermaid chunks (hash-based filenames prevent glob exclusion)
 - i18n: Replace ~30 hardcoded German strings on dashboard with `$_()` calls and add corresponding en/de keys under `page.home.*` and `component.dashboard_section.*`
 - i18n: Fix pluralization for `notes_available` and `items_count` using ICU MessageFormat plural syntax (1 note vs 2 notes)
 - Recipes: Replace native `confirm()` with styled `dialog.confirm()` for collection deletion (consistent with recipe deletion pattern)

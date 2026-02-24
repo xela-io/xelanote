@@ -107,14 +107,12 @@ plugins.push(
 
     workbox: {
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-      globIgnores: [
-        '**/splash/**', // Splash screens are only fetched by iOS via <link> media queries
-        '**/shiki-*', // Lazy-loaded (~5MB) — fetched on demand when code blocks appear
-        '**/mermaid-*', // Lazy-loaded (~4.5MB) — fetched on demand when diagrams appear
-      ],
+      globIgnores: ['**/splash/**'], // Splash screens are only fetched by iOS via <link> media queries
       navigateFallback: '/', // ← Enable SPA routing for offline deep links
       navigateFallbackDenylist: [/^\/api/],
-      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB — covers codemirror chunk (~1.5MB)
+      // Shiki (~5.1MB) and Mermaid (~4.5MB) are the largest chunks.
+      // They're lazy-loaded but Vite hashes chunk names, so globIgnores can't target them.
+      maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6MB — accommodates shiki chunk (~5.1MB)
 
       // NOTE: No runtime caching for /api/notes, /api/notes/:id, /api/folders.
       // These are user-specific endpoints — caching them in a shared SW cache

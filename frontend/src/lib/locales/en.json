@@ -499,7 +499,39 @@
       "create_new_note": "Create new note",
       "open_quick_search": "Open quick search",
       "recently_edited": "Recently edited",
-      "notes_available": "{count} notes available"
+      "notes_available": "{count, plural, one {# note available} other {# notes available}}",
+      "dashboard_title": "Overview",
+      "dashboard_subtitle": "Recently edited notes, activity, and quick actions",
+      "layout_reset": "Reset layout",
+      "items_count": "{count, plural, one {# item} other {# items}}",
+      "collapsed": "Collapsed",
+      "no_changes_today": "No changes yet today.",
+      "no_changes_week": "No changes this week yet.",
+      "edited_today": "{count} edited today",
+      "this_week": "{count} this week",
+      "in_root_folder": "{count} in root folder",
+      "continue_working": "Continue working",
+      "no_notes_hint": "No notes yet. Create your first note or use quick search.",
+      "activity_title": "Activity",
+      "activity_subtitle": "Today & this week",
+      "today_count": "Today ({count})",
+      "this_week_count": "This week ({count})",
+      "recently_created": "Recently created",
+      "created_prefix": "created",
+      "all_notes": "All notes",
+      "total_count": "{count} total",
+      "filter_placeholder": "Filter notes or folders...",
+      "sort_recent": "Recently edited",
+      "sort_newest": "Newly created",
+      "sort_az": "A-Z",
+      "no_filter_results": "No notes found for this filter.",
+      "section_expand": "Expand section",
+      "section_collapse": "Collapse section",
+      "recently_edited_section": "Recently edited section",
+      "activity_section": "Activity section",
+      "recently_created_section": "Recently created section",
+      "all_notes_section": "All notes section",
+      "search_notes": "Search notes"
     },
     "search": {
       "input_label": "Search notes",
@@ -677,8 +709,10 @@
         "security": "Security",
         "account": "Account",
         "ai": "AI",
-        "data": "Data"
+        "data": "Data",
+        "connection": "Connection"
       },
+      "subtitle": "Manage settings and preferences in one place",
       "data": {
         "export_title": "Export Notes",
         "export_description": "Export all your notes as Markdown files in a ZIP archive.",
@@ -769,6 +803,7 @@
         "mode_split_label": "Split View",
         "mode_split_description": "Editor and preview side-by-side",
         "features_title": "Features",
+        "performance_experimental_title": "Performance (Experimental)",
         "journal_feature_title": "Journal (Diary)",
         "journal_feature_description": "Enable daily journal with calendar navigation. One entry can be created per day.",
         "recipe_feature_title": "Recipes (Cookbook)",
@@ -816,7 +851,9 @@
         "migration_button": "Migrate Notes",
         "migration_complete": "All notes are encrypted!",
         "migration_no_notes": "No notes available.",
-        "migration_error": "Could not load statistics."
+        "migration_error": "Could not load statistics.",
+        "security_keys_title": "Security Keys",
+        "security_keys_description": "Use hardware security keys (YubiKey etc.) as a second factor when logging in."
       },
       "account": {
         "logged_in_as": "Logged in as",
@@ -918,6 +955,11 @@
     }
   },
   "component": {
+    "dashboard_section": {
+      "reorder_title": "Reorder (drag)",
+      "expand": "Expand section",
+      "collapse": "Collapse section"
+    },
     "canvas": {
       "link_dialog": {
         "title": "Add link",
@@ -998,6 +1040,8 @@
       "info": "Graph info",
       "nodes": "Nodes",
       "connections": "Connections",
+      "empty_title": "No graph data yet",
+      "empty_description": "Create notes with wikilinks to populate the graph.",
       "truncated_warning": "⚠️ Graph truncated - use filters to narrow down",
       "existing_notes": "🔵 Existing notes",
       "unresolved_links": "🔴 Unresolved links"
@@ -1070,10 +1114,10 @@
         "save": "Save manually (Ctrl+S)",
         "save_short": "Save",
         "upload": "Upload image",
-      "history": "Version history",
-      "undo": "Undo",
-      "redo": "Redo",
-      "focus_mode": "Focus mode",
+        "history": "Version history",
+        "undo": "Undo",
+        "redo": "Redo",
+        "focus_mode": "Focus mode",
         "color": "Text color",
         "move": "Move",
         "delete": "Delete",
@@ -1097,6 +1141,9 @@
         "encrypt_note": "Encrypt note",
         "open_menu": "Open menu",
         "editor_toolbar": "Editor toolbar",
+        "syncing": "Sync...",
+        "locked_short": "Locked",
+        "offline_short": "Offline",
         "section_view_mode": "View mode",
         "section_formatting": "Formatting",
         "section_note": "Note",

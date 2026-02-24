@@ -11,6 +11,7 @@
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
   import RecipeCollectionDialog from '$lib/components/RecipeCollectionDialog.svelte';
   import RecipeCollectionList from '$lib/components/RecipeCollectionList.svelte';
+  import PageHeader from '$lib/components/ui/PageHeader.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as notes from '$lib/stores/notes.svelte';
@@ -135,13 +136,27 @@
   }
 
   async function handleDeleteCollection(id: number) {
-    if (confirm($_('page.recipes.confirm_delete_collection'))) {
+    const confirmed = await dialog.confirm({
+      title: $_('dialog.confirm_title'),
+      message: $_('page.recipes.confirm_delete_collection'),
+      confirmText: $_('common.delete'),
+      cancelText: $_('dialog.cancel'),
+      variant: 'danger',
+    });
+    if (confirmed) {
       await recipes.deleteCollection(id);
     }
   }
 
   async function handleDeleteCollectionFromDetail(id: number) {
-    if (confirm($_('page.recipes.confirm_delete_collection'))) {
+    const confirmed = await dialog.confirm({
+      title: $_('dialog.confirm_title'),
+      message: $_('page.recipes.confirm_delete_collection'),
+      confirmText: $_('common.delete'),
+      cancelText: $_('dialog.cancel'),
+      variant: 'danger',
+    });
+    if (confirmed) {
       recipes.clearCollectionFilter();
       await recipes.deleteCollection(id);
     }
@@ -186,14 +201,19 @@
 
 <div class="h-full flex flex-col">
   <!-- Header -->
-  <div class="ui-page-header shrink-0 px-4 py-3 sm:px-6 sm:py-4">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <PageHeader
+    title={$_('page.recipes.title')}
+    class="shrink-0 px-4 py-3 sm:px-6 sm:py-4"
+    titleClass="min-w-0 truncate text-xl font-bold"
+  >
+    {#snippet leading()}
       <div
         class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-2 sm:flex sm:items-center sm:gap-3"
       >
         <MobileSidebarInlineToggle />
-        <h1 class="text-xl font-bold min-w-0 truncate">{$_('page.recipes.title')}</h1>
       </div>
+    {/snippet}
+    {#snippet actions()}
       <div class="grid grid-cols-2 gap-2 min-w-0 sm:flex sm:items-center sm:min-w-auto">
         <div
           class="col-span-2 flex min-w-0 gap-2 overflow-x-auto pb-1 -mb-1 sm:col-span-1 sm:mb-0 sm:pb-0 sm:overflow-visible sm:flex-none scrollbar-none"
@@ -229,8 +249,8 @@
           <span class="leading-tight whitespace-nowrap">{$_('page.recipes.create')}</span>
         </button>
       </div>
-    </div>
-  </div>
+    {/snippet}
+  </PageHeader>
 
   {#if loading}
     <div class="flex items-center justify-center flex-1">
@@ -243,7 +263,7 @@
         <div class="max-w-5xl">
           <button
             onclick={() => recipes.clearCollectionFilter()}
-            class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+            class="ui-button ui-button-ghost mb-4 gap-1 px-2 py-1 text-sm"
           >
             <ArrowLeft size={14} />
             {$_('page.recipes.all_recipes')}
@@ -264,26 +284,24 @@
                   <p class="text-sm text-muted-foreground mt-2">{selectedCollection.description}</p>
                 {/if}
               </div>
-              <div
-                class="flex items-center gap-1 self-start rounded-lg border border-border bg-background/40 p-1"
-              >
+              <div class="ui-panel-soft flex items-center gap-1 self-start p-1">
                 <button
                   onclick={() => handleShareCollection(selectedCollection.id)}
-                  class="p-2 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                  class="ui-icon-button ui-icon-button-sm"
                   title={$_('sharing.collection_title')}
                 >
                   <Users size={16} />
                 </button>
                 <button
                   onclick={() => handleEditCollection(selectedCollection)}
-                  class="p-2 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                  class="ui-icon-button ui-icon-button-sm"
                   title={$_('common.edit')}
                 >
                   <Pencil size={16} />
                 </button>
                 <button
                   onclick={() => handleDeleteCollectionFromDetail(selectedCollection.id)}
-                  class="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                  class="ui-icon-button ui-icon-button-sm hover:bg-destructive/10 hover:text-destructive"
                   title={$_('common.delete')}
                 >
                   <Trash2 size={16} />
@@ -489,7 +507,7 @@
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="bg-background border border-border rounded-lg p-6 w-full max-w-md shadow-xl"
+      class="ui-panel w-full max-w-md p-6"
       onclick={(e) => e.stopPropagation()}
       role="dialog"
       tabindex="-1"
@@ -503,19 +521,19 @@
         bind:value={newTitle}
         onkeydown={handleCreateKeydown}
         placeholder={$_('page.recipes.title_placeholder')}
-        class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring mb-4"
+        class="ui-input mb-4"
       />
       <div class="flex justify-end gap-2">
         <button
           onclick={() => (showCreateDialog = false)}
-          class="px-4 py-2 text-sm hover:bg-accent rounded-md"
+          class="ui-button ui-button-secondary text-sm"
         >
           {$_('dialog.cancel')}
         </button>
         <button
           onclick={handleCreate}
           disabled={!newTitle.trim() || creating}
-          class="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md disabled:opacity-50"
+          class="ui-button ui-button-primary text-sm"
         >
           {#if creating}
             <Loader2 size={14} class="animate-spin" />

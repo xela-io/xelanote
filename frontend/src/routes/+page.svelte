@@ -5,7 +5,6 @@
     Clock3,
     FilePlus,
     FileText,
-    GripVertical,
     Search,
     Sparkles,
   } from 'lucide-svelte';
@@ -17,7 +16,9 @@
   import { getPreferences, updateHomeDashboardLayoutPreference } from '$lib/api/preferences';
   import type { HomeDashboardLayoutPreference } from '$lib/api/types';
   import CreateNoteDialog from '$lib/components/CreateNoteDialog.svelte';
+  import DashboardSection from '$lib/components/DashboardSection.svelte';
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
+  import PageHeader from '$lib/components/ui/PageHeader.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as ui from '$lib/stores/ui.svelte';
@@ -352,12 +353,33 @@
   ></div>
 
   <div class="relative h-full overflow-y-auto">
-    <div class="mx-auto flex min-h-full w-full max-w-7xl items-start px-4 py-8 sm:px-6 lg:px-10">
+    <PageHeader
+      title={$_('page.home.dashboard_title')}
+      subtitle={$_('page.home.dashboard_subtitle')}
+      class="sticky top-0 z-10 px-4 py-3 sm:px-6 sm:py-4 lg:px-10"
+      containerClass="mx-auto w-full max-w-7xl"
+      subtitleClass="hidden sm:block"
+    >
+      {#snippet leading()}
+        <MobileSidebarInlineToggle />
+      {/snippet}
+      {#snippet actions()}
+        <button
+          type="button"
+          onclick={resetDashboardLayout}
+          class="ui-button ui-button-secondary text-sm"
+        >
+          {$_('page.home.layout_reset')}
+        </button>
+      {/snippet}
+    </PageHeader>
+
+    <div
+      class="mx-auto flex min-h-full w-full max-w-7xl items-start px-4 py-5 sm:px-6 sm:py-6 lg:px-10"
+    >
       <div class="w-full">
         <div class="grid w-full grid-cols-1 gap-5 lg:grid-cols-[1.08fr_0.92fr] lg:gap-6">
-          <section
-            class="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur-sm sm:p-6"
-          >
+          <section class="ui-panel relative overflow-hidden p-5 sm:p-6">
             <div
               class="pointer-events-none absolute -right-12 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-2xl"
             ></div>
@@ -365,7 +387,6 @@
             <div class="relative">
               <div class="mb-4 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
-                  <MobileSidebarInlineToggle />
                   <div
                     class="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/50 px-3 py-1 text-xs font-medium text-muted-foreground"
                   >
@@ -378,9 +399,11 @@
                   onclick={() => toggleSection('hero')}
                   class="inline-flex items-center gap-1 rounded-lg border border-border/60 bg-background/40 px-2 py-1 text-xs text-muted-foreground transition hover:bg-accent/25"
                   aria-expanded={!isSectionCollapsed('hero')}
-                  aria-label={isSectionCollapsed('hero')
-                    ? 'Bereich ausklappen'
-                    : 'Bereich einklappen'}
+                  aria-label={$_(
+                    isSectionCollapsed('hero')
+                      ? 'page.home.section_expand'
+                      : 'page.home.section_collapse'
+                  )}
                 >
                   {#if isSectionCollapsed('hero')}
                     <ChevronDown size={14} />
@@ -412,7 +435,7 @@
                         {$_('page.home.open_quick_search')}
                       </span>
                       <span
-                        class="rounded-md border border-border/70 bg-background/70 px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted-foreground"
+                        class="hidden sm:inline-flex rounded-md border border-border/70 bg-background/70 px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted-foreground"
                       >
                         Ctrl+P
                       </span>
@@ -439,26 +462,40 @@
                     class="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground"
                   >
                     <Clock3 size={14} class="text-primary/85" />
-                    <span>{updatedTodayCount} heute bearbeitet</span>
+                    <span
+                      >{$_('page.home.edited_today', {
+                        values: { count: updatedTodayCount },
+                      })}</span
+                    >
                   </div>
                   <div
                     class="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground"
                   >
                     <Clock3 size={14} class="text-primary/85" />
-                    <span>{updatedThisWeekCount} diese Woche</span>
+                    <span
+                      >{$_('page.home.this_week', {
+                        values: { count: updatedThisWeekCount },
+                      })}</span
+                    >
                   </div>
                   <div
                     class="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground"
                   >
                     <FileText size={14} class="text-primary/85" />
-                    <span>{withoutFolderCount} im Root-Ordner</span>
+                    <span
+                      >{$_('page.home.in_root_folder', {
+                        values: { count: withoutFolderCount },
+                      })}</span
+                    >
                   </div>
                 </div>
 
                 {#if latestNote}
                   <div class="mt-5 rounded-xl border border-border/60 bg-background/35 p-3.5">
                     <div class="mb-2 flex items-center justify-between gap-3">
-                      <div class="text-xs font-medium text-foreground">Weiterarbeiten</div>
+                      <div class="text-xs font-medium text-foreground">
+                        {$_('page.home.continue_working')}
+                      </div>
                       <div class="text-[11px] text-muted-foreground">
                         {formatRelativeTime(latestNote.updated_at, $_)}
                       </div>
@@ -488,69 +525,22 @@
           </section>
 
           <div class="flex flex-col gap-5">
-            <div class="flex justify-end">
-              <button
-                type="button"
-                onclick={resetDashboardLayout}
-                class="rounded-lg border border-border/60 bg-background/35 px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-accent/25"
-              >
-                Layout zurücksetzen
-              </button>
-            </div>
-            <section
-              role="group"
-              aria-label="Zuletzt bearbeitet Bereich"
-              ondragover={(event) => handleSectionDragOver(event, 'recent')}
-              ondrop={(event) => handleSectionDrop(event, 'recent')}
-              style={`order: ${getRightSectionOrder('recent')}`}
-              class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
-                dragOverSectionId === 'recent'
-                  ? 'border-primary/50 ring-1 ring-primary/20'
-                  : 'border-border/60'
-              }`}
+            <DashboardSection
+              title={$_('page.home.recently_edited')}
+              subtitle={recentNotes.length > 0
+                ? $_('page.home.items_count', { values: { count: recentNotes.length } })
+                : '—'}
+              collapsed={isSectionCollapsed('recent')}
+              isDragOver={dragOverSectionId === 'recent'}
+              order={getRightSectionOrder('recent')}
+              ariaLabel={$_('page.home.recently_edited_section')}
+              onToggle={() => toggleSection('recent')}
+              onDragStart={(event) => handleSectionDragStart(event, 'recent')}
+              onDragOver={(event) => handleSectionDragOver(event, 'recent')}
+              onDrop={(event) => handleSectionDrop(event, 'recent')}
+              onDragEnd={handleSectionDragEnd}
             >
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div class="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                    {$_('page.home.recently_edited')}
-                  </div>
-                  <div class="mt-1 text-sm font-medium text-foreground">
-                    {recentNotes.length > 0 ? `${recentNotes.length} items` : '—'}
-                  </div>
-                </div>
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    draggable="true"
-                    ondragstart={(event) => handleSectionDragStart(event, 'recent')}
-                    ondragend={handleSectionDragEnd}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    title="Reihenfolge ändern (ziehen)"
-                    aria-label="Reihenfolge ändern (ziehen)"
-                  >
-                    <GripVertical size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={() => toggleSection('recent')}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    aria-expanded={!isSectionCollapsed('recent')}
-                    aria-label={isSectionCollapsed('recent')
-                      ? 'Bereich ausklappen'
-                      : 'Bereich einklappen'}
-                  >
-                    {#if isSectionCollapsed('recent')}
-                      <ChevronDown size={14} />
-                    {:else}
-                      <ChevronUp size={14} />
-                    {/if}
-                  </button>
-                </div>
-              </div>
-
-              {#if isSectionCollapsed('recent')}
-                <div class="text-xs text-muted-foreground">Eingeklappt</div>
-              {:else if recentNotes.length > 0}
+              {#if recentNotes.length > 0}
                 <div class="space-y-1.5">
                   {#each recentNotes as note (note.id)}
                     <button
@@ -586,170 +576,93 @@
                 <div
                   class="rounded-xl border border-dashed border-border/60 bg-background/25 p-5 text-sm text-muted-foreground"
                 >
-                  Noch keine Notizen vorhanden. Erstelle deine erste Notiz oder nutze die
-                  Schnellsuche.
+                  {$_('page.home.no_notes_hint')}
                 </div>
               {/if}
-            </section>
+            </DashboardSection>
 
-            <section
-              role="group"
-              aria-label="Aktivitätsbereich"
-              ondragover={(event) => handleSectionDragOver(event, 'activity')}
-              ondrop={(event) => handleSectionDrop(event, 'activity')}
-              style={`order: ${getRightSectionOrder('activity')}`}
-              class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
-                dragOverSectionId === 'activity'
-                  ? 'border-primary/50 ring-1 ring-primary/20'
-                  : 'border-border/60'
-              }`}
+            <DashboardSection
+              title={$_('page.home.activity_title')}
+              subtitle={$_('page.home.activity_subtitle')}
+              collapsed={isSectionCollapsed('activity')}
+              isDragOver={dragOverSectionId === 'activity'}
+              order={getRightSectionOrder('activity')}
+              ariaLabel={$_('page.home.activity_section')}
+              onToggle={() => toggleSection('activity')}
+              onDragStart={(event) => handleSectionDragStart(event, 'activity')}
+              onDragOver={(event) => handleSectionDragOver(event, 'activity')}
+              onDrop={(event) => handleSectionDrop(event, 'activity')}
+              onDragEnd={handleSectionDragEnd}
             >
-              <div class="mb-3 flex items-start justify-between gap-3">
-                <div>
-                  <div class="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                    Aktivität
+              <div class="grid gap-3 md:grid-cols-2">
+                <div class="rounded-xl border border-border/60 bg-background/20 p-3">
+                  <div class="mb-2 text-xs font-medium text-foreground">
+                    {$_('page.home.today_count', { values: { count: updatedTodayCount } })}
                   </div>
-                  <div class="mt-1 text-sm font-medium text-foreground">Heute & diese Woche</div>
+                  {#if notesUpdatedToday.length > 0}
+                    <div class="space-y-1.5">
+                      {#each notesUpdatedToday as note (note.id)}
+                        <button
+                          onclick={() => goto(`/note/${note.id}`)}
+                          class="w-full rounded-lg border border-transparent bg-background/20 px-2.5 py-2 text-left transition hover:border-border/60 hover:bg-accent/25"
+                        >
+                          <div class="truncate text-sm font-medium">{note.title}</div>
+                          <div class="truncate text-xs text-muted-foreground">
+                            {formatRelativeTime(note.updated_at, $_)}
+                          </div>
+                        </button>
+                      {/each}
+                    </div>
+                  {:else}
+                    <div class="text-xs text-muted-foreground">
+                      {$_('page.home.no_changes_today')}
+                    </div>
+                  {/if}
                 </div>
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    draggable="true"
-                    ondragstart={(event) => handleSectionDragStart(event, 'activity')}
-                    ondragend={handleSectionDragEnd}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    title="Reihenfolge ändern (ziehen)"
-                    aria-label="Reihenfolge ändern (ziehen)"
-                  >
-                    <GripVertical size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={() => toggleSection('activity')}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    aria-expanded={!isSectionCollapsed('activity')}
-                    aria-label={isSectionCollapsed('activity')
-                      ? 'Bereich ausklappen'
-                      : 'Bereich einklappen'}
-                  >
-                    {#if isSectionCollapsed('activity')}
-                      <ChevronDown size={14} />
-                    {:else}
-                      <ChevronUp size={14} />
-                    {/if}
-                  </button>
+
+                <div class="rounded-xl border border-border/60 bg-background/20 p-3">
+                  <div class="mb-2 text-xs font-medium text-foreground">
+                    {$_('page.home.this_week_count', { values: { count: updatedThisWeekCount } })}
+                  </div>
+                  {#if notesUpdatedThisWeek.length > 0}
+                    <div class="space-y-1.5">
+                      {#each notesUpdatedThisWeek as note (note.id)}
+                        <button
+                          onclick={() => goto(`/note/${note.id}`)}
+                          class="w-full rounded-lg border border-transparent bg-background/20 px-2.5 py-2 text-left transition hover:border-border/60 hover:bg-accent/25"
+                        >
+                          <div class="truncate text-sm font-medium">{note.title}</div>
+                          <div class="truncate text-xs text-muted-foreground">
+                            {formatRelativeTime(note.updated_at, $_)}
+                          </div>
+                        </button>
+                      {/each}
+                    </div>
+                  {:else}
+                    <div class="text-xs text-muted-foreground">
+                      {$_('page.home.no_changes_week')}
+                    </div>
+                  {/if}
                 </div>
               </div>
+            </DashboardSection>
 
-              {#if isSectionCollapsed('activity')}
-                <div class="text-xs text-muted-foreground">Eingeklappt</div>
-              {:else}
-                <div class="grid gap-3 md:grid-cols-2">
-                  <div class="rounded-xl border border-border/60 bg-background/20 p-3">
-                    <div class="mb-2 text-xs font-medium text-foreground">
-                      Heute ({updatedTodayCount})
-                    </div>
-                    {#if notesUpdatedToday.length > 0}
-                      <div class="space-y-1.5">
-                        {#each notesUpdatedToday as note (note.id)}
-                          <button
-                            onclick={() => goto(`/note/${note.id}`)}
-                            class="w-full rounded-lg border border-transparent bg-background/20 px-2.5 py-2 text-left transition hover:border-border/60 hover:bg-accent/25"
-                          >
-                            <div class="truncate text-sm font-medium">{note.title}</div>
-                            <div class="truncate text-xs text-muted-foreground">
-                              {formatRelativeTime(note.updated_at, $_)}
-                            </div>
-                          </button>
-                        {/each}
-                      </div>
-                    {:else}
-                      <div class="text-xs text-muted-foreground">Heute noch keine Änderungen.</div>
-                    {/if}
-                  </div>
-
-                  <div class="rounded-xl border border-border/60 bg-background/20 p-3">
-                    <div class="mb-2 text-xs font-medium text-foreground">
-                      Diese Woche ({updatedThisWeekCount})
-                    </div>
-                    {#if notesUpdatedThisWeek.length > 0}
-                      <div class="space-y-1.5">
-                        {#each notesUpdatedThisWeek as note (note.id)}
-                          <button
-                            onclick={() => goto(`/note/${note.id}`)}
-                            class="w-full rounded-lg border border-transparent bg-background/20 px-2.5 py-2 text-left transition hover:border-border/60 hover:bg-accent/25"
-                          >
-                            <div class="truncate text-sm font-medium">{note.title}</div>
-                            <div class="truncate text-xs text-muted-foreground">
-                              {formatRelativeTime(note.updated_at, $_)}
-                            </div>
-                          </button>
-                        {/each}
-                      </div>
-                    {:else}
-                      <div class="text-xs text-muted-foreground">
-                        Diese Woche noch keine Änderungen.
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-              {/if}
-            </section>
-
-            <section
-              role="group"
-              aria-label="Zuletzt erstellt Bereich"
-              ondragover={(event) => handleSectionDragOver(event, 'created')}
-              ondrop={(event) => handleSectionDrop(event, 'created')}
-              style={`order: ${getRightSectionOrder('created')}`}
-              class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
-                dragOverSectionId === 'created'
-                  ? 'border-primary/50 ring-1 ring-primary/20'
-                  : 'border-border/60'
-              }`}
+            <DashboardSection
+              title={$_('page.home.recently_created')}
+              subtitle={newlyCreatedNotes.length > 0
+                ? $_('page.home.items_count', { values: { count: newlyCreatedNotes.length } })
+                : '—'}
+              collapsed={isSectionCollapsed('created')}
+              isDragOver={dragOverSectionId === 'created'}
+              order={getRightSectionOrder('created')}
+              ariaLabel={$_('page.home.recently_created_section')}
+              onToggle={() => toggleSection('created')}
+              onDragStart={(event) => handleSectionDragStart(event, 'created')}
+              onDragOver={(event) => handleSectionDragOver(event, 'created')}
+              onDrop={(event) => handleSectionDrop(event, 'created')}
+              onDragEnd={handleSectionDragEnd}
             >
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div class="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                    Zuletzt erstellt
-                  </div>
-                  <div class="mt-1 text-sm font-medium text-foreground">
-                    {newlyCreatedNotes.length > 0 ? `${newlyCreatedNotes.length} items` : '—'}
-                  </div>
-                </div>
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    draggable="true"
-                    ondragstart={(event) => handleSectionDragStart(event, 'created')}
-                    ondragend={handleSectionDragEnd}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    title="Reihenfolge ändern (ziehen)"
-                    aria-label="Reihenfolge ändern (ziehen)"
-                  >
-                    <GripVertical size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={() => toggleSection('created')}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    aria-expanded={!isSectionCollapsed('created')}
-                    aria-label={isSectionCollapsed('created')
-                      ? 'Bereich ausklappen'
-                      : 'Bereich einklappen'}
-                  >
-                    {#if isSectionCollapsed('created')}
-                      <ChevronDown size={14} />
-                    {:else}
-                      <ChevronUp size={14} />
-                    {/if}
-                  </button>
-                </div>
-              </div>
-
-              {#if isSectionCollapsed('created')}
-                <div class="text-xs text-muted-foreground">Eingeklappt</div>
-              {:else if newlyCreatedNotes.length > 0}
+              {#if newlyCreatedNotes.length > 0}
                 <div class="space-y-1.5">
                   {#each newlyCreatedNotes as note (note.id)}
                     <button
@@ -765,10 +678,8 @@
                         <span class="min-w-0 flex-1">
                           <span class="block truncate text-sm font-medium">{note.title}</span>
                           <span class="block truncate text-xs text-muted-foreground">
-                            {formatFolderPath(note.folder_path)} • erstellt {formatRelativeTime(
-                              note.created_at,
-                              $_
-                            )}
+                            {formatFolderPath(note.folder_path)} • {$_('page.home.created_prefix')}
+                            {formatRelativeTime(note.created_at, $_)}
                           </span>
                         </span>
                       </span>
@@ -776,67 +687,31 @@
                   {/each}
                 </div>
               {:else}
-                <div class="text-sm text-muted-foreground">Noch keine Notizen vorhanden.</div>
+                <div class="text-sm text-muted-foreground">{$_('page.home.no_notes_hint')}</div>
               {/if}
-            </section>
+            </DashboardSection>
 
-            <section
-              role="group"
-              aria-label="Alle Notizen Bereich"
-              ondragover={(event) => handleSectionDragOver(event, 'all')}
-              ondrop={(event) => handleSectionDrop(event, 'all')}
-              style={`order: ${getRightSectionOrder('all')}`}
-              class={`rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5 ${
-                dragOverSectionId === 'all'
-                  ? 'border-primary/50 ring-1 ring-primary/20'
-                  : 'border-border/60'
-              }`}
+            <DashboardSection
+              title={$_('page.home.all_notes')}
+              subtitle={totalNotes > 0
+                ? $_('page.home.total_count', { values: { count: totalNotes } })
+                : '—'}
+              collapsed={isSectionCollapsed('all')}
+              isDragOver={dragOverSectionId === 'all'}
+              order={getRightSectionOrder('all')}
+              ariaLabel={$_('page.home.all_notes_section')}
+              onToggle={() => toggleSection('all')}
+              onDragStart={(event) => handleSectionDragStart(event, 'all')}
+              onDragOver={(event) => handleSectionDragOver(event, 'all')}
+              onDrop={(event) => handleSectionDrop(event, 'all')}
+              onDragEnd={handleSectionDragEnd}
             >
-              <div class="mb-3 flex items-start justify-between gap-3">
-                <div>
-                  <div class="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                    Alle Notizen
-                  </div>
-                  <div class="mt-1 text-sm font-medium text-foreground">
-                    {totalNotes > 0 ? `${totalNotes} insgesamt` : '—'}
-                  </div>
-                </div>
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    draggable="true"
-                    ondragstart={(event) => handleSectionDragStart(event, 'all')}
-                    ondragend={handleSectionDragEnd}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    title="Reihenfolge ändern (ziehen)"
-                    aria-label="Reihenfolge ändern (ziehen)"
-                  >
-                    <GripVertical size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={() => toggleSection('all')}
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/35 text-muted-foreground transition hover:bg-accent/25"
-                    aria-expanded={!isSectionCollapsed('all')}
-                    aria-label={isSectionCollapsed('all')
-                      ? 'Bereich ausklappen'
-                      : 'Bereich einklappen'}
-                  >
-                    {#if isSectionCollapsed('all')}
-                      <ChevronDown size={14} />
-                    {:else}
-                      <ChevronUp size={14} />
-                    {/if}
-                  </button>
-                </div>
-              </div>
-
-              {#if isSectionCollapsed('all')}
-                <div class="text-xs text-muted-foreground">Eingeklappt</div>
-              {:else if totalNotes > 0}
+              {#if totalNotes > 0}
                 <div class="space-y-3">
                   <div>
-                    <label for="home-notes-search" class="sr-only">Notizen durchsuchen</label>
+                    <label for="home-notes-search" class="sr-only"
+                      >{$_('page.home.search_notes')}</label
+                    >
                     <div
                       class="flex items-center gap-2 rounded-xl border border-border/70 bg-background/35 px-3 py-2"
                     >
@@ -845,7 +720,7 @@
                         id="home-notes-search"
                         bind:value={allNotesQuery}
                         type="text"
-                        placeholder="Notizen oder Ordner filtern..."
+                        placeholder={$_('page.home.filter_placeholder')}
                         class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                       />
                     </div>
@@ -860,7 +735,7 @@
                           : 'border-border/60 bg-background/35 text-muted-foreground hover:bg-accent/30'
                       }`}
                     >
-                      Zuletzt bearbeitet
+                      {$_('page.home.sort_recent')}
                     </button>
                     <button
                       onclick={() => (allNotesSort = 'created')}
@@ -870,7 +745,7 @@
                           : 'border-border/60 bg-background/35 text-muted-foreground hover:bg-accent/30'
                       }`}
                     >
-                      Neu erstellt
+                      {$_('page.home.sort_newest')}
                     </button>
                     <button
                       onclick={() => (allNotesSort = 'alpha')}
@@ -880,7 +755,7 @@
                           : 'border-border/60 bg-background/35 text-muted-foreground hover:bg-accent/30'
                       }`}
                     >
-                      A-Z
+                      {$_('page.home.sort_az')}
                     </button>
                   </div>
 
@@ -915,7 +790,7 @@
                         disabled
                         class="w-full rounded-xl border border-dashed border-border/60 bg-background/20 px-3 py-4 text-left text-sm text-muted-foreground"
                       >
-                        Keine Notizen für diesen Filter gefunden.
+                        {$_('page.home.no_filter_results')}
                       </button>
                     {/if}
                   </div>
@@ -924,11 +799,10 @@
                 <div
                   class="rounded-xl border border-dashed border-border/60 bg-background/25 p-5 text-sm text-muted-foreground"
                 >
-                  Noch keine Notizen vorhanden. Erstelle deine erste Notiz oder nutze die
-                  Schnellsuche.
+                  {$_('page.home.no_notes_hint')}
                 </div>
               {/if}
-            </section>
+            </DashboardSection>
           </div>
         </div>
       </div>

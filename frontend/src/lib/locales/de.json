@@ -499,7 +499,39 @@
       "create_new_note": "Neue Notiz erstellen",
       "open_quick_search": "Schnellsuche öffnen",
       "recently_edited": "Zuletzt bearbeitet",
-      "notes_available": "{count} Notizen vorhanden"
+      "notes_available": "{count, plural, one {# Notiz vorhanden} other {# Notizen vorhanden}}",
+      "dashboard_title": "Übersicht",
+      "dashboard_subtitle": "Zuletzt bearbeitete Notizen, Aktivität und Schnellzugriffe",
+      "layout_reset": "Layout zurücksetzen",
+      "items_count": "{count, plural, one {# Eintrag} other {# Einträge}}",
+      "collapsed": "Eingeklappt",
+      "no_changes_today": "Heute noch keine Änderungen.",
+      "no_changes_week": "Diese Woche noch keine Änderungen.",
+      "edited_today": "{count} heute bearbeitet",
+      "this_week": "{count} diese Woche",
+      "in_root_folder": "{count} im Root-Ordner",
+      "continue_working": "Weiterarbeiten",
+      "no_notes_hint": "Noch keine Notizen vorhanden. Erstelle deine erste Notiz oder nutze die Schnellsuche.",
+      "activity_title": "Aktivität",
+      "activity_subtitle": "Heute & diese Woche",
+      "today_count": "Heute ({count})",
+      "this_week_count": "Diese Woche ({count})",
+      "recently_created": "Zuletzt erstellt",
+      "created_prefix": "erstellt",
+      "all_notes": "Alle Notizen",
+      "total_count": "{count} insgesamt",
+      "filter_placeholder": "Notizen oder Ordner filtern...",
+      "sort_recent": "Zuletzt bearbeitet",
+      "sort_newest": "Neu erstellt",
+      "sort_az": "A-Z",
+      "no_filter_results": "Keine Notizen für diesen Filter gefunden.",
+      "section_expand": "Bereich ausklappen",
+      "section_collapse": "Bereich einklappen",
+      "recently_edited_section": "Zuletzt bearbeitet Bereich",
+      "activity_section": "Aktivitätsbereich",
+      "recently_created_section": "Zuletzt erstellt Bereich",
+      "all_notes_section": "Alle Notizen Bereich",
+      "search_notes": "Notizen durchsuchen"
     },
     "search": {
       "input_label": "Notizen durchsuchen",
@@ -677,8 +709,10 @@
         "security": "Sicherheit",
         "account": "Account",
         "ai": "KI",
-        "data": "Daten"
+        "data": "Daten",
+        "connection": "Verbindung"
       },
+      "subtitle": "Einstellungen und Präferenzen zentral verwalten",
       "data": {
         "export_title": "Notizen exportieren",
         "export_description": "Exportiere alle deine Notizen als Markdown-Dateien in einem ZIP-Archiv.",
@@ -769,6 +803,7 @@
         "mode_split_label": "Split View",
         "mode_split_description": "Editor und Preview nebeneinander",
         "features_title": "Features",
+        "performance_experimental_title": "Performance (Experimentell)",
         "journal_feature_title": "Journal (Tagebuch)",
         "journal_feature_description": "Aktiviert das tägliche Journal mit Kalendernavigation. Jeden Tag kann ein Eintrag erstellt werden.",
         "recipe_feature_title": "Rezepte (Kochbuch)",
@@ -816,7 +851,9 @@
         "migration_button": "Notizen migrieren",
         "migration_complete": "Alle Notizen sind verschlüsselt!",
         "migration_no_notes": "Keine Notizen vorhanden.",
-        "migration_error": "Statistiken konnten nicht geladen werden."
+        "migration_error": "Statistiken konnten nicht geladen werden.",
+        "security_keys_title": "Security Keys",
+        "security_keys_description": "Hardware Security Keys (YubiKey etc.) als zweiten Faktor beim Login verwenden."
       },
       "account": {
         "logged_in_as": "Eingeloggt als",
@@ -918,6 +955,11 @@
     }
   },
   "component": {
+    "dashboard_section": {
+      "reorder_title": "Reihenfolge ändern (ziehen)",
+      "expand": "Bereich ausklappen",
+      "collapse": "Bereich einklappen"
+    },
     "canvas": {
       "link_dialog": {
         "title": "Link hinzufügen",
@@ -998,6 +1040,8 @@
       "info": "Graph-Info",
       "nodes": "Knoten",
       "connections": "Verbindungen",
+      "empty_title": "Noch keine Daten im Graph",
+      "empty_description": "Erstelle Notizen mit Wikilinks, um den Graphen zu füllen.",
       "truncated_warning": "⚠️ Graph gekürzt - nutze Filter zur Eingrenzung",
       "existing_notes": "🔵 Bestehende Notizen",
       "unresolved_links": "🔴 Ungelöste Links"
@@ -1070,10 +1114,10 @@
         "save": "Manuell speichern (Strg+S)",
         "save_short": "Speichern",
         "upload": "Bild hochladen",
-      "history": "Versionshistorie",
-      "undo": "Rückgängig",
-      "redo": "Wiederholen",
-      "focus_mode": "Fokusmodus",
+        "history": "Versionshistorie",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "focus_mode": "Fokusmodus",
         "color": "Textfarbe",
         "move": "Verschieben",
         "delete": "Löschen",
@@ -1097,6 +1141,9 @@
         "encrypt_note": "Notiz verschlüsseln",
         "open_menu": "Menü öffnen",
         "editor_toolbar": "Editor-Werkzeugleiste",
+        "syncing": "Sync...",
+        "locked_short": "Gesperrt",
+        "offline_short": "Offline",
         "section_view_mode": "Ansicht",
         "section_formatting": "Formatierung",
         "section_note": "Notiz",

@@ -7,9 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Preview: Shiki syntax highlighting for code blocks with Gruvbox CSS variable theme and lazy language loading
+- Preview: KaTeX math rendering support with `$inline$` and `$$display$$` syntax (opt-in via feature flag)
+- Preview: Mermaid diagram rendering with content-hash caching and 500ms debounce (opt-in via feature flag)
+- Preview: Web Worker for markdown-it rendering — moves expensive parsing off the main thread with auto-cancel and 500ms timeout fallback
+- Preview: Idiomorph DOM morphing — preserves DOM state (scroll position, focus, `<details>` open) on content updates instead of full innerHTML replacement
+- Preview: Element-level scroll sync between editor and preview using `data-source-line` anchors with interpolation, replacing ratio-based sync
+- Preview: Performance baseline benchmarks for renderMarkdown() at 100/500/2000 lines (vitest bench)
+- Editor: Image lazy loading (`loading="lazy"`, `decoding="async"`) on all rendered images
+- Editor: CSS `content-visibility: auto` on preview block elements for off-screen rendering optimization
+- Editor: Viewport-aware heading and task group collection in live preview — reduces map population from O(document) to O(viewport)
+- Recipes: Delete button on recipe list items with confirmation dialog, trash integration, and state refresh
+
 ### Changed
 
 - Mobile: Add undo/redo buttons to mobile editor toolbar with CodeMirror state integration (disabled when no undo/redo available)
+
+### Fixed
+
+- i18n: Replace ~30 hardcoded German strings on dashboard with `$_()` calls and add corresponding en/de keys under `page.home.*` and `component.dashboard_section.*`
+- i18n: Fix pluralization for `notes_available` and `items_count` using ICU MessageFormat plural syntax (1 note vs 2 notes)
+- Recipes: Replace native `confirm()` with styled `dialog.confirm()` for collection deletion (consistent with recipe deletion pattern)
+- Mobile: Hide theme descriptions on small screens and use responsive grid gap for compact theme cards in appearance settings
+- Mobile: Hide `Ctrl+P` keyboard shortcut badge on small screens
+- Editor: Improve live preview gutter layout — increase left padding to prevent toggle/drag-handle overlap, enlarge toggle icons, hide drag handles on completed task group lines, switch expanded indicator from triangle to dash
+- PWA: Fix iOS viewport height jumps on keyboard open/close, app switching, and orientation changes via JS-corrected `--app-viewport-height` CSS variable (replaces raw `100vh`/`100dvh` in dropdowns, search, trash, and root layout)
+- Mobile: Add WCAG AA compliant 44px touch targets for buttons, tabs, and icon buttons; enable momentum scrolling in editor/preview panes on mobile WebKit/PWA
+- Mobile: Hide drag handles on touch devices and use long-press for task reordering; enlarge heading and task-group toggle buttons to 44px (WCAG AA); disable live-mode drag on touch to avoid text selection conflicts
+
+## [1.1.3] - 2026-02-23
+
+### Changed
+
 - Editor: Streamline toolbar — extract mode selector into dedicated component (segmented control on desktop, dropdown on mobile), consolidate insert actions (task, table, upload) behind a single "+" menu, move autosave toggle to more menu, add section headers to more menu
 - Editor: Polish toolbar with grouped pill containers, custom mobile mode dropdown with checkmarks, enhanced save button with primary highlight and spinner, i18n for all section headers
 - Editor: Note title is now edited inline as the first line of the editor content (Bear/Apple Notes style) instead of a separate toolbar input. Title and content remain separate in the API/DB. Journal notes retain their read-only date title in the toolbar.
@@ -30,10 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Editor: Improve live preview gutter layout — increase left padding to prevent toggle/drag-handle overlap, enlarge toggle icons, hide drag handles on completed task group lines, switch expanded indicator from triangle to dash
-- PWA: Fix iOS viewport height jumps on keyboard open/close, app switching, and orientation changes via JS-corrected `--app-viewport-height` CSS variable (replaces raw `100vh`/`100dvh` in dropdowns, search, trash, and root layout)
-- Mobile: Add WCAG AA compliant 44px touch targets for buttons, tabs, and icon buttons; enable momentum scrolling in editor/preview panes on mobile WebKit/PWA
-- Mobile: Hide drag handles on touch devices and use long-press for task reordering; enlarge heading and task-group toggle buttons to 44px (WCAG AA); disable live-mode drag on touch to avoid text selection conflicts
 - Editor: Suppress first-line title styling for journal notes via `data-note-type` attribute
 - Backend: Fix admin promotion violating single-admin unique constraint (atomically demote existing admin before promoting new one, update API test accordingly)
 - Backend: Fix build failure in service package — `cache.NewCache` renamed to `cache.New` but `graph_test.go` was missed
@@ -45,7 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Recipes: Delete button on recipe list items with confirmation dialog, trash integration, and state refresh
 - Recipes: Automatic Fahrenheit→Celsius conversion in recipe instructions during AI import (image and URL), rounded to nearest 5°C
 
 ### Security
@@ -749,7 +775,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backlinks via wiki-links
 - Path-based folder system
 
-[Unreleased]: https://github.com/xela-io/xelanote/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/xela-io/xelanote/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/xela-io/xelanote/compare/v0.5.0...v1.1.3
 [0.5.0]: https://github.com/xela-io/xelanote/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/xela-io/xelanote/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/xela-io/xelanote/compare/v0.2.0...v0.3.0

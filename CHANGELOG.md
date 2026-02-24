@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Recipes: Replace tab buttons with animated slider component — sliding indicator shows active tab (Ingredients/Instructions/Preview) with smooth CSS transition
 - Mobile: Add undo/redo buttons to mobile editor toolbar with CodeMirror state integration (disabled when no undo/redo available)
+- Mobile: Hide encryption lock icon in editor toolbar on mobile to save space
 
 ### Fixed
 

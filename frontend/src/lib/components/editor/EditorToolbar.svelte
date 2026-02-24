@@ -156,7 +156,7 @@
           {note.title}
         </span>
       {/if}
-      {#if note?.content_encrypted}
+      {#if note?.content_encrypted && !isMobile}
         <Lock size={14} class="flex-shrink-0 text-muted-foreground" />
       {/if}
       {#if isMobile}

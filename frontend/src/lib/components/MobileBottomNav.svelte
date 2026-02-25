@@ -73,41 +73,41 @@
   class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border pb-safe"
   aria-label={$_('nav.bottom_navigation')}
 >
-  <div class="flex items-center h-14 px-2">
+  <div class="flex items-center h-12 px-2">
     <!-- Nav Tabs -->
     <button
       onclick={handleNotesClick}
-      class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-12"
+      class="flex-1 flex flex-col items-center justify-center min-h-10"
       style="-webkit-tap-highlight-color: transparent"
     >
       <span
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full transition-colors {isNotesActive
+        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-colors {isNotesActive
           ? 'bg-primary/12 text-primary'
           : 'text-muted-foreground'}"
       >
-        <FileText size={20} />
+        <FileText size={18} />
         <span class="text-[10px] font-medium">{$_('nav.notes')}</span>
       </span>
     </button>
 
     <button
       onclick={handleSearchClick}
-      class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-12 text-muted-foreground"
+      class="flex-1 flex flex-col items-center justify-center min-h-10 text-muted-foreground"
       style="-webkit-tap-highlight-color: transparent"
     >
-      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full">
-        <Search size={20} />
+      <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full">
+        <Search size={18} />
         <span class="text-[10px] font-medium">{$_('page.sidebar.search')}</span>
       </span>
     </button>
 
     <button
       onclick={handleMoreClick}
-      class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-12 text-muted-foreground"
+      class="flex-1 flex flex-col items-center justify-center min-h-10 text-muted-foreground"
       style="-webkit-tap-highlight-color: transparent"
     >
-      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full">
-        <MoreHorizontal size={20} />
+      <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full">
+        <MoreHorizontal size={18} />
         <span class="text-[10px] font-medium">{$_('nav.more')}</span>
       </span>
     </button>

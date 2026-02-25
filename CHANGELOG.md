@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - iOS Safari: dual-mode mobile layout — body-level scrolling on opt-in pages (journal, recipes, due-dates, trash, shared collections) so Safari toolbar auto-hides on scroll; PWA and desktop remain in fixed layout
 - Local iPhone/PWA testing helpers: Caddy HTTPS proxy, mkcert integration, `make phone-*` targets
 
+### Changed
+
+- Mobile bottom nav: reduced height from 56px to 48px, smaller icons (18px) and tighter padding for less wasted space in PWA mode
+
 ### Fixed
 
 - iOS PWA: improved viewport resync after app resume, orientation change, and window focus — prevents stale viewport height leaving a gap at the bottom

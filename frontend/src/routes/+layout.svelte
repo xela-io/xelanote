@@ -677,7 +677,7 @@
             ? ''
             : 'overflow-hidden'} flex flex-col focus:outline-none relative z-0"
           style:padding-bottom={ui.getIsMobile() && !ui.getIsKeyboardOpen() && !useBodyScroll
-            ? 'calc(3.5rem + var(--safe-area-inset-bottom))'
+            ? 'calc(3rem + var(--safe-area-inset-bottom))'
             : '0'}
         >
           <div class="flex-1 {useBodyScroll ? '' : 'overflow-hidden'}">

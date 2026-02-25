@@ -70,7 +70,7 @@
 
 <!-- Bottom Navigation Bar -->
 <nav
-  class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border pb-safe"
+  class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 border-t border-border/50 pb-safe"
   aria-label={$_('nav.bottom_navigation')}
 >
   <div class="flex items-center h-10 px-2">
@@ -315,6 +315,12 @@
 {/if}
 
 <style>
+  .mobile-bottom-nav {
+    background: color-mix(in oklch, var(--color-background), transparent 15%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+
   .mobile-more-sheet {
     border-top: 1px solid color-mix(in oklch, var(--color-border), transparent 38%);
     box-shadow:

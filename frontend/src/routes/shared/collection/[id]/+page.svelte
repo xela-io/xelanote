@@ -44,7 +44,7 @@
   <title>{collectionInfo?.name ?? $_('page.recipes.collections')} - xelanote</title>
 </svelte:head>
 
-<div class="h-full flex flex-col">
+<div data-body-scroll class="h-full flex flex-col">
   <!-- Header -->
   <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-border shrink-0">
     <div class="flex items-center gap-2 mb-2">

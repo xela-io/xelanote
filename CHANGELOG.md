@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- iOS Safari: dual-mode mobile layout — body-level scrolling on opt-in pages (journal, recipes, due-dates, trash, shared collections) so Safari toolbar auto-hides on scroll; PWA and desktop remain in fixed layout
+- Local iPhone/PWA testing helpers: Caddy HTTPS proxy, mkcert integration, `make phone-*` targets
+
 ### Fixed
 
 - iOS PWA: improved viewport resync after app resume, orientation change, and window focus — prevents stale viewport height leaving a gap at the bottom
 - iOS PWA: account for safe-area-inset-bottom in viewport height calculation to prevent gap on notch devices
+- iOS: viewport height no longer double-counts safe-area-inset-bottom
+- iOS: keyboard detection now prefers Visual Viewport over focus state to avoid stale keyboard-open state
 - Recipe editor: tab slider styling and Prettier formatting fixes
 
 ### Added

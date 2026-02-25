@@ -78,6 +78,7 @@
       }
     }
     ui.initStandaloneDetection();
+    ui.initIOSDetection();
     pwa.initPwaDetection();
   }
 
@@ -149,6 +150,39 @@
   let authInitialized = $state(false);
   let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
   let viewportResyncTimeouts: ReturnType<typeof setTimeout>[] = [];
+  let viewportDebugInfo = $state({
+    inner: '-',
+    visual: '-',
+    appHeight: '-',
+    safeBottom: '-',
+    standalone: '-',
+    keyboard: '-',
+    urlFlag: '-',
+  });
+  const showViewportDebug = $derived(page.url.searchParams.get('debugViewport') === '1');
+
+  function updateViewportDebugInfo() {
+    if (!browser) return;
+    const vv = window.visualViewport;
+    const root = document.documentElement;
+    const styles = window.getComputedStyle(root);
+    const appHeight = styles.getPropertyValue('--app-viewport-height').trim() || '-';
+    const safeBottom = styles.getPropertyValue('--safe-area-inset-bottom').trim() || '-';
+    const navigatorStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
+    const mediaStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+    viewportDebugInfo = {
+      inner: `${window.innerWidth} x ${window.innerHeight}`,
+      visual: vv
+        ? `${Math.round(vv.width)} x ${Math.round(vv.height)} / top ${Math.round(vv.offsetTop)}`
+        : 'n/a',
+      appHeight,
+      safeBottom,
+      standalone: `class=${root.classList.contains('is-standalone')} nav=${navigatorStandalone} media=${mediaStandalone}`,
+      keyboard: String(ui.getIsKeyboardOpen()),
+      urlFlag: page.url.searchParams.get('debugViewport') ?? '-',
+    };
+  }
 
   onMount(() => {
     // Keep onMount sync so cleanup runs; move async work into inner function.
@@ -313,6 +347,7 @@
     const syncViewportHeight = () => {
       viewportHandlers.handleResize();
       viewportHandlers.handleVisualViewportResize();
+      updateViewportDebugInfo();
     };
     const clearViewportResyncTimeouts = () => {
       for (const timeout of viewportResyncTimeouts) clearTimeout(timeout);
@@ -376,7 +411,14 @@
     // Mobile detection must run synchronously before async init to prevent
     // sidebar rendering in desktop mode on mobile devices
     viewportHandlers.handleResize();
+    updateViewportDebugInfo();
     window.addEventListener('resize', viewportHandlers.debouncedHandleResize);
+    window.addEventListener('resize', updateViewportDebugInfo);
+    window.addEventListener('focus', updateViewportDebugInfo);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportDebugInfo);
+      window.visualViewport.addEventListener('scroll', updateViewportDebugInfo);
+    }
 
     // Start async initialization (non-blocking)
     void initializeAsync();
@@ -384,10 +426,16 @@
     return () => {
       document.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('resize', viewportHandlers.debouncedHandleResize);
+      window.removeEventListener('resize', updateViewportDebugInfo);
+      window.removeEventListener('focus', updateViewportDebugInfo);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pageshow', scheduleViewportResync);
       window.removeEventListener('orientationchange', scheduleViewportResync);
       window.removeEventListener('focus', scheduleViewportResync);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewportDebugInfo);
+        window.visualViewport.removeEventListener('scroll', updateViewportDebugInfo);
+      }
       clearViewportResyncTimeouts();
       viewportHandlers.cleanup();
       websocket.disconnect();
@@ -421,6 +469,9 @@
     publicRoutes.some((route) => page.url.pathname.startsWith(route)) || !auth.isAuthenticated()
   );
 
+  // iOS Safari (non-PWA): use body-level scrolling so Safari toolbar auto-hides
+  const useBodyScroll = $derived(ui.getIsMobile() && ui.getIsIOS() && !ui.getIsStandalone());
+
   async function loadQuickSwitcher() {
     if (QuickSwitcherComponent) return;
     const module = await import('$lib/components/QuickSwitcher.svelte');
@@ -430,6 +481,12 @@
   $effect(() => {
     if (ui.getQuickSwitcherOpen()) {
       loadQuickSwitcher();
+    }
+  });
+
+  $effect(() => {
+    if (browser && showViewportDebug) {
+      updateViewportDebugInfo();
     }
   });
 
@@ -528,8 +585,27 @@
   });
 </script>
 
-<!-- Root container: full viewport height with flex column -->
-<div class="h-screen-safe pt-safe flex flex-col overflow-hidden bg-background">
+<!-- Root container: fixed to viewport edges, all scrolling in inner containers -->
+<div
+  class="{useBodyScroll
+    ? 'relative min-h-dvh'
+    : 'fixed inset-0 overflow-hidden'} pt-safe flex flex-col bg-background"
+>
+  {#if showViewportDebug}
+    <div
+      class="fixed top-2 right-2 z-[9999] max-w-[calc(100vw-1rem)] rounded-md border border-border bg-background/95 px-3 py-2 text-[11px] leading-tight shadow-lg backdrop-blur-sm"
+      style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace;"
+    >
+      <div>inner: {viewportDebugInfo.inner}</div>
+      <div>visual: {viewportDebugInfo.visual}</div>
+      <div>--app-viewport-height: {viewportDebugInfo.appHeight}</div>
+      <div>safe-bottom: {viewportDebugInfo.safeBottom}</div>
+      <div>standalone: {viewportDebugInfo.standalone}</div>
+      <div>keyboard: {viewportDebugInfo.keyboard}</div>
+      <div>?debugViewport: {viewportDebugInfo.urlFlag}</div>
+    </div>
+  {/if}
+
   <!-- Skip Link for keyboard navigation -->
   <a
     href="#main-content"
@@ -562,7 +638,7 @@
   {:else}
     <!-- Protected app pages - with sidebar -->
     <div
-      class="flex flex-1 overflow-hidden"
+      class="flex flex-1 {useBodyScroll ? '' : 'overflow-hidden'}"
       use:swipe={{
         direction: 'right',
         edge: 'left',
@@ -597,12 +673,14 @@
         <main
           id="main-content"
           tabindex="-1"
-          class="flex-1 overflow-hidden flex flex-col focus:outline-none relative z-0"
-          style:padding-bottom={ui.getIsMobile() && !ui.getIsKeyboardOpen()
+          class="flex-1 {useBodyScroll
+            ? ''
+            : 'overflow-hidden'} flex flex-col focus:outline-none relative z-0"
+          style:padding-bottom={ui.getIsMobile() && !ui.getIsKeyboardOpen() && !useBodyScroll
             ? 'calc(3.5rem + var(--safe-area-inset-bottom))'
             : '0'}
         >
-          <div class="flex-1 overflow-hidden">
+          <div class="flex-1 {useBodyScroll ? '' : 'overflow-hidden'}">
             {@render children()}
           </div>
         </main>

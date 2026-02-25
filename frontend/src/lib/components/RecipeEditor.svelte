@@ -197,7 +197,7 @@
     </div>
   </div>
 {:else if currentRecipe}
-  <div class="recipe-editor h-full flex flex-col">
+  <div class="recipe-editor h-full min-h-0 flex flex-col overflow-hidden">
     <!-- Error Banner -->
     {#if lastError}
       <div class="px-4 py-2 bg-destructive/10 text-destructive text-sm flex items-center gap-2">
@@ -308,7 +308,7 @@
     </div>
 
     <!-- Tab Content -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="recipe-tab-content-scroll flex-1 min-h-0 overflow-y-auto">
       {#if activeTab === 'ingredients'}
         <div class="max-w-4xl p-4 pb-28 sm:p-5 sm:pb-5">
           <div class="ui-panel ui-panel-mobile-flat recipe-pane-shell space-y-4 sm:space-y-5">
@@ -523,6 +523,12 @@
 {/if}
 
 <style>
+  .recipe-tab-content-scroll {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+
   .recipe-section-card {
     padding: 0.9rem;
   }

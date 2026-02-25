@@ -1,4 +1,4 @@
-.PHONY: all build run test test-coverage clean frontend backend docker dev dev-full fmt fmt-check lint lint-frontend lint-backend lint-md typecheck typecheck-frontend typecheck-backend lint-golangci check-policy quality demo-db
+.PHONY: all build run test test-coverage clean frontend backend docker dev dev-full fmt fmt-check lint lint-frontend lint-backend lint-md typecheck typecheck-frontend typecheck-backend lint-golangci check-policy quality demo-db phone-setup-https phone-setup-ip-cert phone-frontend-dev phone-frontend-preview phone-caddy phone-help
 
 # Default target
 all: build
@@ -90,6 +90,39 @@ dev:
 dev-full:
 	@echo "Terminal 1: make dev       (Backend mit Hot-Reload)"
 	@echo "Terminal 2: make run-frontend (Frontend mit Vite HMR)"
+
+# Local mobile/iPhone testing helpers (frontend + HTTPS proxy)
+phone-setup-https:
+	bash scripts/setup-local-phone-https.sh
+
+phone-setup-ip-cert:
+	@test -n "$(IP)" || (echo "Usage: make phone-setup-ip-cert IP=10.22.22.60"; exit 1)
+	@command -v mkcert >/dev/null 2>&1 || { echo "mkcert not found"; exit 1; }
+	@mkdir -p .certs
+	mkcert -cert-file .certs/lan-ip.pem -key-file .certs/lan-ip-key.pem $(IP)
+
+phone-frontend-dev:
+	cd frontend && npm run dev:phone
+
+phone-frontend-preview:
+	cd frontend && npm run build:phone && npm run preview:phone
+
+phone-caddy:
+	@command -v caddy >/dev/null 2>&1 || { echo "Caddy not found. Install from https://caddyserver.com/docs/install"; exit 1; }
+	caddy run --config $(CURDIR)/Caddyfile.local
+
+phone-help:
+	@echo "Local iPhone testing setup"
+	@echo "1) make phone-setup-https   (mkcert certs under .certs/)"
+	@echo "2) make dev                 (Backend with Air on :8080)"
+	@echo "3) make phone-frontend-dev  (Vite HMR on :5173) OR"
+	@echo "   make phone-frontend-preview (build + preview on :4173)"
+	@echo "4) make phone-caddy         (HTTPS reverse proxy)"
+	@echo "5) Open https://dev.xelanote.local:8443 or https://pwa.xelanote.local:8443"
+	@echo "   (LAN DNS/hosts/tunnel needed for iPhone name resolution)"
+	@echo "   OR use direct IP after: make phone-setup-ip-cert IP=<LAN_IP>"
+	@echo "   - PWA preview: https://<LAN_IP>:8443"
+	@echo "   - Vite dev:    https://<LAN_IP>:8444"
 
 # Initialize the project (first time setup)
 init:

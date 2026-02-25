@@ -44,6 +44,9 @@ let editorMode = $state<'edit' | 'preview' | 'split' | 'live'>('live');
 // Standalone PWA state
 let isStandalone = $state(false);
 
+// iOS detection (for Safari body-scroll mode)
+let isIOS = $state(false);
+
 // Markdown guide state
 let markdownGuideOpen = $state(false);
 let markdownGuideTab = $state<'syntax' | 'wikilinks' | 'code'>('syntax');
@@ -174,6 +177,21 @@ export function initStandaloneDetection(): void {
     window.matchMedia('(display-mode: standalone)').matches;
   if (typeof document !== 'undefined') {
     document.documentElement.classList.toggle('is-standalone', isStandalone);
+  }
+}
+
+export function getIsIOS(): boolean {
+  return isIOS;
+}
+
+export function initIOSDetection(): void {
+  if (typeof navigator === 'undefined') return;
+  const ua = navigator.userAgent;
+  isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.toggle('is-ios', isIOS);
   }
 }
 

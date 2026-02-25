@@ -19,6 +19,7 @@ Dieses Dokument beschreibt das Setup, die Entwicklungs-Workflows und Best Practi
 - [Version History Feature](#version-history-feature)
 - [Mobile Sidebar Feature](#mobile-sidebar-feature)
 - [Graph View Mobile Touch Interaction](#graph-view-mobile-touch-interaction)
+- [Lokales iPhone/PWA-Testsetup](#lokales-iphonepwa-testsetup)
 - [Performance-Optimierungen](#performance-optimierungen)
 - [Editor TAB-Einrückung](#editor-tab-einrückung)
 - [Markdown Preview Styling](#markdown-preview-styling)
@@ -184,6 +185,108 @@ export default {
 ```
 
 **Effekt**: `fetch('/api/notes')` wird zu `http://localhost:8080/api/notes` geroutet.
+
+---
+
+## Lokales iPhone/PWA-Testsetup
+
+Ziel: Mobile UI schnell lokal testen (HMR) und iPhone-PWA-Verhalten (Standalone, Scope, Browser-UI) ohne Deploy prod-nah prüfen.
+
+### Warum zwei Modi?
+
+- `Vite dev` (`make phone-frontend-dev`): schnell für UI/Responsiveness, aber kein verlässlicher PWA-Test
+- `build + preview` (`make phone-frontend-preview`): korrekt für iPhone-PWA-/Standalone-Verhalten
+
+Hinweis: In diesem Projekt ist PWA im Dev-Modus deaktiviert (`frontend/vite.config.ts`, `devOptions.enabled: false`).
+
+### Voraussetzungen (zusätzlich)
+
+- `mkcert` (lokale TLS-Zertifikate)
+- `caddy` (lokaler HTTPS-Reverse-Proxy)
+- Backend lokal auf `:8080` (z. B. via `make dev` / Air)
+
+### Einmaliges Setup
+
+1. `mkcert` installieren und lokale CA einrichten (Arch Linux)
+
+```bash
+sudo pacman -S mkcert
+mkcert -install
+```
+
+2. Hostname-Zertifikate erzeugen (optional, für `*.xelanote.local`)
+
+```bash
+make phone-setup-https
+```
+
+3. IP-Zertifikat erzeugen (für direkten Zugriff vom iPhone ohne DNS)
+
+Beispiel mit LAN-IP `10.22.22.60`:
+
+```bash
+make phone-setup-ip-cert IP=10.22.22.60
+```
+
+### Lokaler Betrieb (3 Terminals)
+
+Terminal 1 (Backend mit Air):
+
+```bash
+make dev
+```
+
+Terminal 2 (Frontend):
+
+- PWA/Standalone-Test (empfohlen für iPhone):
+
+```bash
+make phone-frontend-preview
+```
+
+- Schnelle UI-Iteration mit HMR:
+
+```bash
+make phone-frontend-dev
+```
+
+Terminal 3 (HTTPS-Proxy):
+
+```bash
+make phone-caddy
+```
+
+### Zugriff vom iPhone
+
+Direkt per IP (kein DNS nötig):
+
+- PWA Preview: `https://10.22.22.60:8443`
+- Vite Dev (HMR): `https://10.22.22.60:8444`
+
+Optional per Hostname (wenn im Netzwerk auflösbar):
+
+- `https://dev.xelanote.local:8443`
+- `https://pwa.xelanote.local:8443`
+
+### Troubleshooting
+
+- Fehler `listen tcp :80: bind: permission denied`:
+  - Das lokale Setup nutzt absichtlich `8443`/`8444` (kein `sudo` nötig).
+- iPhone zeigt Browser-UI statt PWA-Standalone:
+  - Gegen `preview` testen (`make phone-frontend-preview`), nicht gegen `dev`
+  - Gleichen Host/Origin beibehalten (keine Mischung aus IP/Hostname)
+  - Redirects vermeiden (`http -> https`, `www`/non-`www`)
+- Zertifikatswarnung auf iPhone:
+  - iPhone muss der lokalen `mkcert`-CA vertrauen
+
+### Make-Targets (Kurzreferenz)
+
+- `make phone-help`
+- `make phone-setup-https`
+- `make phone-setup-ip-cert IP=<LAN_IP>`
+- `make phone-frontend-dev`
+- `make phone-frontend-preview`
+- `make phone-caddy`
 
 ---
 

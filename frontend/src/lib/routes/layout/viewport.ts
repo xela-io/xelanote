@@ -40,10 +40,6 @@ export function createViewportHandlers(
     const visualViewportHeight = visualViewport?.height ?? windowHeight;
     const visualViewportOffsetTop = visualViewport?.offsetTop ?? 0;
     const effectiveViewportHeight = visualViewportHeight + visualViewportOffsetTop;
-    const rootStyles = windowObj.getComputedStyle(documentObj.documentElement);
-    const safeAreaBottom =
-      Number.parseFloat(rootStyles.getPropertyValue('--safe-area-inset-bottom')) || 0;
-    const safeAdjustedViewportHeight = effectiveViewportHeight + safeAreaBottom;
     const keyboardOpen = windowHeight - visualViewportHeight > 150;
 
     // Keep a stable "full app" height while the keyboard is open to avoid
@@ -51,9 +47,10 @@ export function createViewportHandlers(
     if (!keyboardOpen) {
       // iOS PWA can transiently report a too-small visualViewport height after
       // app resume. Prefer the larger non-keyboard reading to avoid leaving a gap.
-      lastNonKeyboardViewportHeight = Math.round(
-        Math.max(windowHeight, effectiveViewportHeight, safeAdjustedViewportHeight)
-      );
+      // Note: Do NOT add safe-area-inset-bottom here — with viewport-fit=cover,
+      // window.innerHeight already includes safe areas. Adding it again would
+      // make --app-viewport-height larger than the screen, causing body overflow.
+      lastNonKeyboardViewportHeight = Math.round(Math.max(windowHeight, effectiveViewportHeight));
     }
 
     const targetHeight = Math.max(
@@ -69,6 +66,7 @@ export function createViewportHandlers(
   };
 
   const updateKeyboardState = () => {
+    const hasVisualViewport = Boolean(windowObj.visualViewport);
     let viewportKeyboard = false;
     if (windowObj.visualViewport) {
       const viewportHeight = windowObj.visualViewport.height;
@@ -76,7 +74,10 @@ export function createViewportHandlers(
       viewportKeyboard = windowHeight - viewportHeight > 150;
     }
 
-    const keyboardOpen = viewportKeyboard || (deps.getIsMobile() && inputFocused);
+    // If Visual Viewport is available, prefer it over focus state. Editors can
+    // remain focused after keyboard dismissal, which would otherwise keep the
+    // mobile bottom nav hidden.
+    const keyboardOpen = hasVisualViewport ? viewportKeyboard : deps.getIsMobile() && inputFocused;
     deps.setIsKeyboardOpen(keyboardOpen);
   };
 
@@ -111,6 +112,7 @@ export function createViewportHandlers(
 
   const handleVisualViewportScroll = () => {
     setViewportHeightCssVar();
+    updateKeyboardState();
   };
 
   const handleFocusIn = (e: FocusEvent) => {

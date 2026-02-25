@@ -60,7 +60,7 @@
   }
 </script>
 
-<div class="h-full overflow-y-auto">
+<div data-body-scroll class="h-full overflow-y-auto">
   <div class="max-w-4xl mx-auto px-6 py-8">
     <!-- Header -->
     <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">

@@ -140,7 +140,7 @@
 </script>
 
 <!-- Toolbar (fixed header, not in scroll container) -->
-<div class="ui-page-header flex-shrink-0 z-10">
+<div class="ui-page-header sticky top-0 flex-shrink-0 z-20">
   <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
     class="ui-mobile-topbar sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center sm:px-4 sm:py-2.5 sm:gap-2"

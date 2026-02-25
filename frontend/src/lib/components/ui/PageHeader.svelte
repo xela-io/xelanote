@@ -11,6 +11,7 @@
     mobileHeaderMode?: 'default' | 'topbar';
     mobileSingleRow?: boolean;
     mobileHideSubtitle?: boolean;
+    mobileSticky?: boolean;
     leading?: Snippet;
     actions?: Snippet;
   }
@@ -25,12 +26,15 @@
     mobileHeaderMode = 'default',
     mobileSingleRow = false,
     mobileHideSubtitle = false,
+    mobileSticky = true,
     leading,
     actions,
   }: Props = $props();
 </script>
 
-<header class={`ui-page-header ${className}`.trim()}>
+<header
+  class={`ui-page-header ${mobileSticky ? 'ui-page-header-mobile-sticky' : ''} ${className}`.trim()}
+>
   <div class={containerClass}>
     <div
       class={`ui-page-title-row ${

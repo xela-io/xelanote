@@ -12,10 +12,13 @@
   "scripts": {
     "dev": "vite dev",
     "dev:local": "vite dev --port 5173 --strictPort",
+    "dev:phone": "VITE_API_BASE_URL=/api VITE_API_PROXY_TARGET=http://localhost:8080 vite dev --host 0.0.0.0 --port 5173 --strictPort",
     "dev:prod": "VITE_API_BASE_URL=/api VITE_API_PROXY_TARGET=https://xelanote.com vite dev --port 5173 --strictPort",
     "build": "vite build",
+    "build:phone": "VITE_API_BASE_URL=/api vite build",
     "analyze": "ANALYZE=true vite build",
     "preview": "vite preview",
+    "preview:phone": "vite preview --host 0.0.0.0 --port 4173 --strictPort",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "eslint .",

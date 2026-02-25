@@ -176,11 +176,11 @@
   <title>{$_('page.journal.title')} - xelanote</title>
 </svelte:head>
 
-<div class="h-full flex flex-col">
+<div data-body-scroll class="h-full flex flex-col">
   <!-- Header -->
   <PageHeader
     title={$_('page.journal.title')}
-    class="shrink-0 px-4 py-2.5 sm:px-6 sm:py-4"
+    class="sticky top-0 z-10 shrink-0 px-4 py-2.5 sm:px-6 sm:py-4"
     titleClass="min-w-0 truncate text-xl font-bold"
   >
     {#snippet leading()}
@@ -219,7 +219,7 @@
       </button>
     </div>
   {:else}
-    <div class="flex-1 overflow-y-auto p-6">
+    <div class="flex-1 overflow-y-auto overscroll-contain p-6">
       <div class="max-w-5xl">
         <!-- Mobile Layout: Activity widget, entries, then collapsible calendar -->
         <div class="md:hidden">

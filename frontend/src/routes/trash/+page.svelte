@@ -76,7 +76,7 @@
   }
 </script>
 
-<div class="h-full overflow-y-auto">
+<div data-body-scroll class="h-full overflow-y-auto">
   <div class="max-w-7xl mx-auto px-6 py-8">
     <!-- Header -->
     <div

@@ -172,6 +172,8 @@ make run-frontend
 
 Open `http://localhost:5173` and create your first account.
 
+For local iPhone/mobile/PWA testing (HTTPS via Caddy, `mkcert`, IP access like `https://<LAN-IP>:8443`), see `docs/development.md` ("Lokales iPhone/PWA-Testsetup").
+
 **Docker (recommended)**
 
 ```bash
@@ -230,6 +232,9 @@ Full API documentation: `docs/api.md`.
 - `make init`: install frontend/backend dependencies and hooks
 - `make dev`: run Go backend with hot-reload on `:8080` (via Air)
 - `make run-frontend`: run Vite dev server on `:5173`
+- `make phone-help`: local iPhone/PWA test workflow (Caddy + HTTPS + preview/dev)
+- `make phone-frontend-preview`: prod-like frontend preview for PWA/iPhone standalone tests
+- `make phone-caddy`: local HTTPS reverse proxy for mobile testing (`:8443`/`:8444`)
 - `make build`: production build (backend binary + frontend static)
 - `make test`: backend tests
 - `make test-frontend`: frontend unit tests (Vitest)

@@ -70,7 +70,7 @@
 
 <!-- Bottom Navigation Bar -->
 <nav
-  class="fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border pb-safe"
+  class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border pb-safe"
   aria-label={$_('nav.bottom_navigation')}
 >
   <div class="flex items-center h-14 px-2">

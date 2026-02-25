@@ -21,7 +21,7 @@
   <PageHeader
     title={$_('page.graph.title')}
     subtitle={$_('page.graph.hint')}
-    class="shrink-0 px-4 py-2.5 sm:px-6 sm:py-4"
+    class="sticky top-0 z-10 shrink-0 px-4 py-2.5 sm:px-6 sm:py-4"
     subtitleClass="hidden sm:block"
   >
     {#snippet leading()}

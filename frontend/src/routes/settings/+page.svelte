@@ -618,14 +618,15 @@
   }
 </script>
 
-<div class="ui-page-shell overflow-y-auto overflow-x-hidden scrollbar-none">
+<div class="ui-page-shell min-h-0 overflow-hidden">
   <PageHeader
     title={$_('page.settings.title')}
     subtitle={$_('page.settings.subtitle')}
     mobileHeaderMode="topbar"
     mobileSingleRow={true}
     mobileHideSubtitle={true}
-    class="sticky top-0 z-10 mb-4 px-3 py-2 sm:px-6 sm:py-4"
+    mobileSticky={false}
+    class="mb-4 px-3 py-2 sm:px-6 sm:py-4"
     containerClass="mx-auto max-w-3xl"
     subtitleClass="hidden sm:block"
   >
@@ -643,155 +644,157 @@
     {/snippet}
   </PageHeader>
 
-  <div class="max-w-3xl mx-auto w-full px-4 pb-24 sm:px-6 sm:pb-8">
-    <!-- Tabs: Option A - Icon-only on mobile, with text on desktop -->
-    <div class="mb-6 overflow-x-auto scrollbar-none">
-      <div class="ui-tablist min-w-max" role="tablist" aria-label={$_('page.settings.title')}>
-        <button
-          onclick={() => (activeTab = 'appearance')}
-          title={$_('page.settings.tabs.appearance')}
-          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
-          role="tab"
-          aria-selected={activeTab === 'appearance'}
-        >
-          <Palette size={18} />
-          <span class="hidden sm:inline">{$_('page.settings.tabs.appearance')}</span>
-        </button>
-        <button
-          onclick={() => (activeTab = 'editor')}
-          title={$_('page.settings.tabs.editor')}
-          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
-          role="tab"
-          aria-selected={activeTab === 'editor'}
-        >
-          <Edit3 size={18} />
-          <span class="hidden sm:inline">{$_('page.settings.tabs.editor')}</span>
-        </button>
-        <button
-          onclick={() => (activeTab = 'security')}
-          title={$_('page.settings.tabs.security')}
-          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
-          role="tab"
-          aria-selected={activeTab === 'security'}
-        >
-          <Shield size={18} />
-          <span class="hidden sm:inline">{$_('page.settings.tabs.security')}</span>
-        </button>
-        <button
-          onclick={() => (activeTab = 'account')}
-          title={$_('page.settings.tabs.account')}
-          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
-          role="tab"
-          aria-selected={activeTab === 'account'}
-        >
-          <User size={18} />
-          <span class="hidden sm:inline">{$_('page.settings.tabs.account')}</span>
-        </button>
-        <button
-          onclick={() => (activeTab = 'ai')}
-          title={$_('page.settings.tabs.ai')}
-          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
-          role="tab"
-          aria-selected={activeTab === 'ai'}
-        >
-          <Sparkles size={18} />
-          <span class="hidden sm:inline">{$_('page.settings.tabs.ai')}</span>
-        </button>
-        <button
-          onclick={() => (activeTab = 'data')}
-          title={$_('page.settings.tabs.data')}
-          class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
-          role="tab"
-          aria-selected={activeTab === 'data'}
-        >
-          <Database size={18} />
-          <span class="hidden sm:inline">{$_('page.settings.tabs.data')}</span>
-        </button>
-        {#if isTauriApp}
+  <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-none overscroll-contain">
+    <div class="max-w-3xl mx-auto w-full px-4 pb-24 sm:px-6 sm:pb-8">
+      <!-- Tabs: Option A - Icon-only on mobile, with text on desktop -->
+      <div class="mb-6 overflow-x-auto scrollbar-none">
+        <div class="ui-tablist min-w-max" role="tablist" aria-label={$_('page.settings.title')}>
           <button
-            onclick={() => (activeTab = 'connection')}
-            title={$_('page.settings.tabs.connection')}
+            onclick={() => (activeTab = 'appearance')}
+            title={$_('page.settings.tabs.appearance')}
             class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
             role="tab"
-            aria-selected={activeTab === 'connection'}
+            aria-selected={activeTab === 'appearance'}
           >
-            <Globe size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.connection')}</span>
+            <Palette size={18} />
+            <span class="hidden sm:inline">{$_('page.settings.tabs.appearance')}</span>
           </button>
+          <button
+            onclick={() => (activeTab = 'editor')}
+            title={$_('page.settings.tabs.editor')}
+            class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+            role="tab"
+            aria-selected={activeTab === 'editor'}
+          >
+            <Edit3 size={18} />
+            <span class="hidden sm:inline">{$_('page.settings.tabs.editor')}</span>
+          </button>
+          <button
+            onclick={() => (activeTab = 'security')}
+            title={$_('page.settings.tabs.security')}
+            class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+            role="tab"
+            aria-selected={activeTab === 'security'}
+          >
+            <Shield size={18} />
+            <span class="hidden sm:inline">{$_('page.settings.tabs.security')}</span>
+          </button>
+          <button
+            onclick={() => (activeTab = 'account')}
+            title={$_('page.settings.tabs.account')}
+            class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+            role="tab"
+            aria-selected={activeTab === 'account'}
+          >
+            <User size={18} />
+            <span class="hidden sm:inline">{$_('page.settings.tabs.account')}</span>
+          </button>
+          <button
+            onclick={() => (activeTab = 'ai')}
+            title={$_('page.settings.tabs.ai')}
+            class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+            role="tab"
+            aria-selected={activeTab === 'ai'}
+          >
+            <Sparkles size={18} />
+            <span class="hidden sm:inline">{$_('page.settings.tabs.ai')}</span>
+          </button>
+          <button
+            onclick={() => (activeTab = 'data')}
+            title={$_('page.settings.tabs.data')}
+            class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+            role="tab"
+            aria-selected={activeTab === 'data'}
+          >
+            <Database size={18} />
+            <span class="hidden sm:inline">{$_('page.settings.tabs.data')}</span>
+          </button>
+          {#if isTauriApp}
+            <button
+              onclick={() => (activeTab = 'connection')}
+              title={$_('page.settings.tabs.connection')}
+              class="ui-tab flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2.5"
+              role="tab"
+              aria-selected={activeTab === 'connection'}
+            >
+              <Globe size={18} />
+              <span class="hidden sm:inline">{$_('page.settings.tabs.connection')}</span>
+            </button>
+          {/if}
+        </div>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="ui-panel ui-panel-mobile-flat p-4 sm:p-5">
+        {#if activeTab === 'appearance'}
+          <AppearanceTab />
+        {:else if activeTab === 'editor'}
+          <EditorTab />
+        {:else if activeTab === 'security'}
+          <SecurityTab
+            {encryption}
+            {securityLevel}
+            {isSavingSecurityLevel}
+            bind:autoLockTimeout
+            {isSavingAutoLockTimeout}
+            {handleSecurityLevelChange}
+            {handleAutoLockTimeoutChange}
+            {webAuthnCredentials}
+            {load2FAStatus}
+            {loadSecurityPreferences}
+            {isLoadingMigrationStats}
+            {migrationStats}
+          />
+        {:else if activeTab === 'account'}
+          <AccountTab
+            {auth}
+            {emailForm}
+            {passwordForm}
+            {handleEmailSubmit}
+            {handlePasswordSubmit}
+            {tfaStatus}
+            {isLoadingTfa}
+            bind:showSetupDialog
+            bind:showDisableDialog
+            {handleRegenerateBackupCodes}
+            {formatDate}
+            {handleSettingsLogout}
+          />
+        {:else if activeTab === 'ai'}
+          <AiTab
+            {claudeApiKeyStatus}
+            {isLoadingClaudeKeyStatus}
+            {claudeKeyForm}
+            {handleSaveClaudeApiKey}
+            {handleDeleteClaudeApiKey}
+            {geminiApiKeyStatus}
+            {isLoadingGeminiKeyStatus}
+            {geminiKeyForm}
+            {handleSaveGeminiApiKey}
+            {handleDeleteGeminiApiKey}
+            {openAIApiKeyStatus}
+            {isLoadingOpenAIKeyStatus}
+            {openAIKeyForm}
+            {handleSaveOpenAIApiKey}
+            {handleDeleteOpenAIApiKey}
+            {activeAIProvider}
+            {isSavingAIProvider}
+            {handleAIProviderChange}
+            {dietaryPreference}
+            {isSavingDietaryPreference}
+            {handleDietaryPreferenceChange}
+            {aiModels}
+            {availableAIModels}
+            {isLoadingAvailableAIModels}
+            {isSavingAIModels}
+            {handleSaveAIModels}
+          />
+        {:else if activeTab === 'data'}
+          <DataTab />
+        {:else if activeTab === 'connection' && isTauriApp}
+          <ConnectionTab />
         {/if}
       </div>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="ui-panel ui-panel-mobile-flat p-4 sm:p-5">
-      {#if activeTab === 'appearance'}
-        <AppearanceTab />
-      {:else if activeTab === 'editor'}
-        <EditorTab />
-      {:else if activeTab === 'security'}
-        <SecurityTab
-          {encryption}
-          {securityLevel}
-          {isSavingSecurityLevel}
-          bind:autoLockTimeout
-          {isSavingAutoLockTimeout}
-          {handleSecurityLevelChange}
-          {handleAutoLockTimeoutChange}
-          {webAuthnCredentials}
-          {load2FAStatus}
-          {loadSecurityPreferences}
-          {isLoadingMigrationStats}
-          {migrationStats}
-        />
-      {:else if activeTab === 'account'}
-        <AccountTab
-          {auth}
-          {emailForm}
-          {passwordForm}
-          {handleEmailSubmit}
-          {handlePasswordSubmit}
-          {tfaStatus}
-          {isLoadingTfa}
-          bind:showSetupDialog
-          bind:showDisableDialog
-          {handleRegenerateBackupCodes}
-          {formatDate}
-          {handleSettingsLogout}
-        />
-      {:else if activeTab === 'ai'}
-        <AiTab
-          {claudeApiKeyStatus}
-          {isLoadingClaudeKeyStatus}
-          {claudeKeyForm}
-          {handleSaveClaudeApiKey}
-          {handleDeleteClaudeApiKey}
-          {geminiApiKeyStatus}
-          {isLoadingGeminiKeyStatus}
-          {geminiKeyForm}
-          {handleSaveGeminiApiKey}
-          {handleDeleteGeminiApiKey}
-          {openAIApiKeyStatus}
-          {isLoadingOpenAIKeyStatus}
-          {openAIKeyForm}
-          {handleSaveOpenAIApiKey}
-          {handleDeleteOpenAIApiKey}
-          {activeAIProvider}
-          {isSavingAIProvider}
-          {handleAIProviderChange}
-          {dietaryPreference}
-          {isSavingDietaryPreference}
-          {handleDietaryPreferenceChange}
-          {aiModels}
-          {availableAIModels}
-          {isLoadingAvailableAIModels}
-          {isSavingAIModels}
-          {handleSaveAIModels}
-        />
-      {:else if activeTab === 'data'}
-        <DataTab />
-      {:else if activeTab === 'connection' && isTauriApp}
-        <ConnectionTab />
-      {/if}
     </div>
   </div>
 </div>

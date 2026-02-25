@@ -30,6 +30,7 @@ body {
   height: -webkit-fill-available;
 }
 
+
 /* Safe-area insets only for standalone/fullscreen web app mode */
 :root {
   --app-viewport-height: 100dvh;
@@ -76,9 +77,39 @@ html {
 /* Keep scroll anchoring enabled on mobile so deleting task/list lines
    doesn't shift the viewport unexpectedly. */
 @media (max-width: 767px) {
+  :where(.overflow-y-auto, .overflow-auto, .ui-page-shell) {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .cm-scroller,
   .editor-scroll-container {
     overflow-anchor: auto;
+  }
+}
+
+/* ===== iOS Safari Body-Scroll Mode: Toolbar Auto-Hide ===== */
+@media (max-width: 767px) {
+  /* iOS non-standalone: allow overscroll so Safari toolbar hides on scroll */
+  html.is-ios:not(.is-standalone) {
+    overscroll-behavior-y: auto;
+  }
+
+  /* Body-scroll pages: neutralise inner scroll containers */
+  html.is-ios:not(.is-standalone) [data-body-scroll] {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  html.is-ios:not(.is-standalone) [data-body-scroll] > .overflow-y-auto,
+  html.is-ios:not(.is-standalone) [data-body-scroll] > .overflow-auto {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* BottomNav: sticky instead of fixed in body-scroll mode */
+  html.is-ios:not(.is-standalone) .mobile-bottom-nav {
+    position: sticky !important;
+    bottom: 0;
   }
 }
 
@@ -2550,6 +2581,12 @@ details.completed-tasks-group[open] .chevron-icon {
 
 @layer components {
   @media (max-width: 639px) {
+    .ui-page-header-mobile-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
     .ui-page-header {
       border-bottom-color: color-mix(in oklch, var(--color-border), transparent 50%);
       backdrop-filter: blur(8px);

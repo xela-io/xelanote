@@ -419,10 +419,12 @@ async function setupEncryptionForScreenshots(
       async ({ pw, uid, salt }) => {
         // Wait for the app to expose the test helper (set in +layout.svelte DEV block)
         let attempts = 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         while (!(window as any).__testSetupEncryption && attempts < 50) {
           await new Promise((r) => setTimeout(r, 100));
           attempts++;
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const setupFn = (window as any).__testSetupEncryption;
         if (!setupFn) throw new Error('__testSetupEncryption not found on window');
 

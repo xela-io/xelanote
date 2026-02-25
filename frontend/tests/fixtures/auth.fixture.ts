@@ -2,10 +2,10 @@ import { expect, type Page, test as base } from '@playwright/test';
 
 import {
   createCredentials,
-  type TestCredentials,
   loginViaApi,
   registerViaApi,
   spoofedClientIP,
+  type TestCredentials,
 } from '../e2e/helpers/auth';
 
 interface AuthContext {

@@ -1,0 +1,66 @@
+{
+  # Run fully unprivileged for local development.
+  auto_https disable_redirects
+  http_port 8081
+  https_port 8443
+}
+
+# Local HTTPS reverse proxy for iPhone/mobile testing (frontend + backend)
+#
+# Usage overview:
+# 1) Start backend with Air on :8080
+# 2) Start frontend in one of these modes:
+#    - Dev/HMR:     `make phone-frontend-dev`
+#    - PWA preview: `make phone-frontend-preview`
+# 3) Run Caddy with this file:
+#    `caddy run --config /workspace/Caddyfile.local`
+#
+# TLS certs:
+# - Generate with mkcert into `/workspace/.certs/`
+# - See `scripts/setup-local-phone-https.sh`
+#
+# Hostnames:
+# - `dev.xelanote.local`  -> Vite dev server (:5173)
+# - `pwa.xelanote.local`  -> Vite preview server (:4173)
+# - `10.22.22.60:8444`    -> Vite dev server (:5173)  [LAN IP direct]
+# - `10.22.22.60:8443`    -> Vite preview server (:4173) [LAN IP direct]
+# - Both proxy `/api/*` to backend (:8080)
+
+https://dev.xelanote.local:8443 {
+  tls .certs/dev.xelanote.local.pem .certs/dev.xelanote.local-key.pem
+
+  @api path /api/*
+  reverse_proxy @api 127.0.0.1:8080
+
+  reverse_proxy 127.0.0.1:5173
+}
+
+https://pwa.xelanote.local:8443 {
+  tls .certs/pwa.xelanote.local.pem .certs/pwa.xelanote.local-key.pem
+
+  @api path /api/*
+  reverse_proxy @api 127.0.0.1:8080
+
+  reverse_proxy 127.0.0.1:4173
+}
+
+# Direct LAN-IP access (no DNS needed on iPhone)
+# Requires an mkcert certificate with IP SAN for 10.22.22.60:
+#   mkcert -cert-file .certs/lan-ip.pem -key-file .certs/lan-ip-key.pem 10.22.22.60
+https://10.22.22.60:8443 {
+  tls .certs/lan-ip.pem .certs/lan-ip-key.pem
+
+  @api path /api/*
+  reverse_proxy @api 127.0.0.1:8080
+
+  reverse_proxy 127.0.0.1:4173
+}
+
+https://10.22.22.60:8444 {
+  tls .certs/lan-ip.pem .certs/lan-ip-key.pem
+
+  @api path /api/*
+  reverse_proxy @api 127.0.0.1:8080
+
+  reverse_proxy 127.0.0.1:5173
+}

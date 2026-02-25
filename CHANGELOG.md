@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Docs: updated `docs/design-system.md` to match actual codebase (2 Gruvbox themes, Svelte 5 component APIs, CSS-only tokens, removed references to non-existent `$lib/design/` files)
+- Docs: updated `frontend/DESIGN_SYSTEM.md` theme addition steps (added FOUC script + backend validation steps, fixed TypeScript file path)
 - Mobile bottom nav: reduced height from 56px to 40px, smaller icons (18px) and tighter padding for less wasted space in PWA mode
 - Mobile bottom nav: frosted-glass effect (backdrop-blur + semi-transparent background) so the safe area blends with content like native iOS tab bars
 

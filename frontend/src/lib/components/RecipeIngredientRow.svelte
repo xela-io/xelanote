@@ -407,36 +407,62 @@
 
   @media (max-width: 767px) {
     .ingredient-row {
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) 5.25rem;
       grid-template-areas:
         'name amount'
         'unit options';
       row-gap: 0.45rem;
       column-gap: 0.45rem;
-      padding: 0.62rem;
+      padding: 0.55rem;
       border-radius: 0.9rem;
+      background: color-mix(in oklch, var(--color-background), transparent 20%);
+      box-shadow: none;
+      border-color: color-mix(in oklch, var(--color-border), transparent 58%);
     }
 
     .ingredient-cell-options {
       justify-content: flex-end;
-      width: 100%;
+      width: auto;
+      justify-self: end;
       gap: 0.3rem;
     }
 
     .remove-button {
       opacity: 1;
-      padding: 0.4rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
+      padding: 0;
+      box-shadow: none;
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
     }
 
     .option-chip {
-      min-width: 2rem;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
       justify-content: center;
-      padding: 0.38rem 0.5rem;
+      padding: 0;
       gap: 0.2rem;
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
     }
 
     .option-chip span {
       display: none;
+    }
+
+    .ingredient-row :global(.ui-input) {
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
+      box-shadow: none;
+    }
+
+    .ingredient-row :global(.ui-input:hover),
+    .ingredient-row :global(.ui-input:focus) {
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 0%);
     }
   }
 </style>

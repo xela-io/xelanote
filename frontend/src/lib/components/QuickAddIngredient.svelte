@@ -281,6 +281,7 @@
 
   .quick-input {
     width: 100%;
+    min-width: 0;
     padding: 0.5rem 0.55rem;
     font-size: 0.9rem;
     line-height: 1.2;
@@ -358,25 +359,96 @@
 
   @media (max-width: 767px) {
     .quick-add-composer {
-      padding: 0.4rem;
+      padding: 0.45rem;
       border-radius: 0.9rem;
       margin-bottom: 0.15rem;
+      border-color: color-mix(in oklch, var(--color-border), transparent 58%);
+      background: color-mix(in oklch, var(--color-background), transparent 66%);
+      box-shadow: none;
+    }
+
+    .quick-add-label {
+      margin-bottom: 0.35rem;
     }
 
     .quick-add-row {
+      grid-template-columns: 4.4rem minmax(0, 1fr) 2.5rem 2.5rem;
+      grid-template-areas:
+        'name name name name'
+        'amount unit opt add';
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.45rem;
+      row-gap: 0.35rem;
+      column-gap: 0.35rem;
+      padding: 0.35rem;
+      border: none;
+      background: transparent;
+    }
+
+    .quick-amount {
+      min-width: 0;
+    }
+
+    .quick-unit {
+      min-width: 0;
+    }
+
+    .quick-name {
+      min-width: 0;
     }
 
     .quick-add-row .quick-opt-chip {
       grid-area: opt;
       justify-self: end;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
+      width: 2.5rem;
+      padding-inline: 0;
+      padding-block: 0;
+      margin-right: 0;
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
+    }
+
+    .quick-add-row .quick-opt-chip span {
+      display: none;
     }
 
     .quick-add-row .quick-add-button {
       grid-area: add;
-      min-width: 2.25rem;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+    }
+
+    .quick-add-row .quick-add-button,
+    .quick-add-row .quick-amount,
+    .quick-add-row .quick-unit,
+    .quick-add-row .quick-name {
+      border-radius: 0.7rem;
+    }
+
+    .quick-add-row :global(.ui-input) {
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
+      box-shadow: none;
+    }
+
+    .quick-add-row :global(.ui-input:hover),
+    .quick-add-row :global(.ui-input:focus) {
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 0%);
+    }
+
+    .quick-add-row .quick-add-button {
+      border-color: transparent;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
+      box-shadow: none;
+    }
+
+    .quick-name {
+      font-weight: 500;
     }
   }
 </style>

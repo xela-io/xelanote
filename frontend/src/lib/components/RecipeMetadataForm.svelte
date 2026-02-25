@@ -186,3 +186,38 @@
     </div>
   </div>
 </div>
+
+<style>
+  @media (max-width: 639px) {
+    :global(.ui-fieldset) {
+      gap: 0.7rem;
+    }
+
+    :global(.ui-form-grid-2) {
+      gap: 0.65rem;
+    }
+
+    :global(.ui-form-row) {
+      gap: 0.22rem;
+    }
+
+    :global(.ui-label) {
+      font-size: 0.8rem;
+      margin-bottom: 0.2rem;
+    }
+
+    :global(.ui-control-row) {
+      gap: 0.3rem;
+    }
+
+    :global(.ui-form-help) {
+      font-size: 0.72rem;
+    }
+
+    :global(.ui-input),
+    :global(.ui-select) {
+      min-height: 2.5rem;
+      padding-block: 0.45rem;
+    }
+  }
+</style>

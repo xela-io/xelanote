@@ -428,13 +428,50 @@ Add a new theme class in `/src/app.css`:
 
 ### 2. Update TypeScript Definitions
 
-Add theme to `/src/lib/design/colors.ts` if needed for programmatic access.
+Add theme ID to `/src/lib/themes/index.ts`:
 
-### 3. Add Theme Selector Option
+```typescript
+export type ThemeId = 'gruvbox-light' | 'gruvbox-dark' | 'your-new-theme';
 
-Update the theme selector component to include the new theme option.
+export const THEMES: Record<ThemeId, Theme> = {
+  // ... existing themes
+  'your-new-theme': {
+    id: 'your-new-theme',
+    name: 'Your New Theme',
+    variant: 'dark', // or 'light'
+    description: 'Description',
+    className: 'theme-your-new-theme',
+  },
+};
+```
 
-### 4. Test Accessibility
+### 3. Update FOUC Script
+
+Add theme mapping in `/src/app.html` inline script:
+
+```javascript
+var themes = {
+  // ... existing themes
+  'your-new-theme': { cls: 'theme-your-new-theme', bg: '#hexcolor', tc: '#hexcolor' },
+};
+```
+
+### 4. Add Backend Validation
+
+Add theme ID to `backend/internal/service/user_types.go`:
+
+```go
+var validThemes = map[string]bool{
+  // ... existing themes
+  "your-new-theme": true,
+}
+```
+
+### 5. Add Theme Selector Option
+
+The theme selector automatically reads from the `THEMES` record – no additional changes needed.
+
+### 6. Test Accessibility
 
 Verify WCAG contrast ratios:
 
@@ -444,7 +481,7 @@ Verify WCAG contrast ratios:
 
 Use browser DevTools or online contrast checkers to validate.
 
-### 5. Test Scrollbar Colors
+### 7. Test Scrollbar Colors
 
 Add scrollbar styling if needed (see lines 82-123 in `app.css`):
 

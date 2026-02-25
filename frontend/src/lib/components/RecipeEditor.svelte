@@ -373,13 +373,13 @@
 
             <!-- Collections -->
             <section class="ui-panel-soft recipe-section-card">
-              <div class="ui-section-head mb-3">
+              <div class="ui-section-head mb-3 recipe-collections-head">
                 <h3 class="text-sm font-semibold tracking-tight">
                   {$_('page.recipes.collections')}
                 </h3>
                 <button
                   onclick={() => (showAddToCollectionDialog = true)}
-                  class="ui-button ui-button-secondary px-2 py-1 text-xs"
+                  class="ui-button ui-button-secondary px-2 py-1 text-xs recipe-collections-add-btn"
                 >
                   <Plus size={12} />
                   {$_('page.recipes.add_to_collection')}
@@ -569,6 +569,44 @@
   }
 
   @media (max-width: 639px) {
+    :global(.recipe-editor .ui-mobile-topbar) {
+      gap: 0.35rem;
+      padding-inline: 0.45rem;
+    }
+
+    :global(.recipe-editor .ui-mobile-topbar-icon) {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+    }
+
+    :global(.recipe-editor .ui-mobile-topbar-scroll) {
+      flex: 1 1 0;
+      overflow-x: hidden;
+    }
+
+    :global(.recipe-editor .ui-mobile-topbar-nowrap) {
+      display: flex;
+      min-width: 0;
+      width: 100%;
+    }
+
+    :global(.recipe-editor .recipe-tab-slider) {
+      display: flex;
+      width: 100%;
+      min-width: 0;
+    }
+
+    :global(.recipe-editor .recipe-tab-slider-tab) {
+      flex: 1 1 0;
+      width: auto;
+      padding-inline: 0.45rem;
+      font-size: 0.78rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     :global(.recipe-editor .ui-input),
     :global(.recipe-editor .ui-select),
     :global(.recipe-editor .ui-textarea) {
@@ -592,14 +630,47 @@
     }
 
     .recipe-section-header {
-      margin-bottom: 0.55rem;
-      padding-bottom: 0.35rem;
+      margin-bottom: 0.45rem;
+      padding-bottom: 0.3rem;
       border-bottom-color: color-mix(in oklch, var(--color-border), transparent 42%);
     }
 
     .recipe-subsection {
       border-top-color: color-mix(in oklch, var(--color-border), transparent 42%);
-      padding-top: 0.65rem;
+      padding-top: 0.55rem;
+    }
+
+    .recipe-pane-shell {
+      padding: 0.55rem;
+    }
+
+    .recipe-section-card {
+      padding: 0.65rem;
+      border-radius: 0.9rem;
+    }
+
+    .recipe-collections-card {
+      padding-top: 0.6rem;
+      padding-bottom: 0.55rem;
+    }
+
+    .recipe-collections-head {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding-bottom: 0.35rem;
+    }
+
+    .recipe-collections-add-btn {
+      width: 100%;
+      min-height: 2.5rem;
+      justify-content: center;
+      font-size: 0.8125rem;
+    }
+
+    .recipe-top-grid {
+      gap: 0.7rem;
     }
   }
 

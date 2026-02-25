@@ -143,10 +143,12 @@
 <div class="ui-page-header flex-shrink-0 z-10">
   <!-- Mobile: single row | Desktop: 3-column grid for true centering -->
   <div
-    class="flex items-center sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center px-2 sm:px-4 py-2 sm:py-2.5 gap-1 sm:gap-2"
+    class="ui-mobile-topbar sm:grid sm:grid-cols-[minmax(120px,1fr)_minmax(0,auto)_1fr] sm:items-center sm:px-4 sm:py-2.5 sm:gap-2"
   >
     <!-- Left: metadata (desktop only shows full info, mobile shows compact) -->
-    <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0 sm:shrink">
+    <div
+      class="flex items-center gap-1.5 ui-mobile-topbar-leading sm:gap-2 min-w-0 shrink-0 sm:shrink"
+    >
       <MobileSidebarInlineToggle />
       {#if note?.note_type === 'journal' && !isMobile}
         <span
@@ -183,7 +185,7 @@
       <!-- Offline/Sync status pill -->
       {#if syncing}
         <div
-          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-blue-500"
+          class="hidden sm:flex flex-shrink-0 items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-blue-500"
         >
           <RefreshCw size={12} class="animate-spin" />
           <span
@@ -192,26 +194,55 @@
               : $_('component.editor.toolbar.syncing')}</span
           >
         </div>
+        <div
+          class="sm:hidden flex-shrink-0 inline-flex items-center justify-center rounded-full p-1.5 text-blue-500 bg-blue-500/12"
+          title={$_('component.editor.toolbar.syncing')}
+          aria-label={$_('component.editor.toolbar.syncing')}
+        >
+          <RefreshCw size={12} class="animate-spin" />
+        </div>
       {:else if !isOnline && !isEncryptionUnlocked}
         <div
-          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
+          class="hidden sm:flex flex-shrink-0 items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-600"
         >
           <Lock size={12} />
           <span>{$_('component.editor.toolbar.locked_short')}</span>
         </div>
+        <div
+          class="sm:hidden flex-shrink-0 inline-flex items-center justify-center rounded-full p-1.5 text-amber-600 bg-amber-500/15"
+          title={$_('component.editor.toolbar.locked_short')}
+          aria-label={$_('component.editor.toolbar.locked_short')}
+        >
+          <Lock size={12} />
+        </div>
       {:else if !isOnline && pendingCount > 0}
         <div
-          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
+          class="hidden sm:flex flex-shrink-0 items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
         >
           <WifiOff size={12} />
           <span>{pendingCount}</span>
         </div>
+        <div
+          class="sm:hidden flex-shrink-0 inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-amber-600 bg-amber-500/15"
+          title={$_('component.editor.toolbar.offline_short')}
+          aria-label={$_('component.editor.toolbar.offline_short')}
+        >
+          <WifiOff size={12} />
+          <span class="text-[10px] leading-none font-medium">{pendingCount}</span>
+        </div>
       {:else if !isOnline}
         <div
-          class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
+          class="hidden sm:flex flex-shrink-0 items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-amber-500"
         >
           <WifiOff size={12} />
           <span>{$_('component.editor.toolbar.offline_short')}</span>
+        </div>
+        <div
+          class="sm:hidden flex-shrink-0 inline-flex items-center justify-center rounded-full p-1.5 text-amber-600 bg-amber-500/15"
+          title={$_('component.editor.toolbar.offline_short')}
+          aria-label={$_('component.editor.toolbar.offline_short')}
+        >
+          <WifiOff size={12} />
         </div>
       {/if}
     </div>
@@ -219,7 +250,7 @@
     <!-- Center + Right: toolbar buttons + more menu -->
     <div class="flex items-center gap-1 flex-1 min-w-0 sm:contents">
       <div class="flex items-center justify-center gap-1 min-w-0 flex-1">
-        <div class="toolbar-scroll-wrapper">
+        <div class="toolbar-scroll-wrapper ui-mobile-topbar-scroll">
           <div
             class="toolbar-buttons flex items-center gap-1.5"
             role="toolbar"
@@ -363,7 +394,7 @@
       <!-- Right: More menu button (third grid column on desktop, inline on mobile) -->
       <button
         onclick={handleMoreMenuClick}
-        class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn sm:justify-self-end"
+        class="p-2 rounded-md toolbar-btn ui-mobile-topbar-icon ui-mobile-topbar-icon--ghost hover:bg-accent flex-shrink-0 sm:justify-self-end"
         aria-label={$_('component.editor.toolbar.more_options')}
         aria-expanded={showMoreMenu}
         aria-haspopup="menu"
@@ -419,6 +450,17 @@
       gap: 0;
       border-radius: 0.5rem;
       padding: 0.125rem;
+    }
+
+    :global(.toolbar-group-pill .toolbar-btn) {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    :global(.toolbar-group-pill .toolbar-btn.bg-accent) {
+      background: color-mix(in oklch, var(--color-accent), transparent 70%);
+      border-color: transparent;
     }
   }
 </style>

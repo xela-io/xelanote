@@ -420,6 +420,11 @@ body,
 :root {
   --bg-primary: var(--color-background);
   --bg-secondary: var(--color-card);
+  --ui-mobile-topbar-h: 56px;
+  --ui-mobile-topbar-px: 12px;
+  --ui-mobile-topbar-gap: 8px;
+  --ui-mobile-topbar-btn-size: 44px;
+  --ui-mobile-topbar-btn-radius: 12px;
   /* Reusable elevated surfaces (cards/panels/toolbars) */
   --surface-panel-bg: color-mix(in oklch, var(--color-card), var(--color-background) 28%);
   --surface-panel-bg-soft: color-mix(in oklch, var(--color-card), var(--color-background) 22%);
@@ -2538,4 +2543,154 @@ details.completed-tasks-group[open] .chevron-icon {
 .cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail {
   color: var(--color-accent-foreground) !important;
   opacity: 0.7 !important;
+}
+
+@layer components {
+  @media (max-width: 639px) {
+    .ui-page-header {
+      border-bottom-color: color-mix(in oklch, var(--color-border), transparent 50%);
+      backdrop-filter: blur(8px);
+    }
+
+    .ui-mobile-topbar {
+      min-height: var(--ui-mobile-topbar-h);
+      display: flex;
+      align-items: center;
+      gap: var(--ui-mobile-topbar-gap);
+      padding-inline: var(--ui-mobile-topbar-px);
+      padding-block: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .ui-mobile-topbar-leading {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ui-mobile-topbar-gap);
+      flex-shrink: 0;
+      min-width: 0;
+    }
+
+    .ui-mobile-topbar-title {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ui-mobile-topbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ui-mobile-topbar-gap);
+      flex-shrink: 0;
+      min-width: 0;
+    }
+
+    .ui-mobile-topbar-icon {
+      width: var(--ui-mobile-topbar-btn-size);
+      height: var(--ui-mobile-topbar-btn-size);
+      min-width: var(--ui-mobile-topbar-btn-size);
+      min-height: var(--ui-mobile-topbar-btn-size);
+      border-radius: var(--ui-mobile-topbar-btn-radius);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ui-mobile-topbar-icon--ghost {
+      border: 1px solid transparent;
+      background: transparent;
+    }
+
+    .ui-mobile-topbar-icon--soft {
+      border: 1px solid color-mix(in oklch, var(--color-border), transparent 42%);
+      background: color-mix(in oklch, var(--color-background), transparent 68%);
+    }
+
+    .ui-mobile-topbar-scroll {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+
+    .ui-mobile-topbar-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ui-mobile-topbar-nowrap {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ui-mobile-topbar-gap);
+      white-space: nowrap;
+      min-width: max-content;
+    }
+
+    .ui-panel-mobile-flat {
+      border-color: transparent;
+      box-shadow: none;
+      background: color-mix(in oklch, var(--color-card), transparent 55%);
+      backdrop-filter: none;
+    }
+
+    .ui-panel-soft {
+      border-color: color-mix(in oklch, var(--color-border), transparent 68%);
+      background: color-mix(in oklch, var(--color-background), transparent 76%);
+    }
+
+    .ui-tablist {
+      gap: 0.2rem;
+      padding: 0.2rem;
+      border-color: color-mix(in oklch, var(--color-border), transparent 58%);
+      background: color-mix(in oklch, var(--color-background), transparent 42%);
+    }
+
+    .ui-tab {
+      border-color: transparent;
+      padding: 0.45rem 0.75rem;
+    }
+
+    .ui-tab[aria-selected='true'],
+    .ui-tab.is-active {
+      border-color: transparent;
+      box-shadow: none;
+      background: color-mix(in oklch, var(--color-background), transparent 4%);
+    }
+
+    .recipe-tab-slider {
+      border-color: color-mix(in oklch, var(--color-border), transparent 68%);
+      background: color-mix(in oklch, var(--color-foreground), transparent 95%);
+      max-width: 100%;
+    }
+
+    .recipe-tab-slider-tab {
+      padding-inline: 0.7rem;
+      font-size: 0.8125rem;
+    }
+
+    .ui-mobile-hide-overflow-actions {
+      display: none !important;
+    }
+
+    .ui-mobile-topbar * {
+      min-width: 0;
+    }
+
+    .ui-mobile-topbar button {
+      flex-shrink: 0;
+    }
+
+    .ui-mobile-topbar .ui-mobile-topbar-icon--ghost:hover {
+      background: color-mix(in oklch, var(--color-accent), transparent 78%);
+    }
+
+    .ui-mobile-topbar .ui-page-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 }

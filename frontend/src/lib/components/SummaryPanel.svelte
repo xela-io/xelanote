@@ -194,4 +194,19 @@
     border-color: color-mix(in oklch, var(--color-border), var(--color-primary) 12%);
     background: var(--surface-panel-bg-soft);
   }
+
+  @media (max-width: 639px) {
+    .summary-panel {
+      border-color: color-mix(in oklch, var(--color-border), transparent 68%);
+      background: color-mix(in oklch, var(--color-background), transparent 48%);
+      padding: 0.75rem;
+      border-radius: 0.9rem;
+      backdrop-filter: none;
+    }
+
+    .summary-panel:hover {
+      border-color: color-mix(in oklch, var(--color-border), transparent 58%);
+      background: color-mix(in oklch, var(--color-background), transparent 42%);
+    }
+  }
 </style>

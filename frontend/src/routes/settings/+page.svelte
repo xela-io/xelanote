@@ -622,25 +622,30 @@
   <PageHeader
     title={$_('page.settings.title')}
     subtitle={$_('page.settings.subtitle')}
-    class="sticky top-0 z-10 mb-4 px-4 py-3 sm:px-6 sm:py-4"
+    mobileHeaderMode="topbar"
+    mobileSingleRow={true}
+    mobileHideSubtitle={true}
+    class="sticky top-0 z-10 mb-4 px-3 py-2 sm:px-6 sm:py-4"
     containerClass="mx-auto max-w-3xl"
     subtitleClass="hidden sm:block"
   >
     {#snippet leading()}
-      <MobileSidebarInlineToggle />
-      <button
-        onclick={() => goto('/')}
-        class="ui-icon-button ui-icon-button-md"
-        title={$_('page.settings.back')}
-      >
-        <ArrowLeft size={20} />
-      </button>
+      <div class="ui-mobile-topbar-leading">
+        <MobileSidebarInlineToggle />
+        <button
+          onclick={() => goto('/')}
+          class="ui-icon-button ui-icon-button-md ui-mobile-topbar-icon"
+          title={$_('page.settings.back')}
+        >
+          <ArrowLeft size={20} />
+        </button>
+      </div>
     {/snippet}
   </PageHeader>
 
   <div class="max-w-3xl mx-auto w-full px-4 pb-24 sm:px-6 sm:pb-8">
     <!-- Tabs: Option A - Icon-only on mobile, with text on desktop -->
-    <div class="ui-panel-soft p-1.5 sm:p-2 mb-6 overflow-x-auto scrollbar-none">
+    <div class="mb-6 overflow-x-auto scrollbar-none">
       <div class="ui-tablist min-w-max" role="tablist" aria-label={$_('page.settings.title')}>
         <button
           onclick={() => (activeTab = 'appearance')}
@@ -718,7 +723,7 @@
     </div>
 
     <!-- Tab Content -->
-    <div class="ui-panel p-4 sm:p-5">
+    <div class="ui-panel ui-panel-mobile-flat p-4 sm:p-5">
       {#if activeTab === 'appearance'}
         <AppearanceTab />
       {:else if activeTab === 'editor'}

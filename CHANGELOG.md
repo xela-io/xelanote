@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recipes: Replace tab buttons with animated slider component — sliding indicator shows active tab (Ingredients/Instructions/Preview) with smooth CSS transition
 - Mobile: Add undo/redo buttons to mobile editor toolbar with CodeMirror state integration (disabled when no undo/redo available)
 - Mobile: Hide encryption lock icon in editor toolbar on mobile to save space
+- Mobile: Redesign mobile topbar system — new CSS utility classes (`ui-mobile-topbar`, `ui-mobile-topbar-icon`, etc.) with consistent 44px touch targets, scrollable action areas, and ghost/soft button variants
+- Mobile: Add section headers and styled dividers to bottom navigation "More" sheet
+- Mobile: Recipe editor overflow actions moved to bottom sheet on mobile, with flat panel/input styles for cleaner look
+- Mobile: Hide desktop sidebar icon strip on mobile (replaced by bottom nav), widen drawer to 82vw
+- Mobile: Editor toolbar uses compact icon-only status pills (sync, offline, locked) on mobile
+- Mobile: PageHeader gains `mobileHeaderMode`, `mobileSingleRow`, `mobileHideSubtitle` props for topbar layout
+- Mobile: Settings page uses flat panels and topbar mode on mobile
+- Mobile: SummaryPanel gets responsive styles with reduced padding and softer borders
 
 ### Fixed
 

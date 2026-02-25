@@ -127,7 +127,7 @@
 
   <!-- Sheet -->
   <div
-    class="fixed z-50 bottom-0 left-0 right-0 bg-background rounded-t-2xl animate-bottom-sheet p-4"
+    class="mobile-more-sheet fixed z-50 bottom-0 left-0 right-0 bg-background rounded-t-2xl animate-bottom-sheet p-4"
     role="menu"
     aria-label={$_('nav.more_options')}
     tabindex="-1"
@@ -138,6 +138,8 @@
     <div class="w-12 h-1 bg-muted rounded-full mx-auto mb-4"></div>
 
     <div class="space-y-1">
+      <div class="mobile-more-sheet-section">{$_('nav.bottom_navigation')}</div>
+
       <!-- Notes Tree -->
       <button
         type="button"
@@ -149,7 +151,9 @@
         {$_('nav.notes_tree')}
       </button>
 
-      <hr class="my-2 border-border" />
+      <hr class="mobile-more-sheet-divider" />
+
+      <div class="mobile-more-sheet-section">{$_('nav.more_options')}</div>
 
       <!-- Journal (conditional) -->
       {#if journalEnabled}
@@ -270,7 +274,9 @@
         </button>
       {/if}
 
-      <hr class="my-2 border-border" />
+      <hr class="mobile-more-sheet-divider" />
+
+      <div class="mobile-more-sheet-section">{$_('page.settings.tabs.appearance')}</div>
 
       <!-- Theme Toggle -->
       <button
@@ -286,6 +292,10 @@
         {/if}
         {$_('nav.toggle_theme')}
       </button>
+
+      <hr class="mobile-more-sheet-divider" />
+
+      <div class="mobile-more-sheet-section">{$_('page.sidebar.settings')}</div>
 
       <!-- Settings -->
       <button
@@ -303,3 +313,27 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .mobile-more-sheet {
+    border-top: 1px solid color-mix(in oklch, var(--color-border), transparent 38%);
+    box-shadow:
+      0 -12px 36px color-mix(in oklch, black, transparent 82%),
+      inset 0 1px 0 color-mix(in oklch, white, transparent 94%);
+  }
+
+  .mobile-more-sheet-section {
+    padding: 0.25rem 0.75rem 0.2rem;
+    font-size: 0.68rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in oklch, var(--color-muted-foreground), var(--color-primary) 20%);
+  }
+
+  .mobile-more-sheet-divider {
+    margin-block: 0.55rem;
+    border-color: color-mix(in oklch, var(--color-border), transparent 46%);
+  }
+</style>

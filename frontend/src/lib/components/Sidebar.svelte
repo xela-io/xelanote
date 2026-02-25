@@ -334,11 +334,11 @@
 />
 
 {#if ui.getIsMobile()}
-  <!-- Mobile: Two-column drawer (icon strip + tree panel), mirrors desktop layout -->
+  <!-- Mobile: tree drawer only (global navigation lives in bottom nav / more sheet) -->
   <aside
     aria-label={$_('accessibility.sidebar')}
     class="flex flex-row border-r border-border bg-sidebar-background h-full
-      fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs shadow-xl transition-transform duration-200
+      fixed inset-y-0 left-0 z-50 w-[82vw] max-w-sm overflow-hidden shadow-xl transition-transform duration-200
       {ui.getSidebarOpen() ? 'translate-x-0' : '-translate-x-full'}"
     use:swipe={{
       direction: 'left',
@@ -348,9 +348,9 @@
     }}
   >
     {#if ui.getSidebarOpen()}
-      <!-- Left icon strip — matches desktop -->
+      <!-- Hidden on mobile: desktop icon strip is replaced by bottom navigation -->
       <nav
-        class="flex flex-col items-center h-full shrink-0 border-r border-sidebar-border py-2 gap-1"
+        class="hidden flex-col items-center h-full shrink-0 border-r border-sidebar-border py-2 gap-1"
         style="width: {ICON_STRIP_WIDTH}px; padding-top: calc(var(--safe-area-inset-top) + 2.5rem)"
         aria-label={$_('accessibility.sidebar')}
       >
@@ -456,8 +456,8 @@
         </button>
       </nav>
 
-      <!-- Right panel: header + tree -->
-      <div class="flex flex-col flex-1 min-w-0">
+      <!-- Tree panel -->
+      <div class="flex flex-col flex-1 min-w-0 w-full">
         <!-- Safe area spacer for iOS PWA standalone mode -->
         <div class="pt-safe shrink-0"></div>
         <!-- Header with creation buttons -->

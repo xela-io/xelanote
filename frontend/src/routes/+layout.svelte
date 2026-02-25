@@ -148,6 +148,7 @@
 
   let authInitialized = $state(false);
   let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+  let viewportResyncTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   onMount(() => {
     // Keep onMount sync so cleanup runs; move async work into inner function.
@@ -306,16 +307,32 @@
     // Initialize Visual Viewport listener for keyboard detection
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', viewportHandlers.handleVisualViewportResize);
+      window.visualViewport.addEventListener('scroll', viewportHandlers.handleVisualViewportScroll);
     }
 
     const syncViewportHeight = () => {
       viewportHandlers.handleResize();
       viewportHandlers.handleVisualViewportResize();
     };
+    const clearViewportResyncTimeouts = () => {
+      for (const timeout of viewportResyncTimeouts) clearTimeout(timeout);
+      viewportResyncTimeouts = [];
+    };
+    const scheduleViewportResync = () => {
+      clearViewportResyncTimeouts();
+
+      // iOS PWA often restores stale viewport measurements for a short time
+      // after app switching or orientation changes. Re-sample over a few frames.
+      syncViewportHeight();
+      requestAnimationFrame(() => syncViewportHeight());
+
+      for (const delay of [50, 150, 350, 700]) {
+        viewportResyncTimeouts.push(setTimeout(syncViewportHeight, delay));
+      }
+    };
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // iOS PWA can restore with stale viewport units after app switching.
-        setTimeout(syncViewportHeight, 0);
+        scheduleViewportResync();
       }
     };
 
@@ -323,8 +340,9 @@
     document.addEventListener('focusout', viewportHandlers.handleFocusOut);
     document.addEventListener('touchstart', viewportHandlers.handleTouchStart, { passive: true });
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', syncViewportHeight);
-    window.addEventListener('orientationchange', syncViewportHeight);
+    window.addEventListener('pageshow', scheduleViewportResync);
+    window.addEventListener('orientationchange', scheduleViewportResync);
+    window.addEventListener('focus', scheduleViewportResync);
 
     const { handleKeydown, handleActivity } = createLayoutInteractions({
       isAuthenticated: () => auth.isAuthenticated(),
@@ -367,8 +385,10 @@
       document.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('resize', viewportHandlers.debouncedHandleResize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', syncViewportHeight);
-      window.removeEventListener('orientationchange', syncViewportHeight);
+      window.removeEventListener('pageshow', scheduleViewportResync);
+      window.removeEventListener('orientationchange', scheduleViewportResync);
+      window.removeEventListener('focus', scheduleViewportResync);
+      clearViewportResyncTimeouts();
       viewportHandlers.cleanup();
       websocket.disconnect();
 

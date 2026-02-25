@@ -12,6 +12,7 @@ export interface ViewportHandlers {
   handleResize: () => void;
   debouncedHandleResize: () => void;
   handleVisualViewportResize: () => void;
+  handleVisualViewportScroll: () => void;
   handleFocusIn: (e: FocusEvent) => void;
   handleFocusOut: () => void;
   handleTouchStart: (e: TouchEvent) => void;
@@ -35,13 +36,18 @@ export function createViewportHandlers(
   const setViewportHeightCssVar = () => {
     const style = documentObj.documentElement.style;
     const windowHeight = windowObj.innerHeight;
-    const visualViewportHeight = windowObj.visualViewport?.height ?? windowHeight;
+    const visualViewport = windowObj.visualViewport;
+    const visualViewportHeight = visualViewport?.height ?? windowHeight;
+    const visualViewportOffsetTop = visualViewport?.offsetTop ?? 0;
+    const effectiveViewportHeight = visualViewportHeight + visualViewportOffsetTop;
     const keyboardOpen = windowHeight - visualViewportHeight > 150;
 
     // Keep a stable "full app" height while the keyboard is open to avoid
     // shrinking the root layout and causing large reflows/jumps in editors.
     if (!keyboardOpen) {
-      lastNonKeyboardViewportHeight = Math.round(visualViewportHeight);
+      // iOS PWA can transiently report a too-small visualViewport height after
+      // app resume. Prefer the larger non-keyboard reading to avoid leaving a gap.
+      lastNonKeyboardViewportHeight = Math.round(Math.max(windowHeight, effectiveViewportHeight));
     }
 
     const targetHeight = Math.max(
@@ -97,6 +103,10 @@ export function createViewportHandlers(
     updateKeyboardState();
   };
 
+  const handleVisualViewportScroll = () => {
+    setViewportHeightCssVar();
+  };
+
   const handleFocusIn = (e: FocusEvent) => {
     const target = e.target as Element | null;
     if (target && options.isInputElement(target)) {
@@ -128,6 +138,7 @@ export function createViewportHandlers(
   const cleanup = () => {
     if (windowObj.visualViewport) {
       windowObj.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+      windowObj.visualViewport.removeEventListener('scroll', handleVisualViewportScroll);
     }
     documentObj.removeEventListener('focusin', handleFocusIn);
     documentObj.removeEventListener('focusout', handleFocusOut);
@@ -143,6 +154,7 @@ export function createViewportHandlers(
     handleResize,
     debouncedHandleResize,
     handleVisualViewportResize,
+    handleVisualViewportScroll,
     handleFocusIn,
     handleFocusOut,
     handleTouchStart,

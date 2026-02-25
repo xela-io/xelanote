@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- iOS PWA: improved viewport resync after app resume, orientation change, and window focus — prevents stale viewport height leaving a gap at the bottom
 - Recipe editor: tab slider styling and Prettier formatting fixes
 
 ### Added

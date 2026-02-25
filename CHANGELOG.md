@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Mobile bottom nav: reduced height from 56px to 48px, smaller icons (18px) and tighter padding for less wasted space in PWA mode
+- Mobile bottom nav: reduced height from 56px to 40px, smaller icons (18px) and tighter padding for less wasted space in PWA mode
 
 ### Fixed
 

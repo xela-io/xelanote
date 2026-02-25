@@ -73,11 +73,11 @@
   class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border pb-safe"
   aria-label={$_('nav.bottom_navigation')}
 >
-  <div class="flex items-center h-12 px-2">
+  <div class="flex items-center h-10 px-2">
     <!-- Nav Tabs -->
     <button
       onclick={handleNotesClick}
-      class="flex-1 flex flex-col items-center justify-center min-h-10"
+      class="flex-1 flex flex-col items-center justify-center min-h-8"
       style="-webkit-tap-highlight-color: transparent"
     >
       <span
@@ -92,7 +92,7 @@
 
     <button
       onclick={handleSearchClick}
-      class="flex-1 flex flex-col items-center justify-center min-h-10 text-muted-foreground"
+      class="flex-1 flex flex-col items-center justify-center min-h-8 text-muted-foreground"
       style="-webkit-tap-highlight-color: transparent"
     >
       <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full">
@@ -103,7 +103,7 @@
 
     <button
       onclick={handleMoreClick}
-      class="flex-1 flex flex-col items-center justify-center min-h-10 text-muted-foreground"
+      class="flex-1 flex flex-col items-center justify-center min-h-8 text-muted-foreground"
       style="-webkit-tap-highlight-color: transparent"
     >
       <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full">

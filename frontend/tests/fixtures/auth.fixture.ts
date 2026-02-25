@@ -2,6 +2,7 @@ import { expect, type Page, test as base } from '@playwright/test';
 
 import {
   createCredentials,
+  type TestCredentials,
   loginViaApi,
   registerViaApi,
   spoofedClientIP,
@@ -10,6 +11,8 @@ import {
 interface AuthContext {
   page: Page;
   testNoteId: string;
+  baseURL: string;
+  credentials: TestCredentials;
 }
 
 interface AuthFixture {
@@ -53,7 +56,29 @@ export const test = base.extend<AuthFixture>({
       headers,
       data: {
         title: 'E2E Test Note',
-        content: '# Test Content\n\n[[Test Wikilink]]',
+        content: [
+          '# Project Notes',
+          '',
+          '## Architecture',
+          'The application uses a **Go backend** with an **SQLite database**.',
+          '',
+          '### Key Components',
+          '- REST API with Chi router',
+          '- SvelteKit frontend with Svelte 5 Runes',
+          '- End-to-end encryption',
+          '',
+          '## Links',
+          '[[Architecture Overview]] | [[API Design]]',
+          '',
+          '```go',
+          'func main() {',
+          '    r := chi.NewRouter()',
+          '    r.Get("/api/notes", handlers.ListNotes)',
+          '}',
+          '```',
+          '',
+          '> This is a test note for visual regression screenshots.',
+        ].join('\n'),
         folder_path: '/',
       },
     });
@@ -82,6 +107,8 @@ export const test = base.extend<AuthFixture>({
     const context: AuthContext = {
       page,
       testNoteId,
+      baseURL,
+      credentials,
     };
 
     await use(context);

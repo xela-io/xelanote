@@ -2,7 +2,6 @@
   import { ChefHat, Clock, Loader2, Lock, Plus, Sparkles, Upload } from 'lucide-svelte';
   import { ArrowLeft, Edit, Eye, Pencil, Trash2, Users, Users as UsersIcon } from 'lucide-svelte';
   import type { ComponentType } from 'svelte';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import { goto } from '$app/navigation';
@@ -61,6 +60,7 @@
   const loading = $derived(recipes.getRecipesLoading());
   const collections = $derived(recipes.getCollections());
   const featureEnabled = $derived(features.getRecipeFeatureEnabled());
+  const featureLoaded = $derived(features.getRecipeFeatureLoaded());
   const sharedRecipesList = $derived(recipes.getSharedRecipes());
   const selectedCollectionId = $derived(recipes.getSelectedCollectionId());
   const collectionItems = $derived(recipes.getCollectionItems());
@@ -68,16 +68,21 @@
   const selectedCollection = $derived(collections.find((c) => c.id === selectedCollectionId));
   const displayedRecipes = $derived(selectedCollectionId ? collectionItems : recipeList);
 
-  onMount(async () => {
-    if (!featureEnabled) {
+  let dataLoaded = false;
+
+  // Redirect when feature is confirmed disabled (wait for load to complete)
+  $effect(() => {
+    if (featureLoaded && !featureEnabled) {
       goto('/');
-      return;
     }
-    await Promise.all([
-      recipes.loadRecipes(),
-      recipes.loadCollections(),
-      recipes.loadSharedRecipes(),
-    ]);
+  });
+
+  // Load data reactively once feature is confirmed enabled
+  $effect(() => {
+    if (featureLoaded && featureEnabled && !dataLoaded) {
+      dataLoaded = true;
+      Promise.all([recipes.loadRecipes(), recipes.loadCollections(), recipes.loadSharedRecipes()]);
+    }
   });
 
   async function handleCreate() {
@@ -223,7 +228,7 @@
               await ensureSuggestionDialog();
               showIngredientSuggestions = true;
             }}
-            class="ui-button ui-button-secondary flex flex-1 items-center justify-center text-sm sm:flex-none sm:justify-start"
+            class="ui-button ui-button-secondary recipe-header-secondary-action flex flex-1 items-center justify-center text-sm sm:flex-none sm:justify-start"
           >
             <Sparkles size={16} />
             <span class="leading-tight whitespace-nowrap">
@@ -235,7 +240,7 @@
               await ensureImportDialog();
               showImportDialog = true;
             }}
-            class="ui-button ui-button-secondary flex flex-1 items-center justify-center text-sm sm:flex-none sm:justify-start"
+            class="ui-button ui-button-secondary recipe-header-secondary-action flex flex-1 items-center justify-center text-sm sm:flex-none sm:justify-start"
           >
             <Upload size={16} />
             <span class="leading-tight whitespace-nowrap">{$_('page.recipes.import.button')}</span>
@@ -243,7 +248,7 @@
         </div>
         <button
           onclick={() => (showCreateDialog = true)}
-          class="ui-button ui-button-primary col-span-2 flex w-full items-center justify-center text-sm sm:col-span-1 sm:w-auto sm:justify-start"
+          class="ui-button ui-button-primary recipe-header-primary-action col-span-2 flex w-full items-center justify-center text-sm sm:col-span-1 sm:w-auto sm:justify-start"
         >
           <Plus size={16} />
           <span class="leading-tight whitespace-nowrap">{$_('page.recipes.create')}</span>
@@ -252,7 +257,7 @@
     {/snippet}
   </PageHeader>
 
-  {#if loading}
+  {#if !featureLoaded || loading}
     <div class="flex items-center justify-center flex-1">
       <Loader2 class="w-8 h-8 animate-spin" />
     </div>
@@ -573,3 +578,21 @@
 {#if ImportDialog}
   <ImportDialog open={showImportDialog} onClose={() => (showImportDialog = false)} />
 {/if}
+
+<style>
+  @media (max-width: 639px) {
+    .recipe-header-secondary-action {
+      border-color: color-mix(in oklch, var(--color-border), transparent 60%);
+      background: color-mix(in oklch, var(--color-background), transparent 78%);
+      box-shadow: none;
+    }
+
+    .recipe-header-secondary-action:hover {
+      background: color-mix(in oklch, var(--color-accent), transparent 82%);
+    }
+
+    .recipe-header-primary-action {
+      box-shadow: inset 0 1px 0 color-mix(in oklch, white, transparent 88%);
+    }
+  }
+</style>

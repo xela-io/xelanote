@@ -59,6 +59,12 @@
   let updateCheckInterval: ReturnType<typeof setInterval> | null = null;
   let cleanupErrorHandler: (() => void) | null = null;
 
+  // Expose encryption helper for E2E tests (DEV-mode only, tree-shaken in production)
+  if (import.meta.env.DEV && browser) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__testSetupEncryption = encryption.setupEncryption;
+  }
+
   // Early mobile detection: runs before onMount to prevent sidebar flash on mobile
   const MOBILE_BREAKPOINT = 768;
 
@@ -562,14 +568,11 @@
         {/snippet}
       </svelte:boundary>
 
-      <!-- Mobile: sliding wrapper that pushes content right when sidebar opens -->
+      <!-- Mobile: content stays fixed; sidebar overlays on top -->
       <div
         class="flex-1 flex flex-col min-w-0 {ui.getIsMobile()
-          ? 'transition-[transform,filter] duration-200'
+          ? 'transition-opacity duration-200'
           : ''}"
-        style={ui.getIsMobile()
-          ? `transform: translateX(${ui.getSidebarOpen() ? 'min(85vw, 20rem)' : '0px'}); filter: blur(${ui.getSidebarOpen() ? '3px' : '0px'})`
-          : ''}
       >
         <main
           id="main-content"
@@ -589,10 +592,10 @@
         {/if}
       </div>
 
-      <!-- Mobile: transparent overlay to close sidebar on tap -->
+      <!-- Mobile: backdrop overlay to close sidebar on tap -->
       {#if ui.getIsMobile() && ui.getSidebarOpen()}
         <div
-          class="fixed inset-0 z-40"
+          class="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
           onclick={() => ui.setSidebarOpen(false)}
           onkeydown={(e) => {
             if (e.key === 'Escape') ui.setSidebarOpen(false);

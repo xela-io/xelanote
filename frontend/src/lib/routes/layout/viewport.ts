@@ -40,6 +40,10 @@ export function createViewportHandlers(
     const visualViewportHeight = visualViewport?.height ?? windowHeight;
     const visualViewportOffsetTop = visualViewport?.offsetTop ?? 0;
     const effectiveViewportHeight = visualViewportHeight + visualViewportOffsetTop;
+    const rootStyles = windowObj.getComputedStyle(documentObj.documentElement);
+    const safeAreaBottom =
+      Number.parseFloat(rootStyles.getPropertyValue('--safe-area-inset-bottom')) || 0;
+    const safeAdjustedViewportHeight = effectiveViewportHeight + safeAreaBottom;
     const keyboardOpen = windowHeight - visualViewportHeight > 150;
 
     // Keep a stable "full app" height while the keyboard is open to avoid
@@ -47,7 +51,9 @@ export function createViewportHandlers(
     if (!keyboardOpen) {
       // iOS PWA can transiently report a too-small visualViewport height after
       // app resume. Prefer the larger non-keyboard reading to avoid leaving a gap.
-      lastNonKeyboardViewportHeight = Math.round(Math.max(windowHeight, effectiveViewportHeight));
+      lastNonKeyboardViewportHeight = Math.round(
+        Math.max(windowHeight, effectiveViewportHeight, safeAdjustedViewportHeight)
+      );
     }
 
     const targetHeight = Math.max(

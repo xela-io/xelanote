@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - iOS PWA: improved viewport resync after app resume, orientation change, and window focus — prevents stale viewport height leaving a gap at the bottom
+- iOS PWA: account for safe-area-inset-bottom in viewport height calculation to prevent gap on notch devices
 - Recipe editor: tab slider styling and Prettier formatting fixes
 
 ### Added

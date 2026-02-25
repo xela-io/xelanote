@@ -34,6 +34,8 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
   - [DELETE /api/notes/:id/permanent](#delete-apinotesidpermanent)
   - [GET /api/notes/:id/backlinks](#get-apinotesidbacklinks)
   - [PUT /api/notes/:id/color](#put-apinotesidcolor)
+  - [GET /api/notes/:id/user-state](#get-apinotesiduser-state)
+  - [PUT /api/notes/:id/user-state](#put-apinotesiduser-state)
   - [POST /api/notes/:id/decrypt](#post-apinotesiddecrypt)
   - [POST /api/notes/batch-reencrypt-deks](#post-apinotesbatch-reencrypt-deks)
   - [GET /api/notes/:id/versions](#get-apinotesidversions)
@@ -1267,6 +1269,99 @@ Content-Type: application/json
 - Farbe wird in `notes.color` Spalte gespeichert (Migration 023)
 - Frontend validiert mit `sanitizeColor()` Funktion
 - Bei Named Colors wird der Name gespeichert, nicht der CSS-Wert
+
+---
+
+### GET /api/notes/:id/user-state
+
+Gibt den per-User State fuer eine Notiz zurueck. Aktuell wird `collapse_state` (Zustand zusammengeklappter Task-Gruppen) gespeichert. Funktioniert fuer eigene und geteilte Notizen.
+
+#### Request
+
+```http
+GET /api/notes/550e8400-e29b-41d4-a716-446655440000/user-state
+Authorization: Bearer <access_token>
+```
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "collapse_state": {"abc": true, "def": false}
+}
+```
+
+Wenn noch kein State gespeichert wurde:
+
+```json
+{
+  "collapse_state": null
+}
+```
+
+#### Fehler
+
+**401 Unauthorized**: Kein gueltiger JWT-Token
+
+**404 Not Found**: Notiz existiert nicht oder kein Zugriff (weder Besitzer noch Shared)
+
+---
+
+### PUT /api/notes/:id/user-state
+
+Speichert den Collapse-State der Task-Gruppen einer Notiz. Wird vom Frontend debounced (500ms) nach jedem Toggle aufgerufen. Funktioniert fuer eigene und geteilte Notizen.
+
+#### Request
+
+```http
+PUT /api/notes/550e8400-e29b-41d4-a716-446655440000/user-state
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Body**:
+```json
+{
+  "collapse_state": {"abc": true, "def": false}
+}
+```
+
+#### Validierung
+
+- `collapse_state` muss ein Object mit `string`-Keys und `boolean`-Values sein
+- Keys muessen Base36-Strings sein (1-7 Zeichen, `[0-9a-z]`)
+- Maximal 50 Eintraege
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "status": "ok"
+}
+```
+
+#### Fehler
+
+**401 Unauthorized**: Kein gueltiger JWT-Token
+
+**404 Not Found**: Notiz existiert nicht oder kein Zugriff
+
+**422 Unprocessable Entity**: Ungueltige Daten (falsches Format, zu viele Eintraege, ungueltige Keys)
+
+#### Hinweise
+
+- State wird pro User und pro Notiz gespeichert (`note_user_state` Tabelle, Migration 056)
+- `state_data` ist ein JSON-Blob mit Envelope `{"collapse_state": ...}` — erweiterbar fuer zukuenftige per-Note-per-User Preferences
+- CASCADE DELETE: State wird automatisch geloescht wenn die Notiz oder der User geloescht wird
+- Frontend nutzt localStorage als schnellen Cache und synchronisiert asynchron mit dem Server
 
 ---
 

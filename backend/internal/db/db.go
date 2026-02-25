@@ -273,6 +273,7 @@ func (db *DB) runMigrations() error {
 		"053_unique_admin_constraint.sql",
 		"054_account_lockouts.sql",
 		"055_home_dashboard_layout.sql",
+		"056_note_user_state.sql",
 	}
 
 	for _, migrationFile := range migrations {

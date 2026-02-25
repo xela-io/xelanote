@@ -815,6 +815,10 @@ export interface IngredientSuggestionResult {
   generated: GeneratedRecipe[];
 }
 
+export interface NoteUserState {
+  collapse_state: Record<string, boolean> | null;
+}
+
 // === JSON Canvas spec 1.0 types (https://jsoncanvas.org/spec/1.0/) ===
 
 export type CanvasNodeType = 'text' | 'file' | 'link' | 'group';

@@ -3,8 +3,12 @@
  * Completed (checked) items at the end of each task list are wrapped in a
  * <details> element that defaults to collapsed.
  *
- * State (open/closed) is preserved across re-renders via a module-level Map.
+ * State (open/closed) is preserved across re-renders via a module-level Map
+ * and synced to the server for cross-device persistence.
  */
+
+import { ApiError } from '$lib/api/client';
+import { getNoteUserState, updateNoteUserCollapseState } from '$lib/api/notes';
 
 export interface TaskCollapseOptions {
   completedLabel: (count: number) => string;
@@ -13,18 +17,30 @@ export interface TaskCollapseOptions {
   revision?: string | number;
 }
 
-const TASK_COLLAPSE_STORAGE_KEY = 'xelanote-task-collapse-v1';
+const STORAGE_KEY_V1 = 'xelanote-task-collapse-v1';
+const STORAGE_KEY_V2 = 'xelanote-task-collapse-v2';
 
-// Persist collapse state across re-renders (noteId-groupSignature -> open)
-const collapseState = new Map<string, boolean>();
+// Nested state: noteId -> groupHash -> open
+const collapseState = new Map<string, Map<string, boolean>>();
 
 let persistedStateLoaded = false;
 
-function normalizeText(value: string): string {
+// Server sync tracking
+const loadedNoteIds = new Set<string>();
+const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+let serverSyncSupported = true;
+
+const SYNC_DEBOUNCE_MS = 500;
+
+export function normalizeText(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
-function buildStateKey(noteId: string, checkedItems: HTMLLIElement[], anchorText: string): string {
+/**
+ * Returns a base36 FNV hash string for a group of checked items.
+ * Used as the key in collapse state maps.
+ */
+export function buildGroupHash(checkedItems: HTMLLIElement[], anchorText: string): string {
   const parts = checkedItems.map((item) => normalizeText(item.textContent ?? ''));
   const signature = `${normalizeText(anchorText)}|${parts.join('|')}`;
   let hash = 2166136261;
@@ -32,20 +48,69 @@ function buildStateKey(noteId: string, checkedItems: HTMLLIElement[], anchorText
     hash ^= signature.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
-  return `${noteId}-${(hash >>> 0).toString(36)}`;
+  return (hash >>> 0).toString(36);
 }
 
-function loadPersistedState() {
+function getNoteState(noteId: string): Map<string, boolean> {
+  let noteState = collapseState.get(noteId);
+  if (!noteState) {
+    noteState = new Map();
+    collapseState.set(noteId, noteState);
+  }
+  return noteState;
+}
+
+// --- localStorage migration (v1 → v2) and persistence ---
+
+function migrateV1ToV2(): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const v1Raw = localStorage.getItem(STORAGE_KEY_V1);
+    if (!v1Raw) return;
+    const v1 = JSON.parse(v1Raw);
+    if (!v1 || typeof v1 !== 'object') return;
+
+    const v2: Record<string, Record<string, boolean>> = {};
+    for (const [key, value] of Object.entries(v1)) {
+      if (typeof value !== 'boolean') continue;
+      // Key format: "noteId-hash" — split at last dash (noteId may contain dashes like UUIDs)
+      const lastDash = key.lastIndexOf('-');
+      if (lastDash <= 0) continue;
+      const noteId = key.substring(0, lastDash);
+      const hash = key.substring(lastDash + 1);
+      if (!v2[noteId]) v2[noteId] = {};
+      v2[noteId][hash] = value;
+    }
+
+    localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(v2));
+    localStorage.removeItem(STORAGE_KEY_V1);
+  } catch {
+    // ignore migration errors
+  }
+}
+
+function loadPersistedState(): void {
   if (persistedStateLoaded || typeof localStorage === 'undefined') return;
   persistedStateLoaded = true;
+
+  // Try v2 first, migrate from v1 if needed
   try {
-    const raw = localStorage.getItem(TASK_COLLAPSE_STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY_V2);
+    if (!raw) {
+      migrateV1ToV2();
+      raw = localStorage.getItem(STORAGE_KEY_V2);
+    }
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return;
-    for (const [key, value] of Object.entries(parsed)) {
-      if (typeof value === 'boolean') {
-        collapseState.set(key, value);
+
+    for (const [noteId, hashes] of Object.entries(parsed)) {
+      if (!hashes || typeof hashes !== 'object') continue;
+      const noteState = getNoteState(noteId);
+      for (const [hash, value] of Object.entries(hashes as Record<string, unknown>)) {
+        if (typeof value === 'boolean') {
+          noteState.set(hash, value);
+        }
       }
     }
   } catch {
@@ -53,17 +118,93 @@ function loadPersistedState() {
   }
 }
 
-function persistState() {
+function persistState(): void {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(
-      TASK_COLLAPSE_STORAGE_KEY,
-      JSON.stringify(Object.fromEntries(collapseState.entries()))
-    );
+    const data: Record<string, Record<string, boolean>> = {};
+    for (const [noteId, noteState] of collapseState.entries()) {
+      if (noteState.size > 0) {
+        data[noteId] = Object.fromEntries(noteState.entries());
+      }
+    }
+    localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(data));
   } catch {
     // localStorage unavailable or quota exceeded
   }
 }
+
+// --- Server sync ---
+
+function queueServerSync(noteId: string): void {
+  if (!serverSyncSupported) return;
+
+  const existing = syncTimers.get(noteId);
+  if (existing !== undefined) clearTimeout(existing);
+
+  syncTimers.set(
+    noteId,
+    setTimeout(() => {
+      syncTimers.delete(noteId);
+      const noteState = collapseState.get(noteId);
+      const stateObj: Record<string, boolean> = noteState
+        ? Object.fromEntries(noteState.entries())
+        : {};
+
+      updateNoteUserCollapseState(noteId, stateObj).catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          if ([404, 405].includes(error.status)) {
+            serverSyncSupported = false;
+          }
+          // 400, 422, 500 = transient, don't disable sync
+        }
+        // Network errors = transient, don't disable sync
+      });
+    }, SYNC_DEBOUNCE_MS)
+  );
+}
+
+function loadFromServer(noteId: string): void {
+  if (!serverSyncSupported || loadedNoteIds.has(noteId)) return;
+  loadedNoteIds.add(noteId);
+
+  getNoteUserState(noteId)
+    .then((response) => {
+      if (!response.collapse_state) return;
+
+      const noteState = getNoteState(noteId);
+      let changed = false;
+
+      for (const [hash, value] of Object.entries(response.collapse_state)) {
+        if (typeof value === 'boolean' && noteState.get(hash) !== value) {
+          noteState.set(hash, value);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        persistState();
+        // Targeted DOM update: find <details> elements with matching data-group-hash
+        const allDetails = document.querySelectorAll<HTMLDetailsElement>(
+          'details.completed-tasks-group[data-group-hash]'
+        );
+        for (const details of allDetails) {
+          const hash = details.getAttribute('data-group-hash');
+          if (hash && noteState.has(hash)) {
+            details.open = noteState.get(hash)!;
+          }
+        }
+      }
+    })
+    .catch((error: unknown) => {
+      if (error instanceof ApiError) {
+        if ([404, 405].includes(error.status)) {
+          serverSyncSupported = false;
+        }
+      }
+    });
+}
+
+// --- DOM rendering ---
 
 const CHEVRON_SVG = `<svg class="chevron-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
 
@@ -73,6 +214,10 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
 
   function init() {
     loadPersistedState();
+
+    // Trigger server load for this note (first time only)
+    loadFromServer(options.noteId);
+
     const lists = container.querySelectorAll('ul.contains-task-list');
 
     lists.forEach((list) => {
@@ -106,8 +251,9 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
       const checkedItems = items.slice(items.length - checkedCount);
       const anchorItem = items[items.length - checkedCount - 1];
       const anchorText = anchorItem ? (anchorItem.textContent ?? '') : '';
-      const stateKey = buildStateKey(options.noteId, checkedItems, anchorText);
-      const isOpen = collapseState.get(stateKey) ?? false;
+      const groupHash = buildGroupHash(checkedItems, anchorText);
+      const noteState = getNoteState(options.noteId);
+      const isOpen = noteState.get(groupHash) ?? false;
 
       // Build DOM structure
       const wrapper = document.createElement('li');
@@ -115,6 +261,7 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
 
       const details = document.createElement('details');
       details.className = 'completed-tasks-group';
+      details.setAttribute('data-group-hash', groupHash);
       if (isOpen) details.open = true;
 
       const summary = document.createElement('summary');
@@ -142,8 +289,9 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
 
       // Toggle listener to persist state
       const onToggle = () => {
-        collapseState.set(stateKey, details.open);
+        noteState.set(groupHash, details.open);
         persistState();
+        queueServerSync(options.noteId);
       };
       details.addEventListener('toggle', onToggle);
       cleanups.push(() => details.removeEventListener('toggle', onToggle));
@@ -180,4 +328,16 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
       cleanup();
     },
   };
+}
+
+/**
+ * Reset module state — for testing only.
+ */
+export function _resetForTest(): void {
+  collapseState.clear();
+  loadedNoteIds.clear();
+  for (const timer of syncTimers.values()) clearTimeout(timer);
+  syncTimers.clear();
+  persistedStateLoaded = false;
+  serverSyncSupported = true;
 }

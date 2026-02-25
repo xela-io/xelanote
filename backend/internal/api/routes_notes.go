@@ -15,6 +15,8 @@ func (s *Server) registerNotesRoutes(r chi.Router) {
 		r.Post("/{id}/rename", s.renameNote)
 		r.Get("/{id}/backlinks", s.getBacklinks)
 		r.Put("/{id}/color", s.updateNoteColor)
+		r.Get("/{id}/user-state", s.getNoteUserState)
+		r.Put("/{id}/user-state", s.updateNoteUserState)
 
 		// AI-enabled (Claude API opt-in) endpoints
 		r.Get("/{id}/ai-enabled", s.getNoteAIEnabled)

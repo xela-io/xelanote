@@ -1,7 +1,7 @@
 import type { OfflineNoteContext } from '../offline/types';
 import { request } from './client';
 import { withQuery } from './query';
-import type { Backlink, Job, Note, NotePayload, RenameResult } from './types';
+import type { Backlink, Job, Note, NotePayload, NoteUserState, RenameResult } from './types';
 
 export async function listNotes(
   options: {
@@ -107,4 +107,18 @@ export async function getJobStatus(jobId: string): Promise<Job> {
 
 export async function getBacklinks(noteId: string): Promise<{ backlinks: Backlink[] }> {
   return request(`/notes/${noteId}/backlinks`);
+}
+
+export async function getNoteUserState(noteId: string): Promise<NoteUserState> {
+  return request(`/notes/${noteId}/user-state`);
+}
+
+export async function updateNoteUserCollapseState(
+  noteId: string,
+  state: Record<string, boolean>
+): Promise<{ status: string }> {
+  return request(`/notes/${noteId}/user-state`, {
+    method: 'PUT',
+    body: JSON.stringify({ collapse_state: state }),
+  });
 }

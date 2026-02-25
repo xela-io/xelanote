@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Recipe editor: tab slider styling and Prettier formatting fixes
+
 ### Added
 
 - Preview: Shiki syntax highlighting for code blocks with Gruvbox CSS variable theme and lazy language loading

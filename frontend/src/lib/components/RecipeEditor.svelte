@@ -209,7 +209,9 @@
     {/if}
 
     <!-- Tabs -->
-    <div class="ui-page-header ui-mobile-topbar sm:px-4 sm:py-3 shrink-0">
+    <div
+      class="ui-page-header flex items-center gap-2 px-2 py-2 ui-mobile-topbar sm:px-4 sm:py-3 shrink-0"
+    >
       <div class="ui-mobile-topbar-leading">
         <MobileSidebarInlineToggle />
       </div>

@@ -727,8 +727,9 @@ body {
     align-items: center;
     padding: 0.25rem;
     border-radius: var(--radius-xl);
-    border: 1px solid color-mix(in oklch, var(--color-border), transparent 60%);
-    background: color-mix(in oklch, var(--color-foreground), transparent 94%);
+    border: 1px solid color-mix(in oklch, var(--color-border), transparent 68%);
+    background: color-mix(in oklch, var(--color-foreground), transparent 95%);
+    max-width: 100%;
   }
 
   .recipe-tab-slider-indicator {
@@ -749,7 +750,8 @@ body {
   .recipe-tab-slider-tab {
     position: relative;
     z-index: 1;
-    flex: 1;
+    flex: 0 0 6.8rem;
+    width: 6.8rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -760,6 +762,7 @@ body {
     font-size: 0.875rem;
     line-height: 1.2;
     min-height: 44px;
+    min-width: 0;
     color: var(--color-muted-foreground);
     background: transparent;
     cursor: pointer;
@@ -2660,13 +2663,9 @@ details.completed-tasks-group[open] .chevron-icon {
       background: color-mix(in oklch, var(--color-background), transparent 4%);
     }
 
-    .recipe-tab-slider {
-      border-color: color-mix(in oklch, var(--color-border), transparent 68%);
-      background: color-mix(in oklch, var(--color-foreground), transparent 95%);
-      max-width: 100%;
-    }
-
     .recipe-tab-slider-tab {
+      flex-basis: 6.2rem;
+      width: 6.2rem;
       padding-inline: 0.7rem;
       font-size: 0.8125rem;
     }

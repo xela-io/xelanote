@@ -30,7 +30,6 @@ body {
   height: -webkit-fill-available;
 }
 
-
 /* Safe-area insets only for standalone/fullscreen web app mode */
 :root {
   --app-viewport-height: 100dvh;

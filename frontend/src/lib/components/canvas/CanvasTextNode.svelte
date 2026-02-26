@@ -98,7 +98,7 @@
     border: 1px solid var(--color-border);
     border-radius: 0.5rem;
     padding: 12px;
-    font-family: var(--font-sans, Inter, sans-serif);
+    font-family: var(--font-sans);
     min-width: 100px;
     min-height: 60px;
     width: 100%;

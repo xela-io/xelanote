@@ -346,10 +346,11 @@
         </div>
       {:else}
         <div class="space-y-2.5">
-          {#each entryList as entry (entry.id)}
+          {#each entryList as entry, i (entry.id)}
             <button
               onclick={() => goto(`/note/${entry.id}`)}
-              class="ui-list-item w-full text-left p-3"
+              class="ui-list-item w-full text-left p-3 animate-stagger-item"
+              style="animation-delay: {i * 40}ms"
             >
               <div class="text-xs text-muted-foreground">
                 {formatEntryDate(entry.journal_date)}

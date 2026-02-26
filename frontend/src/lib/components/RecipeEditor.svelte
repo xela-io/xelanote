@@ -474,7 +474,7 @@
     ></div>
 
     <div
-      class="fixed z-50 bottom-0 left-0 right-0 bg-background rounded-t-2xl animate-bottom-sheet p-4 sm:hidden"
+      class="fixed z-50 bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet p-4 mobile-glass-sheet sm:hidden"
       role="menu"
       aria-label={$_('nav.more_options')}
       tabindex="-1"

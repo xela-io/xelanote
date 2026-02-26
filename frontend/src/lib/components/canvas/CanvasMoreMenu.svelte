@@ -63,9 +63,9 @@
 
 <!-- Menu: Bottom sheet on mobile, fixed-positioned near button on desktop -->
 <div
-  class="fixed z-50 ui-panel p-4
-		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
-		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
+  class="fixed z-50 p-4
+		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet mobile-glass-sheet
+		sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none ui-panel"
   style={desktopStyle}
   role="menu"
   aria-label={$_('component.editor.toolbar.more_options')}

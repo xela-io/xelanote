@@ -11,12 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Mobile ToC FAB: Table of Contents trigger becomes a fixed-position floating action button (bottom-right) on mobile with an SVG progress ring that fills as the user scrolls; desktop behavior unchanged
 - Task collapse state sync: completed task group open/closed state now persists across devices via `GET/PUT /api/notes/:id/user-state` (localStorage as fast cache, server as source of truth, 500ms debounced sync)
-
+- Live-preview task collapse server sync: collapsed task groups in live-preview mode sync to server via `note_user_state` API (namespaced `tasks:<hash>` keys) with debounced writes and merge logic
+- Stagger animations on list items (home page recent/new notes, journal entries, recipe list)
+- Dark theme: subtle noise grain texture on background for visual depth
+- Frosted-glass `mobile-glass-sheet` class for all mobile bottom sheets
+- CTA button color tokens (warm amber) for primary action buttons in both themes
 - iOS Safari: dual-mode mobile layout — body-level scrolling on opt-in pages (journal, recipes, due-dates, trash, shared collections) so Safari toolbar auto-hides on scroll; PWA and desktop remain in fixed layout
 - Local iPhone/PWA testing helpers: Caddy HTTPS proxy, mkcert integration, `make phone-*` targets
 
 ### Changed
 
+- Typography: replaced Inter with DM Sans (body), Literata (headings), JetBrains Mono (code) as variable fonts
+- Mobile bottom nav: active tab pills now have subtle scale animation on press
+- Mobile "More" sheet: promoted Journal/Recipes above the "More Options" divider for faster access
+- Mobile bottom sheets: all use frosted-glass effect and clear bottom nav spacing
+- Settings page: tab labels visible on mobile (9px text) instead of icon-only
+- Recipe ingredient row: tighter padding and smaller touch targets on mobile
+- Note page: editor component lazy-loaded once, preserving Svelte action state across note-to-note navigations
+- Live-preview: disabled auto-expand of collapsed task groups on cursor enter for stable persistence
 - Docs: updated `docs/design-system.md` to match actual codebase (2 Gruvbox themes, Svelte 5 component APIs, CSS-only tokens, removed references to non-existent `$lib/design/` files)
 - Docs: updated `frontend/DESIGN_SYSTEM.md` theme addition steps (added FOUC script + backend validation steps, fixed TypeScript file path)
 - Mobile bottom nav: reduced height from 56px to 40px, smaller icons (18px) and tighter padding for less wasted space in PWA mode
@@ -24,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Live-preview: fixed collapse state being pruned/reset during note switches by reordering effect lifecycle (content sync before live-preview reconfigure)
+- Task collapse: prevented state being persisted under empty noteId during initial mount
+- Task collapse: cleanup now properly removes wrapper DOM for correct re-initialization
+- Backend: `collapse_state` validation now accepts namespaced `tasks:<base36>` keys
 - iOS PWA: improved viewport resync after app resume, orientation change, and window focus — prevents stale viewport height leaving a gap at the bottom
 - iOS PWA: account for safe-area-inset-bottom in viewport height calculation to prevent gap on notch devices
 - iOS: viewport height no longer double-counts safe-area-inset-bottom

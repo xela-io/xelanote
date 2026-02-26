@@ -1,8 +1,7 @@
 @import 'tailwindcss';
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/literata';
+@import '@fontsource-variable/jetbrains-mono';
 
 /* ===== Mobile Safari Fixes ===== */
 
@@ -317,6 +316,10 @@ body,
   --color-sidebar-border: oklch(88% 0.03 85);
   --color-sidebar-ring: oklch(38% 0.1 230);
 
+  /* CTA button colors (warm amber) */
+  --color-cta: oklch(55% 0.12 75);
+  --color-cta-foreground: oklch(97% 0.03 85);
+
   /* Border radius (Tailwind v4 default scale) */
   --radius: 0.5rem;
   --radius-xs: 0.125rem;
@@ -338,8 +341,9 @@ body,
   --duration-slow: 300ms;
 
   /* Fonts */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --font-sans: 'DM Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Literata Variable', 'Georgia', serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
 
 /* Gruvbox Light - explicit class (same as default) */
@@ -377,6 +381,10 @@ body,
   --color-sidebar-accent-foreground: oklch(24% 0.02 60);
   --color-sidebar-border: oklch(88% 0.03 85);
   --color-sidebar-ring: oklch(38% 0.1 230);
+
+  /* CTA button colors (warm amber) */
+  --color-cta: oklch(55% 0.12 75);
+  --color-cta-foreground: oklch(97% 0.03 85);
 
   /* Canvas color presets (Gruvbox light) */
   --canvas-red: oklch(52% 0.2 25);
@@ -429,6 +437,10 @@ body,
   --color-sidebar-border: oklch(28% 0.015 58);
   --color-sidebar-ring: oklch(72% 0.1 155);
 
+  /* CTA button colors (warm amber) */
+  --color-cta: oklch(72% 0.12 75);
+  --color-cta-foreground: oklch(18% 0.02 60);
+
   /* Canvas color presets (Gruvbox dark) */
   --canvas-red: oklch(65% 0.18 25);
   --canvas-red-bg: oklch(30% 0.08 25);
@@ -442,6 +454,17 @@ body,
   --canvas-blue-bg: oklch(28% 0.06 230);
   --canvas-purple: oklch(62% 0.14 320);
   --canvas-purple-bg: oklch(30% 0.07 320);
+}
+
+/* Subtle noise grain on dark background for depth */
+.theme-gruvbox-dark body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Legacy CSS variable aliases (removal target: next major refactor or v2.0) */
@@ -595,6 +618,27 @@ body {
     background: color-mix(in oklch, var(--color-background), transparent 70%);
   }
 
+  /* Frosted-glass bottom sheet for mobile menus */
+  .mobile-glass-sheet {
+    background: color-mix(in oklch, var(--color-card), transparent 32%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid color-mix(in oklch, var(--color-border), transparent 38%);
+    box-shadow:
+      0 -12px 36px color-mix(in oklch, black, transparent 82%),
+      inset 0 1px 0 color-mix(in oklch, white, transparent 92%);
+  }
+
+  @media (min-width: 640px) {
+    .mobile-glass-sheet {
+      background: unset;
+      -webkit-backdrop-filter: unset;
+      backdrop-filter: unset;
+      border-top: unset;
+      box-shadow: unset;
+    }
+  }
+
   .ui-panel-section {
     padding: 0.9rem;
   }
@@ -714,8 +758,8 @@ body {
   }
 
   .ui-button-primary {
-    background: var(--color-primary);
-    color: var(--color-primary-foreground);
+    background: var(--color-cta);
+    color: var(--color-cta-foreground);
   }
 
   .ui-button-primary:hover:not(:disabled) {
@@ -1092,6 +1136,11 @@ body {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* Staggered list animation — apply with inline style="animation-delay: {i * 40}ms" */
+.animate-stagger-item {
+  animation: slideUp var(--duration-base) var(--ease-entrance) both;
 }
 
 @keyframes slideDown {
@@ -2391,6 +2440,13 @@ details.completed-tasks-group[open] .chevron-icon {
   animation: slide-up 0.3s ease-out;
 }
 
+/* Ensure bottom sheets clear the mobile bottom nav (h-10 = 40px + spacing) */
+@media (max-width: 639px) {
+  .animate-bottom-sheet {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 3.25rem);
+  }
+}
+
 /* ===== iOS Install Coach ===== */
 
 /* Step indicator dots - large tap targets with small visual dots */
@@ -2690,6 +2746,9 @@ details.completed-tasks-group[open] .chevron-icon {
     .ui-tab {
       border-color: transparent;
       padding: 0.45rem 0.75rem;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding-inline: 0.5rem;
     }
 
     .ui-tab[aria-selected='true'],

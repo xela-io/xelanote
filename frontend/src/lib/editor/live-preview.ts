@@ -30,8 +30,10 @@ import {
   getActiveLines,
   isInsideRanges,
   loadCollapsedTaskGroups,
+  loadCollapsedTaskGroupsFromServer,
   persistCollapsedTaskGroups,
   profile,
+  queueCollapsedTaskGroupsServerSync,
   setsEqual,
 } from './live-preview/utilities';
 import {
@@ -66,9 +68,34 @@ function getViewportLineRange(view: EditorView, buffer = 50): { from: number; to
   return { from: fromLine, to: toLine };
 }
 
+function isFullDocumentReplacement(update: ViewUpdate): boolean {
+  if (!update.docChanged) return false;
+
+  let count = 0;
+  let matches = false;
+  update.changes.iterChanges((fromA, toA, fromB, toB) => {
+    count++;
+    if (
+      count === 1 &&
+      fromA === 0 &&
+      toA === update.startState.doc.length &&
+      fromB === 0 &&
+      toB === update.state.doc.length
+    ) {
+      matches = true;
+    }
+  });
+  return count === 1 && matches;
+}
+
 interface LivePreviewPersistenceOptions {
   noteId?: string;
 }
+
+// Auto-expanding collapsed task groups when the cursor enters them causes the
+// state to "randomly" reset during note switches/focus restoration. Keep it off
+// for stable persistence semantics.
+const AUTO_EXPAND_COLLAPSED_TASK_GROUPS = false;
 
 function buildDecorations(
   view: EditorView,
@@ -562,6 +589,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
     persistenceOptions: LivePreviewPersistenceOptions;
     pendingGutterSyncFrame: number | null = null;
     gutterObserver: MutationObserver | null = null;
+    destroyed = false;
 
     constructor(view: EditorView, persistenceOptions: LivePreviewPersistenceOptions = {}) {
       this.persistenceOptions = persistenceOptions;
@@ -595,10 +623,47 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       this.setupGutterObserver(view);
       this.syncCollapsedGutter(view);
       this.scheduleCollapsedGutterSync(view);
+
+      const noteId = this.persistenceOptions.noteId;
+      if (noteId) {
+        void loadCollapsedTaskGroupsFromServer(noteId).then((serverKeys) => {
+          if (this.destroyed || !serverKeys) return;
+          const localKeys = this.collapsedTaskGroups;
+          let nextKeys = serverKeys;
+          let shouldSync = false;
+
+          // Prefer already-known local state when the server is empty/stale, and
+          // otherwise merge to avoid losing local toggles during async note loads.
+          if (localKeys.size > 0 && serverKeys.size === 0) {
+            nextKeys = new Set(localKeys);
+            shouldSync = true;
+          } else if (localKeys.size > 0 && !setsEqual(localKeys, serverKeys)) {
+            nextKeys = new Set([...serverKeys, ...localKeys]);
+            shouldSync = true;
+          }
+
+          if (setsEqual(this.collapsedTaskGroups, nextKeys)) {
+            if (shouldSync) {
+              queueCollapsedTaskGroupsServerSync(noteId, nextKeys);
+            }
+            return;
+          }
+
+          this.collapsedTaskGroups = nextKeys;
+          persistCollapsedTaskGroups(noteId, this.collapsedTaskGroups);
+          if (shouldSync) {
+            queueCollapsedTaskGroupsServerSync(noteId, this.collapsedTaskGroups);
+          }
+          this.taskGroupInfoDirty = true;
+          this.forceRebuild = true;
+          view.dispatch({});
+        });
+      }
     }
 
     update(update: ViewUpdate) {
       const reason = this.describeUpdateReason(update);
+      const fullDocReplacement = isFullDocumentReplacement(update);
       const previousTaskGroupInfo = this.completedTaskGroupInfo;
       const shouldRecalcActive = update.selectionSet || update.focusChanged;
       const nextActiveLines = shouldRecalcActive ? getActiveLines(update.view) : this.activeLines;
@@ -641,7 +706,13 @@ const livePreviewPlugin = ViewPlugin.fromClass(
         }
         if (!setsEqual(this.collapsedTaskGroups, remappedCollapsedTaskGroups)) {
           this.collapsedTaskGroups = remappedCollapsedTaskGroups;
-          persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
+          if (!fullDocReplacement) {
+            persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
+            queueCollapsedTaskGroupsServerSync(
+              this.persistenceOptions.noteId,
+              this.collapsedTaskGroups
+            );
+          }
         }
         this.completedTaskGroupInfo = nextTaskGroupInfo;
         this.taskGroupInfoDirty = false;
@@ -677,7 +748,10 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       // Auto-expand collapsed task groups when cursor moves into them
       // Only check when active lines actually changed, so that an explicit
       // user toggle (which doesn't move the cursor) isn't immediately reversed.
-      if (nextActiveLinesSignature !== this.activeLinesSignature) {
+      if (
+        AUTO_EXPAND_COLLAPSED_TASK_GROUPS &&
+        nextActiveLinesSignature !== this.activeLinesSignature
+      ) {
         for (const group of this.completedTaskGroupInfo.groups) {
           if (!group.collapsed) continue;
           for (const activeLine of nextActiveLines) {
@@ -685,6 +759,10 @@ const livePreviewPlugin = ViewPlugin.fromClass(
               this.collapsedTaskGroups.delete(group.key);
               group.collapsed = false;
               persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
+              queueCollapsedTaskGroupsServerSync(
+                this.persistenceOptions.noteId,
+                this.collapsedTaskGroups
+              );
               this.forceRebuild = true;
               break;
             }
@@ -737,6 +815,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
         this.collapsedTaskGroups.add(key);
       }
       persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
+      queueCollapsedTaskGroupsServerSync(this.persistenceOptions.noteId, this.collapsedTaskGroups);
       this.taskGroupInfoDirty = true;
       this.forceRebuild = true;
       view.dispatch({});
@@ -761,6 +840,10 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       }
       if (changed) {
         persistCollapsedTaskGroups(this.persistenceOptions.noteId, this.collapsedTaskGroups);
+        queueCollapsedTaskGroupsServerSync(
+          this.persistenceOptions.noteId,
+          this.collapsedTaskGroups
+        );
       }
     }
 
@@ -846,6 +929,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
     }
 
     destroy(): void {
+      this.destroyed = true;
       if (this.pendingGutterSyncFrame != null && typeof cancelAnimationFrame === 'function') {
         cancelAnimationFrame(this.pendingGutterSyncFrame);
         this.pendingGutterSyncFrame = null;

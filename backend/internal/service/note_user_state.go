@@ -9,8 +9,10 @@ import (
 // maxCollapseEntries is the maximum number of keys allowed in a collapse_state map.
 const maxCollapseEntries = 50
 
-// groupHashPattern matches base36 hash strings (1-7 chars, digits + lowercase a-z).
-var groupHashPattern = regexp.MustCompile(`^[0-9a-z]{1,7}$`)
+// groupHashPattern matches either:
+// - plain base36 hash strings (preview details groups), or
+// - namespaced live-preview task keys ("tasks:<base36>")
+var groupHashPattern = regexp.MustCompile(`^(?:[0-9a-z]{1,7}|tasks:[0-9a-z]{1,7})$`)
 
 // GetNoteUserState returns the state_data JSON for a note+user pair.
 // Access is granted to note owners and users with share permission.
@@ -46,7 +48,7 @@ func (s *NoteService) UpdateNoteUserCollapseState(userID int, noteID string, raw
 
 		for key := range m {
 			if !groupHashPattern.MatchString(key) {
-				return &ValidationError{Message: "collapse_state keys must be base36 strings (1-7 chars)"}
+				return &ValidationError{Message: "collapse_state keys must be base36 strings (1-7 chars) or tasks:<base36>"}
 			}
 		}
 

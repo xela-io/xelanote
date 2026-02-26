@@ -90,9 +90,12 @@
     }
   });
 
-  // Load editor when noteId changes (with cleanup to prevent race conditions)
+  // Load editor components once (lazy). Only show the loading spinner on the
+  // first load — subsequent note-to-note navigations keep the Editor mounted so
+  // that Svelte actions (taskCollapse, previewRenderer, etc.) are not
+  // destroyed/recreated, preserving their internal state and avoiding DOM races.
   $effect(() => {
-    if (noteId) {
+    if (noteId && !EditorComponent) {
       let cancelled = false;
 
       const load = async () => {

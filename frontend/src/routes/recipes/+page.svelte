@@ -390,9 +390,10 @@
               </div>
             {:else}
               <div class="space-y-2.5">
-                {#each recipeList as recipe (recipe.id)}
+                {#each recipeList as recipe, i (recipe.id)}
                   <div
-                    class="ui-list-item group flex w-full items-center p-3 text-left hover:-translate-y-px"
+                    class="ui-list-item group flex w-full items-center p-3 text-left hover:-translate-y-px animate-stagger-item"
+                    style="animation-delay: {i * 40}ms"
                   >
                     <button
                       onclick={() => goto(`/note/${recipe.id}`)}

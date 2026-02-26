@@ -136,7 +136,7 @@ function persistState(): void {
 // --- Server sync ---
 
 function queueServerSync(noteId: string): void {
-  if (!serverSyncSupported) return;
+  if (!serverSyncSupported || !noteId) return;
 
   const existing = syncTimers.get(noteId);
   if (existing !== undefined) clearTimeout(existing);
@@ -164,7 +164,7 @@ function queueServerSync(noteId: string): void {
 }
 
 function loadFromServer(noteId: string): void {
-  if (!serverSyncSupported || loadedNoteIds.has(noteId)) return;
+  if (!serverSyncSupported || !noteId || loadedNoteIds.has(noteId)) return;
   loadedNoteIds.add(noteId);
 
   getNoteUserState(noteId)
@@ -211,15 +211,20 @@ const CHEVRON_SVG = `<svg class="chevron-icon" aria-hidden="true" viewBox="0 0 2
 export function taskCollapse(container: HTMLElement, options: TaskCollapseOptions) {
   let cleanups: (() => void)[] = [];
   let rafId: number | null = null;
-
   function init() {
     loadPersistedState();
+
+    // Skip wrapping when noteId is not yet set (e.g., initial mount before $effect
+    // sets the real noteId). Without this guard, wrappers would be created under the
+    // '' key and toggle state would be persisted under the wrong noteId.
+    if (!options.noteId) {
+      return;
+    }
 
     // Trigger server load for this note (first time only)
     loadFromServer(options.noteId);
 
     const lists = container.querySelectorAll('ul.contains-task-list');
-
     lists.forEach((list) => {
       // Defensive: skip if already wrapped
       if (list.querySelector(':scope > li.completed-tasks-wrapper')) return;
@@ -301,6 +306,23 @@ export function taskCollapse(container: HTMLElement, options: TaskCollapseOption
   function cleanup() {
     cleanups.forEach((fn) => fn());
     cleanups = [];
+    // Remove wrapper DOM elements so init() can re-process lists.
+    // Without this, init()'s defensive check finds existing wrappers and skips
+    // re-processing, leaving <details> elements without event listeners.
+    const wrappers = container.querySelectorAll('li.completed-tasks-wrapper');
+    for (const wrapper of wrappers) {
+      const innerList = wrapper.querySelector('ul.completed-tasks-inner');
+      if (innerList) {
+        const parentList = wrapper.parentElement;
+        if (parentList) {
+          // Move checked items back into the parent list before the wrapper
+          while (innerList.firstChild) {
+            parentList.insertBefore(innerList.firstChild, wrapper);
+          }
+        }
+      }
+      wrapper.remove();
+    }
   }
 
   function scheduleInit() {

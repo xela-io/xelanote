@@ -58,10 +58,10 @@
 ></div>
 
 <div
-  class="fixed z-50 bg-background p-4
+  class="fixed z-50 p-4
     pt-3
-    bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
-    sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none"
+    bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet mobile-glass-sheet
+    sm:bottom-auto sm:left-auto sm:right-auto sm:w-56 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none sm:bg-popover sm:backdrop-blur-none"
   style={desktopStyle}
   role="menu"
   aria-label={$_('component.editor.table_insert.insert')}

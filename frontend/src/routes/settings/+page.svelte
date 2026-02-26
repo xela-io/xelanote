@@ -657,7 +657,7 @@
             aria-selected={activeTab === 'appearance'}
           >
             <Palette size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.appearance')}</span>
+            <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.appearance')}</span>
           </button>
           <button
             onclick={() => (activeTab = 'editor')}
@@ -667,7 +667,7 @@
             aria-selected={activeTab === 'editor'}
           >
             <Edit3 size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.editor')}</span>
+            <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.editor')}</span>
           </button>
           <button
             onclick={() => (activeTab = 'security')}
@@ -677,7 +677,7 @@
             aria-selected={activeTab === 'security'}
           >
             <Shield size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.security')}</span>
+            <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.security')}</span>
           </button>
           <button
             onclick={() => (activeTab = 'account')}
@@ -687,7 +687,7 @@
             aria-selected={activeTab === 'account'}
           >
             <User size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.account')}</span>
+            <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.account')}</span>
           </button>
           <button
             onclick={() => (activeTab = 'ai')}
@@ -697,7 +697,7 @@
             aria-selected={activeTab === 'ai'}
           >
             <Sparkles size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.ai')}</span>
+            <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.ai')}</span>
           </button>
           <button
             onclick={() => (activeTab = 'data')}
@@ -707,7 +707,7 @@
             aria-selected={activeTab === 'data'}
           >
             <Database size={18} />
-            <span class="hidden sm:inline">{$_('page.settings.tabs.data')}</span>
+            <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.data')}</span>
           </button>
           {#if isTauriApp}
             <button
@@ -718,7 +718,7 @@
               aria-selected={activeTab === 'connection'}
             >
               <Globe size={18} />
-              <span class="hidden sm:inline">{$_('page.settings.tabs.connection')}</span>
+              <span class="text-[9px] sm:text-sm">{$_('page.settings.tabs.connection')}</span>
             </button>
           {/if}
         </div>

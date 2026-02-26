@@ -416,22 +416,27 @@
     }
   });
 
-  $effect(() => {
-    const view = editorView;
-    if (!view) return;
-    setLivePreviewMode(view, FEATURE_FLAGS.livePreview && ui.getEditorMode() === 'live', {
-      noteId,
-    });
-  });
-
   // Update editor when note content changes externally (note switch, load).
   // Skip when dirty to avoid overwriting unsaved user edits during auto-save.
   // No isLoading guard — updateEditorContent already no-ops when content is identical.
   $effect(() => {
     const note = notes.getCurrentNote();
-    if (editorView && note && !notes.getIsDirty()) {
+    if (editorView && note && note.id === noteId && !notes.getIsDirty()) {
       updateEditorContent(editorView, composeEditorContent(note));
     }
+  });
+
+  // Reconfigure live preview after the editor content sync effect above so the
+  // plugin initializes against the correct note document (prevents pruning the
+  // target note's persisted collapse keys using the previous note's content).
+  $effect(() => {
+    const view = editorView;
+    if (!view) return;
+    const currentNote = notes.getCurrentNote();
+    const livePreviewNoteId = currentNote?.id === noteId ? noteId : undefined;
+    setLivePreviewMode(view, FEATURE_FLAGS.livePreview && ui.getEditorMode() === 'live', {
+      noteId: livePreviewNoteId,
+    });
   });
 
   // Update editor focus mode when settings change

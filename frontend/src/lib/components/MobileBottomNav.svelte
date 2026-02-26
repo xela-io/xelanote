@@ -81,9 +81,9 @@
       style="-webkit-tap-highlight-color: transparent"
     >
       <span
-        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-colors {isNotesActive
-          ? 'bg-primary/12 text-primary'
-          : 'text-muted-foreground'}"
+        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 {isNotesActive
+          ? 'bg-primary/12 text-primary scale-105'
+          : 'text-muted-foreground scale-100'}"
       >
         <FileText size={18} />
         <span class="text-[10px] font-medium">{$_('nav.notes')}</span>
@@ -92,10 +92,12 @@
 
     <button
       onclick={handleSearchClick}
-      class="flex-1 flex flex-col items-center justify-center min-h-8 text-muted-foreground"
+      class="flex-1 flex flex-col items-center justify-center min-h-8"
       style="-webkit-tap-highlight-color: transparent"
     >
-      <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full">
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 text-muted-foreground scale-100 active:scale-105"
+      >
         <Search size={18} />
         <span class="text-[10px] font-medium">{$_('page.sidebar.search')}</span>
       </span>
@@ -103,10 +105,12 @@
 
     <button
       onclick={handleMoreClick}
-      class="flex-1 flex flex-col items-center justify-center min-h-8 text-muted-foreground"
+      class="flex-1 flex flex-col items-center justify-center min-h-8"
       style="-webkit-tap-highlight-color: transparent"
     >
-      <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full">
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 text-muted-foreground scale-100 active:scale-105"
+      >
         <MoreHorizontal size={18} />
         <span class="text-[10px] font-medium">{$_('nav.more')}</span>
       </span>
@@ -127,7 +131,7 @@
 
   <!-- Sheet -->
   <div
-    class="mobile-more-sheet fixed z-50 bottom-0 left-0 right-0 bg-background rounded-t-2xl animate-bottom-sheet p-4"
+    class="mobile-more-sheet fixed z-50 bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet p-4 mobile-glass-sheet"
     role="menu"
     aria-label={$_('nav.more_options')}
     tabindex="-1"
@@ -150,10 +154,6 @@
         <PanelLeft size={18} />
         {$_('nav.notes_tree')}
       </button>
-
-      <hr class="mobile-more-sheet-divider" />
-
-      <div class="mobile-more-sheet-section">{$_('nav.more_options')}</div>
 
       <!-- Journal (conditional) -->
       {#if journalEnabled}
@@ -185,6 +185,42 @@
           {$_('page.journal.title')}
         </button>
       {/if}
+
+      <!-- Recipes (conditional) -->
+      {#if recipeEnabled}
+        <button
+          type="button"
+          onclick={() => {
+            goto('/recipes');
+            closeSheet();
+          }}
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+          role="menuitem"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M15 11h.01"></path>
+            <path d="M11 15h.01"></path>
+            <path d="M16 16h.01"></path>
+            <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16"></path>
+            <path d="M5.71 17.11a17.04 17.04 0 0 1 11.4-11.4"></path>
+          </svg>
+          {$_('page.recipes.title')}
+        </button>
+      {/if}
+
+      <hr class="mobile-more-sheet-divider" />
+
+      <div class="mobile-more-sheet-section">{$_('nav.more_options')}</div>
 
       <!-- Shared Notes -->
       <button
@@ -241,38 +277,6 @@
           </span>
         {/if}
       </button>
-
-      <!-- Recipes (conditional) -->
-      {#if recipeEnabled}
-        <button
-          type="button"
-          onclick={() => {
-            goto('/recipes');
-            closeSheet();
-          }}
-          class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
-          role="menuitem"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M15 11h.01"></path>
-            <path d="M11 15h.01"></path>
-            <path d="M16 16h.01"></path>
-            <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16"></path>
-            <path d="M5.71 17.11a17.04 17.04 0 0 1 11.4-11.4"></path>
-          </svg>
-          {$_('page.recipes.title')}
-        </button>
-      {/if}
 
       <hr class="mobile-more-sheet-divider" />
 

@@ -1,7 +1,31 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createEditor, setLivePreviewMode } from './codemirror';
+const serverCollapseStateByNote = new Map<string, Record<string, boolean> | null>();
+
+vi.mock('$lib/api/notes', () => ({
+  getNoteUserState: vi.fn(async (noteId: string) => ({
+    collapse_state: serverCollapseStateByNote.get(noteId) ?? null,
+  })),
+  updateNoteUserCollapseState: vi.fn(async (noteId: string, state: Record<string, boolean>) => {
+    serverCollapseStateByNote.set(noteId, { ...state });
+    return { status: 'ok' };
+  }),
+}));
+
+vi.mock('$lib/api/client', () => ({
+  ApiError: class ApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+      this.name = 'ApiError';
+    }
+  },
+}));
+
+import { createEditor, setLivePreviewMode, updateEditorContent } from './codemirror';
 import { setLivePreviewProfilerSink } from './live-preview';
+import { _resetLivePreviewPersistenceForTest } from './live-preview/utilities';
 
 describe('codemirror live interactions', () => {
   if (!Range.prototype.getClientRects) {
@@ -14,7 +38,10 @@ describe('codemirror live interactions', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     localStorage.clear();
+    serverCollapseStateByNote.clear();
+    _resetLivePreviewPersistenceForTest();
     vi.restoreAllMocks();
+    vi.useRealTimers();
     setLivePreviewProfilerSink(null);
   });
 
@@ -196,5 +223,78 @@ describe('codemirror live interactions', () => {
     expect(view.state.doc.lineAt(view.state.selection.main.anchor).number).toBe(2);
 
     view.destroy();
+  });
+
+  it('preserves collapsed task-group state across note switches (A -> B -> A)', () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const docA = 'Active\n- [x] Done 1\n- [x] Done 2\nNext';
+    const docB = 'Other note\n- [ ] Open task';
+
+    const view = createEditor(parent, { doc: docA });
+    setLivePreviewMode(view, true, { noteId: 'note-a' });
+
+    const toggleA = parent.querySelector('.cm-live-task-group-toggle') as HTMLElement | null;
+    expect(toggleA).not.toBeNull();
+    toggleA?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    toggleA?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(parent.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    // Fixed lifecycle order used in Editor.svelte:
+    // 1) update document content  2) reconfigure live preview with target noteId
+    updateEditorContent(view, docB);
+    setLivePreviewMode(view, true, { noteId: 'note-b' });
+    expect(parent.querySelectorAll('.cm-live-collapsed-line').length).toBe(0);
+
+    updateEditorContent(view, docA);
+    setLivePreviewMode(view, true, { noteId: 'note-a' });
+    expect(parent.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    view.destroy();
+  });
+
+  it('preserves collapsed state across A -> B -> A and reload (server sync regression)', async () => {
+    vi.useFakeTimers();
+
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const docA = 'Active\n- [x] Done 1\n- [x] Done 2\nNext';
+    const docB = 'Other note\n- [ ] Open task';
+
+    const view = createEditor(parent, { doc: docA });
+    setLivePreviewMode(view, true, { noteId: 'note-a' });
+
+    const toggleA = parent.querySelector('.cm-live-task-group-toggle') as HTMLElement | null;
+    expect(toggleA).not.toBeNull();
+    toggleA?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    toggleA?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(parent.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    await vi.advanceTimersByTimeAsync(700); // debounce + async sync
+
+    updateEditorContent(view, docB);
+    setLivePreviewMode(view, true, { noteId: 'note-b' });
+    updateEditorContent(view, docA);
+    setLivePreviewMode(view, true, { noteId: 'note-a' });
+    expect(parent.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    view.destroy();
+
+    // Simulate fresh page load and force restore from server (not local cache/state)
+    localStorage.clear();
+    _resetLivePreviewPersistenceForTest();
+
+    const parentReload = document.createElement('div');
+    document.body.appendChild(parentReload);
+    const reloaded = createEditor(parentReload, { doc: docA });
+    setLivePreviewMode(reloaded, true, { noteId: 'note-a' });
+
+    await vi.advanceTimersByTimeAsync(50); // async getNoteUserState -> view.dispatch
+
+    expect(parentReload.querySelectorAll('.cm-live-collapsed-line').length).toBeGreaterThan(0);
+
+    reloaded.destroy();
   });
 });

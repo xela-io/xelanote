@@ -73,9 +73,9 @@
 <!-- Menu: Bottom sheet on mobile, positioned on desktop -->
 <div
   bind:this={menuRef}
-  class="fixed z-50 bg-background p-4
-		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet
-		sm:bottom-auto sm:left-auto sm:right-auto sm:w-48 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none sm:p-2"
+  class="fixed z-50 p-4
+		bottom-0 left-0 right-0 rounded-t-2xl animate-bottom-sheet mobile-glass-sheet
+		sm:bottom-auto sm:left-auto sm:right-auto sm:w-48 sm:rounded-lg sm:shadow-lg sm:border sm:border-border sm:animate-none sm:p-2 sm:bg-popover"
   style={initialStyle}
   role="menu"
   aria-label={$_('component.tree.context_menu.more_options')}

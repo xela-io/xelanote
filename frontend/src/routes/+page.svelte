@@ -542,10 +542,11 @@
             >
               {#if recentNotes.length > 0}
                 <div class="space-y-1.5">
-                  {#each recentNotes as note (note.id)}
+                  {#each recentNotes as note, i (note.id)}
                     <button
                       onclick={() => goto(`/note/${note.id}`)}
-                      class="group w-full rounded-xl border border-transparent bg-background/25 px-3 py-2.5 text-left transition hover:border-border/60 hover:bg-accent/30"
+                      class="group w-full rounded-xl border border-transparent bg-background/25 px-3 py-2.5 text-left transition hover:border-border/60 hover:bg-accent/30 animate-stagger-item"
+                      style="animation-delay: {i * 40}ms"
                     >
                       <span class="flex items-center gap-3">
                         <span
@@ -664,10 +665,11 @@
             >
               {#if newlyCreatedNotes.length > 0}
                 <div class="space-y-1.5">
-                  {#each newlyCreatedNotes as note (note.id)}
+                  {#each newlyCreatedNotes as note, i (note.id)}
                     <button
                       onclick={() => goto(`/note/${note.id}`)}
-                      class="group w-full rounded-xl border border-transparent bg-background/20 px-3 py-2.5 text-left transition hover:border-border/60 hover:bg-accent/25"
+                      class="group w-full rounded-xl border border-transparent bg-background/20 px-3 py-2.5 text-left transition hover:border-border/60 hover:bg-accent/25 animate-stagger-item"
+                      style="animation-delay: {i * 40}ms"
                     >
                       <span class="flex items-center gap-3">
                         <span

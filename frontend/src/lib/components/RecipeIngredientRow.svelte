@@ -411,10 +411,10 @@
       grid-template-areas:
         'name amount'
         'unit options';
-      row-gap: 0.45rem;
+      row-gap: 0.3rem;
       column-gap: 0.45rem;
-      padding: 0.55rem;
-      border-radius: 0.9rem;
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.65rem;
       background: color-mix(in oklch, var(--color-background), transparent 20%);
       box-shadow: none;
       border-color: color-mix(in oklch, var(--color-border), transparent 58%);
@@ -429,10 +429,10 @@
 
     .remove-button {
       opacity: 1;
-      width: 2.5rem;
-      height: 2.5rem;
-      min-width: 2.5rem;
-      min-height: 2.5rem;
+      width: 2rem;
+      height: 2rem;
+      min-width: 2rem;
+      min-height: 2rem;
       padding: 0;
       box-shadow: none;
       border-color: transparent;
@@ -440,8 +440,8 @@
     }
 
     .option-chip {
-      min-width: 2.5rem;
-      min-height: 2.5rem;
+      min-width: 2rem;
+      min-height: 2rem;
       justify-content: center;
       padding: 0;
       gap: 0.2rem;
@@ -457,6 +457,7 @@
       border-color: transparent;
       background: color-mix(in oklch, var(--color-background), transparent 4%);
       box-shadow: none;
+      padding: 0.4rem 0.6rem;
     }
 
     .ingredient-row :global(.ui-input:hover),

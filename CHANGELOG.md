@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Mobile ToC FAB: Table of Contents trigger becomes a fixed-position floating action button (bottom-right) on mobile with an SVG progress ring that fills as the user scrolls; desktop behavior unchanged
 - Task collapse state sync: completed task group open/closed state now persists across devices via `GET/PUT /api/notes/:id/user-state` (localStorage as fast cache, server as source of truth, 500ms debounced sync)
 
 - iOS Safari: dual-mode mobile layout — body-level scrolling on opt-in pages (journal, recipes, due-dates, trash, shared collections) so Safari toolbar auto-hides on scroll; PWA and desktop remain in fixed layout

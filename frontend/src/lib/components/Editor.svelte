@@ -225,6 +225,73 @@
     return () => clearTimeout(timer);
   });
 
+  // Scroll progress for mobile FAB ring.
+  // Walk up the DOM to find whichever ancestor actually scrolls — the layout
+  // chain varies (body-scroll on iOS Safari, nested overflow containers on
+  // Android/desktop responsive mode, etc.).
+  let scrollContainerRef: HTMLDivElement | undefined = $state();
+  let scrollProgress = $state(0);
+
+  function findScrollParent(el: HTMLElement): HTMLElement | null {
+    let node: HTMLElement | null = el;
+    while (node) {
+      if (node.scrollHeight > node.clientHeight + 1) {
+        const style = getComputedStyle(node);
+        const ov = style.overflowY || style.overflow;
+        if (ov === 'auto' || ov === 'scroll') return node;
+      }
+      node = node.parentElement;
+    }
+    // Body/document-level scroll
+    const de = document.documentElement;
+    if (de.scrollHeight > de.clientHeight + 1) return de;
+    return null;
+  }
+
+  $effect(() => {
+    if (!ui.getIsMobile() || headings.length === 0) {
+      scrollProgress = 0;
+      return;
+    }
+    const anchor = scrollContainerRef;
+    if (!anchor) return;
+
+    // Defer one frame so layout is settled after content render
+    const initId = requestAnimationFrame(() => {
+      const scroller = findScrollParent(anchor);
+      if (!scroller) return;
+
+      // For document-level scroll, events fire on window, not documentElement
+      const eventTarget: EventTarget = scroller === document.documentElement ? window : scroller;
+
+      let rafId = 0;
+      const update = () => {
+        rafId = 0;
+        const top = scroller === document.documentElement ? window.scrollY : scroller.scrollTop;
+        const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+        scrollProgress = maxScroll > 0 ? Math.min(1, top / maxScroll) : 0;
+      };
+      const onScroll = () => {
+        if (!rafId) rafId = requestAnimationFrame(update);
+      };
+
+      update();
+      eventTarget.addEventListener('scroll', onScroll, { passive: true });
+
+      // Store cleanup in a variable the outer effect can call
+      cleanupScrollListener = () => {
+        eventTarget.removeEventListener('scroll', onScroll);
+        if (rafId) cancelAnimationFrame(rafId);
+      };
+    });
+
+    let cleanupScrollListener: (() => void) | null = null;
+    return () => {
+      cancelAnimationFrame(initId);
+      cleanupScrollListener?.();
+    };
+  });
+
   // Reactive: update rendered content when note changes.
   // In split mode, debounce to avoid expensive DOM recreation on every keystroke.
   // When workerMarkdown is enabled, use web worker for split mode rendering.
@@ -985,6 +1052,7 @@
        standalone mode where wheel events don't chain from .cm-scroller to
        an outer overflow-auto container. -->
   <div
+    bind:this={scrollContainerRef}
     class="editor-scroll-container flex-1 {ui.getIsMobile()
       ? 'overflow-auto'
       : 'flex flex-col min-h-0'}"
@@ -1027,7 +1095,7 @@
       >
         {#if ui.getEditorMode() === 'live' && headings.length > 0}
           <div class="absolute inset-x-0 top-0 z-20 pointer-events-none">
-            <TableOfContents {headings} onHeadingClick={handleTocClickLocal} />
+            <TableOfContents {headings} {scrollProgress} onHeadingClick={handleTocClickLocal} />
           </div>
         {/if}
         <!-- Editor -->
@@ -1073,6 +1141,7 @@
             {renderedContent}
             {headings}
             {editorView}
+            {scrollProgress}
             editorMode={ui.getEditorMode()}
             isMobile={ui.getIsMobile()}
             splitPosition={ui.getSplitPosition()}

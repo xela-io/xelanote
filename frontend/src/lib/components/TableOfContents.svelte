@@ -7,9 +7,13 @@
     headings: TocEntry[];
     onHeadingClick?: (slug: string) => void;
     activeSlug?: string | null;
+    scrollProgress?: number;
   }
 
-  const { headings, onHeadingClick, activeSlug = null }: Props = $props();
+  const { headings, onHeadingClick, activeSlug = null, scrollProgress = 0 }: Props = $props();
+
+  const CIRCUMFERENCE = 2 * Math.PI * 19; // ≈ 119.38
+  const ringOffset = $derived(CIRCUMFERENCE * (1 - scrollProgress));
   let isOpen = $state(false);
   let dropdownRef: HTMLDivElement | undefined = $state();
   let triggerButtonRef: HTMLButtonElement | undefined = $state();
@@ -169,6 +173,22 @@
       aria-label="Inhaltsverzeichnis ({headings.length})"
       aria-expanded={isOpen}
     >
+      <svg class="toc-fab-ring" viewBox="0 0 44 44" aria-hidden="true">
+        <circle class="toc-fab-ring-track" cx="22" cy="22" r="19" fill="none" stroke-width="2.5"
+        ></circle>
+        <circle
+          class="toc-fab-ring-progress"
+          cx="22"
+          cy="22"
+          r="19"
+          fill="none"
+          stroke-width="2.5"
+          stroke-dasharray={CIRCUMFERENCE}
+          stroke-dashoffset={ringOffset}
+          stroke-linecap="round"
+          transform="rotate(-90 22 22)"
+        ></circle>
+      </svg>
       <span class="toc-trigger-icon" aria-hidden="true">
         {#if isOpen}
           <X size={16} />
@@ -482,6 +502,11 @@
     font-size: 0.8rem;
   }
 
+  /* SVG ring — hidden on desktop */
+  .toc-fab-ring {
+    display: none;
+  }
+
   .toc-trigger:focus-visible,
   .toc-entry:focus-visible {
     outline: 2px solid var(--color-ring);
@@ -490,15 +515,60 @@
 
   @media (max-width: 640px) {
     .toc-floating {
-      position: relative;
+      position: fixed;
       top: auto;
+      bottom: calc(var(--safe-area-inset-bottom, 0px) + 48px + 12px);
+      right: 16px;
+      left: auto;
       height: auto;
-      z-index: auto;
-      padding: 8px 8px 6px 0;
+      z-index: 25;
+      padding: 0;
+      display: block;
+      justify-content: initial;
     }
 
-    .toc-trigger-label {
+    .toc-trigger {
+      width: 48px;
+      height: 48px;
+      border-radius: 9999px;
+      padding: 0;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in oklch, var(--surface-panel-bg, var(--color-card)) 78%, transparent);
+      backdrop-filter: blur(14px);
+      box-shadow:
+        0 4px 14px -4px rgb(0 0 0 / 0.4),
+        0 1px 0 color-mix(in oklch, var(--color-border), transparent 40%);
+      position: relative;
+    }
+
+    .toc-trigger.open {
+      transform: scale(0.85);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toc-trigger-label,
+    .toc-badge {
       display: none;
+    }
+
+    .toc-fab-ring {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .toc-fab-ring-track {
+      stroke: color-mix(in oklch, var(--color-border), transparent 50%);
+    }
+
+    .toc-fab-ring-progress {
+      stroke: var(--color-primary);
+      transition: stroke-dashoffset 200ms ease;
     }
 
     .toc-backdrop {
@@ -512,7 +582,7 @@
       left: 8px;
       right: 8px;
       top: auto;
-      bottom: max(8px, env(safe-area-inset-bottom));
+      bottom: calc(max(8px, env(safe-area-inset-bottom)) + 48px);
       width: auto;
       max-height: min(68vh, 520px);
       border-radius: calc(var(--radius-lg) + 6px);
@@ -585,6 +655,10 @@
     }
 
     .toc-dropdown {
+      transition: none !important;
+    }
+
+    .toc-fab-ring-progress {
       transition: none !important;
     }
   }

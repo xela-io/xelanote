@@ -23,6 +23,7 @@
     renderedContent: string;
     headings: ReturnType<typeof import('$lib/editor/markdown').extractHeadings>;
     editorView: EditorView | undefined;
+    scrollProgress?: number;
     editorMode: string;
     isMobile: boolean;
     splitPosition: number;
@@ -41,6 +42,7 @@
     renderedContent,
     headings,
     editorView,
+    scrollProgress = 0,
     editorMode,
     isMobile,
     splitPosition,
@@ -177,7 +179,12 @@
 >
   <!-- Floating Table of Contents -->
   {#if headings.length > 0}
-    <TableOfContents {headings} activeSlug={activePreviewHeadingSlug} {onHeadingClick} />
+    <TableOfContents
+      {headings}
+      {scrollProgress}
+      activeSlug={activePreviewHeadingSlug}
+      {onHeadingClick}
+    />
   {/if}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

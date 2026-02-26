@@ -236,7 +236,7 @@
   onkeydown={handleKeydown}
 >
   <div
-    class="bg-background border border-border shadow-lg flex flex-col {isMobile
+    class="bg-background border border-border shadow-lg flex flex-col overflow-hidden {isMobile
       ? 'h-full w-full rounded-none'
       : 'rounded-lg w-full max-w-3xl max-h-[80vh]'}"
     onclick={(e) => e.stopPropagation()}
@@ -259,7 +259,7 @@
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-auto p-4">
+    <div class="flex-1 overflow-auto min-h-0 p-4">
       {#if loading}
         <div class="flex flex-col items-center justify-center py-12 gap-4">
           <Loader2 size={32} class="animate-spin text-primary" />
@@ -313,7 +313,9 @@
     </div>
 
     <!-- Footer -->
-    <div class="flex items-center justify-between p-4 border-t border-border flex-shrink-0 gap-4">
+    <div
+      class="flex items-center justify-between p-4 pb-safe border-t border-border flex-shrink-0 gap-4"
+    >
       <div class="text-xs text-muted-foreground">
         {#if !loading && !error && !noChanges}
           {isFullContent

@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- AI Transform dialog: apply button no longer off-screen on mobile (added `min-h-0` for proper flex shrinking, `overflow-hidden` on container, `pb-safe` for safe-area inset)
 - Live-preview: fixed collapse state being pruned/reset during note switches by reordering effect lifecycle (content sync before live-preview reconfigure)
 - Task collapse: prevented state being persisted under empty noteId during initial mount
 - Task collapse: cleanup now properly removes wrapper DOM for correct re-initialization

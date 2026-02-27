@@ -171,7 +171,7 @@ jobs:
 
     - name: Run Playwright E2E tests
       working-directory: ./frontend
-      run: npx playwright test --project=e2e --grep-invert "visual regression"
+      run: npx playwright test --project=e2e --grep-invert "visual regression|consistency screenshots"
 
     - name: Upload Playwright report
       if: failure()

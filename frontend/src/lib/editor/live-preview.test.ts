@@ -431,4 +431,133 @@ describe('live-preview', () => {
 
     view.destroy();
   });
+
+  it('uses distinct keys for duplicate completed task groups with identical content', () => {
+    const doc = 'Active\n- [x] Done A\n- [x] Done B\n\nActive\n- [x] Done A\n- [x] Done B\nNext';
+    const view = createView(doc, 0);
+
+    const toggles = [...view.dom.querySelectorAll('.cm-live-task-group-toggle')] as HTMLElement[];
+    expect(toggles.length).toBe(2);
+    const firstKey = toggles[0]?.dataset.taskGroup;
+    const secondKey = toggles[1]?.dataset.taskGroup;
+    expect(firstKey).toBeTruthy();
+    expect(secondKey).toBeTruthy();
+    expect(firstKey).not.toBe(secondKey);
+
+    toggleLivePreviewCompletedTaskGroup(view, firstKey!);
+    expect(view.dom.querySelectorAll('.cm-live-collapsed-line').length).toBe(1);
+
+    view.destroy();
+  });
+
+  it('keeps collapse on the same visual duplicate group after inserting another duplicate above', () => {
+    const doc =
+      'Top\n\nActive\n- [x] Done A\n- [x] Done B\n\nActive\n- [x] Done A\n- [x] Done B\nTail';
+    const view = createView(doc, 0);
+
+    const togglesBefore = [
+      ...view.dom.querySelectorAll('.cm-live-task-group-toggle'),
+    ] as HTMLElement[];
+    expect(togglesBefore.length).toBe(2);
+    const secondKeyBefore = togglesBefore[1]?.dataset.taskGroup;
+    expect(secondKeyBefore).toBeTruthy();
+
+    toggleLivePreviewCompletedTaskGroup(view, secondKeyBefore!);
+    let summaries = [...view.dom.querySelectorAll('.cm-live-task-group-summary')] as HTMLElement[];
+    expect(summaries.length).toBe(1);
+    const collapsedLineBefore = Number.parseInt(summaries[0]?.dataset.line ?? '', 10);
+    expect(Number.isInteger(collapsedLineBefore)).toBe(true);
+
+    const insertPos = view.state.doc.line(3).from;
+    view.dispatch({
+      changes: {
+        from: insertPos,
+        to: insertPos,
+        insert: 'Active\n- [x] Done A\n- [x] Done B\n\n',
+      },
+    });
+
+    summaries = [...view.dom.querySelectorAll('.cm-live-task-group-summary')] as HTMLElement[];
+    expect(summaries.length).toBe(1);
+    const collapsedLineAfter = Number.parseInt(summaries[0]?.dataset.line ?? '', 10);
+    expect(collapsedLineAfter).toBe(collapsedLineBefore + 4);
+
+    view.destroy();
+  });
+
+  it('adds cm-live-nest-1 class for indented task', () => {
+    const doc = 'Active\n- [ ] Parent\n  - [ ] Child';
+    const view = createView(doc, 0);
+
+    const nestedLines = view.dom.querySelectorAll('.cm-live-nest-1');
+    expect(nestedLines.length).toBe(1);
+
+    // Top-level task should NOT have nest class
+    const taskLines = view.dom.querySelectorAll('.cm-live-task-line');
+    const topLevelTask = Array.from(taskLines).find(
+      (el) => !el.classList.contains('cm-live-nest-1')
+    );
+    expect(topLevelTask).toBeDefined();
+
+    view.destroy();
+  });
+
+  it('does not add nest class for top-level task', () => {
+    const doc = 'Active\n- [ ] Task A\n- [ ] Task B';
+    const view = createView(doc, 0);
+
+    const nestedLines = view.dom.querySelectorAll('[class*="cm-live-nest-"]');
+    expect(nestedLines.length).toBe(0);
+
+    view.destroy();
+  });
+
+  it('adds nest class to indented list items', () => {
+    const doc = 'Active\n- Item\n  - Sub item';
+    const view = createView(doc, 0);
+
+    const nestedLines = view.dom.querySelectorAll('.cm-live-nest-1');
+    expect(nestedLines.length).toBe(1);
+
+    view.destroy();
+  });
+
+  it('supports multiple nesting levels', () => {
+    const doc = 'Active\n- [ ] L0\n  - [ ] L1\n    - [ ] L2';
+    const view = createView(doc, 0);
+
+    expect(view.dom.querySelectorAll('.cm-live-nest-1').length).toBe(1);
+    expect(view.dom.querySelectorAll('.cm-live-nest-2').length).toBe(1);
+
+    view.destroy();
+  });
+
+  it('combines nest class with task-group class on checked nested tasks', () => {
+    const doc = 'Active\n- [x] Parent\n  - [x] Child A\n  - [x] Child B';
+    const view = createView(doc, 0);
+
+    // The nested checked items should have both nest and task-group classes
+    const nestedGroupLines = view.dom.querySelectorAll(
+      '.cm-live-nest-1.cm-live-task-group-middle, .cm-live-nest-1.cm-live-task-group-last'
+    );
+    expect(nestedGroupLines.length).toBeGreaterThan(0);
+
+    view.destroy();
+  });
+
+  it('does not group checked children within an unchecked parent as completed', () => {
+    // After unchecking a child, parent auto-unchecks but other children stay checked.
+    // Those checked children must NOT form their own completed task group.
+    const doc =
+      'Active\n- [ ] Parent\n  - [x] Child A\n  - [ ] Child B\n  - [x] Child C\n- [x] Other';
+    const view = createView(doc, 0);
+
+    // Child A and Child C are checked but parent is unchecked → no task-group class on them
+    const nestedGroupLines = view.dom.querySelectorAll(
+      '.cm-live-nest-1.cm-live-task-group-first, .cm-live-nest-1.cm-live-task-group-middle, .cm-live-nest-1.cm-live-task-group-last'
+    );
+    expect(nestedGroupLines.length).toBe(0);
+
+    view.destroy();
+  });
 });

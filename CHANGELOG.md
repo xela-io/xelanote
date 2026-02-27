@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
+- PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA
 - CI: relaxed flaky `docChanged:structured` performance threshold from 2.0ms to 5.0ms for slower CI runners
 - CI: updated bundle size budget from 3600 KB to 15000 KB to match actual app size after CodeMirror/charting deps
 - Quality: added `OPENAI_MODEL` env var to docs and `.env.example` (env-sync check)
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Nested todo lists in live-preview: hierarchical indentation for task and list items, bidirectional auto-propagation (parent ↔ children check sync), and subtree-as-atomic-unit for drag/reorder (children move with their parent, only top-level tasks are individually draggable)
 - Backend error reporting: 500 errors (`respondInternalErr`) and panics are now automatically reported as Forgejo issues with fingerprint-based dedup, stack traces, and a `backend` label for filtering
 - Mobile ToC FAB: Table of Contents trigger becomes a fixed-position floating action button (bottom-right) on mobile with an SVG progress ring that fills as the user scrolls; desktop behavior unchanged
 - Task collapse state sync: completed task group open/closed state now persists across devices via `GET/PUT /api/notes/:id/user-state` (localStorage as fast cache, server as source of truth, 500ms debounced sync)

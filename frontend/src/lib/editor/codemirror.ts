@@ -97,6 +97,17 @@ const sharedDecorationPlugins: Extension[] = [
   lightTheme,
 ];
 
+const allowedExternalLinkProtocols = new Set(['http:', 'https:', 'mailto:']);
+
+function isSafeExternalLink(href: string): boolean {
+  try {
+    const parsed = new URL(href, window.location.href);
+    return allowedExternalLinkProtocols.has(parsed.protocol.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 // Shared mousedown handler that prevents default for live preview widgets
 function createMousedownHandler() {
   return (event: MouseEvent) => {
@@ -201,7 +212,11 @@ function createClickHandler(config: {
     if (liveLink?.dataset.href) {
       const href = liveLink.dataset.href;
       if (href) {
-        window.open(href, '_blank', 'noopener,noreferrer');
+        if (isSafeExternalLink(href)) {
+          window.open(href, '_blank', 'noopener,noreferrer');
+        } else {
+          console.warn('[Security] Blocked unsafe live preview link', href);
+        }
         event.preventDefault();
         return true;
       }

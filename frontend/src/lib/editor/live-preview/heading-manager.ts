@@ -15,6 +15,23 @@ export interface HeadingInfo {
   keys: Set<string>;
 }
 
+export function buildHeadingSectionByLineForViewport(
+  headingByLine: Map<number, HeadingSection>,
+  visibleFrom: number,
+  visibleTo: number
+): Map<number, HeadingSection> {
+  const sectionByLine = new Map<number, HeadingSection>();
+  for (const section of headingByLine.values()) {
+    if (section.endLine <= section.headingLine) continue;
+    const populateStart = Math.max(section.headingLine + 1, visibleFrom);
+    const populateEnd = Math.min(section.endLine, visibleTo);
+    for (let line = populateStart; line <= populateEnd; line++) {
+      sectionByLine.set(line, section);
+    }
+  }
+  return sectionByLine;
+}
+
 /**
  * Collect heading info with viewport-optimized sectionByLine population.
  * All headings are still scanned (cheap regex), but sectionByLine is only
@@ -28,7 +45,6 @@ export function collectHeadingInfo(
   visibleTo?: number
 ): HeadingInfo {
   const headingByLine = new Map<number, HeadingSection>();
-  const sectionByLine = new Map<number, HeadingSection>();
   const keys = new Set<string>();
   const headings: Array<{ line: number; level: number }> = [];
 
@@ -65,15 +81,16 @@ export function collectHeadingInfo(
     };
     headingByLine.set(current.line, section);
 
-    // Only populate sectionByLine for lines within the visible range
-    if (endLine > current.line) {
-      const populateStart = Math.max(current.line + 1, viewportStartLine);
-      const populateEnd = Math.min(endLine, viewportEndLine);
-      for (let line = populateStart; line <= populateEnd; line++) {
-        sectionByLine.set(line, section);
-      }
-    }
+    // sectionByLine is built in one pass below for the active viewport.
   }
 
-  return { headingByLine, sectionByLine, keys };
+  return {
+    headingByLine,
+    sectionByLine: buildHeadingSectionByLineForViewport(
+      headingByLine,
+      viewportStartLine,
+      viewportEndLine
+    ),
+    keys,
+  };
 }

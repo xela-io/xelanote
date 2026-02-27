@@ -11,7 +11,7 @@ import {
 } from '@codemirror/view';
 
 import type { HeadingInfo } from './live-preview/heading-manager';
-import { collectHeadingInfo } from './live-preview/heading-manager';
+import { buildHeadingSectionByLineForViewport, collectHeadingInfo } from './live-preview/heading-manager';
 import type { LinePrimitives } from './live-preview/line-primitives';
 import { parseLinePrimitives } from './live-preview/line-primitives';
 import type { StructuredLines } from './live-preview/structured-lines';
@@ -22,6 +22,7 @@ import {
 import type { TableBlock } from './live-preview/table-parser';
 import type { CompletedTaskGroupInfo } from './live-preview/task-group-manager';
 import {
+  buildTaskGroupByLineForViewport,
   collectCompletedTaskGroups,
   remapCollapsedTaskGroups,
 } from './live-preview/task-group-manager';
@@ -269,6 +270,10 @@ function buildDecorations(
         if (hasTaskBody) {
           // Keep task-line layout stable even when active to avoid checkbox shifting.
           lineClasses.push('cm-live-task-line');
+        }
+        // Nesting class for indented task/list lines
+        if (primitives.nestLevel > 0) {
+          lineClasses.push(`cm-live-nest-${primitives.nestLevel}`);
         }
 
         if (line.number === 1) {
@@ -699,7 +704,21 @@ const livePreviewPlugin = ViewPlugin.fromClass(
         const remappedCollapsedTaskGroups = remapCollapsedTaskGroups(
           previousTaskGroupInfo,
           nextTaskGroupInfo,
-          this.collapsedTaskGroups
+          this.collapsedTaskGroups,
+          (previousGroup) => {
+            const previousStartLine = update.startState.doc.line(previousGroup.startLine);
+            const previousEndLine = update.startState.doc.line(previousGroup.endLine);
+            const mappedStartPos = update.changes.mapPos(previousStartLine.from, 1);
+            const mappedEndPos = update.changes.mapPos(previousEndLine.to, -1);
+            const safeStartPos = Math.max(0, Math.min(mappedStartPos, update.state.doc.length));
+            const safeEndPos = Math.max(0, Math.min(mappedEndPos, update.state.doc.length));
+            const mappedStartLine = update.state.doc.lineAt(safeStartPos).number;
+            const mappedEndLine = update.state.doc.lineAt(safeEndPos).number;
+            return {
+              startLine: mappedStartLine,
+              endLine: Math.max(mappedStartLine, mappedEndLine),
+            };
+          }
         );
         for (const group of nextTaskGroupInfo.groups) {
           group.collapsed = remappedCollapsedTaskGroups.has(group.key);
@@ -717,30 +736,55 @@ const livePreviewPlugin = ViewPlugin.fromClass(
         this.completedTaskGroupInfo = nextTaskGroupInfo;
         this.taskGroupInfoDirty = false;
       } else if (update.viewportChanged) {
+        const vp = getViewportLineRange(update.view);
         this.staticData = {
           ...this.staticData,
           treeFeatures: profile('tree', reason, () => collectTreeFeatures(update.view)),
         };
+        this.headingInfo = {
+          ...this.headingInfo,
+          sectionByLine: buildHeadingSectionByLineForViewport(
+            this.headingInfo.headingByLine,
+            vp.from,
+            vp.to
+          ),
+        };
+        this.completedTaskGroupInfo = {
+          ...this.completedTaskGroupInfo,
+          groupByLine: buildTaskGroupByLineForViewport(
+            this.completedTaskGroupInfo.groups,
+            vp.from,
+            vp.to
+          ),
+        };
       } else if (this.headingInfoDirty || this.taskGroupInfoDirty) {
+        const vp = getViewportLineRange(update.view);
         if (this.headingInfoDirty) {
-          this.headingInfo = profile('structured', reason, () =>
-            collectHeadingInfo(
-              update.view,
-              this.collapsedHeadingSections,
-              getViewportLineRange(update.view).from,
-              getViewportLineRange(update.view).to
-            )
-          );
+          for (const section of this.headingInfo.headingByLine.values()) {
+            section.collapsed = this.collapsedHeadingSections.has(section.key);
+          }
+          this.headingInfo = {
+            ...this.headingInfo,
+            sectionByLine: buildHeadingSectionByLineForViewport(
+              this.headingInfo.headingByLine,
+              vp.from,
+              vp.to
+            ),
+          };
           this.headingInfoDirty = false;
         }
         if (this.taskGroupInfoDirty) {
-          const vp = getViewportLineRange(update.view);
-          this.completedTaskGroupInfo = collectCompletedTaskGroups(
-            update.view,
-            this.collapsedTaskGroups,
-            vp.from,
-            vp.to
-          );
+          for (const group of this.completedTaskGroupInfo.groups) {
+            group.collapsed = this.collapsedTaskGroups.has(group.key);
+          }
+          this.completedTaskGroupInfo = {
+            ...this.completedTaskGroupInfo,
+            groupByLine: buildTaskGroupByLineForViewport(
+              this.completedTaskGroupInfo.groups,
+              vp.from,
+              vp.to
+            ),
+          };
           this.taskGroupInfoDirty = false;
         }
       }

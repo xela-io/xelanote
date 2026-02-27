@@ -44,6 +44,7 @@ export function profile<T>(phase: LivePreviewProfilePhase, reason: string, fn: (
 const TASK_COLLAPSE_STORAGE_PREFIX = 'xelanote-live-task-collapse-v1:';
 const LIVE_TASK_KEY_PREFIX = 'tasks:';
 const LIVE_TASK_SYNC_DEBOUNCE_MS = 500;
+const MAX_SERVER_COLLAPSE_ENTRIES = 50;
 
 const loadedServerStateByNote = new Map<string, Record<string, boolean> | null>();
 const pendingServerStateLoads = new Map<string, Promise<Record<string, boolean> | null>>();
@@ -52,6 +53,31 @@ let liveTaskServerSyncSupported = true;
 
 function isLiveTaskKey(key: string): boolean {
   return key.startsWith(LIVE_TASK_KEY_PREFIX);
+}
+
+function buildServerCollapseState(
+  baseState: Record<string, boolean>,
+  liveTaskSnapshot: Set<string>
+): Record<string, boolean> {
+  const nextState: Record<string, boolean> = {};
+  let used = 0;
+
+  // Keep non-live-task keys first so other features sharing collapse_state
+  // continue to persist even when approaching the backend entry limit.
+  for (const [key, value] of Object.entries(baseState)) {
+    if (isLiveTaskKey(key)) continue;
+    if (used >= MAX_SERVER_COLLAPSE_ENTRIES) break;
+    nextState[key] = value;
+    used++;
+  }
+
+  for (const key of liveTaskSnapshot) {
+    if (used >= MAX_SERVER_COLLAPSE_ENTRIES) break;
+    nextState[key] = true;
+    used++;
+  }
+
+  return nextState;
 }
 
 function normalizeServerState(state: unknown): Record<string, boolean> | null {
@@ -81,8 +107,14 @@ async function ensureServerStateLoaded(noteId: string): Promise<Record<string, b
     })
     .catch((error: unknown) => {
       pendingServerStateLoads.delete(noteId);
-      if (error instanceof ApiError && [404, 405].includes(error.status)) {
-        liveTaskServerSyncSupported = false;
+      if (error instanceof ApiError) {
+        if (error.status === 405) {
+          // Older backends may not support this endpoint at all.
+          liveTaskServerSyncSupported = false;
+        } else if (error.status === 404) {
+          // Note-specific 404 (missing/no access) must not disable sync globally.
+          loadedServerStateByNote.set(noteId, null);
+        }
       }
       return null;
     });
@@ -123,21 +155,18 @@ export function queueCollapsedTaskGroupsServerSync(
         if (!liveTaskServerSyncSupported) return;
 
         const baseState = (await ensureServerStateLoaded(noteId)) ?? {};
-        const nextState: Record<string, boolean> = { ...baseState };
-
-        for (const key of Object.keys(nextState)) {
-          if (isLiveTaskKey(key)) delete nextState[key];
-        }
-        for (const key of snapshot) {
-          nextState[key] = true;
-        }
+        const nextState = buildServerCollapseState(baseState, snapshot);
 
         try {
           await updateNoteUserCollapseState(noteId, nextState);
           loadedServerStateByNote.set(noteId, nextState);
         } catch (error: unknown) {
-          if (error instanceof ApiError && [404, 405].includes(error.status)) {
-            liveTaskServerSyncSupported = false;
+          if (error instanceof ApiError) {
+            if (error.status === 405) {
+              liveTaskServerSyncSupported = false;
+            } else if (error.status === 404) {
+              loadedServerStateByNote.set(noteId, null);
+            }
           }
         }
       })();

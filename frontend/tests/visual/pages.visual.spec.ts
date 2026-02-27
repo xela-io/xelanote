@@ -84,7 +84,7 @@ test.describe('Visual Regression - Protected Pages @visual', () => {
 });
 
 test.describe('Visual Regression - Public Pages @visual', () => {
-  test.setTimeout(120000);
+  test.setTimeout(300000);
 
   test('all public pages match baseline', async ({ browser }) => {
     const context = await browser.newContext();

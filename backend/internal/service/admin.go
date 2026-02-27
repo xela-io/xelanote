@@ -192,7 +192,7 @@ func (s *AdminService) calculateTotalStorageMB() float64 {
 	uploadDir := filepath.Join(s.dataDir, "uploads")
 	var totalSize int64
 
-	filepath.WalkDir(uploadDir, func(path string, d fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(uploadDir, func(path string, d fs.DirEntry, err error) error { //nolint:gosec // best-effort size calculation
 		if err != nil {
 			return nil // Continue on errors
 		}
@@ -218,7 +218,7 @@ func (s *AdminService) calculateUserStorageMB(userID int) float64 {
 	uploadDir := filepath.Join(s.dataDir, "uploads", strconv.Itoa(userID))
 	var totalSize int64
 
-	filepath.WalkDir(uploadDir, func(path string, d fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(uploadDir, func(path string, d fs.DirEntry, err error) error { //nolint:gosec // best-effort size calculation
 		if err != nil {
 			return nil // Continue on errors
 		}
@@ -255,7 +255,7 @@ func (s *AdminService) calculateAllUserStorageMB() map[int]float64 {
 		}
 		var totalSize int64
 		userDir := filepath.Join(uploadsDir, entry.Name())
-		filepath.WalkDir(userDir, func(_ string, d fs.DirEntry, err error) error {
+		_ = filepath.WalkDir(userDir, func(_ string, d fs.DirEntry, err error) error { //nolint:gosec // best-effort size calculation
 			if err != nil {
 				return nil
 			}

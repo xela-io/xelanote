@@ -13,19 +13,42 @@
   let iframeRef = $state<HTMLIFrameElement | null>(null);
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  function parseIframeUrl(url: string): URL | null {
+    try {
+      if (typeof window !== 'undefined') {
+        return new URL(url, window.location.origin);
+      }
+      return new URL(url);
+    } catch {
+      return null;
+    }
+  }
+
   // Derive the expected origin from the iframe URL for security validation
   function getExpectedOrigin(url: string): string {
-    try {
-      const parsed = new URL(url);
-      return parsed.origin;
-    } catch {
+    const parsed = parseIframeUrl(url);
+    if (!parsed) {
       return '';
     }
+    return parsed.origin;
+  }
+
+  function buildIframeSrc(url: string): string {
+    const parsed = parseIframeUrl(url);
+    if (!parsed) {
+      return url;
+    }
+
+    if (typeof window !== 'undefined' && !parsed.searchParams.has('parent_origin')) {
+      parsed.searchParams.set('parent_origin', window.location.origin);
+    }
+
+    return parsed.toString();
   }
 
   function handleMessage(event: MessageEvent) {
     // Origin validation: only accept messages from the server hosting the CAPTCHA page
-    const expectedOrigin = getExpectedOrigin(iframeUrl);
+    const expectedOrigin = getExpectedOrigin(buildIframeSrc(iframeUrl));
     if (expectedOrigin && event.origin !== expectedOrigin) {
       return;
     }
@@ -56,7 +79,7 @@
    */
   export function reset() {
     if (iframeRef?.contentWindow) {
-      const expectedOrigin = getExpectedOrigin(iframeUrl);
+      const expectedOrigin = getExpectedOrigin(buildIframeSrc(iframeUrl));
       iframeRef.contentWindow.postMessage({ type: 'captcha-reset' }, expectedOrigin || '*');
     }
   }
@@ -82,7 +105,7 @@
 
 <iframe
   bind:this={iframeRef}
-  src={iframeUrl}
+  src={buildIframeSrc(iframeUrl)}
   title="CAPTCHA verification"
   class="captcha-iframe"
   scrolling="no"

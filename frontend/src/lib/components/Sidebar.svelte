@@ -473,6 +473,7 @@
           onToggleSortDropdown={() => (showSortDropdown = !showSortDropdown)}
           onSortSelect={handleSortSelect}
           onBindSortDropdownRef={(el) => (sortDropdownRef = el)}
+          onCloseSidebar={() => ui.setSidebarOpen(false)}
         />
 
         <!-- Notes Tree (main content - maximized space) -->

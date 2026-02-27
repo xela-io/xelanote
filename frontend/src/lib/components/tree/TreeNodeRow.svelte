@@ -280,7 +280,7 @@
     background: none;
     border: 1px solid transparent;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.2;
     color: var(--color-sidebar-foreground);
     border-radius: var(--radius-sm);
@@ -528,7 +528,7 @@
   /* Touch-optimized sizes */
   @media (pointer: coarse) {
     .tree-button {
-      font-size: 15px;
+      font-size: 17px;
       padding: 6px 10px;
       gap: 8px;
     }

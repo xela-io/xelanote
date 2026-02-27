@@ -155,38 +155,52 @@ xelanote is a privacy-first, self-hosted note-taking app that combines modern kn
 
 ## Screenshots
 
-<!-- Screenshots coming soon -->
-
 <p align="center">
-  <em>Screenshots will be added here.</em>
-</p>
-
-<!--
-<p align="center">
-  <img src="docs/images/screenshot-editor.png" alt="Editor" width="800" />
-  <br /><sub>Markdown editor with live preview and frosted-glass toolbar</sub>
+  <img src="docs/pr-assets/screenshots/desktop/home-dashboard.png" alt="Home Dashboard (Light)" width="800" />
+  <br /><sub>Home dashboard with activity stats, quick search, and recent notes</sub>
 </p>
 
 <p align="center">
-  <img src="docs/images/screenshot-graph.png" alt="Knowledge Graph" width="800" />
+  <img src="docs/pr-assets/screenshots/desktop/home-dashboard-dark.png" alt="Home Dashboard (Dark)" width="800" />
+  <br /><sub>Dark mode — Gruvbox Dark theme</sub>
+</p>
+
+<p align="center">
+  <img src="docs/pr-assets/screenshots/desktop/note-editor.png" alt="Note Editor" width="800" />
+  <br /><sub>Live preview editor with sidebar, AI summary, tag and link suggestions</sub>
+</p>
+
+<p align="center">
+  <img src="docs/pr-assets/screenshots/desktop/graph.png" alt="Knowledge Graph" width="800" />
   <br /><sub>Interactive knowledge graph showing note connections</sub>
 </p>
 
 <p align="center">
-  <img src="docs/images/screenshot-canvas.png" alt="Infinite Canvas" width="800" />
-  <br /><sub>Free-form canvas with embedded notes and groups</sub>
+  <img src="docs/pr-assets/screenshots/desktop/journal.png" alt="Journal" width="800" />
+  <br /><sub>Journal with yearly heatmap, calendar navigation, and entry list</sub>
 </p>
 
 <p align="center">
-  <img src="docs/images/screenshot-recipes.png" alt="Recipes" width="800" />
-  <br /><sub>Structured recipe editor with AI import</sub>
+  <img src="docs/pr-assets/screenshots/desktop/recipe-ingredients.png" alt="Recipe Editor" width="800" />
+  <br /><sub>Structured recipe editor with ingredients, servings, and photo gallery</sub>
 </p>
 
 <p align="center">
-  <img src="docs/images/screenshot-mobile.png" alt="Mobile PWA" width="400" />
-  <br /><sub>Mobile PWA with bottom navigation and offline support</sub>
+  <img src="docs/pr-assets/screenshots/desktop/settings-encryption.png" alt="Encryption Settings" width="800" />
+  <br /><sub>End-to-end encryption settings with zero-knowledge architecture</sub>
 </p>
--->
+
+### Mobile (PWA)
+
+<p align="center">
+  <img src="docs/pr-assets/screenshots/xelanote_iphone_frame_5.png" alt="Mobile Editor" width="220" />&nbsp;&nbsp;
+  <img src="docs/pr-assets/screenshots/xelanote_iphone_frame_3.png" alt="Mobile Navigation" width="220" />&nbsp;&nbsp;
+  <img src="docs/pr-assets/screenshots/xelanote_iphone_frame_4.png" alt="Mobile Sidebar" width="220" />&nbsp;&nbsp;
+  <img src="docs/pr-assets/screenshots/xelanote_iphone_frame_2.png" alt="Mobile Security Settings" width="220" />
+</p>
+<p align="center">
+  <sub>Installable PWA with live preview editor, bottom navigation, folder tree, and security settings</sub>
+</p>
 
 ---
 

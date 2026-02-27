@@ -143,7 +143,8 @@ app.whenReady().then(async () => {
             "connect-src 'self' app: https: wss:",
             "img-src 'self' app: data: blob: https:",
             "font-src 'self' app: data:",
-            'frame-src https: http://localhost:*',
+            // CAPTCHA iframe and Turnstile challenge are loaded over HTTPS only in production.
+            'frame-src https:',
           ].join('; '),
         ],
       },

@@ -12,6 +12,16 @@ import { registerWindow } from '../modules/window-manager';
 
 // Determine if we're in development
 const isDev = process.env.NODE_ENV === 'development';
+const allowedExternalProtocols = new Set(['http:', 'https:', 'mailto:']);
+
+function isSafeExternalUrl(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    return allowedExternalProtocols.has(parsed.protocol.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Create the main application window.
@@ -134,7 +144,11 @@ export function createMainWindow(): BrowserWindow {
 
   // Open external links in default browser
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (isSafeExternalUrl(url)) {
+      shell.openExternal(url);
+    } else {
+      console.warn(`[Security] Blocked external URL with unsupported protocol: ${url}`);
+    }
     return { action: 'deny' };
   });
 

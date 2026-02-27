@@ -53,7 +53,6 @@ async function captureAndAssert(
     await gotoReady(page, route);
     await expect(page).toHaveScreenshot(filename, {
       animations: 'disabled',
-      maxDiffPixelRatio: 0.03,
     });
   } finally {
     await page.close().catch(() => {});

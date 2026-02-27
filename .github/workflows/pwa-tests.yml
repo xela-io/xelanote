@@ -1,0 +1,171 @@
+name: PWA Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/pwa-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/pwa-tests.yml'
+
+jobs:
+  scope-check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          CHANGED="$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)"
+          if echo "$CHANGED" | grep -qE '^(frontend/|\.github/workflows/pwa-tests\.yml$)'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  pwa-playwright:
+    needs: scope-check
+    if: needs.scope-check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: "1.25.x"
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install sqlite3 dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Pre-build backend
+        working-directory: backend
+        run: CGO_ENABLED=1 go build -tags "fts5" -o /tmp/xelanote-test ./cmd/server
+
+      - run: npm ci
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Build frontend (generates SW + Manifest)
+        run: npm run build
+
+      - name: Run PWA tests
+        run: CI=true npx playwright test --config=playwright.pwa.config.ts
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pwa-test-results
+          path: |
+            frontend/tests/reports/pwa-html/
+            frontend/tests/reports/pwa-results.json
+            frontend/tests/results/
+          retention-days: 7
+
+  lighthouse:
+    needs: scope-check
+    if: needs.scope-check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: "1.25.x"
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install sqlite3 dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Pre-build backend
+        working-directory: backend
+        run: CGO_ENABLED=1 go build -tags "fts5" -o /tmp/xelanote-test ./cmd/server
+
+      - run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Start backend
+        run: |
+          JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+          XELANOTE_DB=:memory: \
+          XELANOTE_ENV=test \
+          /tmp/xelanote-test &
+          # Warte bis Backend bereit ist
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:8080/api/health > /dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start preview server
+        run: |
+          npx vite preview --port 4173 &
+          # Warte bis Preview-Server bereit ist
+          for i in $(seq 1 15); do
+            if curl -s http://localhost:4173 > /dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run Lighthouse CI
+        run: npx lhci autorun
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lighthouse-reports
+          path: frontend/lighthouse-reports/
+          retention-days: 14

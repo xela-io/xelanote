@@ -151,7 +151,7 @@ func (s *AdminService) DeleteUser(adminID, targetUserID int) error {
 
 	// Delete uploads directory for the user
 	uploadDir := filepath.Join(s.dataDir, "uploads", strconv.Itoa(targetUserID))
-	os.RemoveAll(uploadDir) // Ignore errors - directory might not exist
+	_ = os.RemoveAll(uploadDir) //nolint:gosec // best-effort cleanup, directory might not exist
 
 	if err := s.db.DeleteUserByAdmin(targetUserID); err != nil {
 		return err

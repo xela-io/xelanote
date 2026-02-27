@@ -37,7 +37,7 @@ func (db *DB) RecordPerfMetric(metric PerfMetric) error {
 	}
 
 	// Opportunistic 90-day cleanup (ignore errors)
-	db.Exec("DELETE FROM perf_metrics WHERE created_at < datetime('now', '-90 days')") //nolint:errcheck
+	db.Exec("DELETE FROM perf_metrics WHERE created_at < datetime('now', '-90 days')") //nolint:errcheck,gosec
 	return nil
 }
 
@@ -53,6 +53,6 @@ func (db *DB) RecordAnalyticsEvent(event AnalyticsEvent) error {
 	}
 
 	// Opportunistic 90-day cleanup (ignore errors)
-	db.Exec("DELETE FROM analytics_events WHERE created_at < datetime('now', '-90 days')") //nolint:errcheck
+	db.Exec("DELETE FROM analytics_events WHERE created_at < datetime('now', '-90 days')") //nolint:errcheck,gosec
 	return nil
 }

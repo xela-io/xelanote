@@ -98,7 +98,7 @@ test.describe('Visual Regression - Public Pages @visual', () => {
           await expect(page).toHaveScreenshot(`${name}-${VARIANT.slug}.png`, {
             fullPage: true,
             animations: 'disabled',
-                });
+          });
         } finally {
           await page.close().catch(() => {});
         }
@@ -165,7 +165,7 @@ test.describe('Visual Regression - Responsive @visual', () => {
           await expect(page).toHaveScreenshot(`${vp.name}-${name}-${VARIANT.slug}.png`, {
             fullPage: true,
             animations: 'disabled',
-                });
+          });
         } finally {
           await page.close().catch(() => {});
         }

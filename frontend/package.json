@@ -45,7 +45,7 @@
     "test:report:generate": "npx tsx tests/utils/generate-report.ts",
     "test:debug": "PWDEBUG=1 playwright test",
     "test:headed": "playwright test --headed",
-    "tauri:dev": "tauri dev",
+    "tauri:dev": "tauri dev --features devtools",
     "tauri:build": "tauri build",
     "tauri:icon": "tauri icon",
     "electron:dev": "TMPBASE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}; mkdir -p \"$TMPBASE/xelanote-tmp\" && TMPDIR=\"$TMPBASE/xelanote-tmp\" TMP=\"$TMPBASE/xelanote-tmp\" TEMP=\"$TMPBASE/xelanote-tmp\" concurrently -k \"vite dev --port 5173 --strictPort\" \"sleep 2 && NODE_ENV=development electron-vite dev --ignoreConfigWarning\"",
@@ -87,7 +87,7 @@
     "eslint-plugin-svelte": "^3.0.0",
     "globals": "^15.15.0",
     "jsdom": "^25.0.1",
-    "markdownlint-cli2": "^0.20.0",
+    "markdownlint-cli2": "^0.21.0",
     "otpauth": "^9.4.1",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
@@ -116,7 +116,8 @@
     "workbox-window": "^7.4.0"
   },
   "overrides": {
-    "cookie": "^1.0.0"
+    "cookie": "^1.0.0",
+    "esbuild": "^0.25.12"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.3",

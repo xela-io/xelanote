@@ -15,8 +15,9 @@ COPY frontend/ ./
 RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Stage 2: Build Backend
-# Last updated: 2026-02-24
-FROM golang:1.25-alpine@sha256:f6751d823c26342f9506c03797d2527668d095b0a15f1862cddb4d927a7a4ced AS backend-builder
+# Last updated: 2026-02-27
+# Pin digest for supply-chain integrity while staying on Go 1.25.7 tag line.
+FROM golang:1.25.7-alpine@sha256:f6751d823c26342f9506c03797d2527668d095b0a15f1862cddb4d927a7a4ced AS backend-builder
 
 # For SQLCipher support: replace "gcc musl-dev" with "gcc musl-dev sqlcipher-dev",
 # change build tags to "fts5 sqlite_crypt", and add "sqlcipher" to runtime stage.

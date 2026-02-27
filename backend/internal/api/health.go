@@ -42,5 +42,5 @@ func availableDiskMB(path string) (int64, error) {
 	if err := syscall.Statfs(path, &stat); err != nil {
 		return 0, err
 	}
-	return int64(stat.Bavail) * int64(stat.Bsize) / (1024 * 1024), nil
+	return int64(stat.Bavail) * int64(stat.Bsize) / (1024 * 1024), nil //nolint:gosec // safe: disk size < 8EB
 }

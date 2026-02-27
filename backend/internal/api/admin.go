@@ -198,7 +198,7 @@ func (s *Server) toggleUserAdmin(w http.ResponseWriter, r *http.Request) {
 	ipAddress := getClientIPSafe(r)
 	userAgent := r.UserAgent()
 	targetUsername := targetUser.Username
-	s.activityService.LogUserAdminSet(adminID, targetID, req.IsAdmin, targetUsername, ipAddress, userAgent)
+	_ = s.activityService.LogUserAdminSet(adminID, targetID, req.IsAdmin, targetUsername, ipAddress, userAgent) //nolint:gosec // fire-and-forget logging
 
 	w.WriteHeader(http.StatusNoContent)
 }

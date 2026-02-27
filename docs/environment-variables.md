@@ -41,8 +41,9 @@ Complete reference for all environment variables used by xelanote.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Override the default Gemini model for LLM features. |
+| `OPENAI_MODEL` | `gpt-4o-mini` | Override the default OpenAI/ChatGPT model for LLM features. |
 
-> **Note:** Claude and Gemini API keys are configured per-user in Settings, not via environment variables.
+> **Note:** Claude, Gemini, and OpenAI API keys are configured per-user in Settings, not via environment variables.
 
 ## Optional - Error Reporting (Forgejo)
 

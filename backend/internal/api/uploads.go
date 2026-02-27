@@ -116,7 +116,7 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 	// Save file (still under lock)
 	filePath := filepath.Join(userUploadDir, filename)
-	dst, err := os.Create(filePath)
+	dst, err := os.Create(filePath) //nolint:gosec // path constructed from validated user ID + generated UUID filename
 	if err != nil {
 		uploadMu.Unlock()
 		respondError(w, http.StatusInternalServerError, "failed to save file")

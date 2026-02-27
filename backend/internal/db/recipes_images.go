@@ -207,7 +207,7 @@ func (db *DB) ReorderRecipeImages(noteID string, imageIDs []int) error {
 		args = append(args, id)
 	}
 
-	query := fmt.Sprintf(
+	query := fmt.Sprintf( //nolint:gosec // uses parametrized placeholders, no injection risk
 		"SELECT COUNT(*) FROM recipe_images WHERE note_id = ? AND id IN (%s)",
 		strings.Join(placeholders, ","),
 	)

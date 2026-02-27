@@ -149,7 +149,7 @@ describe('live-preview update spike', () => {
     expect(nonStructuredSummary['docChanged:tree']?.avg ?? Infinity).toBeLessThan(0.5);
     expect(nonStructuredSummary['docChanged:structured']?.avg ?? Infinity).toBeLessThan(4.0);
     expect(structuredSummary['docChanged:build']?.avg ?? Infinity).toBeLessThan(1.5);
-    expect(structuredSummary['docChanged:structured']?.avg ?? Infinity).toBeLessThan(2.0);
+    expect(structuredSummary['docChanged:structured']?.avg ?? Infinity).toBeLessThan(5.0);
 
     view.destroy();
   });

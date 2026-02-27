@@ -2725,6 +2725,6 @@ Alle Styles verwenden CSS-Variablen und funktionieren mit allen 9 Themes:
 
 **Issues**: [GitHub Issues](https://github.com/xela-io/xelanote/issues)
 
-**Discussions**: [GitHub Discussions](https://github.com/xela-io/xelanote/discussions)
+**Discussions**: [GitHub Issues](https://github.com/xela-io/xelanote/issues)
 
 **Matrix**: (TODO: Setup Matrix Room)

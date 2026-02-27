@@ -225,11 +225,7 @@ func (s *Server) setAIModels(w http.ResponseWriter, r *http.Request) {
 
 	s.summarizeService.InvalidateAllAIClients(userID)
 
-	respondJSON(w, http.StatusOK, aiModelsResponse{
-		ClaudeModel:  req.ClaudeModel,
-		GeminiModel:  req.GeminiModel,
-		ChatGPTModel: req.ChatGPTModel,
-	})
+	respondJSON(w, http.StatusOK, aiModelsResponse(req))
 }
 
 // getDietaryPreference returns the dietary preference for the user.
@@ -274,7 +270,7 @@ func (s *Server) setDietaryPreference(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, dietaryPreferenceResponse{DietaryPreference: req.DietaryPreference})
+	respondJSON(w, http.StatusOK, dietaryPreferenceResponse(req))
 }
 
 // getAvailableAIModels returns selectable models and estimated pricing metadata.

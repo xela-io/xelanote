@@ -81,7 +81,7 @@ func (m *Manager) Run() {
 						// Use closeOnce to prevent double-close race condition
 						conn.closeOnce.Do(func() {
 							close(conn.Send)
-							conn.Conn.Close()
+							conn.Conn.Close() //nolint:gosec // best-effort close during cleanup
 						})
 						break
 					}
@@ -117,7 +117,7 @@ func (m *Manager) Stop() {
 			for _, conn := range conns {
 				conn.closeOnce.Do(func() {
 					close(conn.Send)
-					conn.Conn.Close()
+					conn.Conn.Close() //nolint:gosec // best-effort close during shutdown
 				})
 			}
 			delete(m.connections, userID)

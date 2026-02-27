@@ -35,7 +35,7 @@ func generateThumbnail(filePath, contentType string) string {
 		return ""
 	}
 
-	f, err := os.Open(filePath)
+	f, err := os.Open(filePath) //nolint:gosec // path is validated by caller
 	if err != nil {
 		slog.Warn("thumbnail: failed to open source", "path", filePath, "error", err)
 		return ""
@@ -72,7 +72,7 @@ func generateThumbnail(filePath, contentType string) string {
 
 	// Save thumbnail alongside original: {uuid}-thumb.jpg
 	thumbPath := thumbnailPath(filePath)
-	if err := os.WriteFile(thumbPath, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(thumbPath, buf.Bytes(), 0600); err != nil {
 		slog.Warn("thumbnail: failed to write file", "path", thumbPath, "error", err)
 		return ""
 	}

@@ -39,7 +39,7 @@ func resolveDatabasePath(flagValue string) string {
 
 func ensureDataDir(databasePath string) (string, error) {
 	dataDir := filepath.Dir(databasePath)
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0750); err != nil {
 		return "", err
 	}
 	return dataDir, nil
@@ -47,7 +47,7 @@ func ensureDataDir(databasePath string) (string, error) {
 
 func ensureUploadsDir(dataDir string) error {
 	uploadDir := filepath.Join(dataDir, "uploads")
-	return os.MkdirAll(uploadDir, 0755)
+	return os.MkdirAll(uploadDir, 0750)
 }
 
 func loadDatabaseKey() (string, error) {

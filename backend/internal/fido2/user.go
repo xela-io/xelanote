@@ -17,7 +17,7 @@ type WebAuthnUser struct {
 // WebAuthnID returns the user's ID as bytes (required by webauthn.User interface).
 func (u *WebAuthnUser) WebAuthnID() []byte {
 	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(u.ID))
+	binary.BigEndian.PutUint64(buf, uint64(u.ID)) //nolint:gosec // user IDs are always positive
 	return buf
 }
 

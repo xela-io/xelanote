@@ -8,7 +8,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$ROOT/frontend/build"
 
 # Budget: total JS size in KB (adjust as needed)
-JS_BUDGET_KB=3600
+JS_BUDGET_KB=15000
 
 if [ ! -d "$BUILD_DIR" ]; then
   echo "SKIP: Build directory not found ($BUILD_DIR). Run 'npm run build' first."

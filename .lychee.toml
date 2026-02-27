@@ -17,6 +17,9 @@ exclude = [
   "https://SERVER-URL",
   "https://your-server",
 
+  # GitHub tag comparison links (may 404 until tags are pushed)
+  "https://github\\.com/xela-io/xelanote/compare/",
+
   # Mail addresses (mailto:)
   "^mailto:",
 ]

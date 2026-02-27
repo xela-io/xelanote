@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"time"
 )
 
 // Start pprof server (ONLY when explicitly enabled via PPROF_ENABLED=true).
@@ -33,7 +34,14 @@ func startPprofServerIfEnabled() {
 		log.Printf("  Heap Profile: http://%s/debug/pprof/heap", pprofAddr)
 		log.Printf("  Goroutines: http://%s/debug/pprof/goroutine", pprofAddr)
 
-		if err := http.ListenAndServe(pprofAddr, pprofMux); err != nil {
+		pprofServer := &http.Server{
+			Addr:         pprofAddr,
+			Handler:      pprofMux,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 60 * time.Second,
+			IdleTimeout:  120 * time.Second,
+		}
+		if err := pprofServer.ListenAndServe(); err != nil {
 			log.Printf("pprof server failed: %v", err)
 		}
 	}()

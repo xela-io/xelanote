@@ -136,12 +136,12 @@ func (s *Server) saveImportedRecipeImage(userID int, data []byte, mimeType strin
 	filename := uuid + ext
 
 	userUploadDir := filepath.Join(s.dataDir, UploadDir, strconv.Itoa(userID))
-	if err := os.MkdirAll(userUploadDir, 0755); err != nil {
+	if err := os.MkdirAll(userUploadDir, 0750); err != nil {
 		return "", fmt.Errorf("create upload directory: %w", err)
 	}
 
 	filePath := filepath.Join(userUploadDir, filename)
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0600); err != nil {
 		return "", fmt.Errorf("write image: %w", err)
 	}
 

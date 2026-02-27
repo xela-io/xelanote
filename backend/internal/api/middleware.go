@@ -237,14 +237,6 @@ func requestIDLoggerMiddleware(next http.Handler) http.Handler {
 
 const requestLoggerKey contextKey = "requestID"
 
-// getRequestID extracts the request ID from the context.
-func getRequestID(ctx context.Context) string {
-	if id, ok := ctx.Value(requestLoggerKey).(string); ok {
-		return id
-	}
-	return ""
-}
-
 // adminMiddleware checks if the authenticated user is an admin
 // Must be used after authMiddleware
 func (s *Server) adminMiddleware(next http.Handler) http.Handler {

@@ -53,7 +53,7 @@ func ensureUploadsDir(dataDir string) error {
 func loadDatabaseKey() (string, error) {
 	keyFile := strings.TrimSpace(os.Getenv("XELANOTE_DB_KEY_FILE"))
 	if keyFile != "" {
-		content, err := os.ReadFile(keyFile)
+		content, err := os.ReadFile(keyFile) //nolint:gosec // path from trusted env var XELANOTE_DB_KEY_FILE
 		if err != nil {
 			return "", err
 		}

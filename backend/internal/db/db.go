@@ -108,7 +108,7 @@ func Open(path, key string, opts ...OpenOptions) (*DB, error) {
 
 	for _, pragma := range pragmas {
 		if _, err := db.Exec(pragma); err != nil {
-			db.Close()
+			db.Close() //nolint:gosec // best-effort close on error path
 			return nil, fmt.Errorf("failed to execute %s: %w", pragma, err)
 		}
 	}
@@ -116,7 +116,7 @@ func Open(path, key string, opts ...OpenOptions) (*DB, error) {
 	// Verify journal mode was set correctly (some filesystems don't support WAL)
 	var actualMode string
 	if err := db.QueryRow("PRAGMA journal_mode").Scan(&actualMode); err != nil {
-		db.Close()
+		db.Close() //nolint:gosec // best-effort close on error path
 		return nil, fmt.Errorf("failed to verify journal_mode: %w", err)
 	}
 	if !strings.EqualFold(actualMode, journalMode) {
@@ -127,7 +127,7 @@ func Open(path, key string, opts ...OpenOptions) (*DB, error) {
 
 	// Verify connection
 	if err := db.Ping(); err != nil {
-		db.Close()
+		db.Close() //nolint:gosec // best-effort close on error path
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 

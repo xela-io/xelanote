@@ -643,10 +643,10 @@ Security Hardening: `--read-only`, `--cap-drop ALL`, `--no-new-privileges`, `--t
 
 | Umgebung | URL | Infra |
 |----------|-----|-------|
-| Staging | notes.over-cloud.de | Homelab |
+| Staging | `<STAGING_URL>` | Homelab |
 | Production | xelanote.com | Hetzner |
 
-Beide pullen von Forgejo (`git.over-cloud.de`). Vollstaendige Anleitung: `docs/deployment.md`.
+Beide pullen von Forgejo (`<FORGEJO_URL>`). Vollstaendige Anleitung: `docs/deployment.md`.
 
 ---
 

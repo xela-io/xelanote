@@ -111,7 +111,7 @@ Alle Updates in diesem Plan sind **rückwärtskompatibel** (Minor/Patch-Level). 
   - [ ] Commit mit `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>`
   - [ ] `git push forgejo main` triggert Staging-Workflow
   - [ ] Staging-Workflow grün (inkl. Quality-Gates mit `golang:1.25-alpine`)
-  - [ ] `curl https://notes.over-cloud.de/health` gibt 200
+  - [ ] `curl https://<STAGING_URL>/health` gibt 200
   - [ ] Manueller Smoke-Test auf Staging (Login, Notiz bearbeiten, Suche)
 
 ### Task 3.3: Production-Deploy (nach 24h Staging)

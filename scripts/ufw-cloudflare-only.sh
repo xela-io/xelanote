@@ -123,4 +123,4 @@ ufw status verbose
 
 log ""
 log "IMPORTANT: Verify you can still access the server via SSH before closing this session!"
-log "  Run in another terminal: ssh xelanote-prod"
+log "  Run in another terminal: ssh <PROD_SSH_ALIAS>"

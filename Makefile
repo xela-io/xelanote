@@ -96,7 +96,7 @@ phone-setup-https:
 	bash scripts/setup-local-phone-https.sh
 
 phone-setup-ip-cert:
-	@test -n "$(IP)" || (echo "Usage: make phone-setup-ip-cert IP=10.22.22.60"; exit 1)
+	@test -n "$(IP)" || (echo "Usage: make phone-setup-ip-cert IP=<YOUR_LAN_IP>"; exit 1)
 	@command -v mkcert >/dev/null 2>&1 || { echo "mkcert not found"; exit 1; }
 	@mkdir -p .certs
 	mkcert -cert-file .certs/lan-ip.pem -key-file .certs/lan-ip-key.pem $(IP)

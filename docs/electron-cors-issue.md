@@ -40,7 +40,7 @@ CORS_ALLOWED_ORIGINS=https://xelanote.com,https://www.xelanote.com
 
 ### 1. Backend CORS-Konfiguration aktualisiert
 
-**Server:** `xelanote-prod`
+**Server:** `<PROD_SSH_ALIAS>`
 **Datei:** `~/.xelanote.env`
 
 ```bash
@@ -51,7 +51,7 @@ CORS_ALLOWED_ORIGINS=https://xelanote.com,https://www.xelanote.com,app://.
 **Implementierung:**
 ```bash
 # SSH auf Production Server
-ssh xelanote-prod
+ssh <PROD_SSH_ALIAS>
 
 # Env-Datei aktualisieren
 nano ~/.xelanote.env
@@ -193,7 +193,7 @@ rm -rf ~/.config/xelanote-frontend/Cache
 rm -rf ~/.config/xelanote-frontend/Code\ Cache
 
 # 3. App neu starten
-cd ~/Nextcloud/Documents/projects/xelanote/frontend
+cd ~/path/to/xelanote/frontend
 ./release/xelanote-0.1.0-x86_64.AppImage
 ```
 
@@ -233,7 +233,7 @@ curl -I https://xelanote.com/api/config | grep cf-cache-status
 Falls du weitere Origins hinzufügen möchtest:
 
 ```bash
-ssh xelanote-prod
+ssh <PROD_SSH_ALIAS>
 nano ~/.xelanote.env
 
 # Füge neue Origins hinzu (komma-getrennt, KEINE Leerzeichen!)
@@ -276,7 +276,7 @@ CORS_ALLOWED_ORIGINS=
 ### Container-Logs prüfen
 
 ```bash
-ssh xelanote-prod
+ssh <PROD_SSH_ALIAS>
 sudo docker logs xelanote 2>&1 | grep -i cors
 ```
 

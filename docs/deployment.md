@@ -300,19 +300,19 @@ git push forgejo main
 
 ### 2. Code auf Server ziehen (nur Hetzner)
 ```bash
-ssh xelanote-prod "cd ~/xelanote && git pull"
+ssh <PROD_SSH_ALIAS> "cd ~/xelanote && git pull"
 ```
 
 ### 3. Docker Image bauen (nur Hetzner)
 ```bash
-ssh xelanote-prod "cd ~/xelanote && sudo docker build -t xelanote:latest ."
+ssh <PROD_SSH_ALIAS> "cd ~/xelanote && sudo docker build -t xelanote:latest ."
 ```
 
 ### 4. Container neu starten (nur Hetzner)
 ```bash
-ssh xelanote-prod "sudo docker stop xelanote && sudo docker rm xelanote"
+ssh <PROD_SSH_ALIAS> "sudo docker stop xelanote && sudo docker rm xelanote"
 
-ssh xelanote-prod 'sudo docker run -d --name xelanote --restart unless-stopped \
+ssh <PROD_SSH_ALIAS> 'sudo docker run -d --name xelanote --restart unless-stopped \
   -p 127.0.0.1:8080:8080 \
   -v ~/xelanote-data:/app/data \
   --memory=512m --cpus=1 --security-opt no-new-privileges --pids-limit=200 \
@@ -329,7 +329,7 @@ curl https://<STAGING_URL>/health
 
 # Hetzner Production
 curl https://xelanote.com/health
-ssh xelanote-prod "sudo docker logs xelanote --tail 20"
+ssh <PROD_SSH_ALIAS> "sudo docker logs xelanote --tail 20"
 ```
 
 ---
@@ -731,7 +731,7 @@ See [SECURITY.md](../SECURITY.md) for detailed security logging documentation.
 | **Server** | Hetzner Cloud CX22 |
 | **IP** | <PRODUCTION_IP> |
 | **OS** | Ubuntu 24.04 LTS |
-| **SSH** | `ssh xelanote-prod` (non-standard port, dedicated user) |
+| **SSH** | `ssh <PROD_SSH_ALIAS>` (non-standard port, dedicated user) |
 | **URL** | https://xelanote.com |
 | **Domain** | xelanote.com (in Vorbereitung) |
 
@@ -739,7 +739,7 @@ See [SECURITY.md](../SECURITY.md) for detailed security logging documentation.
 
 ```bash
 # Über SSH-Config (empfohlen)
-ssh xelanote-prod
+ssh <PROD_SSH_ALIAS>
 
 # Oder manuell
 ssh -i ~/.ssh/xelanote_server -p <SSH_PORT> <PROD_USER>@<PRODUCTION_IP>
@@ -747,7 +747,7 @@ ssh -i ~/.ssh/xelanote_server -p <SSH_PORT> <PROD_USER>@<PRODUCTION_IP>
 
 **Lokale SSH-Config** (`~/.ssh/config`):
 ```
-Host xelanote-prod
+Host <PROD_SSH_ALIAS>
     HostName <PRODUCTION_IP>
     User <PROD_USER>
     Port <SSH_PORT>
@@ -835,7 +835,7 @@ sudo systemctl status unattended-upgrades
 
 **Backup-Skript**: `/root/backup-xelanote.sh`
 - **Frequenz**: Täglich um 3:00 UTC (Cronjob)
-- **Speicherort**: `/root/backups/`
+- **Speicherort**: `<BACKUP_DIR>/`
 - **Retention**: Letzte 7 Backups
 - **Methode**: SQLite Online-Backup (ohne Downtime)
 
@@ -844,7 +844,7 @@ sudo systemctl status unattended-upgrades
 sudo /root/backup-xelanote.sh
 
 # Backups anzeigen
-sudo ls -la /root/backups/
+sudo ls -la <BACKUP_DIR>/
 ```
 
 #### 7. Health-Monitoring
@@ -871,11 +871,11 @@ sudo tail -20 /var/log/xelanote-health.log
 git push forgejo main
 
 # 2. Server: Pull & Build
-ssh xelanote-prod "cd ~/xelanote && git pull && sudo docker build -t xelanote:latest ."
+ssh <PROD_SSH_ALIAS> "cd ~/xelanote && git pull && sudo docker build -t xelanote:latest ."
 
 # 3. Container neu starten
-ssh xelanote-prod "sudo docker stop xelanote && sudo docker rm xelanote"
-ssh xelanote-prod 'sudo docker run -d --name xelanote --restart unless-stopped \
+ssh <PROD_SSH_ALIAS> "sudo docker stop xelanote && sudo docker rm xelanote"
+ssh <PROD_SSH_ALIAS> 'sudo docker run -d --name xelanote --restart unless-stopped \
   -p 8080:8080 \
   -v ~/xelanote-data:/app/data \
   --memory=512m \
@@ -897,7 +897,7 @@ Caddy ist installiert und wartet auf Domain-Aktivierung.
 
 **Status prüfen:**
 ```bash
-ssh xelanote-prod "sudo systemctl status caddy"
+ssh <PROD_SSH_ALIAS> "sudo systemctl status caddy"
 ```
 
 **Caddyfile** (`/etc/caddy/Caddyfile`):
@@ -929,7 +929,7 @@ ssh xelanote-prod "sudo systemctl status caddy"
 
 2. **Caddyfile aktivieren:**
    ```bash
-   ssh xelanote-prod
+   ssh <PROD_SSH_ALIAS>
    sudo nano /etc/caddy/Caddyfile
    # Domain-Block einkommentieren, :80 Block auskommentieren
    sudo systemctl reload caddy
@@ -972,9 +972,9 @@ ssh xelanote-prod "sudo systemctl status caddy"
 
 #### Kernel-Update (pending)
 ```bash
-ssh xelanote-prod "sudo reboot"
+ssh <PROD_SSH_ALIAS> "sudo reboot"
 # Warten, dann reconnect
-ssh xelanote-prod "uname -r"
+ssh <PROD_SSH_ALIAS> "uname -r"
 ```
 
 #### Logs rotieren
@@ -982,10 +982,10 @@ Automatisch via Docker und logrotate.
 
 #### Backups prüfen
 ```bash
-ssh xelanote-prod "sudo ls -la /root/backups/"
+ssh <PROD_SSH_ALIAS> "sudo ls -la <BACKUP_DIR>/"
 ```
 
 #### Fail2ban-Bans prüfen
 ```bash
-ssh xelanote-prod "sudo fail2ban-client status sshd"
+ssh <PROD_SSH_ALIAS> "sudo fail2ban-client status sshd"
 ```

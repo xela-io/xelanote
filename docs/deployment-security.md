@@ -183,7 +183,7 @@ sqlite3 ~/xelanote-data/xelanote.db ".backup ~/backup-$(date +%Y%m%d).db"
 ### Automatisches Backup (Cron)
 ```bash
 # Täglich 3:00 UTC
-echo "0 3 * * * sqlite3 /home/deploy/xelanote-data/xelanote.db \".backup /root/backups/xelanote-\$(date +\%Y\%m\%d).db\"" | sudo crontab -
+echo "0 3 * * * sqlite3 <DEPLOY_DATA_DIR>/xelanote.db \".backup <BACKUP_DIR>/xelanote-\$(date +\%Y\%m\%d).db\"" | sudo crontab -
 ```
 
 ## Security Monitoring

@@ -222,10 +222,10 @@ make phone-setup-https
 
 3. IP-Zertifikat erzeugen (für direkten Zugriff vom iPhone ohne DNS)
 
-Beispiel mit LAN-IP `10.22.22.60`:
+Beispiel mit LAN-IP `<YOUR_LAN_IP>`:
 
 ```bash
-make phone-setup-ip-cert IP=10.22.22.60
+make phone-setup-ip-cert IP=<YOUR_LAN_IP>
 ```
 
 ### Lokaler Betrieb (3 Terminals)
@@ -260,8 +260,8 @@ make phone-caddy
 
 Direkt per IP (kein DNS nötig):
 
-- PWA Preview: `https://10.22.22.60:8443`
-- Vite Dev (HMR): `https://10.22.22.60:8444`
+- PWA Preview: `https://<YOUR_LAN_IP>:8443`
+- Vite Dev (HMR): `https://<YOUR_LAN_IP>:8444`
 
 Optional per Hostname (wenn im Netzwerk auflösbar):
 
@@ -972,7 +972,7 @@ go tool pprof -http=:8081 goroutine.prof
 
 ```bash
 # Create SSH tunnel (Hetzner example)
-ssh -L 6060:127.0.0.1:6060 xelanote-prod
+ssh -L 6060:127.0.0.1:6060 <PROD_SSH_ALIAS>
 
 # In another terminal: access as if local
 curl http://localhost:6060/debug/pprof/

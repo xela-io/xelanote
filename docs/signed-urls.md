@@ -251,9 +251,9 @@ BenchmarkValidateUploadSignature    500000    3.5 µs/op    128 B/op    4 allocs
 **Deploy Command:**
 ```bash
 git push origin main
-ssh xelanote-prod "cd ~/xelanote && git pull && sudo docker build -t xelanote:latest ."
-ssh xelanote-prod "sudo docker stop xelanote && sudo docker rm xelanote"
-ssh xelanote-prod 'sudo docker run -d --name xelanote --restart unless-stopped \
+ssh <PROD_SSH_ALIAS> "cd ~/xelanote && git pull && sudo docker build -t xelanote:latest ."
+ssh <PROD_SSH_ALIAS> "sudo docker stop xelanote && sudo docker rm xelanote"
+ssh <PROD_SSH_ALIAS> 'sudo docker run -d --name xelanote --restart unless-stopped \
   -p 127.0.0.1:8080:8080 -v ~/xelanote-data:/app/data \
   --memory=512m --cpus=1 --security-opt no-new-privileges --pids-limit=200 \
   --env-file ~/.xelanote.env xelanote:latest'

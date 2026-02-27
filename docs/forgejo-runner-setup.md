@@ -38,11 +38,11 @@ Developer                    Forgejo (<FORGEJO_URL>)
 | **Runner-Label** | `staging:host` | `production:host` |
 | **Workflow** | `deploy-staging.yml` | `deploy-production.yml` |
 | **Trigger** | Push auf `main` | Tag `v*` oder manuell |
-| **Env-File** | `/home/container/.xelanote.env` | `/home/deploy/.xelanote.env` |
+| **Env-File** | `<STAGING_ENV_FILE>` | `<PROD_ENV_FILE>` |
 | **Port** | 127.0.0.1:8081 → 8080 | 127.0.0.1:8080 → 8080 |
 | **Reverse Proxy** | nginx-proxy-manager | Caddy |
 | **Docker-Netzwerk** | `nginx_default` | keins (Caddy auf Host) |
-| **Volume** | Docker Volume `xelanote_xelanote-data` | Bind Mount `/home/deploy/xelanote-data` |
+| **Volume** | Docker Volume `xelanote_xelanote-data` | Bind Mount `<PROD_HOME>/xelanote-data` |
 | **Image Retention** | 3 Images | 5 Images |
 | **Pre-Deploy Backup** | nein | ja (automatisch) |
 
@@ -81,11 +81,11 @@ Zusaetzlich umgebungsspezifisch:
 
 **Staging:**
 - Docker-Netzwerk `nginx_default` (fuer nginx-proxy-manager)
-- Env-File `/home/container/.xelanote.env` (chmod 600)
+- Env-File `<STAGING_ENV_FILE>` (chmod 600)
 
 **Production:**
-- Env-File `/home/deploy/.xelanote.env` (chmod 600)
-- Daten-Verzeichnis `/home/deploy/xelanote-data/`
+- Env-File `<PROD_ENV_FILE>` (chmod 600)
+- Daten-Verzeichnis `<DEPLOY_DATA_DIR>/`
 
 ---
 
@@ -126,12 +126,12 @@ sudo usermod -aG docker forgejo-runner
 
 # 4. ACL auf Env-File (Pfade anpassen!)
 # Staging:
-sudo setfacl -m "u:forgejo-runner:r" /home/container/.xelanote.env
-sudo setfacl -m "u:forgejo-runner:x" /home/container
+sudo setfacl -m "u:forgejo-runner:r" <STAGING_ENV_FILE>
+sudo setfacl -m "u:forgejo-runner:x" <STAGING_HOME>
 
 # Production:
-sudo setfacl -m "u:forgejo-runner:r" /home/deploy/.xelanote.env
-sudo setfacl -m "u:forgejo-runner:x" /home/deploy
+sudo setfacl -m "u:forgejo-runner:r" <PROD_ENV_FILE>
+sudo setfacl -m "u:forgejo-runner:x" <PROD_HOME>
 
 # 5. Systemd-Service erstellen (siehe Abschnitt weiter unten)
 ```
@@ -331,13 +331,13 @@ Beim allerersten Deploy gibt es kein Rollback-Target.
 
 ## Env-Files
 
-### Staging: `/home/container/.xelanote.env`
+### Staging: `<STAGING_ENV_FILE>`
 
-Owner: `container:container`, chmod 600. ACL: `u:forgejo-runner:r`.
+Owner: `<STAGING_USER>:<STAGING_USER>`, chmod 600. ACL: `u:forgejo-runner:r`.
 
-### Production: `/home/deploy/.xelanote.env`
+### Production: `<PROD_ENV_FILE>`
 
-Owner: `deploy:deploy`, chmod 600. ACL: `u:forgejo-runner:r`.
+Owner: `<PROD_USER>:<PROD_USER>`, chmod 600. ACL: `u:forgejo-runner:r`.
 
 ### Pflicht-Variablen
 

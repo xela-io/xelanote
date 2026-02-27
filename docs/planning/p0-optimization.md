@@ -1238,7 +1238,7 @@ git merge feature/p0-optimization
 git push origin main
 
 # SSH zu Hetzner
-ssh xelanote-prod
+ssh <PROD_SSH_ALIAS>
 
 # Pull + Deploy
 cd ~/xelanote

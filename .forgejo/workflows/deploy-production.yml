@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ENV_FILE: /home/deploy/.xelanote.env
+  ENV_FILE: /home/deploy/.xelanote.env  # Adjust to your server's env file location
   IMAGE_NAME: xelanote
   HEALTH_URL: http://localhost:8080/health
 
@@ -105,7 +105,7 @@ jobs:
             --name $IMAGE_NAME \
             --restart unless-stopped \
             -p 127.0.0.1:8080:8080 \
-            -v /home/deploy/xelanote-data:/app/data \
+            -v /home/deploy/xelanote-data:/app/data \  # Adjust to your data directory
             --env-file $ENV_FILE \
             --memory=512m --cpus=1 --pids-limit=200 \
             --security-opt no-new-privileges --cap-drop ALL \
@@ -124,7 +124,7 @@ jobs:
           BACKUP_DIR="/var/lib/forgejo-runner/backups"
           mkdir -p "$BACKUP_DIR"
 
-          DB_PATH="/home/deploy/xelanote-data/xelanote.db"
+          DB_PATH="/home/deploy/xelanote-data/xelanote.db"  # Adjust to your data directory
           if [ -f "$DB_PATH" ]; then
             TIMESTAMP=$(date +%Y%m%d_%H%M%S)
             echo "Creating pre-deploy backup..."

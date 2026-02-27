@@ -12,7 +12,7 @@ concurrency:
 
 env:
   DOCKER_NETWORK: nginx_default
-  ENV_FILE: /home/container/.xelanote.env
+  ENV_FILE: /home/container/.xelanote.env  # Adjust to your server's env file location
   IMAGE_NAME: xelanote
 
 jobs:

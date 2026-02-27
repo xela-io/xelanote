@@ -42,7 +42,7 @@ officially representing the community in public spaces.
 
 ## Enforcement
 
-Report incidents to: anor.londoe@pm.me
+Report incidents to: https://github.com/xela-io/xelanote/issues
 
 All complaints will be reviewed and investigated promptly and fairly. All community leaders are
 obligated to respect the privacy and security of the reporter of any incident.

@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability in XelaNote, please report it to:
 
-**Email:** anor.londoe@pm.me
+**Email:** [Report a vulnerability](https://github.com/xela-io/xelanote/security/advisories/new)
 
 Please **do not** create public GitHub issues for security vulnerabilities.
 
@@ -278,7 +278,7 @@ TURNSTILE_SITE_KEY=<cloudflare_site_key>
 
 ## Contact
 
-**Security Issues:** anor.londoe@pm.me
+**Security Issues:** [Report a vulnerability](https://github.com/xela-io/xelanote/security/advisories/new)
 **General Support:** https://github.com/xela-io/xelanote/issues
 **Documentation:** https://github.com/xela-io/xelanote/tree/main/docs
 

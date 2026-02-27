@@ -244,7 +244,7 @@ docker exec xelanote sqlite3 /app/data/xelanote.db ".backup /tmp/xelanote_pre_m0
 docker cp xelanote:/tmp/xelanote_pre_m027.db ~/backups/
 
 # Hetzner Production
-ssh xelanote-prod
+ssh <PROD_SSH_ALIAS>
 sudo docker exec xelanote sqlite3 /app/data/xelanote.db ".backup /tmp/xelanote_pre_m027.db"
 sudo docker cp xelanote:/tmp/xelanote_pre_m027.db ~/backups/
 ```

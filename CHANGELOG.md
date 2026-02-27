@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Pre-public-release security & privacy audit: removed personal email addresses from SECURITY.md and CODE_OF_CONDUCT.md, redacted internal infrastructure details (SSH aliases, staging/production IPs, internal domains, server paths, LAN IPs) across all documentation, annotated deployment workflow paths, documented LGPL-3.0 sharp/libvips dependency in THIRD-PARTY-LICENSES.md, removed 18MB compiled Go binary from git history via git-filter-repo
+
 ### Added
 
 - Mobile ToC FAB: Table of Contents trigger becomes a fixed-position floating action button (bottom-right) on mobile with an SVG progress ring that fills as the user scrolls; desktop behavior unchanged

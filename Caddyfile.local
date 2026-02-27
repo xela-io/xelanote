@@ -22,8 +22,8 @@
 # Hostnames:
 # - `dev.xelanote.local`  -> Vite dev server (:5173)
 # - `pwa.xelanote.local`  -> Vite preview server (:4173)
-# - `10.22.22.60:8444`    -> Vite dev server (:5173)  [LAN IP direct]
-# - `10.22.22.60:8443`    -> Vite preview server (:4173) [LAN IP direct]
+# - `<YOUR_LAN_IP>:8444`    -> Vite dev server (:5173)  [LAN IP direct]
+# - `<YOUR_LAN_IP>:8443`    -> Vite preview server (:4173) [LAN IP direct]
 # - Both proxy `/api/*` to backend (:8080)
 
 https://dev.xelanote.local:8443 {
@@ -45,9 +45,9 @@ https://pwa.xelanote.local:8443 {
 }
 
 # Direct LAN-IP access (no DNS needed on iPhone)
-# Requires an mkcert certificate with IP SAN for 10.22.22.60:
-#   mkcert -cert-file .certs/lan-ip.pem -key-file .certs/lan-ip-key.pem 10.22.22.60
-https://10.22.22.60:8443 {
+# Requires an mkcert certificate with IP SAN for <YOUR_LAN_IP>:
+#   mkcert -cert-file .certs/lan-ip.pem -key-file .certs/lan-ip-key.pem <YOUR_LAN_IP>
+https://<YOUR_LAN_IP>:8443 {
   tls .certs/lan-ip.pem .certs/lan-ip-key.pem
 
   @api path /api/*
@@ -56,7 +56,7 @@ https://10.22.22.60:8443 {
   reverse_proxy 127.0.0.1:4173
 }
 
-https://10.22.22.60:8444 {
+https://<YOUR_LAN_IP>:8444 {
   tls .certs/lan-ip.pem .certs/lan-ip-key.pem
 
   @api path /api/*

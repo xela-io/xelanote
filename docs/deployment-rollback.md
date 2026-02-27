@@ -49,7 +49,7 @@ Before executing a rollback:
 ssh <STAGING_USER>@<STAGING_IP> "docker stop xelanote"
 
 # Hetzner Production
-ssh xelanote-prod "sudo docker stop xelanote"
+ssh <PROD_SSH_ALIAS> "sudo docker stop xelanote"
 ```
 
 ### Step 2: Remove Failed Container
@@ -59,7 +59,7 @@ ssh xelanote-prod "sudo docker stop xelanote"
 ssh <STAGING_USER>@<STAGING_IP> "docker rm xelanote"
 
 # Hetzner Production
-ssh xelanote-prod "sudo docker rm xelanote"
+ssh <PROD_SSH_ALIAS> "sudo docker rm xelanote"
 ```
 
 ### Step 3: Restore Previous Image
@@ -71,7 +71,7 @@ ssh xelanote-prod "sudo docker rm xelanote"
 ssh <STAGING_USER>@<STAGING_IP> "docker pull xelanote:v1.2.3"
 
 # Hetzner - pull specific tag
-ssh xelanote-prod "sudo docker pull xelanote:v1.2.3"
+ssh <PROD_SSH_ALIAS> "sudo docker pull xelanote:v1.2.3"
 ```
 
 **Option B: Rebuild from previous Git commit**
@@ -81,7 +81,7 @@ ssh xelanote-prod "sudo docker pull xelanote:v1.2.3"
 ssh <STAGING_USER>@<STAGING_IP> "cd ~/xelanote && git checkout <previous-commit-sha> && docker build -t xelanote:rollback ."
 
 # Hetzner
-ssh xelanote-prod "cd ~/xelanote && git checkout <previous-commit-sha> && sudo docker build -t xelanote:rollback ."
+ssh <PROD_SSH_ALIAS> "cd ~/xelanote && git checkout <previous-commit-sha> && sudo docker build -t xelanote:rollback ."
 ```
 
 ### Step 4: Restore Database (if migrations ran)
@@ -93,8 +93,8 @@ ssh xelanote-prod "cd ~/xelanote && git checkout <previous-commit-sha> && sudo d
 ssh <STAGING_USER>@<STAGING_IP> "cp /path/to/backup/xelanote-backup-YYYY-MM-DD.db ~/xelanote/data/xelanote.db"
 
 # Hetzner - restore from daily backup
-ssh xelanote-prod "sudo cp /root/backups/xelanote-backup-YYYY-MM-DD.db /home/deploy/xelanote-data/xelanote.db"
-ssh xelanote-prod "sudo chown 100:101 /home/deploy/xelanote-data/xelanote.db"
+ssh <PROD_SSH_ALIAS> "sudo cp <BACKUP_DIR>/xelanote-backup-YYYY-MM-DD.db <DEPLOY_DATA_DIR>/xelanote.db"
+ssh <PROD_SSH_ALIAS> "sudo chown 100:101 <DEPLOY_DATA_DIR>/xelanote.db"
 ```
 
 ### Step 5: Start Previous Version
@@ -112,7 +112,7 @@ ssh <STAGING_USER>@<STAGING_IP> 'docker run -d --name xelanote --restart unless-
 **Hetzner Production:**
 
 ```bash
-ssh xelanote-prod 'sudo docker run -d --name xelanote --restart unless-stopped \
+ssh <PROD_SSH_ALIAS> 'sudo docker run -d --name xelanote --restart unless-stopped \
   -p 127.0.0.1:8080:8080 \
   -v ~/xelanote-data:/app/data \
   --memory=512m \
@@ -130,7 +130,7 @@ Run verification checks:
 ```bash
 # Check container is running
 ssh <STAGING_USER>@<STAGING_IP> "docker ps | grep xelanote"
-ssh xelanote-prod "sudo docker ps | grep xelanote"
+ssh <PROD_SSH_ALIAS> "sudo docker ps | grep xelanote"
 
 # Check health endpoint
 curl https://<STAGING_URL>/health
@@ -138,7 +138,7 @@ curl https://xelanote.com/health
 
 # Check logs for errors
 ssh <STAGING_USER>@<STAGING_IP> "docker logs --tail 50 xelanote"
-ssh xelanote-prod "sudo docker logs --tail 50 xelanote"
+ssh <PROD_SSH_ALIAS> "sudo docker logs --tail 50 xelanote"
 ```
 
 **Verification Checklist:**
@@ -191,7 +191,7 @@ If rollback fails or issues persist:
   - Hetzner: `sudo docker logs xelanote`
 - **Backup location**:
   - Homelab: Manual backups in `/path/to/backups/`
-  - Hetzner: `/root/backups/` (daily at 3:00 UTC)
+  - Hetzner: `<BACKUP_DIR>/` (daily at 3:00 UTC)
 
 ## Rollback History
 

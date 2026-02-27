@@ -148,9 +148,10 @@ func (s *Server) summarizeNoteStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get plaintext_content via stream token (preferred) or query parameter (deprecated)
+	// Get plaintext_content via one-time stream token.
+	// Query parameter fallback was removed to prevent plaintext leakage via URLs.
 	var plaintextContent string
-	streamToken := r.URL.Query().Get("token")
+	streamToken := strings.TrimSpace(r.URL.Query().Get("token"))
 	if streamToken != "" {
 		entry, err := s.streamContent.get(streamToken)
 		if err != nil || entry.userID != userID || entry.noteID != noteID {
@@ -158,10 +159,9 @@ func (s *Server) summarizeNoteStream(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		plaintextContent = entry.plaintextContent
-	} else if pc := r.URL.Query().Get("plaintext_content"); pc != "" {
-		s.logger().Warn("deprecated: plaintext_content in query param, use /prepare endpoint",
-			"note_id", noteID, "user_id", userID)
-		plaintextContent = pc
+	} else if r.URL.Query().Get("plaintext_content") != "" {
+		respondError(w, http.StatusBadRequest, "plaintext_content query parameter is no longer supported; use /summarize/prepare")
+		return
 	}
 
 	// Set up SSE headers
@@ -211,7 +211,15 @@ func (s *Server) summarizeNoteStream(w http.ResponseWriter, r *http.Request) {
 			"note_id", noteID,
 			"user_id", userID,
 		)
-		errPayload, marshalErr := json.Marshal(map[string]string{"error": err.Error()})
+		// Do not leak raw internal/provider error details to clients.
+		clientError := "failed to generate summary"
+		if strings.Contains(err.Error(), "not found") {
+			clientError = "note not found"
+		}
+		if strings.Contains(err.Error(), "plaintext content required") {
+			clientError = "plaintext_content is required for encrypted notes"
+		}
+		errPayload, marshalErr := json.Marshal(map[string]string{"error": clientError})
 		if marshalErr != nil {
 			s.logger().Error("failed to marshal SSE error", "error", marshalErr)
 			errPayload = []byte(`{"error":"internal error"}`)

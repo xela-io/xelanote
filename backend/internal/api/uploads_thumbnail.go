@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/jpeg"
 	_ "image/png"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -17,6 +18,9 @@ import (
 const (
 	thumbnailMaxDim  = 200
 	thumbnailQuality = 80
+	// Guard against decompression-bomb images during thumbnail generation.
+	thumbnailMaxSourcePixels    = 25_000_000
+	thumbnailMaxSourceDimension = 10_000
 )
 
 // thumbnailContentTypes lists MIME types eligible for thumbnail generation.
@@ -41,6 +45,30 @@ func generateThumbnail(filePath, contentType string) string {
 		return ""
 	}
 	defer f.Close()
+
+	cfg, _, err := image.DecodeConfig(f)
+	if err != nil {
+		slog.Warn("thumbnail: failed to decode image config", "path", filePath, "error", err)
+		return ""
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 {
+		slog.Warn("thumbnail: invalid source dimensions", "path", filePath, "width", cfg.Width, "height", cfg.Height)
+		return ""
+	}
+	if cfg.Width > thumbnailMaxSourceDimension || cfg.Height > thumbnailMaxSourceDimension ||
+		int64(cfg.Width)*int64(cfg.Height) > thumbnailMaxSourcePixels {
+		slog.Warn(
+			"thumbnail: source image dimensions exceed safety limits",
+			"path", filePath,
+			"width", cfg.Width,
+			"height", cfg.Height,
+		)
+		return ""
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		slog.Warn("thumbnail: failed to rewind source file", "path", filePath, "error", err)
+		return ""
+	}
 
 	src, _, err := image.Decode(f)
 	if err != nil {

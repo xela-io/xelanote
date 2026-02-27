@@ -51,6 +51,9 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "file too large (max 10MB)")
 		return
 	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
 
 	// Get file from form
 	file, header, err := r.FormFile("file")

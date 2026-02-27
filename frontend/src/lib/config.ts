@@ -55,8 +55,12 @@ const DEFAULT_SERVER = 'https://xelanote.com';
  * In web: returns empty string (use relative paths)
  */
 export function getServerUrl(): string {
-  if (isDesktop() && typeof localStorage !== 'undefined') {
-    return localStorage.getItem(SERVER_URL_KEY) || DEFAULT_SERVER;
+  if (isDesktop()) {
+    try {
+      return localStorage.getItem(SERVER_URL_KEY) || DEFAULT_SERVER;
+    } catch {
+      return DEFAULT_SERVER;
+    }
   }
   // Web version: always same-origin
   return '';
@@ -67,10 +71,12 @@ export function getServerUrl(): string {
  * @param url - Server URL (e.g., "https://xelanote.com" or "https://my-server.com")
  */
 export function setServerUrl(url: string): void {
-  if (typeof localStorage !== 'undefined') {
+  try {
     // Normalize URL: remove trailing slash
     const normalized = url.replace(/\/+$/, '');
     localStorage.setItem(SERVER_URL_KEY, normalized);
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 

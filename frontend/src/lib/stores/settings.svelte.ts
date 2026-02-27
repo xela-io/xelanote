@@ -103,14 +103,20 @@ function parseEditorModePreference(raw: string): EditorMode | null {
 }
 
 function readLocalEditorMode(): EditorMode | null {
-  if (typeof localStorage === 'undefined') return null;
-  const stored = localStorage.getItem(EDITOR_MODE_KEY);
-  return stored ? parseEditorModePreference(stored) : null;
+  try {
+    const stored = localStorage.getItem(EDITOR_MODE_KEY);
+    return stored ? parseEditorModePreference(stored) : null;
+  } catch {
+    return null;
+  }
 }
 
 function writeLocalEditorMode(mode: EditorMode): void {
-  if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(EDITOR_MODE_KEY, mode);
+  try {
+    localStorage.setItem(EDITOR_MODE_KEY, mode);
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
+  }
 }
 
 /**

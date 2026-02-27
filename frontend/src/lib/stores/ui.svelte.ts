@@ -79,8 +79,10 @@ export function getSidebarWidth() {
 
 export function setSidebarWidth(width: number) {
   sidebarWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
-  if (typeof localStorage !== 'undefined') {
+  try {
     localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidth));
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
@@ -93,7 +95,7 @@ export function getSidebarMaxWidth() {
 }
 
 export function initSidebarWidth() {
-  if (typeof localStorage !== 'undefined') {
+  try {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
     if (saved) {
       const parsed = parseInt(saved, 10);
@@ -110,6 +112,8 @@ export function initSidebarWidth() {
         }
       }
     }
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
@@ -119,13 +123,15 @@ export function getSplitPosition() {
 
 export function setSplitPosition(pos: number) {
   splitPosition = Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, pos));
-  if (typeof localStorage !== 'undefined') {
+  try {
     localStorage.setItem('xelanote-split-position', String(splitPosition));
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
 export function initSplitPosition() {
-  if (typeof localStorage !== 'undefined') {
+  try {
     const saved = localStorage.getItem('xelanote-split-position');
     if (saved) {
       const parsed = parseFloat(saved);
@@ -133,6 +139,8 @@ export function initSplitPosition() {
         splitPosition = Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, parsed));
       }
     }
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
@@ -142,8 +150,10 @@ export function getEditorPanelsCollapsed() {
 
 export function setEditorPanelsCollapsed(collapsed: boolean) {
   editorPanelsCollapsed = collapsed;
-  if (typeof localStorage !== 'undefined') {
+  try {
     localStorage.setItem('xelanote-editor-panels-collapsed', String(editorPanelsCollapsed));
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
@@ -152,11 +162,13 @@ export function toggleEditorPanelsCollapsed() {
 }
 
 export function initEditorPanelsCollapsed() {
-  if (typeof localStorage !== 'undefined') {
+  try {
     const saved = localStorage.getItem('xelanote-editor-panels-collapsed');
     if (saved === 'true' || saved === 'false') {
       editorPanelsCollapsed = saved === 'true';
     }
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
@@ -244,7 +256,11 @@ export function setTheme(themeId: ThemeId) {
       document.documentElement.classList.add(theme.className);
     }
 
-    localStorage.setItem('xelanote-theme', themeId);
+    try {
+      localStorage.setItem('xelanote-theme', themeId);
+    } catch {
+      // localStorage may throw SecurityError in Firefox private browsing
+    }
   }
 }
 
@@ -254,23 +270,26 @@ export function toggleTheme() {
 }
 
 export function initTheme() {
-  if (typeof localStorage !== 'undefined') {
+  try {
     const saved = localStorage.getItem('xelanote-theme');
 
     // Validierung
     if (saved && isValidThemeId(saved)) {
       setTheme(saved);
-    } else {
-      // Fallback: System-Präferenz
-      if (
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-      ) {
-        setTheme('gruvbox-dark');
-      } else {
-        setTheme('gruvbox-light');
-      }
+      return;
     }
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
+  }
+
+  // Fallback: System-Präferenz
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  ) {
+    setTheme('gruvbox-dark');
+  } else {
+    setTheme('gruvbox-light');
   }
 }
 
@@ -281,8 +300,10 @@ export function getPreviewThemeId(): PreviewThemeId {
 
 export function setPreviewTheme(themeId: PreviewThemeId) {
   previewThemeId = themeId;
-  if (typeof localStorage !== 'undefined') {
+  try {
     localStorage.setItem('xelanote-preview-theme', themeId);
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 
@@ -299,11 +320,13 @@ export function getEffectivePreviewThemeClass(): string {
 }
 
 export function initPreviewTheme() {
-  if (typeof localStorage !== 'undefined') {
+  try {
     const saved = localStorage.getItem('xelanote-preview-theme');
     if (saved && isValidPreviewThemeId(saved)) {
       previewThemeId = saved;
     }
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 }
 

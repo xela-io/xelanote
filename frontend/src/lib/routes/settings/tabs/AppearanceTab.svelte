@@ -26,7 +26,11 @@
       onchange={(e) => {
         const newLocale = (e.target as HTMLSelectElement).value;
         locale.set(newLocale);
-        window.localStorage.setItem('locale', newLocale);
+        try {
+          window.localStorage.setItem('locale', newLocale);
+        } catch {
+          // localStorage may throw SecurityError in Firefox private browsing
+        }
       }}
       class="ui-select"
     >

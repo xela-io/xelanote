@@ -32,9 +32,13 @@ function getInitialLocale(): string {
   if (!browser) return defaultLocale;
 
   // Check localStorage first
-  const savedLocale = window.localStorage.getItem('locale');
-  if (savedLocale && supportedLocales.includes(savedLocale)) {
-    return savedLocale;
+  try {
+    const savedLocale = window.localStorage.getItem('locale');
+    if (savedLocale && supportedLocales.includes(savedLocale)) {
+      return savedLocale;
+    }
+  } catch {
+    // localStorage may throw SecurityError in Firefox private browsing
   }
 
   // Normalize browser language

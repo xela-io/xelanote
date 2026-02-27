@@ -245,7 +245,7 @@ export async function initAuth() {
   // SEC-006: Clean up deprecated sessionStorage tokens (one-time migration)
   if (typeof window !== 'undefined') {
     // Clear old localStorage tokens if present
-    if (localStorage) {
+    try {
       const hasOldTokens =
         localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(REFRESH_TOKEN_KEY);
       if (hasOldTokens) {
@@ -253,10 +253,12 @@ export async function initAuth() {
         localStorage.removeItem(ACCESS_TOKEN_KEY);
         localStorage.removeItem(REFRESH_TOKEN_KEY);
       }
+    } catch {
+      // localStorage may throw SecurityError in Firefox private browsing
     }
 
     // Clear sessionStorage tokens (deprecated as of SEC-006 fix)
-    if (sessionStorage) {
+    try {
       const hasSessionTokens =
         sessionStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(REFRESH_TOKEN_KEY);
       if (hasSessionTokens) {
@@ -264,6 +266,8 @@ export async function initAuth() {
         sessionStorage.removeItem(ACCESS_TOKEN_KEY);
         sessionStorage.removeItem(REFRESH_TOKEN_KEY);
       }
+    } catch {
+      // sessionStorage may throw SecurityError in Firefox private browsing
     }
 
     // SEC-006: Authentication relies on HttpOnly cookies.
@@ -301,9 +305,13 @@ export async function initAuth() {
             tokenIssuedAt = claims.iat;
 
             // Persist expiry timestamps to sessionStorage
-            sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(claims.exp));
-            if (claims.iat > 0) {
-              sessionStorage.setItem(TOKEN_ISSUED_KEY, String(claims.iat));
+            try {
+              sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(claims.exp));
+              if (claims.iat > 0) {
+                sessionStorage.setItem(TOKEN_ISSUED_KEY, String(claims.iat));
+              }
+            } catch {
+              // sessionStorage may throw SecurityError in Firefox private browsing
             }
 
             // Notify listeners for initial state
@@ -399,11 +407,13 @@ export async function setAuth(accessToken: string, refreshToken: string, user: U
 
     // Persist expiry timestamps to sessionStorage (NOT sensitive - just timestamps)
     // This allows token-refresh to restore after page reload
-    if (typeof sessionStorage !== 'undefined') {
+    try {
       sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(claims.exp));
       if (claims.iat > 0) {
         sessionStorage.setItem(TOKEN_ISSUED_KEY, String(claims.iat));
       }
+    } catch {
+      // sessionStorage may throw SecurityError in Firefox private browsing
     }
 
     // Notify listeners (important for Login after +layout mount!)
@@ -465,11 +475,13 @@ export function updateTokens(accessToken: string, refreshToken: string) {
     console.log('[Auth] Token timestamps updated');
 
     // Persist expiry timestamps to sessionStorage
-    if (typeof sessionStorage !== 'undefined') {
+    try {
       sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(claims.exp));
       if (claims.iat > 0) {
         sessionStorage.setItem(TOKEN_ISSUED_KEY, String(claims.iat));
       }
+    } catch {
+      // sessionStorage may throw SecurityError in Firefox private browsing
     }
 
     // Notify all listeners
@@ -495,9 +507,11 @@ export function logout() {
   tokenIssuedAt = 0;
 
   // Clear persisted expiry from sessionStorage
-  if (typeof sessionStorage !== 'undefined') {
+  try {
     sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
     sessionStorage.removeItem(TOKEN_ISSUED_KEY);
+  } catch {
+    // sessionStorage may throw SecurityError in Firefox private browsing
   }
 
   // Notify listeners with exp=0, iat=0 then clear

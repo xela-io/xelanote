@@ -1,6 +1,15 @@
 import type { Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 
+import { computeNestLevel } from './live-preview/line-primitives';
+import {
+  buildTaskTree,
+  computeDownwardPropagations,
+  computeUpwardPropagations,
+  findNodeByLine,
+  getSubtreeLineRange,
+} from './task-nesting';
+
 interface TaskInfo {
   lineNum: number;
   from: number;
@@ -134,8 +143,19 @@ function calculateTargetPosition(
   isNowChecked: boolean,
   log?: (...args: unknown[]) => void
 ): number {
+  // Only top-level tasks participate in sort ordering.
+  // Child tasks (nestLevel > 0) stay in place — they move with their parent.
+  if (computeNestLevel(currentTask.indent) > 0) {
+    return currentTask.lineNum;
+  }
+
+  // Filter to top-level tasks only for sort calculation
+  const topLevelTasks = tasksInList.filter((t) => computeNestLevel(t.indent) === 0);
+
   // Sort tasks by line number (they should already be, but ensure it)
-  const sortedTasks = [...tasksInList].sort((a, b) => a.lineNum - b.lineNum);
+  const sortedTasks = [...topLevelTasks].sort((a, b) => a.lineNum - b.lineNum);
+
+  if (sortedTasks.length === 0) return currentTask.lineNum;
 
   // Create the target order: unchecked first (preserve relative order), then checked
   // Apply the NEW checked state to the current task
@@ -151,6 +171,8 @@ function calculateTargetPosition(
   // Find the index of the current task in the target order
   const targetIndex = targetOrder.findIndex((t) => t.lineNum === currentTask.lineNum);
 
+  if (targetIndex === -1 || targetIndex >= sortedTasks.length) return currentTask.lineNum;
+
   log?.(
     '[TaskSort] calculateTargetPosition:',
     'unchecked:',
@@ -165,6 +187,41 @@ function calculateTargetPosition(
 
   // The target line is the line of the task currently at that index
   return sortedTasks[targetIndex].lineNum;
+}
+
+/**
+ * Apply checkbox text replacement to a line string.
+ */
+function toggleCheckboxInLine(line: string, newChecked: boolean): string {
+  const replacement = newChecked ? '[x]' : '[ ]';
+  return line.replace(/\[([xX ])\]/, replacement);
+}
+
+/**
+ * Collect all propagation changes (upward + downward) for a toggle.
+ */
+function collectPropagationChanges(
+  tasksInBoundary: TaskInfo[],
+  task: TaskInfo,
+  checked: boolean
+): Array<{ lineNum: number; newChecked: boolean }> {
+  const treeInput = tasksInBoundary.map((t) => ({
+    lineNumber: t.lineNum,
+    indent: t.indent,
+    checked: t.isChecked,
+  }));
+
+  const roots = buildTaskTree(treeInput);
+  const node = findNodeByLine(roots, task.lineNum);
+  if (!node) return [];
+
+  const downward = computeDownwardPropagations(node, checked);
+  const upward = computeUpwardPropagations(node, checked);
+
+  return [
+    ...downward.map((c) => ({ lineNum: c.lineNumber, newChecked: c.newChecked })),
+    ...upward.map((c) => ({ lineNum: c.lineNumber, newChecked: c.newChecked })),
+  ];
 }
 
 export function toggleTaskByIndex(options: ToggleTaskOptions) {
@@ -248,101 +305,217 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
   );
   log?.('[TaskSort] Tasks in list:', tasksInList.length);
 
-  // Calculate target position
-  const targetLineNum = calculateTargetPosition(tasksInList, task, checked, log);
-  log?.('[TaskSort] Current line:', task.lineNum, 'Target line:', targetLineNum);
+  // Compute propagation changes (children + parents)
+  const propagationChanges = collectPropagationChanges(tasksInList, task, checked);
+
+  // Determine which task drives the sort position.
+  // If the clicked task is a child and propagation changed a top-level ancestor,
+  // the ancestor determines the move target (subtree moves as a unit).
+  let moveTask = task;
+  let moveTaskNewChecked = checked;
+
+  if (computeNestLevel(task.indent) > 0) {
+    let bestNestLevel = Infinity;
+    for (const prop of propagationChanges) {
+      const propTask = tasksInList.find((t) => t.lineNum === prop.lineNum);
+      if (!propTask) continue;
+      const nl = computeNestLevel(propTask.indent);
+      if (nl < bestNestLevel) {
+        bestNestLevel = nl;
+        moveTask = propTask;
+        moveTaskNewChecked = prop.newChecked;
+      }
+    }
+  }
+
+  // Calculate target position (only for top-level tasks)
+  const targetLineNum = calculateTargetPosition(tasksInList, moveTask, moveTaskNewChecked, log);
+  log?.('[TaskSort] Move task line:', moveTask.lineNum, 'Target line:', targetLineNum);
 
   // Check if we need to move the line
-  const needsMove = targetLineNum !== task.lineNum;
+  const needsMove = targetLineNum !== moveTask.lineNum;
   log?.('[TaskSort] Needs move:', needsMove);
 
   if (useEditorView) {
     // CodeMirror mode - apply changes via dispatch
     const doc = editorView!.state.doc;
 
+    // Build all checkbox toggle changes (own + propagation)
+    const toggleChanges: { from: number; to: number; insert: string }[] = [];
+
+    // Own toggle
+    toggleChanges.push({ from: task.from, to: task.to, insert: newCheckboxText });
+
+    // Propagation toggles
+    for (const prop of propagationChanges) {
+      const propTask = tasksInList.find((t) => t.lineNum === prop.lineNum);
+      if (propTask) {
+        const propText = prop.newChecked ? '[x]' : '[ ]';
+        toggleChanges.push({ from: propTask.from, to: propTask.to, insert: propText });
+      }
+    }
+
     if (!needsMove) {
-      editorView!.dispatch({
-        changes: { from: task.from, to: task.to, insert: newCheckboxText },
-      });
+      // Sort changes by position descending to avoid offset issues
+      toggleChanges.sort((a, b) => a.from - b.from);
+      editorView!.dispatch({ changes: toggleChanges });
     } else {
-      const currentLine = doc.line(task.lineNum);
-      const lineText = currentLine.text;
-      const toggledLineText =
-        lineText.substring(0, task.from - currentLine.from) +
-        newCheckboxText +
-        lineText.substring(task.to - currentLine.from);
+      // Subtree-aware move: get the full range of the moveTask's subtree
+      const subtreeRange = getSubtreeLineRange(lines, moveTask.lineNum - 1);
+      const subtreeStartLine = subtreeRange.start + 1; // to 1-based
+      const subtreeEndLine = subtreeRange.end + 1;
+      const subtreeLineCount = subtreeEndLine - subtreeStartLine + 1;
+
+      // Build the toggled subtree text
+      const subtreeLines: string[] = [];
+      for (let i = subtreeStartLine; i <= subtreeEndLine; i++) {
+        let lineText = lines[i - 1];
+        // Apply direct toggle to the clicked task
+        if (i === task.lineNum) {
+          lineText = toggleCheckboxInLine(lineText, checked);
+        }
+        // Apply propagation toggles
+        const prop = propagationChanges.find((p) => p.lineNum === i);
+        if (prop) {
+          lineText = toggleCheckboxInLine(lineText, prop.newChecked);
+        }
+        subtreeLines.push(lineText);
+      }
+      const subtreeText = subtreeLines.join('\n');
 
       if (targetLineNum < 1 || targetLineNum > doc.lines) {
-        editorView!.dispatch({
-          changes: { from: task.from, to: task.to, insert: newCheckboxText },
-        });
+        // Fall back to just toggling
+        toggleChanges.sort((a, b) => a.from - b.from);
+        editorView!.dispatch({ changes: toggleChanges });
         scheduleAutoSave();
         return;
       }
 
+      // Get target's subtree range to determine insertion point
+      const targetSubtreeRange = getSubtreeLineRange(lines, targetLineNum - 1);
+      const targetSubtreeEndLine = targetSubtreeRange.end + 1;
+
+      const currentFirstLine = doc.line(subtreeStartLine);
+      const currentLastLine = doc.line(subtreeEndLine);
+
       let changes: { from: number; to: number; insert: string }[];
 
-      if (targetLineNum < task.lineNum) {
+      if (targetLineNum < moveTask.lineNum) {
+        // Moving up
         const targetLine = doc.line(targetLineNum);
         const insertPos = targetLine.from;
-        const deleteFrom = currentLine.from;
-        const deleteTo = currentLine.to + (currentLine.to < doc.length ? 1 : 0);
+        const deleteFrom = currentFirstLine.from;
+        const deleteTo = currentLastLine.to + (currentLastLine.to < doc.length ? 1 : 0);
+
+        // Also apply propagation changes to lines NOT in the subtree
+        const externalPropChanges: { from: number; to: number; insert: string }[] = [];
+        for (const prop of propagationChanges) {
+          if (prop.lineNum >= subtreeStartLine && prop.lineNum <= subtreeEndLine) continue;
+          const propTask = tasksInList.find((t) => t.lineNum === prop.lineNum);
+          if (propTask) {
+            externalPropChanges.push({
+              from: propTask.from,
+              to: propTask.to,
+              insert: prop.newChecked ? '[x]' : '[ ]',
+            });
+          }
+        }
+
         changes = [
-          { from: insertPos, to: insertPos, insert: toggledLineText + '\n' },
+          { from: insertPos, to: insertPos, insert: subtreeText + '\n' },
           { from: deleteFrom, to: deleteTo, insert: '' },
+          ...externalPropChanges,
         ];
       } else {
-        const targetLine = doc.line(targetLineNum);
+        // Moving down: insert after target's subtree
+        const targetEndLine = doc.line(targetSubtreeEndLine);
+
         let deleteFrom: number;
         let deleteTo: number;
 
-        if (currentLine.from > 0) {
-          deleteFrom = currentLine.from - 1;
-          deleteTo = currentLine.to;
+        if (currentFirstLine.from > 0) {
+          deleteFrom = currentFirstLine.from - 1;
+          deleteTo = currentLastLine.to;
         } else {
-          deleteFrom = currentLine.from;
-          deleteTo = currentLine.to + (currentLine.to < doc.length ? 1 : 0);
+          deleteFrom = currentFirstLine.from;
+          deleteTo =
+            currentLastLine.to + (currentLastLine.to < doc.length ? 1 : 0);
         }
 
-        const insertPos = targetLine.to;
+        const insertPos = targetEndLine.to;
+
+        // Also apply propagation changes to lines NOT in the subtree
+        const externalPropChanges: { from: number; to: number; insert: string }[] = [];
+        for (const prop of propagationChanges) {
+          if (prop.lineNum >= subtreeStartLine && prop.lineNum <= subtreeEndLine) continue;
+          const propTask = tasksInList.find((t) => t.lineNum === prop.lineNum);
+          if (propTask) {
+            externalPropChanges.push({
+              from: propTask.from,
+              to: propTask.to,
+              insert: prop.newChecked ? '[x]' : '[ ]',
+            });
+          }
+        }
+
         changes = [
           { from: deleteFrom, to: deleteTo, insert: '' },
-          { from: insertPos, to: insertPos, insert: '\n' + toggledLineText },
+          { from: insertPos, to: insertPos, insert: '\n' + subtreeText },
+          ...externalPropChanges,
         ];
       }
 
-      editorView!.dispatch({
-        changes,
-      });
+      // Sort changes by position for CodeMirror
+      changes.sort((a, b) => a.from - b.from);
+      editorView!.dispatch({ changes });
     }
   } else {
     // Preview mode - manipulate content string directly
     const currentLineIndex = task.lineNum - 1;
-    const currentLineText = lines[currentLineIndex];
+    const moveLineIndex = moveTask.lineNum - 1;
 
-    // Toggle the checkbox in the line
-    const toggledLineText = currentLineText.replace(/\[([xX ])\]/, newCheckboxText);
+    // Apply propagation toggles first (before moving lines)
+    for (const prop of propagationChanges) {
+      const propLineIndex = prop.lineNum - 1;
+      lines[propLineIndex] = toggleCheckboxInLine(lines[propLineIndex], prop.newChecked);
+    }
+
+    // Toggle the checkbox in the clicked task line
+    lines[currentLineIndex] = toggleCheckboxInLine(lines[currentLineIndex], checked);
 
     if (!needsMove) {
-      // Just toggle, no move
-      lines[currentLineIndex] = toggledLineText;
+      // No move needed — changes already applied above
     } else {
-      // Remove current line and insert at target position
+      // Subtree-aware move using the moveTask's subtree
+      const subtreeRange = getSubtreeLineRange(lines, moveLineIndex);
+      const subtreeLineCount = subtreeRange.end - subtreeRange.start + 1;
+
+      // Extract the subtree lines
+      const subtreeLines = lines.splice(subtreeRange.start, subtreeLineCount);
+
+      // Recalculate target index after removal
       const targetLineIndex = targetLineNum - 1;
+      // After splice, the target shifts if it was after the removed block
+      const adjustedTarget =
+        targetLineIndex > subtreeRange.start
+          ? targetLineIndex - subtreeLineCount
+          : targetLineIndex;
 
-      // Remove the line
-      lines.splice(currentLineIndex, 1);
+      // For moving down, calculate target's subtree end in the modified array
+      let insertAt: number;
+      if (targetLineNum > moveTask.lineNum) {
+        // Moving down: insert after target's subtree
+        const targetSubtreeRange = getSubtreeLineRange(lines, adjustedTarget);
+        insertAt = targetSubtreeRange.end + 1;
+      } else {
+        // Moving up: insert before target
+        insertAt = adjustedTarget;
+      }
 
-      // When moving down: we want to insert AFTER the target element
-      // splice(index, 0, item) inserts BEFORE index, so we need targetLineIndex
-      // (which after removal is the position AFTER the shifted target element)
-      // When moving up: we want to insert BEFORE the target, so just use targetLineIndex
-      const newTargetIndex = targetLineIndex;
-
-      log?.('[TaskSort] Moving line from index', currentLineIndex, 'to index', newTargetIndex);
+      log?.('[TaskSort] Moving subtree from', subtreeRange.start, 'to', insertAt);
 
       // Insert at new position
-      lines.splice(newTargetIndex, 0, toggledLineText);
+      lines.splice(insertAt, 0, ...subtreeLines);
     }
 
     // Update the note content

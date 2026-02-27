@@ -6,6 +6,14 @@ export interface LinePrimitives {
   markerPrefixLength: number | null;
   taskRegex: { markerLength: number; markerTokenLength: number; checked: boolean } | null;
   listMarker: { indentLength: number; marker: string; spacingLength: number } | null;
+  nestLevel: number;
+}
+
+/** Convert raw leading whitespace to a nesting level (0 = top-level, max 5). */
+export function computeNestLevel(rawIndent: string): number {
+  let spaces = 0;
+  for (const ch of rawIndent) spaces += ch === '\t' ? 4 : 1;
+  return Math.min(Math.floor(spaces / 2), 5);
 }
 
 export function parseLinePrimitives(text: string): LinePrimitives {
@@ -14,6 +22,8 @@ export function parseLinePrimitives(text: string): LinePrimitives {
   const markerPrefixMatch = /^(\s*(?:[-*+]|\d+[.)])\s+)/.exec(text);
   const taskRegexMatch = /^(\s*(?:[-*+]|\d+[.)]) )(\[[xX ]\])(\s+)/.exec(text);
   const listMarkerMatch = /^(\s*)([-*+]|\d+[.)])(\s+)/.exec(text);
+
+  const nestLevel = listMarkerMatch ? computeNestLevel(listMarkerMatch[1]) : 0;
 
   return {
     heading: headingMatch
@@ -44,5 +54,6 @@ export function parseLinePrimitives(text: string): LinePrimitives {
           spacingLength: listMarkerMatch[3].length,
         }
       : null,
+    nestLevel,
   };
 }

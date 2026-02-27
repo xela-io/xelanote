@@ -242,43 +242,54 @@ const listIndentPattern = /^(\s*)([-*+]|\d+[.)])\s/;
 const taskListPattern = /^(\s*)([-*+]|\d+[.)])\s\[[ xX]\]\s/;
 const blankLinePattern = /^\s*$/;
 
-const taskContinuationStyle =
-  'padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap));';
+import { computeNestLevel } from '../live-preview/line-primitives';
+
+function buildNestPart(rawIndent: string): string {
+  const nestLevel = computeNestLevel(rawIndent);
+  return nestLevel > 0 ? ` + ${nestLevel} * var(--live-preview-nest-indent)` : '';
+}
 
 function buildListIndentDecorations(view: EditorView): DecorationSet {
   const items: Array<{ pos: number; style: string }> = [];
 
   for (const { from, to } of view.visibleRanges) {
     let pos = from;
-    let inTaskItem = false;
+    // Track nest level of the current task item for continuation lines
+    let inTaskItemNestLevel = -1; // -1 = not in a task item
     while (pos <= to) {
       const line = view.state.doc.lineAt(pos);
       const text = line.text;
 
       if (blankLinePattern.test(text)) {
-        inTaskItem = false;
+        inTaskItemNestLevel = -1;
         pos = line.to + 1;
         continue;
       }
 
-      if (taskListPattern.test(text)) {
+      const taskMatch = taskListPattern.exec(text);
+      if (taskMatch) {
+        const nestPart = buildNestPart(taskMatch[1]);
         items.push({
           pos: line.from,
           style:
-            'padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)); text-indent: calc(-1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)));',
+            `padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)${nestPart}); text-indent: calc(-1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)));`,
         });
-        inTaskItem = true;
+        inTaskItemNestLevel = computeNestLevel(taskMatch[1]);
         pos = line.to + 1;
         continue;
       }
 
-      if (inTaskItem && !listIndentPattern.test(text)) {
-        items.push({ pos: line.from, style: taskContinuationStyle });
+      if (inTaskItemNestLevel >= 0 && !listIndentPattern.test(text)) {
+        const nestPart = inTaskItemNestLevel > 0 ? ` + ${inTaskItemNestLevel} * var(--live-preview-nest-indent)` : '';
+        items.push({
+          pos: line.from,
+          style: `padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)${nestPart});`,
+        });
         pos = line.to + 1;
         continue;
       }
 
-      inTaskItem = false;
+      inTaskItemNestLevel = -1;
       const match = listIndentPattern.exec(text);
       if (match) {
         items.push({

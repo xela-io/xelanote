@@ -1,106 +1,258 @@
 <p align="center">
-  <!-- TODO: Replace with a real banner image -->
-  <img src="docs/images/banner-placeholder.svg" alt="xelanote banner" width="100%" />
-</p>
-
-<p align="center">
-  <!-- TODO: Replace with a high-res logo if available -->
   <img src="frontend/static/icon-192.png" alt="xelanote logo" width="96" height="96" />
 </p>
 
 <h1 align="center">xelanote</h1>
 
 <p align="center">
-  <strong>Self-hosted, encrypted note-taking with Wikilinks, Backlinks, and Full-Text Search.</strong>
+  <strong>Self-hosted, encrypted note-taking with Wikilinks, Backlinks, and a Knowledge Graph.</strong>
   <br />
   <em>Your knowledge, your server, your rules.</em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/xela-io/xelanote/actions/workflows/ci.yml"><img src="https://github.com/xela-io/xelanote/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
-  <a href="https://github.com/xela-io/xelanote/actions/workflows/quality.yml"><img src="https://github.com/xela-io/xelanote/actions/workflows/quality.yml/badge.svg" alt="Quality Status" /></a>
+  <a href="https://github.com/xela-io/xelanote/actions/workflows/ci.yml"><img src="https://github.com/xela-io/xelanote/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/xela-io/xelanote/actions/workflows/quality.yml"><img src="https://github.com/xela-io/xelanote/actions/workflows/quality.yml/badge.svg" alt="Quality" /></a>
+  <a href="https://github.com/xela-io/xelanote/actions/workflows/security.yml"><img src="https://github.com/xela-io/xelanote/actions/workflows/security.yml/badge.svg" alt="Security" /></a>
   <a href="https://github.com/xela-io/xelanote/releases"><img src="https://img.shields.io/github/v/release/xela-io/xelanote?include_prereleases&label=release" alt="Release" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
-  <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
 </p>
 
 <p align="center">
   <a href="#features">Features</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
-  <a href="#installation">Installation</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
-  <a href="#usage">Usage</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
+  <a href="#screenshots">Screenshots</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
+  <a href="#quick-start">Quick Start</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
   <a href="#configuration">Configuration</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
-  <a href="#contributing">Contributing</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
-  <a href="#license">License</a>
+  <a href="#tech-stack">Tech Stack</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
+  <a href="#contributing">Contributing</a>
 </p>
 
 ---
 
-## Project Description
+## What is xelanote?
 
-xelanote is a privacy-first, self-hosted note app that brings modern knowledge management features
-(Wikilinks, backlinks, graph view, offline mode) together with optional end-to-end encryption. It
-runs as a single Go binary with an embedded SvelteKit frontend and stores everything in a single
-SQLite database file.
+xelanote is a privacy-first, self-hosted note-taking app that combines modern knowledge management (Wikilinks, backlinks, knowledge graph, infinite canvas) with optional end-to-end encryption. It ships as a single Go binary with an embedded SvelteKit frontend and stores everything in one SQLite file — no external database required.
 
 ---
 
 ## Features
 
-**Editor & Knowledge Management**
+### Editor
 
-- Markdown editor with live preview (Obsidian-style WYSIWYG with syntax visible on active line)
-- Wikilinks and backlinks with automatic reference tracking
-- Interactive graph visualization of notes and connections
-- Full-text search (server-side FTS5 + client-side search for encrypted notes)
-- Folder hierarchy, tags, drag-and-drop reordering, and version history (up to 100 versions)
-- Inline title editing (Bear/Apple Notes style), table of contents, collapsible task groups
-- Find-in-note (Ctrl+F) and search-and-replace (Ctrl+H) with VS Code-style UI
-- Due date syntax (`@due(YYYY-MM-DD)`) with colored badges and dedicated due dates page
-- Command Palette (Ctrl+K) with extensible command registry
+- **Four editing modes** — pure Markdown, rendered preview, side-by-side split, and Obsidian-style live preview (inline rendering with syntax visible on the active line)
+- **Wikilinks & Backlinks** — `[[note title]]` linking with autocomplete and automatic reverse-reference tracking
+- **Inline title editing** — Bear / Apple Notes style; the first line of the editor *is* the title
+- **Find & Replace** — VS Code-style `Ctrl+F` / `Ctrl+H` overlay with regex support
+- **Command palette** — `Ctrl+K` quick switcher with extensible command registry
+- **Table of Contents** — auto-generated from headings; mobile FAB with scroll-progress ring
+- **Version history** — up to 100 revisions per note with diff view and one-click restore
+- **Due dates** — `@due(YYYY-MM-DD)` syntax with colored badges and a dedicated due-dates page
+- **Task management** — checkbox toggling, drag-to-reorder, collapsible completed groups (state synced across devices)
+- **Code blocks** — Shiki syntax highlighting with Gruvbox theme and lazy language loading
+- **Math** — KaTeX rendering for `$inline$` and `$$display$$` expressions
+- **Diagrams** — Mermaid diagram rendering with content-hash caching
+- **Image handling** — drag-and-drop / paste upload, resize handles, lazy loading
+- **Table builder** — visual row/column picker for Markdown tables
+- **Focus mode** — typewriter scrolling with dimmed inactive lines
+- **Spell check** — LLM-powered grammar and spelling suggestions (German + English)
+- **Autosave** — debounced saves with ETag-based conflict detection
+- **Templates & Snippets** — reusable note templates and keyboard-triggered text snippets
 
-**Recipes**
+### Knowledge Graph
 
-- Structured recipe management with ingredients, portions, difficulty, and prep time
-- AI-powered recipe import from URLs and images (with automatic F-to-C temperature conversion)
-- Portion scaling, cookbook collections, recipe sharing, and dietary preference support
-- Multi-provider AI integration (Claude, Gemini, ChatGPT) with per-provider model selection
+- Interactive force-directed graph of all notes and their connections
+- Filter by folder, zoom, pan, and click-to-navigate
+- Backlink panel on every note showing all incoming references
 
-**Infinite Canvas**
+### Infinite Canvas
 
-- Free-form spatial board (JSON Canvas spec v1.0) with text cards, embedded notes, links, and groups
-- Drag-and-drop from sidebar, keyboard shortcuts, copy/paste, and 6 Gruvbox color presets
+- Free-form spatial board following the [JSON Canvas spec v1.0](https://jsoncanvas.org) (Obsidian-compatible export)
+- **Node types** — text cards, embedded note previews, external links, resizable groups
+- Drag-and-drop notes from the sidebar, copy/paste, keyboard shortcuts, color presets
 
-**Security & Encryption**
+### Recipes
 
-- Optional end-to-end encryption (AES-256-GCM, Argon2id KDF, zero-knowledge architecture)
-- Per-note encryption toggle, folder encryption defaults, and encrypted search via client-side index
-- Two-factor authentication (TOTP + WebAuthn/FIDO2 hardware keys + backup codes)
-- Account lockout with rate limiting, CSRF protection, CSP headers, and security event logging
+- Structured recipe editor with ingredients, servings, prep/cook time, categories, and dietary tags
+- **Dynamic scaling** — adjust serving count and all ingredient amounts recalculate
+- **AI import** — paste a URL or snap a photo; the recipe is extracted, structured, and translated automatically (including F-to-C conversion)
+- **AI suggestions** — find similar recipes, get suggestions from available ingredients, generate new recipes
+- Multi-image gallery with drag-to-reorder, captions, and lightbox
+- Cookbook collections with sharing support
+- Multi-provider AI (Claude, Gemini, ChatGPT) with BYOK (Bring Your Own Key)
 
-**Collaboration & Sharing**
+### Journal
 
-- Note sharing (Viewer/Editor roles) with user search and permission management
-- Folder sharing with implicit permission inheritance for all contained notes
-- Cookbook/collection sharing with 3-tier priority permission chain
+- One entry per day with calendar navigation and auto-creation
+- GitHub-style yearly heatmap showing writing frequency
+- Activity stats and streak tracking
+- Feature-gated per user (enable in settings)
 
-**Mobile & PWA**
+### Security & Encryption
 
-- Progressive Web App with offline read/write mode (IndexedDB queue, conflict resolution)
-- Responsive UI with bottom navigation bar, touch-optimized controls (WCAG AA 44px targets)
-- iOS/Android install coach, dark mode splash screens, and portrait orientation lock
-- Delta-sync with field projection for efficient mobile data transfer
+- **End-to-end encryption** — XChaCha20-Poly1305 with Argon2id KDF, per-note data encryption keys, zero-knowledge architecture
+- **Per-note toggle** — encrypt or decrypt individual notes; set folder-level encryption defaults
+- **Encrypted search** — client-side MiniSearch index so encrypted notes are fully searchable without server access
+- **Recovery key** — regain access to encrypted notes if you forget your encryption password
+- **Two-factor authentication** — TOTP (any authenticator app) + WebAuthn/FIDO2 hardware keys + backup codes
+- **Auth hardening** — JWT with refresh token rotation, HttpOnly cookies only (no localStorage), CSRF double-submit protection
+- **Rate limiting & lockout** — per-endpoint rate limits, exponential-backoff account lockout
+- **Security headers** — HSTS, CSP, X-Frame-Options, and more
+- **Upload security** — owner-only serving, HMAC-signed URLs, MIME type validation, 10 MB limit
 
-**Customization & i18n**
+### Sharing & Collaboration
 
-- 23 themes (Gruvbox, One Dark/Light, Monokai, Ayu, Rose Pine, Kanagawa, Everforest, and more)
-- Full internationalization (German + English, ~604 i18n keys per locale)
-- AI text transformations (format, summarize, expand, translate, formal/informal)
+- Share notes with other users as **Viewer** or **Editor**
+- Folder sharing with automatic permission inheritance for all contained notes
+- Recipe collection sharing with 3-tier priority permission chain
+- User search for quick permission grants
+- Real-time updates via WebSocket across tabs and devices
 
-**Infrastructure**
+### Mobile & PWA
 
-- Single Go binary with embedded SvelteKit frontend, SQLite database
-- Docker-first deployment with auto-rollback, health checks, and CI/CD via Forgejo Actions
-- Strict backend layering (API -> Service -> DB) enforced by CI guardrails
+- **Progressive Web App** — installable on iOS and Android with offline read/write support
+- **Offline mode** — IndexedDB write queue with background sync and conflict resolution dialog
+- **Responsive design** — bottom navigation bar, touch-optimized 44px targets (WCAG AA), frosted-glass panels
+- **iOS/Android install coach** — guided setup prompts for adding to home screen
+- **Portrait lock** — stable orientation for mobile writing
+
+### Desktop App
+
+- **Tauri v2** desktop app for Linux (`.deb` and `.AppImage`)
+- Custom title bar, configurable server connection, fullscreen focus mode
+
+### AI Features
+
+- **Text transformations** — format, summarize, expand, translate (DE/EN), formal/informal, custom instructions
+- **Tag suggestions** — LLM analyzes note content and suggests relevant tags
+- **Link suggestions** — AI recommends Wikilinks to related notes in your library
+- **Note summaries** — streaming AI-generated summaries in a collapsible sidebar panel
+- **Multi-provider** — Claude (Anthropic), Gemini (Google), ChatGPT (OpenAI) with per-provider model selection
+- **BYOK** — bring your own API keys, stored encrypted per user
+
+### Organization
+
+- Folder hierarchy with drag-and-drop reordering and nesting
+- Tags with autocomplete and filter UI
+- Note and folder color labels
+- Full-text search powered by SQLite FTS5 (with snippet highlighting)
+- Quick search (`Ctrl+P`) for instant title-based lookup
+- Trash with soft-delete and restore
+- Markdown import (ZIP with frontmatter) and export
+
+### Customization & i18n
+
+- **Gruvbox Light & Dark** themes with separate preview theme setting
+- Full internationalization — **German** and **English** (~604 i18n keys per locale)
+- Configurable editor preferences (font size, autosave, spell check, line numbers, etc.)
+
+### Admin
+
+- User management with role assignment and account deletion
+- Activity logs with filtering and pagination
+- System-wide settings and growth statistics dashboard
+
+---
+
+## Screenshots
+
+<!-- Screenshots coming soon -->
+
+<p align="center">
+  <em>Screenshots will be added here.</em>
+</p>
+
+<!--
+<p align="center">
+  <img src="docs/images/screenshot-editor.png" alt="Editor" width="800" />
+  <br /><sub>Markdown editor with live preview and frosted-glass toolbar</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/screenshot-graph.png" alt="Knowledge Graph" width="800" />
+  <br /><sub>Interactive knowledge graph showing note connections</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/screenshot-canvas.png" alt="Infinite Canvas" width="800" />
+  <br /><sub>Free-form canvas with embedded notes and groups</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/screenshot-recipes.png" alt="Recipes" width="800" />
+  <br /><sub>Structured recipe editor with AI import</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/screenshot-mobile.png" alt="Mobile PWA" width="400" />
+  <br /><sub>Mobile PWA with bottom navigation and offline support</sub>
+</p>
+-->
+
+---
+
+## Quick Start
+
+### Docker (recommended)
+
+```bash
+# 1. Create environment file
+cat > .env.local << 'EOF'
+JWT_SECRET=$(openssl rand -hex 32)
+XELANOTE_ENV=production
+CORS_ALLOWED_ORIGINS=https://notes.example.com
+EOF
+
+# 2. Start the container
+docker compose --env-file .env.local up -d --build
+```
+
+Open `http://localhost:8080` and create your first account.
+
+### Local Development
+
+**Prerequisites:** Go 1.25+, Node.js 22+, GCC (for SQLite CGO)
+
+```bash
+git clone https://github.com/xela-io/xelanote.git
+cd xelanote
+make init
+
+export JWT_SECRET="$(openssl rand -hex 32)"
+
+# Terminal 1 — backend with hot-reload on :8080
+make dev
+
+# Terminal 2 — frontend dev server on :5173
+make run-frontend
+```
+
+Open `http://localhost:5173`.
+
+---
+
+## Configuration
+
+### Required
+
+| Variable | Description |
+|----------|-------------|
+| `JWT_SECRET` | Min. 64 characters. Generate with `openssl rand -hex 32` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated allowed origins (e.g. `https://notes.example.com`) |
+
+### Optional
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `XELANOTE_DB` | `./data/xelanote.db` | SQLite database path |
+| `XELANOTE_ENV` | `development` | Set to `production` for secure cookies and hardened defaults |
+| `XELANOTE_JOURNAL_MODE` | `wal` | SQLite journal mode (`wal` or `delete`) |
+| `XELANOTE_DB_KEY` | — | SQLCipher encryption key for database-at-rest encryption |
+| `XELANOTE_DB_KEY_FILE` | — | Path to file containing the SQLCipher key |
+| `TURNSTILE_SECRET_KEY` | — | Cloudflare Turnstile CAPTCHA secret |
+| `TURNSTILE_SITE_KEY` | — | Cloudflare Turnstile CAPTCHA site key |
+| `CLAUDE_API_KEY` | — | Anthropic Claude API key for AI features |
+| `GEMINI_API_KEY` | — | Google Gemini API key for AI features |
+| `OPENAI_API_KEY` | — | OpenAI ChatGPT API key for AI features |
 
 ---
 
@@ -108,174 +260,70 @@ SQLite database file.
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Go 1.25, Chi v5.2.5, SQLite (FTS5, WAL mode) |
+| Backend | Go 1.25, Chi router, SQLite (FTS5, WAL mode) |
 | Frontend | SvelteKit (Svelte 5 Runes), TypeScript, Tailwind CSS v4, CodeMirror 6 |
-| Desktop | Electron (Linux AppImage/.deb) |
-| Auth | JWT (access + refresh rotation), HttpOnly cookies, Argon2id, WebAuthn |
-| AI | Claude, Gemini, ChatGPT APIs (text transformation, recipe import, suggestions) |
-| CI/CD | GitHub Actions (CI, quality, security), Forgejo Actions (staging/production deploy) |
-| Infra | Docker (Alpine), Cloudflare Turnstile CAPTCHA |
+| Desktop | Tauri v2 (Rust + WebKit2GTK) |
+| Crypto | XChaCha20-Poly1305, Argon2id, WebAuthn/FIDO2 |
+| AI | Claude, Gemini, ChatGPT (multi-provider, BYOK) |
+| CI/CD | GitHub Actions + Forgejo Actions (staging/production auto-deploy with rollback) |
+| Infra | Docker (Alpine), Cloudflare Turnstile |
 
 ## Architecture
 
-- `backend/`: Go API server (`cmd/server`) with strict layered modules:
-  - `internal/api` — HTTP routing, handlers, middleware (CORS, CSRF, rate limiting, auth)
-  - `internal/service` — Business logic, encryption, sharing, AI integration
-  - `internal/db` — SQLite persistence, migrations (52+), FTS5 search
-  - `internal/llm` — Multi-provider LLM client (Claude, Gemini, ChatGPT)
-- `frontend/`: SvelteKit web app (Svelte 5 Runes only, no Svelte 4 stores):
-  - `src/lib/stores/` — Reactive state (notes, tree, encryption, recipes, sharing, journal)
-  - `src/lib/editor/` — CodeMirror 6 plugins (live preview, markdown, task sortable, scroll sync)
-  - `src/lib/components/` — UI components (editor, dialogs, sidebar, canvas, recipes)
-  - `src/lib/offline/` — IndexedDB queue, sync manager, conflict resolution
-  - `src/lib/crypto/` — Client-side encryption (AES-256-GCM, Argon2id via @noble/hashes)
-- `frontend/src-electron/`: Electron desktop wrapper (Linux)
-- `docs/`: Comprehensive documentation (architecture, API, security, deployment, planning)
-
----
-
-## Installation
-
-**Prerequisites**
-
-- Go 1.25+
-- Node.js 22+
-- GCC (for SQLite CGO)
-
-**Local Development**
-
-```bash
-# Clone
-git clone https://github.com/xela-io/xelanote.git
-cd xelanote
-
-# Install dependencies
-make init
-
-# Set required secret (min. 64 characters)
-export JWT_SECRET="$(openssl rand -hex 32)"
+```
+┌─────────────────────────────────────────────────────┐
+│                    SvelteKit Frontend               │
+│  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐ │
+│  │CodeMirror│ │  Stores  │ │Offline │ │  Crypto  │ │
+│  │ 6 Editor │ │(Svelte 5)│ │  Sync  │ │(XChaCha) │ │
+│  └──────────┘ └──────────┘ └────────┘ └──────────┘ │
+└──────────────────────┬──────────────────────────────┘
+                       │ HTTP / WebSocket
+┌──────────────────────▼──────────────────────────────┐
+│                     Go Backend                      │
+│  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐ │
+│  │ API Layer│→│ Service  │→│   DB   │ │   LLM    │ │
+│  │(Chi, JWT)│ │ (Logic)  │ │(SQLite)│ │(Multi-AI)│ │
+│  └──────────┘ └──────────┘ └────────┘ └──────────┘ │
+└─────────────────────────────────────────────────────┘
+                       │
+              ┌────────▼────────┐
+              │  xelanote.db    │
+              │  (single file)  │
+              └─────────────────┘
 ```
 
----
-
-## Usage
-
-**Run locally**
-
-```bash
-# Terminal 1: Start backend with hot-reload (port 8080)
-make dev
-
-# Terminal 2: Start frontend dev server (port 5173)
-make run-frontend
-```
-
-Open `http://localhost:5173` and create your first account.
-
-For local iPhone/mobile/PWA testing (HTTPS via Caddy, `mkcert`, IP access like `https://<LAN-IP>:8443`), see `docs/development.md` ("Lokales iPhone/PWA-Testsetup").
-
-**Docker (recommended)**
-
-```bash
-cat > .env.local << 'ENVEOF'
-JWT_SECRET=your-secret-here-min-64-chars-use-openssl-rand-hex-32
-XELANOTE_ENV=production
-CORS_ALLOWED_ORIGINS=https://notes.example.com
-ENVEOF
-
-docker compose --env-file .env.local up -d --build
-```
-
-Open `http://localhost:8080` and create your first account.
-
-**API example**
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"your-password"}'
-```
-
-Full API documentation: `docs/api.md`.
+- **Strict 3-layer backend**: API → Service → DB (enforced by CI guardrails — no layer skipping allowed)
+- **52+ database migrations** with forward-only, incremental schema evolution
+- **Svelte 5 only** — Svelte 4 store imports are blocked by pre-commit hooks and CI
 
 ---
 
-## Configuration
+## Development
 
-**Required**
-
-| Variable               | Description                                                               |
-| ---------------------- | ------------------------------------------------------------------------- |
-| `JWT_SECRET`           | Min. 64 characters. Generate: `openssl rand -hex 32`                      |
-| `CORS_ALLOWED_ORIGINS` | Comma-separated origins for production (e.g. `https://notes.example.com`) |
-
-**Optional**
-
-| Variable               | Default              | Description                                                  |
-| ---------------------- | -------------------- | ------------------------------------------------------------ |
-| `XELANOTE_DB`            | `./data/xelanote.db` | Path to SQLite database                                      |
-| `XELANOTE_ENV`           | `development`        | Set to `production` for secure cookies and hardened defaults |
-| `XELANOTE_JOURNAL_MODE`  | `wal`                | SQLite journal mode (`wal` or `delete`)                      |
-| `XELANOTE_DB_KEY`        | —                    | SQLCipher encryption key for database-at-rest encryption     |
-| `XELANOTE_DB_KEY_FILE`   | —                    | Path to file containing the SQLCipher key                    |
-| `TURNSTILE_SECRET_KEY`   | —                    | Cloudflare Turnstile CAPTCHA secret                          |
-| `TURNSTILE_SITE_KEY`     | —                    | Cloudflare Turnstile CAPTCHA site key                        |
-| `CLAUDE_API_KEY`         | —                    | Anthropic Claude API key for AI features                     |
-| `GEMINI_API_KEY`         | —                    | Google Gemini API key for AI features                        |
-| `OPENAI_API_KEY`         | —                    | OpenAI ChatGPT API key for AI features                       |
-| `PPROF_ENABLED`          | `false`              | Enable Go pprof profiling endpoint                           |
-
----
-
-## Development Scripts
-
-- `make init`: install frontend/backend dependencies and hooks
-- `make dev`: run Go backend with hot-reload on `:8080` (via Air)
-- `make run-frontend`: run Vite dev server on `:5173`
-- `make phone-help`: local iPhone/PWA test workflow (Caddy + HTTPS + preview/dev)
-- `make phone-frontend-preview`: prod-like frontend preview for PWA/iPhone standalone tests
-- `make phone-caddy`: local HTTPS reverse proxy for mobile testing (`:8443`/`:8444`)
-- `make build`: production build (backend binary + frontend static)
-- `make test`: backend tests
-- `make test-frontend`: frontend unit tests (Vitest)
-- `make test-e2e`: Playwright end-to-end tests
-- `make test-coverage`: backend + frontend coverage reports
-- `make quality`: format/lint/typecheck checks (gofmt, eslint, prettier, svelte-check)
-- `make check-policy`: architecture/security guardrails (layering, Svelte 5-only imports, auth-storage checks)
-- `make docker`: build Docker image
-- `make demo-db`: generate demo database with sample data
-
-Full list: `docs/environment-variables.md`.
-
-## Quality Guardrails
-
-- Backend follows strict layering: `api -> service -> db` (enforced by `scripts/check-layer-violations.sh`).
-- Frontend disallows Svelte 4 store imports in app code (`scripts/check-svelte4-imports.sh`).
-- Auth token persistence in `localStorage` is blocked by policy checks (`scripts/check-security-patterns.sh`).
-- CI runs `ci.yml`, `quality.yml`, and `security.yml` on pushes/PRs.
-
----
-
-## Screenshots
-
-<!-- TODO: Replace with real screenshots -->
-
-<p align="center">
-  <img src="docs/images/screenshot-editor-placeholder.svg" alt="Editor screenshot" width="800" />
-</p>
-
-<p align="center">
-  <img src="docs/images/screenshot-graph-placeholder.svg" alt="Graph screenshot" width="800" />
-</p>
+| Command | Description |
+|---------|-------------|
+| `make init` | Install all dependencies and git hooks |
+| `make dev` | Backend with hot-reload (Air) on `:8080` |
+| `make run-frontend` | Vite dev server on `:5173` |
+| `make build` | Production build (Go binary + static frontend) |
+| `make test` | Backend tests |
+| `make test-frontend` | Frontend unit tests (Vitest) |
+| `make test-e2e` | End-to-end tests (Playwright) |
+| `make test-coverage` | Coverage reports for backend + frontend |
+| `make quality` | Lint, format, and typecheck (gofmt, ESLint, Prettier, svelte-check) |
+| `make check-policy` | Architecture and security guardrail checks |
+| `make docker` | Build Docker image |
+| `make demo-db` | Generate demo database with sample data |
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please see `CONTRIBUTING.md` for workflow, style, and test guidelines.
+Contributions are welcome! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for workflow, code style, and testing guidelines.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for details.
+MIT — see [`LICENSE`](LICENSE) for details.

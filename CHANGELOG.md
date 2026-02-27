@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- README: comprehensive rewrite — expanded feature documentation (editor modes, canvas, recipes, journal, AI, admin, desktop app), added architecture diagram, fixed Desktop entry (Tauri v2 instead of Electron), removed placeholder images and TODOs, restructured sections (Quick Start, Tech Stack, Development)
+
 ### Security
 
 - Pre-public-release security & privacy audit: removed personal email addresses from SECURITY.md and CODE_OF_CONDUCT.md, redacted internal infrastructure details (SSH aliases, staging/production IPs, internal domains, server paths, LAN IPs) across all documentation, annotated deployment workflow paths, documented LGPL-3.0 sharp/libvips dependency in THIRD-PARTY-LICENSES.md, removed 18MB compiled Go binary from git history via git-filter-repo

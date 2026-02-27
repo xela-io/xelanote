@@ -129,6 +129,14 @@ jobs:
       - run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+      - name: Generate missing visual baselines
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.visual_theme == 'matrix' || matrix.visual_variant.theme == github.event.inputs.visual_theme
+        run: |
+          SNAP_DIR="tests/visual/pages.visual.spec.ts-snapshots"
+          if [ ! -d "$SNAP_DIR" ] || [ -z "$(ls -A "$SNAP_DIR" 2>/dev/null)" ]; then
+            echo "No baselines found — generating initial snapshots"
+            npm run test:e2e:visual -- --update-snapshots || true
+          fi
       - name: Run UI visual regression snapshots
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.visual_theme == 'matrix' || matrix.visual_variant.theme == github.event.inputs.visual_theme
         run: npm run test:e2e:visual

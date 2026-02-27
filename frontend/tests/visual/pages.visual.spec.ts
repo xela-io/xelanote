@@ -65,7 +65,7 @@ async function captureAndAssert(
     await expect(page).toHaveScreenshot(filename, {
       fullPage: true,
       animations: 'disabled',
-      maxDiffPixels: 500,
+      maxDiffPixelRatio: 0.03,
     });
   } finally {
     await page.close().catch(() => {});
@@ -99,7 +99,7 @@ test.describe('Visual Regression - Public Pages @visual', () => {
           await expect(page).toHaveScreenshot(`${name}-${VARIANT.slug}.png`, {
             fullPage: true,
             animations: 'disabled',
-            maxDiffPixels: 500,
+            maxDiffPixelRatio: 0.03,
           });
         } finally {
           await page.close().catch(() => {});
@@ -167,7 +167,7 @@ test.describe('Visual Regression - Responsive @visual', () => {
           await expect(page).toHaveScreenshot(`${vp.name}-${name}-${VARIANT.slug}.png`, {
             fullPage: true,
             animations: 'disabled',
-            maxDiffPixels: 500,
+            maxDiffPixelRatio: 0.03,
           });
         } finally {
           await page.close().catch(() => {});

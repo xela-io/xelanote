@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality: fixed 17 golangci-lint findings — tightened file/dir permissions (0750/0600), added http.Server timeouts for pprof, applied struct conversions, removed unused `getRequestID`, added `//nolint` for validated false positives
 - Quality: fixed broken discussions link in development docs, added lychee exclusion for tag comparison URLs
 - Security: resolved npm audit high vulnerabilities via `npm audit fix`, scoped audit to production deps (`--omit=dev`)
+- CI/Quality: relaxed visual regression pixel tolerance from fixed 500px to 3% ratio, auto-generate missing visual baselines in quality workflow
 
 ### Changed
 

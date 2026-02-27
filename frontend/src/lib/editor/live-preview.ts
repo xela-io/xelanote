@@ -11,7 +11,10 @@ import {
 } from '@codemirror/view';
 
 import type { HeadingInfo } from './live-preview/heading-manager';
-import { buildHeadingSectionByLineForViewport, collectHeadingInfo } from './live-preview/heading-manager';
+import {
+  buildHeadingSectionByLineForViewport,
+  collectHeadingInfo,
+} from './live-preview/heading-manager';
 import type { LinePrimitives } from './live-preview/line-primitives';
 import { parseLinePrimitives } from './live-preview/line-primitives';
 import type { StructuredLines } from './live-preview/structured-lines';

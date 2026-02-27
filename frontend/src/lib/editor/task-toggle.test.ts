@@ -94,7 +94,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 1,
       checked: true,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });
@@ -109,7 +111,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 2, // Child B
       checked: true,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });
@@ -124,7 +128,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 0, // Parent
       checked: true,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });
@@ -143,7 +149,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 1, // Parent (index 1 because "Other" is index 0)
       checked: false,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });
@@ -162,7 +170,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 3, // Äpfel (indices: A=0, B=1, Obst=2, Äpfel=3, Bananen=4)
       checked: false,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });
@@ -184,7 +194,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 1, // Äpfel
       checked: false,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });
@@ -199,7 +211,9 @@ describe('toggleTaskByIndex', () => {
       checkboxIndex: 3, // Bananen (A=0, Obst=1, Äpfel=2, Bananen=3, C=4)
       checked: true,
       getContent: () => content,
-      setContent: (next) => { content = next; },
+      setContent: (next) => {
+        content = next;
+      },
       scheduleAutoSave: vi.fn(),
       queueTaskEvent: vi.fn(),
     });

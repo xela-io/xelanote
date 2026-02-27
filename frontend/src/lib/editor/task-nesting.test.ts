@@ -197,12 +197,7 @@ describe('task-nesting', () => {
     });
 
     it('returns full range for deeply nested', () => {
-      const lines = [
-        '- [ ] Parent',
-        '  - [ ] Child',
-        '    - [ ] Grandchild',
-        '- [ ] Next',
-      ];
+      const lines = ['- [ ] Parent', '  - [ ] Child', '    - [ ] Grandchild', '- [ ] Next'];
       const range = getSubtreeLineRange(lines, 0);
       expect(range).toEqual({ start: 0, end: 2 });
     });
@@ -214,12 +209,7 @@ describe('task-nesting', () => {
     });
 
     it('returns child range correctly', () => {
-      const lines = [
-        '- [ ] Parent',
-        '  - [ ] Child',
-        '    - [ ] Grandchild',
-        '  - [ ] Child 2',
-      ];
+      const lines = ['- [ ] Parent', '  - [ ] Child', '    - [ ] Grandchild', '  - [ ] Child 2'];
       const range = getSubtreeLineRange(lines, 1);
       expect(range).toEqual({ start: 1, end: 2 });
     });

@@ -32,6 +32,7 @@ Der Service Worker wird nur bei `vite build` generiert (`generateSW`-Strategie).
 Playwright-Config (`playwright.config.ts`) nutzt `vite dev` — dort gibt es keinen Service Worker.
 
 Die PWA-Tests verwenden daher `playwright.pwa.config.ts` mit:
+
 - **Production Build** (`npm run build`) statt Dev-Server
 - **`vite preview`** als Web-Server (Port 4173)
 - **Nur Chromium** — SW-Testing ist nur in Chromium vollständig unterstützt
@@ -39,15 +40,15 @@ Die PWA-Tests verwenden daher `playwright.pwa.config.ts` mit:
 
 ## Teststruktur
 
-| Describe-Block | Was wird geprüft |
-|---|---|
-| Service Worker | SW-Registrierung, Aktivierung, Kontrolle der Seite |
-| Offline-Fähigkeit | Offline-Laden, kritische Routen, navigateFallback, API-Denylist |
-| Web App Manifest | Pflichtfelder, Icons (192/512/maskable), Farben, Apple Touch Icon |
-| Caching & Sicherheit | Workbox-Precache, kein API-Caching, Cache-Clearing bei Logout |
-| Navigation & UX | Ladezeit, Routen-Navigation, Zurück-Navigation |
-| SW-Update-Lifecycle | Registration-State, Precache-Inhalte |
-| HTTPS | HTTP→HTTPS Redirect (nur mit `TEST_BASE_URL`) |
+| Describe-Block       | Was wird geprüft                                                  |
+| -------------------- | ----------------------------------------------------------------- |
+| Service Worker       | SW-Registrierung, Aktivierung, Kontrolle der Seite                |
+| Offline-Fähigkeit    | Offline-Laden, kritische Routen, navigateFallback, API-Denylist   |
+| Web App Manifest     | Pflichtfelder, Icons (192/512/maskable), Farben, Apple Touch Icon |
+| Caching & Sicherheit | Workbox-Precache, kein API-Caching, Cache-Clearing bei Logout     |
+| Navigation & UX      | Ladezeit, Routen-Navigation, Zurück-Navigation                    |
+| SW-Update-Lifecycle  | Registration-State, Precache-Inhalte                              |
+| HTTPS                | HTTP→HTTPS Redirect (nur mit `TEST_BASE_URL`)                     |
 
 ## Neue Tests hinzufügen
 
@@ -63,6 +64,7 @@ Die Lighthouse-Config (`lighthouserc.js`) prüft die `/login`-Seite (öffentlich
 
 **Hinweis**: Seit Lighthouse 12 (Nov 2024) existiert die PWA-Kategorie nicht mehr als
 aggregierter Score. PWA-Audits werden als einzelne Assertions geprüft:
+
 - `service-worker` — SW ist registriert
 - `installable-manifest` — Manifest ist installierbar
 - `apple-touch-icon` — Apple Touch Icon vorhanden
@@ -71,12 +73,12 @@ aggregierter Score. PWA-Audits werden als einzelne Assertions geprüft:
 
 Diese Funktionen werden **nicht** in den PWA-E2E-Tests geprüft:
 
-| Funktion | Grund | Abgedeckt durch |
-|---|---|---|
-| iOS Install Coach | Browser-spezifisch, nicht in Chromium testbar | Unit-Tests (`pwa.store.test.ts`, 580 Zeilen) |
-| Share Target | Benötigt echte OS-Integration | Manuelles Testing |
-| Offline Queue (IndexedDB) | Komplexes Setup mit Auth + Notiz + Reconnect | Separate E2E-Suite (geplant) |
-| `beforeinstallprompt` | Browser-Event nicht zuverlässig automatisierbar | Unit-Tests |
+| Funktion                  | Grund                                           | Abgedeckt durch                              |
+| ------------------------- | ----------------------------------------------- | -------------------------------------------- |
+| iOS Install Coach         | Browser-spezifisch, nicht in Chromium testbar   | Unit-Tests (`pwa.store.test.ts`, 580 Zeilen) |
+| Share Target              | Benötigt echte OS-Integration                   | Manuelles Testing                            |
+| Offline Queue (IndexedDB) | Komplexes Setup mit Auth + Notiz + Reconnect    | Separate E2E-Suite (geplant)                 |
+| `beforeinstallprompt`     | Browser-Event nicht zuverlässig automatisierbar | Unit-Tests                                   |
 
 ## CI-Integration
 

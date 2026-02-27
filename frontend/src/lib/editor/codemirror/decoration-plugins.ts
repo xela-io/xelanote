@@ -271,8 +271,7 @@ function buildListIndentDecorations(view: EditorView): DecorationSet {
         const nestPart = buildNestPart(taskMatch[1]);
         items.push({
           pos: line.from,
-          style:
-            `padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)${nestPart}); text-indent: calc(-1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)));`,
+          style: `padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)${nestPart}); text-indent: calc(-1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)));`,
         });
         inTaskItemNestLevel = computeNestLevel(taskMatch[1]);
         pos = line.to + 1;
@@ -280,7 +279,10 @@ function buildListIndentDecorations(view: EditorView): DecorationSet {
       }
 
       if (inTaskItemNestLevel >= 0 && !listIndentPattern.test(text)) {
-        const nestPart = inTaskItemNestLevel > 0 ? ` + ${inTaskItemNestLevel} * var(--live-preview-nest-indent)` : '';
+        const nestPart =
+          inTaskItemNestLevel > 0
+            ? ` + ${inTaskItemNestLevel} * var(--live-preview-nest-indent)`
+            : '';
         items.push({
           pos: line.from,
           style: `padding-left: calc(var(--live-preview-marker-column-width) + var(--live-preview-marker-gap)${nestPart});`,

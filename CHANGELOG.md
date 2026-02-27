@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Quality: fixed prettier formatting and svelte-check type error in PWA test
 - Quality: removed unused variables in task-sortable.ts and task-toggle.ts (eslint no-unused-vars)
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
 - PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA

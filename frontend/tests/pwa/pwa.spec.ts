@@ -1,10 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import {
-  createCredentials,
-  loginViaApi,
-  registerViaApi,
-} from '../e2e/helpers/auth';
+import { createCredentials, loginViaApi, registerViaApi } from '../e2e/helpers/auth';
 
 // ---------------------------------------------------------------------------
 // Hilfsfunktion: Wartet bis der SW vollständig aktiviert ist und die Seite
@@ -72,7 +68,11 @@ test.describe('Service Worker', () => {
       { timeout: 30000 }
     );
 
-    const info = await swInfo.jsonValue();
+    const info = (await swInfo.jsonValue()) as {
+      scope: string;
+      hasActive: boolean;
+      state: string;
+    } | null;
     expect(info).not.toBeNull();
     expect(info!.scope).toContain('/');
     expect(info!.hasActive).toBe(true);
@@ -83,9 +83,7 @@ test.describe('Service Worker', () => {
     await page.goto('/');
     await waitForSwControlling(page);
 
-    const hasController = await page.evaluate(
-      () => !!navigator.serviceWorker.controller
-    );
+    const hasController = await page.evaluate(() => !!navigator.serviceWorker.controller);
     expect(hasController).toBe(true);
   });
 });
@@ -161,9 +159,7 @@ test.describe('Offline-Fähigkeit', () => {
     expect(cacheInfo.total).toBeGreaterThan(10); // SvelteKit App hat viele Chunks
   });
 
-  test('NavigationRoute mit Fallback und API-Denylist konfiguriert', async ({
-    page,
-  }) => {
+  test('NavigationRoute mit Fallback und API-Denylist konfiguriert', async ({ page }) => {
     await page.goto('/');
     await waitForSwControlling(page);
 
@@ -245,9 +241,7 @@ test.describe('Web App Manifest', () => {
   test('Manifest ist valides JSON mit Pflichtfeldern', async ({ page }) => {
     await page.goto('/');
 
-    const manifestHref = await page
-      .locator('link[rel="manifest"]')
-      .getAttribute('href');
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     expect(manifestHref).toBeTruthy();
 
     const response = await page.request.get(manifestHref!);
@@ -265,24 +259,18 @@ test.describe('Web App Manifest', () => {
 
   test('Icons: 192x192 und 512x512 vorhanden', async ({ page }) => {
     await page.goto('/');
-    const manifestHref = await page
-      .locator('link[rel="manifest"]')
-      .getAttribute('href');
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const response = await page.request.get(manifestHref!);
     const manifest = await response.json();
 
-    const sizes = manifest.icons.map(
-      (icon: { sizes: string }) => icon.sizes
-    );
+    const sizes = manifest.icons.map((icon: { sizes: string }) => icon.sizes);
     expect(sizes).toContain('192x192');
     expect(sizes).toContain('512x512');
   });
 
   test('Maskable Icon vorhanden', async ({ page }) => {
     await page.goto('/');
-    const manifestHref = await page
-      .locator('link[rel="manifest"]')
-      .getAttribute('href');
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const response = await page.request.get(manifestHref!);
     const manifest = await response.json();
 
@@ -294,9 +282,7 @@ test.describe('Web App Manifest', () => {
 
   test('theme_color und background_color gesetzt', async ({ page }) => {
     await page.goto('/');
-    const manifestHref = await page
-      .locator('link[rel="manifest"]')
-      .getAttribute('href');
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const response = await page.request.get(manifestHref!);
     const manifest = await response.json();
 
@@ -327,8 +313,7 @@ test.describe('Caching & Sicherheit', () => {
     const cacheInfo = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
       const precache = cacheNames.find(
-        (name) =>
-          name.includes('precache') || name.includes('workbox-precache')
+        (name) => name.includes('precache') || name.includes('workbox-precache')
       );
       if (!precache) return { found: false, entryCount: 0, names: cacheNames };
 
@@ -356,9 +341,7 @@ test.describe('Caching & Sicherheit', () => {
         if (name === 'uploads') continue;
         const cache = await caches.open(name);
         const keys = await cache.keys();
-        const apiEntry = keys.find((req) =>
-          new URL(req.url).pathname.startsWith('/api/')
-        );
+        const apiEntry = keys.find((req) => new URL(req.url).pathname.startsWith('/api/'));
         if (apiEntry) return true;
       }
       return false;
@@ -472,8 +455,7 @@ test.describe('SW-Update-Lifecycle', () => {
     const precacheUrls = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
       const precacheName = cacheNames.find(
-        (name) =>
-          name.includes('precache') || name.includes('workbox-precache')
+        (name) => name.includes('precache') || name.includes('workbox-precache')
       );
       if (!precacheName) return [];
 
@@ -517,10 +499,7 @@ test.describe('HTTPS', () => {
 
   test('HTTP→HTTPS Redirect', async ({ page }) => {
     // Nur ausführen wenn TEST_BASE_URL mit https:// beginnt
-    test.skip(
-      !baseUrl.startsWith('https://'),
-      'TEST_BASE_URL ist nicht HTTPS — Test übersprungen'
-    );
+    test.skip(!baseUrl.startsWith('https://'), 'TEST_BASE_URL ist nicht HTTPS — Test übersprungen');
 
     const httpUrl = baseUrl.replace('https://', 'http://');
     const response = await page.goto(httpUrl, {

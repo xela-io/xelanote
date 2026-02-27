@@ -1515,7 +1515,7 @@ html {
 .cm-editor .cm-line.cm-live-list-item {
   padding-left: calc(
     var(--live-preview-marker-column-width) + var(--live-preview-marker-gap) +
-    var(--nest-offset, 0px)
+      var(--nest-offset, 0px)
   );
   text-indent: calc(
     -1 * (var(--live-preview-marker-column-width) + var(--live-preview-marker-gap))
@@ -1523,11 +1523,21 @@ html {
 }
 
 /* Nesting indentation via CSS custom property */
-.cm-editor .cm-line.cm-live-nest-1 { --nest-offset: calc(1 * var(--live-preview-nest-indent)); }
-.cm-editor .cm-line.cm-live-nest-2 { --nest-offset: calc(2 * var(--live-preview-nest-indent)); }
-.cm-editor .cm-line.cm-live-nest-3 { --nest-offset: calc(3 * var(--live-preview-nest-indent)); }
-.cm-editor .cm-line.cm-live-nest-4 { --nest-offset: calc(4 * var(--live-preview-nest-indent)); }
-.cm-editor .cm-line.cm-live-nest-5 { --nest-offset: calc(5 * var(--live-preview-nest-indent)); }
+.cm-editor .cm-line.cm-live-nest-1 {
+  --nest-offset: calc(1 * var(--live-preview-nest-indent));
+}
+.cm-editor .cm-line.cm-live-nest-2 {
+  --nest-offset: calc(2 * var(--live-preview-nest-indent));
+}
+.cm-editor .cm-line.cm-live-nest-3 {
+  --nest-offset: calc(3 * var(--live-preview-nest-indent));
+}
+.cm-editor .cm-line.cm-live-nest-4 {
+  --nest-offset: calc(4 * var(--live-preview-nest-indent));
+}
+.cm-editor .cm-line.cm-live-nest-5 {
+  --nest-offset: calc(5 * var(--live-preview-nest-indent));
+}
 
 .cm-editor .cm-live-task-checkbox {
   cursor: pointer;
@@ -1596,7 +1606,7 @@ html {
 }
 
 /* Hide drag handles on nested task items — only top-level tasks are draggable */
-.cm-editor .cm-line[class*="cm-live-nest-"] .cm-live-task-drag-handle {
+.cm-editor .cm-line[class*='cm-live-nest-'] .cm-live-task-drag-handle {
   display: none;
 }
 

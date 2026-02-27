@@ -113,11 +113,7 @@ describe('task-reorder', () => {
     });
 
     it('rejects move for nested task (nestLevel > 0)', () => {
-      const doc = Text.of([
-        '- [ ] Parent',
-        '  - [ ] Child',
-        '- [ ] Other',
-      ]);
+      const doc = Text.of(['- [ ] Parent', '  - [ ] Child', '- [ ] Other']);
 
       const tasks = getTasksInDocument(doc);
       // Child is at index 1
@@ -128,35 +124,29 @@ describe('task-reorder', () => {
     });
 
     it('moves subtree as a block when parent is moved down', () => {
-      const doc = Text.of([
-        '- [ ] Parent',
-        '  - [ ] Child 1',
-        '  - [ ] Child 2',
-        '- [ ] Target',
-      ]);
+      const doc = Text.of(['- [ ] Parent', '  - [ ] Child 1', '  - [ ] Child 2', '- [ ] Target']);
 
       const changes = calculateMoveChanges(doc, 0, 3);
 
       expect(changes).toHaveLength(2);
       // Should include all 3 lines (parent + 2 children) in the insert
-      const insertChange = changes.find((c) => 'insert' in c && (c.insert as string).includes('Parent'));
+      const insertChange = changes.find(
+        (c) => 'insert' in c && (c.insert as string).includes('Parent')
+      );
       expect(insertChange).toBeDefined();
       expect((insertChange as { insert: string }).insert).toContain('Child 1');
       expect((insertChange as { insert: string }).insert).toContain('Child 2');
     });
 
     it('moves subtree as a block when parent is moved up', () => {
-      const doc = Text.of([
-        '- [ ] First',
-        '- [ ] Parent',
-        '  - [ ] Child',
-        '- [ ] Last',
-      ]);
+      const doc = Text.of(['- [ ] First', '- [ ] Parent', '  - [ ] Child', '- [ ] Last']);
 
       const changes = calculateMoveChanges(doc, 1, 0);
 
       expect(changes).toHaveLength(2);
-      const insertChange = changes.find((c) => 'insert' in c && (c.insert as string).includes('Parent'));
+      const insertChange = changes.find(
+        (c) => 'insert' in c && (c.insert as string).includes('Parent')
+      );
       expect(insertChange).toBeDefined();
       expect((insertChange as { insert: string }).insert).toContain('Child');
     });
@@ -164,11 +154,7 @@ describe('task-reorder', () => {
 
   describe('getTasksInDocument with indentLength', () => {
     it('reports indentLength for nested tasks', () => {
-      const doc = Text.of([
-        '- [ ] Parent',
-        '  - [ ] Child',
-        '    - [ ] Grandchild',
-      ]);
+      const doc = Text.of(['- [ ] Parent', '  - [ ] Child', '    - [ ] Grandchild']);
 
       const tasks = getTasksInDocument(doc);
       expect(tasks).toHaveLength(3);

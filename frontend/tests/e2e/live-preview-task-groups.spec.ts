@@ -12,7 +12,12 @@ async function csrfToken(page: Page, baseURL: string): Promise<string | null> {
   return cookies.find((cookie) => cookie.name === 'csrf_token')?.value ?? null;
 }
 
-async function createNote(page: Page, baseURL: string, title: string, content: string): Promise<string> {
+async function createNote(
+  page: Page,
+  baseURL: string,
+  title: string,
+  content: string
+): Promise<string> {
   const csrf = await csrfToken(page, baseURL);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -104,12 +109,9 @@ test.describe('Live Preview Task Groups', () => {
       element.scrollTop = 0;
     });
     await page.waitForTimeout(120);
-    await scroller.evaluate(
-      (element, top) => {
-        element.scrollTop = top;
-      },
-      collapseScrollTop
-    );
+    await scroller.evaluate((element, top) => {
+      element.scrollTop = top;
+    }, collapseScrollTop);
 
     await expect(summary).toBeVisible({ timeout: 5000 });
     await summary.click();

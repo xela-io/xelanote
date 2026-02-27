@@ -283,10 +283,7 @@ export function initTheme() {
   }
 
   // Fallback: System-Präferenz
-  if (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  ) {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     setTheme('gruvbox-dark');
   } else {
     setTheme('gruvbox-light');

@@ -152,10 +152,7 @@ export async function reportManualFeedback(
 ): Promise<{ accepted: boolean }> {
   // Manual feedback always creates a new issue — no dedup normalization.
   // Use raw description + timestamp to guarantee a unique fingerprint.
-  const fingerprint = await computeFingerprint(
-    'UserFeedback',
-    description + ':' + Date.now()
-  );
+  const fingerprint = await computeFingerprint('UserFeedback', description + ':' + Date.now());
 
   return submitReport({
     type: 'manual',

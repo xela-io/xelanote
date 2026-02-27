@@ -75,7 +75,11 @@ export async function processShareTarget(deps: ShareTargetDeps): Promise<void> {
 
   if (!title && !text && !url) return;
 
-  window.history.replaceState(null, '', window.location.pathname);
+  try {
+    window.history.replaceState(null, '', window.location.pathname);
+  } catch {
+    // replaceState may throw SecurityError on iOS Safari PWA
+  }
   await createNoteFromShare(title, text, url, deps);
 }
 

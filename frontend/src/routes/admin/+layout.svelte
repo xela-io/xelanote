@@ -13,12 +13,12 @@
     const isAdmin = auth.isAdmin();
 
     if (!isAuthenticated) {
-      goto('/login');
+      goto('/login', { replaceState: true });
       return;
     }
 
     if (!isAdmin) {
-      goto('/');
+      goto('/', { replaceState: true });
       return;
     }
 

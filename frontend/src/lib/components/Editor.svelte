@@ -891,7 +891,11 @@
       } else if (url.searchParams.has('highlight')) {
         url.searchParams.delete('highlight');
       }
-      window.history.replaceState(window.history.state, '', url.toString());
+      try {
+        window.history.replaceState(window.history.state, '', url.toString());
+      } catch {
+        // replaceState may throw SecurityError on iOS Safari PWA
+      }
     },
     setState: (
       partial: Partial<{
@@ -1013,6 +1017,7 @@
 <div
   class="editor-shell flex h-full flex-col"
   data-note-type={notes.getCurrentNote()?.note_type ?? 'note'}
+  data-editor-mode={ui.getEditorMode()}
 >
   <!-- Toolbar (fixed header, not in scroll container) -->
   {#if notes.getCurrentNote()}
@@ -1118,7 +1123,7 @@
             style={ui.getEditorMode() === 'split'
               ? `width: ${ui.getSplitPosition()}%; min-height: 400px;`
               : ui.getIsMobile()
-                ? 'min-height: 80vh;'
+                ? 'min-height: calc(var(--app-viewport-height, 100dvh) * 0.8);'
                 : 'min-height: 400px;'}
           ></div>
         {/if}
@@ -1311,6 +1316,15 @@
 
     .preview-pane-shell {
       border-left: 0;
+    }
+  }
+
+  /* Live preview updates line decorations while scrolling. On mobile this can
+     trigger browser scroll anchoring corrections that look like random jumps
+     near the top of long notes. Disable anchoring only for this mode. */
+  @media (max-width: 767px) {
+    .editor-shell[data-editor-mode='live'] :global(.cm-scroller) {
+      overflow-anchor: none;
     }
   }
 

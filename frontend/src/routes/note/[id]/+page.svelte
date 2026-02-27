@@ -66,7 +66,7 @@
   // Redirect falls keine ID (sollte nicht passieren, aber für TypeScript-Safety)
   $effect(() => {
     if (!noteId) {
-      goto('/');
+      goto('/', { replaceState: true });
     }
   });
 

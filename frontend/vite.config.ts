@@ -26,7 +26,7 @@ plugins.push(
       background_color: '#282828',
       display: 'standalone',
       display_override: ['window-controls-overlay', 'standalone'],
-      orientation: 'portrait',
+      orientation: 'any',
       start_url: '/',
       scope: '/',
       categories: ['productivity', 'utilities'],

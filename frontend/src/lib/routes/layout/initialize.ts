@@ -169,13 +169,13 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
     console.log('[Layout] Tokens not yet available, waiting for update');
   }
 
-  // Auth-based redirects
+  // Auth-based redirects (replaceState: programmatic, not user-initiated)
   const currentPath = window.location.pathname;
   const isPublicRoute = deps.publicRoutes.some((route) => currentPath.startsWith(route));
   if (deps.auth.isAuthenticated() && isPublicRoute) {
-    deps.goto('/');
+    deps.goto('/', { replaceState: true });
   } else if (!deps.auth.isAuthenticated() && !isPublicRoute) {
-    deps.goto('/login');
+    deps.goto('/login', { replaceState: true });
   }
 
   // UI restore: synchronous localStorage reads, no network

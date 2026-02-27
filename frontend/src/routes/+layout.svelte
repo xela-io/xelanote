@@ -140,7 +140,7 @@
         isPublicRoute,
       })
     ) {
-      goto('/login');
+      goto('/login', { replaceState: true });
     }
 
     // Note: We don't redirect authenticated users away from login/register pages here
@@ -282,7 +282,11 @@
       // Handle PWA shortcut actions (e.g. ?action=new-note from manifest shortcuts)
       const actionParam = new URL(window.location.href).searchParams.get('action');
       if (actionParam === 'new-note' && auth.isAuthenticated()) {
-        window.history.replaceState(null, '', window.location.pathname);
+        try {
+          window.history.replaceState(null, '', window.location.pathname);
+        } catch {
+          // replaceState may throw SecurityError on iOS Safari PWA
+        }
         const note = await notes.createNote('');
         if (note?.id) {
           goto(`/note/${note.id}`);

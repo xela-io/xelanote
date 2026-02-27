@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Backend error reporting: 500 errors (`respondInternalErr`) and panics are now automatically reported as Forgejo issues with fingerprint-based dedup, stack traces, and a `backend` label for filtering
 - Mobile ToC FAB: Table of Contents trigger becomes a fixed-position floating action button (bottom-right) on mobile with an SVG progress ring that fills as the user scrolls; desktop behavior unchanged
 - Task collapse state sync: completed task group open/closed state now persists across devices via `GET/PUT /api/notes/:id/user-state` (localStorage as fast cache, server as source of truth, 500ms debounced sync)
 - Live-preview task collapse server sync: collapsed task groups in live-preview mode sync to server via `note_user_state` API (namespaced `tasks:<hash>` keys) with debounced writes and merge logic

@@ -2,14 +2,42 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 )
 
 const reportQueueSize = 64
+
+// Regex patterns for message normalization (matching frontend logic).
+var (
+	uuidRe    = regexp.MustCompile(`(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`)
+	isoDateRe = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[.\d]*(?:Z|[+-]\d{2}:\d{2})?`)
+	numberRe  = regexp.MustCompile(`\b\d+\b`)
+)
+
+// ComputeFingerprint produces a 16-hex-char fingerprint identical to the
+// frontend implementation (SHA-256 of normalised "errorType:message").
+func ComputeFingerprint(errorType, message string) string {
+	normalized := NormalizeMessage(errorType + ":" + message)
+	hash := sha256.Sum256([]byte(normalized))
+	return hex.EncodeToString(hash[:])[:16]
+}
+
+// NormalizeMessage replaces volatile parts of an error message so that
+// semantically identical errors produce the same fingerprint.
+func NormalizeMessage(msg string) string {
+	// Order matters: UUIDs before numbers (UUIDs contain hex digits).
+	msg = uuidRe.ReplaceAllString(msg, "UUID")
+	msg = isoDateRe.ReplaceAllString(msg, "DATE")
+	msg = numberRe.ReplaceAllString(msg, "N")
+	return msg
+}
 
 // ErrorReportService handles error reporting to Forgejo issues.
 type ErrorReportService struct {
@@ -18,6 +46,7 @@ type ErrorReportService struct {
 	enabled             bool
 	autoReportLabelID   int64
 	userFeedbackLabelID int64
+	backendLabelID      int64
 	mu                  sync.RWMutex // protects label IDs
 	reportChan          chan ErrorReport
 	done                chan struct{}
@@ -132,6 +161,11 @@ func (s *ErrorReportService) IsEnabled() bool {
 	return s.enabled
 }
 
+// ReportChan returns the internal report channel (for testing only).
+func (s *ErrorReportService) ReportChan() <-chan ErrorReport {
+	return s.reportChan
+}
+
 // EnsureLabels resolves or creates the auto-report and user-feedback labels on Forgejo.
 func (s *ErrorReportService) EnsureLabels(ctx context.Context) error {
 	if !s.enabled {
@@ -148,12 +182,18 @@ func (s *ErrorReportService) EnsureLabels(ctx context.Context) error {
 		return fmt.Errorf("failed to ensure user-feedback label: %w", err)
 	}
 
+	backendID, err := s.resolveOrCreateLabel(ctx, "backend", "#f59e0b")
+	if err != nil {
+		return fmt.Errorf("failed to ensure backend label: %w", err)
+	}
+
 	s.mu.Lock()
 	s.autoReportLabelID = autoID
 	s.userFeedbackLabelID = feedbackID
+	s.backendLabelID = backendID
 	s.mu.Unlock()
 
-	s.log.Info("Error report labels ensured", "auto_report_id", autoID, "user_feedback_id", feedbackID)
+	s.log.Info("Error report labels ensured", "auto_report_id", autoID, "user_feedback_id", feedbackID, "backend_id", backendID)
 	return nil
 }
 
@@ -171,22 +211,25 @@ func (s *ErrorReportService) SubmitReport(ctx context.Context, report ErrorRepor
 	}
 	s.mu.RUnlock()
 
-	// Search for existing issue with the same fingerprint
-	existingIssue, err := s.searchExistingIssue(ctx, report.Fingerprint)
-	if err != nil {
-		s.log.Error("failed to search for existing issue", "error", err, "fingerprint", report.Fingerprint)
-		// Continue to create a new issue — don't fail completely
-	}
-
-	if existingIssue != nil {
-		// Add comment to existing issue
-		commentBody := s.buildCommentBody(report)
-		if err := s.client.AddComment(ctx, existingIssue.Number, commentBody); err != nil {
-			s.log.Error("failed to add comment to existing issue", "error", err, "issue", existingIssue.Number)
-			return ErrorReportResult{Accepted: false}, err
+	// Manual feedback always creates a new issue — skip dedup search.
+	if report.Type != "manual" {
+		// Search for existing issue with the same fingerprint
+		existingIssue, err := s.searchExistingIssue(ctx, report.Fingerprint)
+		if err != nil {
+			s.log.Error("failed to search for existing issue", "error", err, "fingerprint", report.Fingerprint)
+			// Continue to create a new issue — don't fail completely
 		}
-		s.log.Info("added comment to existing issue", "issue", existingIssue.Number, "fingerprint", report.Fingerprint)
-		return ErrorReportResult{Accepted: true}, nil
+
+		if existingIssue != nil {
+			// Add comment to existing issue
+			commentBody := s.buildCommentBody(report)
+			if err := s.client.AddComment(ctx, existingIssue.Number, commentBody); err != nil {
+				s.log.Error("failed to add comment to existing issue", "error", err, "issue", existingIssue.Number)
+				return ErrorReportResult{Accepted: false}, err
+			}
+			s.log.Info("added comment to existing issue", "issue", existingIssue.Number, "fingerprint", report.Fingerprint)
+			return ErrorReportResult{Accepted: true}, nil
+		}
 	}
 
 	// Create fingerprint label
@@ -200,6 +243,15 @@ func (s *ErrorReportService) SubmitReport(ctx context.Context, report ErrorRepor
 	title := s.buildIssueTitle(report)
 	body := s.buildIssueBody(report)
 	labelIDs := []int64{typeLabelID, fpLabelID}
+
+	// Attach backend label for server-side reports
+	if report.Component == "backend" {
+		s.mu.RLock()
+		if s.backendLabelID != 0 {
+			labelIDs = append(labelIDs, s.backendLabelID)
+		}
+		s.mu.RUnlock()
+	}
 
 	for attempt := 0; attempt < 2; attempt++ {
 		err = s.client.CreateIssue(ctx, title, body, labelIDs)

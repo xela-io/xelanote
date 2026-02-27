@@ -12,7 +12,7 @@ func (s *Server) setupRoutes() {
 
 	// Global middleware
 	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(s.panicRecoveryMiddleware)
 	r.Use(middleware.RequestID)
 	r.Use(requestIDLoggerMiddleware)
 	r.Use(middleware.Compress(5)) // gzip level 5 - good compression/speed balance

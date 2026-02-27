@@ -6,10 +6,12 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/xela-io/xelanote/internal/auth"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // Default trusted CIDR ranges for reverse proxies.
@@ -236,6 +238,41 @@ func requestIDLoggerMiddleware(next http.Handler) http.Handler {
 }
 
 const requestLoggerKey contextKey = "requestID"
+
+// panicRecoveryMiddleware recovers from panics, logs them, enqueues an error
+// report to Forgejo, and returns a 500 response. Replaces chi's Recoverer.
+func (s *Server) panicRecoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rv := recover(); rv != nil {
+				stack := string(debug.Stack())
+				msg := fmt.Sprintf("%v", rv)
+
+				s.logger().Error("panic recovered",
+					slog.String("panic", msg),
+					slog.String("stack", stack),
+					slog.String("method", r.Method),
+					slog.String("path", r.URL.Path),
+				)
+
+				if s.errorReportService != nil {
+					s.errorReportService.EnqueueReport(service.ErrorReport{
+						Type:        "automatic",
+						ErrorType:   "Panic",
+						Message:     msg,
+						Stack:       stack,
+						Fingerprint: service.ComputeFingerprint("Panic", msg),
+						URL:         r.Method + " " + r.URL.Path,
+						Component:   "backend",
+					})
+				}
+
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
 
 // adminMiddleware checks if the authenticated user is an admin
 // Must be used after authMiddleware

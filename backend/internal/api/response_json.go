@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // JSON response helpers
@@ -27,7 +29,8 @@ func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, map[string]string{"error": message})
 }
 
-// respondInternalErr logs the error with the request ID and responds with a generic 500.
+// respondInternalErr logs the error with the request ID, enqueues an error
+// report to Forgejo, and responds with a generic 500.
 // Use this instead of respondError(w, 500, err.Error()) to avoid leaking internal details.
 func (s *Server) respondInternalErr(w http.ResponseWriter, msg string, err error) {
 	attrs := []any{slog.Any("error", err)}
@@ -35,5 +38,18 @@ func (s *Server) respondInternalErr(w http.ResponseWriter, msg string, err error
 		attrs = append(attrs, slog.String("request_id", reqID))
 	}
 	s.logger().Error(msg, attrs...)
+
+	// Enqueue error report for automatic Forgejo issue creation
+	if s.errorReportService != nil {
+		s.errorReportService.EnqueueReport(service.ErrorReport{
+			Type:        "automatic",
+			ErrorType:   "BackendError",
+			Message:     msg,
+			Stack:       err.Error(),
+			Fingerprint: service.ComputeFingerprint("BackendError", msg),
+			Component:   "backend",
+		})
+	}
+
 	respondError(w, http.StatusInternalServerError, "internal server error")
 }

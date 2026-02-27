@@ -6,8 +6,6 @@
 import type { EditorView } from '@codemirror/view';
 import Sortable from 'sortablejs';
 
-import { computeNestLevel } from './live-preview/line-primitives';
-
 export interface TaskSortableOptions {
   onReorder: (fromIndex: number, toIndex: number) => void;
   onReorderByLine?: (fromLine: number, toLine: number) => void;
@@ -103,7 +101,8 @@ export function getSortableIndices(
 export function taskSortable(container: HTMLElement, options: TaskSortableOptions) {
   const instancesByContainer = new Map<HTMLElement, Sortable>();
   let rafId: number | null = null;
-  const liveDraggableSelector = '.cm-line.cm-live-task-line:not(.cm-live-collapsed-line):not([class*="cm-live-nest-"])';
+  const liveDraggableSelector =
+    '.cm-line.cm-live-task-line:not(.cm-live-collapsed-line):not([class*="cm-live-nest-"])';
 
   function getLineNumberFromLiveTaskItem(item: Element | null): number {
     if (!item) return -1;
@@ -256,7 +255,6 @@ export function taskSortable(container: HTMLElement, options: TaskSortableOption
             if (fromLine === -1) return;
 
             // Safety: reject moves for nested tasks
-            const fromText = (evt.item as HTMLElement).textContent ?? '';
             const fromLineEl = evt.item as HTMLElement;
             if (fromLineEl.className && fromLineEl.className.includes('cm-live-nest-')) return;
 

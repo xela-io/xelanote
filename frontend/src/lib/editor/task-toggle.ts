@@ -364,7 +364,6 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
       const subtreeRange = getSubtreeLineRange(lines, moveTask.lineNum - 1);
       const subtreeStartLine = subtreeRange.start + 1; // to 1-based
       const subtreeEndLine = subtreeRange.end + 1;
-      const subtreeLineCount = subtreeEndLine - subtreeStartLine + 1;
 
       // Build the toggled subtree text
       const subtreeLines: string[] = [];
@@ -438,8 +437,7 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
           deleteTo = currentLastLine.to;
         } else {
           deleteFrom = currentFirstLine.from;
-          deleteTo =
-            currentLastLine.to + (currentLastLine.to < doc.length ? 1 : 0);
+          deleteTo = currentLastLine.to + (currentLastLine.to < doc.length ? 1 : 0);
         }
 
         const insertPos = targetEndLine.to;
@@ -497,9 +495,7 @@ export function toggleTaskByIndex(options: ToggleTaskOptions) {
       const targetLineIndex = targetLineNum - 1;
       // After splice, the target shifts if it was after the removed block
       const adjustedTarget =
-        targetLineIndex > subtreeRange.start
-          ? targetLineIndex - subtreeLineCount
-          : targetLineIndex;
+        targetLineIndex > subtreeRange.start ? targetLineIndex - subtreeLineCount : targetLineIndex;
 
       // For moving down, calculate target's subtree end in the modified array
       let insertAt: number;

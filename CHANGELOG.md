@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tests: cross-user data isolation tests for user settings, API keys, recovery keys, WebAuthn, due dates, export, task events, and canvas endpoints
+
 ### Fixed
 
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area

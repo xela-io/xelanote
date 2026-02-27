@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -24,6 +25,9 @@ type TurnstileService struct {
 	enabled    bool
 	httpClient *http.Client
 	log        *slog.Logger
+	// allowedHosts contains trusted hostnames extracted from CORS_ALLOWED_ORIGINS.
+	// If empty, hostname enforcement is disabled (development/test convenience).
+	allowedHosts map[string]struct{}
 }
 
 // TurnstileResponse represents the response from Cloudflare's Turnstile verification API.
@@ -56,7 +60,8 @@ func NewTurnstileService(secretKey, siteKey string, log *slog.Logger) *Turnstile
 		httpClient: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-		log: log,
+		log:          log,
+		allowedHosts: make(map[string]struct{}),
 	}
 }
 
@@ -68,6 +73,36 @@ func (s *TurnstileService) IsEnabled() bool {
 // GetSiteKey returns the public site key for frontend use.
 func (s *TurnstileService) GetSiteKey() string {
 	return s.siteKey
+}
+
+// SetAllowedOrigins configures trusted hostnames for Turnstile hostname validation.
+// Origins should match CORS_ALLOWED_ORIGINS entries (e.g. https://app.example.com).
+func (s *TurnstileService) SetAllowedOrigins(origins []string) {
+	hosts := make(map[string]struct{}, len(origins))
+	for _, origin := range origins {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed == "" {
+			continue
+		}
+
+		parsed, err := url.Parse(trimmed)
+		if err != nil {
+			continue
+		}
+		if parsed.Scheme != "http" && parsed.Scheme != "https" {
+			continue
+		}
+		host := normalizeCaptchaHost(parsed.Host)
+		if host == "" {
+			continue
+		}
+		hosts[host] = struct{}{}
+	}
+
+	s.allowedHosts = hosts
+	if s.enabled && len(hosts) == 0 {
+		s.log.Warn("turnstile hostname validation disabled (no trusted origins configured)")
+	}
 }
 
 func hashRemoteIP(remoteIP string) string {
@@ -156,10 +191,37 @@ func (s *TurnstileService) Verify(ctx context.Context, token, remoteIP string) e
 		return fmt.Errorf("captcha verification failed")
 	}
 
+	if len(s.allowedHosts) > 0 {
+		normalizedResultHost := normalizeCaptchaHost(result.Hostname)
+		if _, ok := s.allowedHosts[normalizedResultHost]; !ok {
+			s.log.Warn("turnstile verification failed: hostname not allowed",
+				"received_hostname", normalizedResultHost,
+				"remote_ip_hash", hashRemoteIP(remoteIP),
+			)
+			return fmt.Errorf("captcha verification failed")
+		}
+	}
+
 	s.log.Debug("turnstile verification successful",
 		"challenge_ts", result.ChallengeTS,
 		"hostname", result.Hostname,
 	)
 
 	return nil
+}
+
+func normalizeCaptchaHost(host string) string {
+	host = strings.TrimSpace(strings.ToLower(host))
+	if host == "" {
+		return ""
+	}
+
+	// Accept host:port inputs from HTTP Host headers.
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		return parsedHost
+	}
+	if strings.HasPrefix(host, "[") && strings.Contains(host, "]") {
+		return strings.Trim(host, "[]")
+	}
+	return host
 }

@@ -90,6 +90,9 @@ func NewServer(cfg ServerConfig) *Server {
 	if cfg.LockoutDB != nil {
 		s.accountLockout.SetDB(cfg.LockoutDB)
 	}
+	if s.turnstileService != nil {
+		s.turnstileService.SetAllowedOrigins(cfg.AllowedOrigins)
+	}
 	s.setupRoutes()
 	return s
 }

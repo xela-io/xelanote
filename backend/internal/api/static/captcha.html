@@ -23,6 +23,47 @@
         const params = new URLSearchParams(window.location.search);
         const sitekey = params.get('sitekey');
         const theme = params.get('theme') || 'auto';
+        const parentOriginParam = params.get('parent_origin');
+
+        function resolveParentOrigin() {
+            // Prefer explicit origin from parent iframe URL parameter.
+            if (parentOriginParam) {
+                if (parentOriginParam === 'null') {
+                    return 'null';
+                }
+                try {
+                    const parsed = new URL(parentOriginParam);
+                    return parsed.origin;
+                } catch (_) {
+                    console.error('CAPTCHA: invalid parent_origin parameter');
+                }
+            }
+
+            // Fallback to referrer origin when available.
+            if (document.referrer) {
+                try {
+                    const parsedReferrer = new URL(document.referrer);
+                    return parsedReferrer.origin;
+                } catch (_) {
+                    console.error('CAPTCHA: invalid document.referrer');
+                }
+            }
+
+            return '';
+        }
+
+        const parentOrigin = resolveParentOrigin();
+        // Opaque origins (e.g. custom desktop protocols) serialize to "null".
+        // postMessage cannot target those origins explicitly, so "*" is required.
+        const postMessageTarget = parentOrigin && parentOrigin !== 'null' ? parentOrigin : '*';
+
+        function postToParent(message) {
+            if (!parentOrigin) {
+                console.error('CAPTCHA: parent origin unavailable, dropping message');
+                return;
+            }
+            window.parent.postMessage(message, postMessageTarget);
+        }
 
         if (!sitekey) {
             console.error('CAPTCHA: sitekey parameter required');
@@ -30,6 +71,12 @@
 
         // Listen for reset commands from parent
         window.addEventListener('message', function(event) {
+            if (event.source !== window.parent) {
+                return;
+            }
+            if (parentOrigin && parentOrigin !== 'null' && event.origin !== parentOrigin) {
+                return;
+            }
             if (event.data && event.data.type === 'captcha-reset' && window.turnstile && window._widgetId) {
                 window.turnstile.reset(window._widgetId);
             }
@@ -48,13 +95,13 @@
                 sitekey: sitekey,
                 theme: theme,
                 callback: function(token) {
-                    window.parent.postMessage({ type: 'captcha-token', token: token }, '*');
+                    postToParent({ type: 'captcha-token', token: token });
                 },
                 'expired-callback': function() {
-                    window.parent.postMessage({ type: 'captcha-expired' }, '*');
+                    postToParent({ type: 'captcha-expired' });
                 },
                 'error-callback': function() {
-                    window.parent.postMessage({ type: 'captcha-error' }, '*');
+                    postToParent({ type: 'captcha-error' });
                 }
             });
         };

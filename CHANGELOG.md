@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Editor: moved editor mode selector (Live/Edit/Preview/Split) from toolbar into kebab menu to save toolbar space
 - README: comprehensive rewrite — expanded feature documentation (editor modes, canvas, recipes, journal, AI, admin, desktop app), added architecture diagram, fixed Desktop entry (Tauri v2 instead of Electron), removed placeholder images and TODOs, restructured sections (Quick Start, Tech Stack, Development)
 
 ### Security

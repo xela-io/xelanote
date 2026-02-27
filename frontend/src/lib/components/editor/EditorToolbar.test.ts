@@ -58,7 +58,6 @@ const baseNote: Note = {
 
 function mockCallbacks() {
   return {
-    onSetEditorMode: vi.fn(),
     onSave: vi.fn(),
     onUndo: vi.fn(),
     onRedo: vi.fn(),
@@ -166,29 +165,6 @@ describe('EditorToolbar', () => {
 
     await fireEvent.click(getByLabelText('component.editor.toolbar.history'));
     expect(cbs.onShowHistory).toHaveBeenCalledTimes(1);
-  });
-
-  it('allows direct mode selection on desktop', async () => {
-    const cbs = mockCallbacks();
-    const { getByLabelText } = render(EditorToolbar, {
-      props: { note: baseNote, isMobile: false, editorMode: 'edit', ...cbs },
-    });
-
-    await fireEvent.click(getByLabelText('component.editor.toolbar.mode_preview'));
-    expect(cbs.onSetEditorMode).toHaveBeenCalledWith('preview');
-  });
-
-  it('uses compact mode menu on mobile without split option', async () => {
-    const cbs = mockCallbacks();
-    const { getByLabelText, queryByText, getAllByText } = render(EditorToolbar, {
-      props: { note: baseNote, isMobile: true, editorMode: 'live', ...cbs },
-    });
-
-    await fireEvent.click(getByLabelText('component.editor.toolbar.mode_group'));
-    expect(getAllByText('component.editor.toolbar.mode_live').length).toBeGreaterThan(0);
-    expect(getAllByText('component.editor.toolbar.mode_edit').length).toBeGreaterThan(0);
-    expect(getAllByText('component.editor.toolbar.mode_preview').length).toBeGreaterThan(0);
-    expect(queryByText('component.editor.toolbar.mode_split')).not.toBeInTheDocument();
   });
 
   it('shows focus mode toggle on desktop, not on mobile', () => {

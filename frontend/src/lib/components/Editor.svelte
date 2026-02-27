@@ -1040,7 +1040,6 @@
           ui.getEditorMode() === 'live')}
       canUndo={canMobileUndo()}
       canRedo={canMobileRedo()}
-      onSetEditorMode={settings.setEditorModePreference}
       onSave={handleSave}
       onUndo={handleMobileUndo}
       onRedo={handleMobileRedo}

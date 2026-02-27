@@ -25,7 +25,6 @@
   import { formatRelativeTime } from '$lib/utils/time';
 
   import SpellCheckToggle from '../SpellCheckToggle.svelte';
-  import EditorModeSelector from './EditorModeSelector.svelte';
 
   type EditorMode = 'edit' | 'split' | 'preview' | 'live';
 
@@ -50,7 +49,6 @@
     showInsertMenu?: boolean;
     canUndo?: boolean;
     canRedo?: boolean;
-    onSetEditorMode: (mode: EditorMode) => void;
     onSave: () => void;
     onUndo: () => void;
     onRedo: () => void;
@@ -82,7 +80,6 @@
     showInsertMenu = false,
     canUndo = false,
     canRedo = false,
-    onSetEditorMode,
     onSave,
     onUndo,
     onRedo,
@@ -258,10 +255,6 @@
             use:scrollFade
           >
             <div class="toolbar-group-pill">
-              {#if FEATURE_FLAGS.livePreview}
-                <EditorModeSelector {editorMode} {isMobile} {onSetEditorMode} />
-              {/if}
-
               {#if isMobile}
                 <button
                   type="button"

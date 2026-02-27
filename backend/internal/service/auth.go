@@ -156,7 +156,7 @@ func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password strin
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			// Constant-time: run bcrypt even for non-existent users to prevent timing attacks
-			bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(password))
+			_ = bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(password))
 			return "", "", false, nil, errors.New("invalid credentials")
 		}
 		return "", "", false, nil, err
@@ -277,7 +277,7 @@ func (s *AuthService) LoginWithTwoFactor(ctx context.Context, usernameOrEmail, p
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			// Constant-time: run bcrypt even for non-existent users to prevent timing attacks
-			bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(password))
+			_ = bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(password))
 			return "", "", errors.New("invalid credentials")
 		}
 		return "", "", err

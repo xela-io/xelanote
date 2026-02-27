@@ -229,7 +229,7 @@ func (s *TwoFactorService) VerifyBackupCode(userID int, code string) error {
 		// Execute dummy bcrypt for each code to maintain constant timing
 		dummyHash := []byte(dummyBcryptHash)
 		for range codes {
-			bcrypt.CompareHashAndPassword(dummyHash, []byte("DUMMYCODE"))
+			_ = bcrypt.CompareHashAndPassword(dummyHash, []byte("DUMMYCODE"))
 		}
 		return errors.New("invalid backup code")
 	}

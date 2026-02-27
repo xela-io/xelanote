@@ -99,7 +99,7 @@ func (s *UserService) RecoverPasswordWithRecoveryKeyByEmail(email, recoveryKey, 
 		if errors.Is(err, db.ErrNotFound) {
 			// Don't reveal whether user exists (timing attack mitigation)
 			// Perform a dummy bcrypt comparison to maintain constant time
-			bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(recoveryKey))
+			_ = bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(recoveryKey))
 			return errors.New("invalid email or recovery key")
 		}
 		return err

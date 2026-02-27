@@ -21,7 +21,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version: '1.25'
+          go-version: '1.25.x'
           cache: true
           cache-dependency-path: backend/go.sum
 
@@ -31,6 +31,98 @@ jobs:
       - name: Run govulncheck
         working-directory: backend
         run: govulncheck ./...
+
+  gosec-api-batch:
+    name: Gosec API Batch Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.24.0
+
+      - name: Run gosec batch scan (internal/api)
+        working-directory: backend
+        run: |
+          set -euo pipefail
+
+          BIN="$(go env GOPATH)/bin/gosec"
+          ART_DIR="gosec-artifacts"
+          mkdir -p "$ART_DIR"
+
+          : > "$ART_DIR/gosec-errors.log"
+          : > "$ART_DIR/gosec-failures.log"
+
+          mapfile -t files < <(rg --files internal/api -g '*.go' -g '!**/*_test.go' | sort)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No API files found to scan." | tee "$ART_DIR/summary.txt"
+            exit 1
+          fi
+
+          chunk_size=16
+          chunk_count=0
+          for ((i=0; i<${#files[@]}; i+=chunk_size)); do
+            chunk_count=$((chunk_count + 1))
+            chunk=( "${files[@]:i:chunk_size}" )
+            out="$ART_DIR/chunk_${chunk_count}.json"
+
+            if timeout 180s "$BIN" -fmt=json "${chunk[@]}" > "$out" 2>>"$ART_DIR/gosec-errors.log"; then
+              :
+            else
+              rc=$?
+              if [ -s "$out" ] && jq -e . "$out" >/dev/null 2>&1; then
+                echo "chunk=${chunk_count} exit=${rc} (parseable JSON kept)" >> "$ART_DIR/gosec-errors.log"
+              else
+                echo "chunk=${chunk_count} exit=${rc} first_file=${chunk[0]}" >> "$ART_DIR/gosec-failures.log"
+                printf '{"Issues":[]}\n' > "$out"
+              fi
+            fi
+          done
+
+          jq -s '[.[] | .Issues[]?]' "$ART_DIR"/chunk_*.json > "$ART_DIR/issues.json"
+          jq -c '.[]' "$ART_DIR/issues.json" > "$ART_DIR/issues.ndjson"
+
+          issues_total=$(jq 'length' "$ART_DIR/issues.json")
+          failed_chunks=$(wc -l < "$ART_DIR/gosec-failures.log")
+
+          {
+            echo "files_scanned=${#files[@]}"
+            echo "chunks_scanned=$chunk_count"
+            echo "issues_total=$issues_total"
+            echo "failed_chunks=$failed_chunks"
+            echo "severity_breakdown:"
+            jq -r 'sort_by(.severity) | group_by(.severity) | map("  - \(.[0].severity): \(length)") | .[]' "$ART_DIR/issues.json"
+          } > "$ART_DIR/summary.txt"
+
+          echo "## Gosec API Batch Scan" >> "$GITHUB_STEP_SUMMARY"
+          cat "$ART_DIR/summary.txt" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$issues_total" -gt 0 ] || [ "$failed_chunks" -gt 0 ]; then
+            echo "gosec batch scan failed: issues=$issues_total failed_chunks=$failed_chunks" >&2
+            exit 1
+          fi
+
+      - name: Upload gosec batch artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gosec-api-batch
+          path: |
+            backend/gosec-artifacts/summary.txt
+            backend/gosec-artifacts/issues.json
+            backend/gosec-artifacts/issues.ndjson
+            backend/gosec-artifacts/gosec-errors.log
+            backend/gosec-artifacts/gosec-failures.log
+          retention-days: 14
 
   npm-audit:
     name: NPM Security Audit
@@ -53,6 +145,11 @@ jobs:
       - name: Run npm audit (production dependencies)
         working-directory: frontend
         run: npm audit --audit-level=high --omit=dev
+
+      - name: Run npm audit (all dependencies, advisory only)
+        working-directory: frontend
+        continue-on-error: true
+        run: npm audit --audit-level=moderate
 
   dependency-review:
     name: Dependency Review

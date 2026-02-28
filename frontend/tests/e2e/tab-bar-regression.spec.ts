@@ -61,9 +61,12 @@ test.describe('Tab bar regression', () => {
     await navigateToNoteClientSide(page, idB);
     await navigateToNoteClientSide(page, idC);
 
-    await page.waitForFunction(() => document.querySelectorAll('.tab-bar [role="tab"]').length >= 3, {
-      timeout: 20000,
-    });
+    await page.waitForFunction(
+      () => document.querySelectorAll('.tab-bar [role="tab"]').length >= 3,
+      {
+        timeout: 20000,
+      }
+    );
     await expect(tabByTitle(page, titleA)).toBeVisible();
     await expect(tabByTitle(page, titleC)).toHaveClass(/active/);
 

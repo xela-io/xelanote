@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed UNION ALL column mismatch in shared-note folder query (missing `wrapped_dek_recovery`)
+- Fixed e2e-feature test to match updated `encryptNote` signature (now includes noteId)
 
 ### Added
 

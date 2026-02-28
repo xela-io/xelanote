@@ -114,7 +114,11 @@ describe('E2E Encryption Feature Flow', () => {
     // --- 5. VERIFY ENCRYPTION AND API CALL ---
     expect(encryption.isEncryptionUnlocked).toHaveBeenCalled();
     expect(encryption.encryptNote).toHaveBeenCalledOnce();
-    expect(encryption.encryptNote).toHaveBeenCalledWith('My Encrypted Note', 'This is secret');
+    expect(encryption.encryptNote).toHaveBeenCalledWith(
+      'My Encrypted Note',
+      'This is secret',
+      expect.any(String)
+    );
 
     expect(api.createNote).toHaveBeenCalledOnce();
     const createNotePayload = (api.createNote as Mock).mock.calls[0][0];

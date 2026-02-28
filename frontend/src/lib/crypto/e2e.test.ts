@@ -24,7 +24,7 @@ vi.mock('./sodium', () => ({
   toBase64Standard: sodiumMocks.toBase64Standard,
 }));
 
-import { E2EEncryption } from './e2e';
+import { DecryptionError, E2EEncryption } from './e2e';
 
 describe('E2EEncryption setupKEK', () => {
   beforeEach(() => {
@@ -61,5 +61,125 @@ describe('E2EEncryption setupKEK', () => {
     } finally {
       warnSpy.mockRestore();
     }
+  });
+});
+
+describe('E2EEncryption decrypt error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws INVALID_KEY_OR_DATA when wrapped DEK cannot be unwrapped', async () => {
+    const kek = new Uint8Array([1, 2, 3, 4]);
+    sodiumMocks.deriveKeyAsync.mockResolvedValue(kek);
+    sodiumMocks.fromBase64Standard.mockReturnValueOnce(new Uint8Array([9, 9, 9]));
+    sodiumMocks.decrypt.mockReturnValueOnce(null);
+
+    const encryption = new E2EEncryption();
+    await encryption.setupKEK('password', new Uint8Array([1, 1, 1, 1]));
+
+    const payload = {
+      ciphertext: 'ciphertext-b64',
+      metadata: {
+        version: 3 as const,
+        algorithm: 'XChaCha20-Poly1305' as const,
+        kdf: 'Argon2id' as const,
+        kdf_strength: 'interactive' as const,
+        nonce_bytes: 24 as const,
+        wrapped_dek: 'wrapped-b64',
+      },
+    };
+
+    try {
+      encryption.decryptNote(payload, 'note-1');
+      expect.fail('expected DecryptionError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DecryptionError);
+      expect((err as DecryptionError).code).toBe('INVALID_KEY_OR_DATA');
+    }
+  });
+
+  it('throws INVALID_KEY_OR_DATA when ciphertext decryption fails', async () => {
+    const kek = new Uint8Array([2, 2, 2, 2]);
+    const dek = new Uint8Array(32).fill(7);
+    sodiumMocks.deriveKeyAsync.mockResolvedValue(kek);
+    sodiumMocks.fromBase64Standard
+      .mockReturnValueOnce(new Uint8Array([1, 2, 3])) // wrapped_dek
+      .mockReturnValueOnce(new Uint8Array([4, 5, 6])); // ciphertext
+    sodiumMocks.decrypt.mockReturnValueOnce(dek).mockReturnValueOnce(null);
+
+    const encryption = new E2EEncryption();
+    await encryption.setupKEK('password', new Uint8Array([2, 2, 2, 2]));
+
+    const payload = {
+      ciphertext: 'ciphertext-b64',
+      metadata: {
+        version: 3 as const,
+        algorithm: 'XChaCha20-Poly1305' as const,
+        kdf: 'Argon2id' as const,
+        kdf_strength: 'interactive' as const,
+        nonce_bytes: 24 as const,
+        wrapped_dek: 'wrapped-b64',
+      },
+    };
+
+    try {
+      encryption.decryptNote(payload, 'note-2');
+      expect.fail('expected DecryptionError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DecryptionError);
+      expect((err as DecryptionError).code).toBe('INVALID_KEY_OR_DATA');
+    }
+  });
+
+  it('throws CORRUPTED_METADATA for invalid encrypted title payload', async () => {
+    sodiumMocks.deriveKeyAsync.mockResolvedValue(new Uint8Array([3, 3, 3, 3]));
+
+    const encryption = new E2EEncryption();
+    await encryption.setupKEK('password', new Uint8Array([3, 3, 3, 3]));
+
+    try {
+      encryption.decryptTitle('not-json', 'note-3');
+      expect.fail('expected DecryptionError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DecryptionError);
+      expect((err as DecryptionError).code).toBe('CORRUPTED_METADATA');
+    }
+  });
+});
+
+describe('E2EEncryption AAD behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('uses AAD for v3 note encryption when noteID is provided', async () => {
+    sodiumMocks.deriveKeyAsync.mockResolvedValue(new Uint8Array([4, 4, 4, 4]));
+    sodiumMocks.generateDEK.mockReturnValue(new Uint8Array(32).fill(9));
+    sodiumMocks.encrypt.mockReturnValue(new Uint8Array([1, 2, 3]));
+    sodiumMocks.toBase64Standard.mockReturnValue('b64');
+
+    const encryption = new E2EEncryption();
+    await encryption.setupKEK('password', new Uint8Array([4, 4, 4, 4]));
+    encryption.encryptNote('hello', 'note-v3');
+
+    expect(sodiumMocks.encrypt).toHaveBeenCalledTimes(2);
+    expect(ArrayBuffer.isView(sodiumMocks.encrypt.mock.calls[0][2])).toBe(true);
+    expect(ArrayBuffer.isView(sodiumMocks.encrypt.mock.calls[1][2])).toBe(true);
+  });
+
+  it('does not use AAD for v2 note encryption when noteID is omitted', async () => {
+    sodiumMocks.deriveKeyAsync.mockResolvedValue(new Uint8Array([5, 5, 5, 5]));
+    sodiumMocks.generateDEK.mockReturnValue(new Uint8Array(32).fill(8));
+    sodiumMocks.encrypt.mockReturnValue(new Uint8Array([1, 2, 3]));
+    sodiumMocks.toBase64Standard.mockReturnValue('b64');
+
+    const encryption = new E2EEncryption();
+    await encryption.setupKEK('password', new Uint8Array([5, 5, 5, 5]));
+    encryption.encryptNote('hello');
+
+    expect(sodiumMocks.encrypt).toHaveBeenCalledTimes(2);
+    expect(sodiumMocks.encrypt.mock.calls[0][2]).toBeUndefined();
+    expect(sodiumMocks.encrypt.mock.calls[1][2]).toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { BookOpen, Loader2, ShoppingCart, Sparkles, Users } from 'lucide-svelte';
-  import { SvelteMap } from 'svelte/reactivity';
+  import { BookOpen, Loader2, Plus, ShoppingCart, Sparkles, Users } from 'lucide-svelte';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
   import { _ } from 'svelte-i18n';
 
   import {
@@ -31,6 +31,9 @@
   let showShareDialog = $state(false);
   let shares = $state<ShoppingListShare[]>([]);
   let _editingItem = $state<ShoppingItem | null>(null);
+  const pendingCategories = new SvelteSet<string>();
+  let showNewCategoryInput = $state(false);
+  let newCategoryName = $state('');
 
   // Derived state
   const lists = $derived(shopping.getLists());
@@ -48,13 +51,13 @@
   const uncheckedItems = $derived((currentList?.items ?? []).filter((i) => !i.is_checked));
   const checkedItems = $derived((currentList?.items ?? []).filter((i) => i.is_checked));
 
-  // Group unchecked items by category
+  // Group unchecked items by category (only items with explicit category)
   const categorizedItems = $derived(() => {
     const groups = new SvelteMap<string, ShoppingItem[]>();
     for (const item of uncheckedItems) {
-      const cat = item.category || $_('page.shopping.categories.other');
-      if (!groups.has(cat)) groups.set(cat, []);
-      groups.get(cat)!.push(item);
+      if (!item.category) continue;
+      if (!groups.has(item.category)) groups.set(item.category, []);
+      groups.get(item.category)!.push(item);
     }
     // Sort by category_order of first item in each group
     return [...groups.entries()].sort((a, b) => {
@@ -64,7 +67,14 @@
     });
   });
 
-  const hasCategories = $derived(uncheckedItems.some((i) => i.category && i.category_order < 99));
+  const uncategorizedItems = $derived(uncheckedItems.filter((i) => !i.category));
+  const pendingCategoriesFiltered = $derived(
+    [...pendingCategories].filter((c) => !uncheckedItems.some((i) => i.category === c))
+  );
+
+  const hasCategories = $derived(
+    uncheckedItems.some((i) => !!i.category) || pendingCategories.size > 0
+  );
 
   // Load lists on mount
   $effect(() => {
@@ -78,6 +88,18 @@
   $effect(() => {
     if (lists.length > 0 && !currentList) {
       shopping.loadList(lists[0].id);
+    }
+  });
+
+  // Clear pending categories when switching lists
+  let lastListId: number | undefined;
+  $effect(() => {
+    const newId = currentList?.id;
+    if (newId !== lastListId) {
+      pendingCategories.clear();
+      showNewCategoryInput = false;
+      newCategoryName = '';
+      lastListId = newId;
     }
   });
 
@@ -144,6 +166,66 @@
     }
   }
 
+  function getCategoryOrder(category: string): number {
+    const existing = uncheckedItems.filter((i) => i.category === category);
+    if (existing.length > 0) {
+      return existing[0].category_order ?? 15;
+    }
+    const orders = uncheckedItems.filter((i) => i.category).map((i) => i.category_order ?? 0);
+    return Math.max(...orders, 14) + 1;
+  }
+
+  async function handleAddCategoryItem(
+    category: string,
+    items: Array<{ name: string; quantity: number | null; unit: string | null }>
+  ) {
+    if (!currentList) return;
+    try {
+      const order = getCategoryOrder(category);
+      const shoppingItems = items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        unit: i.unit,
+        category: category,
+        category_order: order,
+      }));
+      if (shoppingItems.length === 1) {
+        await shopping.addItem(currentList.id, shoppingItems[0]);
+      } else {
+        await shopping.addItems(currentList.id, shoppingItems);
+      }
+    } catch {
+      toast.error('Fehler beim Hinzufügen');
+    }
+  }
+
+  function handleCreateCategory() {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    const existingCategories = new Set(
+      uncheckedItems.filter((i) => i.category).map((i) => i.category!)
+    );
+    if (existingCategories.has(name) || pendingCategories.has(name)) return;
+    pendingCategories.add(name);
+    showNewCategoryInput = false;
+    newCategoryName = '';
+  }
+
+  function autofocus(node: HTMLElement) {
+    node.focus();
+  }
+
+  function handleNewCategoryKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCreateCategory();
+    }
+    if (e.key === 'Escape') {
+      showNewCategoryInput = false;
+      newCategoryName = '';
+    }
+  }
+
   async function handleClearChecked() {
     if (!currentList) return;
     try {
@@ -155,8 +237,12 @@
 
   async function handleSort() {
     if (!currentList) return;
+    if (uncheckedItems.some((i) => !!i.category)) {
+      if (!confirm($_('page.shopping.sort_warning'))) return;
+    }
     try {
       await shopping.sortByCategory(currentList.id);
+      pendingCategories.clear();
       toast.success('Sortierung abgeschlossen');
     } catch {
       toast.error('KI-Sortierung fehlgeschlagen');
@@ -299,16 +385,21 @@
           <div class="shopping-loading">
             <Loader2 size={20} class="animate-spin text-muted-foreground" />
           </div>
-        {:else if uncheckedItems.length === 0 && checkedItems.length === 0}
+        {:else if uncheckedItems.length === 0 && checkedItems.length === 0 && pendingCategories.size === 0}
           <div class="shopping-empty-items">
             <p>{$_('page.shopping.no_items')}</p>
           </div>
         {:else}
           <!-- Unchecked items -->
           {#if hasCategories}
-            {#each categorizedItems() as [category, items] (category)}
-              <ShoppingCategoryGroup {category} {items}>
-                {#each items as item (item.id)}
+            {#each categorizedItems() as [category, catItems] (category)}
+              <ShoppingCategoryGroup
+                {category}
+                items={catItems}
+                {canEdit}
+                onadditem={(parsed) => handleAddCategoryItem(category, parsed)}
+              >
+                {#each catItems as item (item.id)}
                   <ShoppingItemRow
                     {item}
                     readonly={!canEdit}
@@ -320,6 +411,29 @@
                 {/each}
               </ShoppingCategoryGroup>
             {/each}
+            {#each pendingCategoriesFiltered as category (category)}
+              <ShoppingCategoryGroup
+                {category}
+                items={[]}
+                {canEdit}
+                onadditem={(parsed) => handleAddCategoryItem(category, parsed)}
+              ></ShoppingCategoryGroup>
+            {/each}
+            {#if uncategorizedItems.length > 0}
+              <div class="uncategorized-header">
+                <span>{$_('page.shopping.uncategorized')}</span>
+              </div>
+              {#each uncategorizedItems as item (item.id)}
+                <ShoppingItemRow
+                  {item}
+                  readonly={!canEdit}
+                  oncheck={handleCheck}
+                  ondelete={handleDelete}
+                  onedit={handleEdit}
+                  onfavorite={handleFavorite}
+                />
+              {/each}
+            {/if}
           {:else}
             {#each uncheckedItems as item (item.id)}
               <ShoppingItemRow
@@ -331,6 +445,31 @@
                 onfavorite={handleFavorite}
               />
             {/each}
+          {/if}
+
+          <!-- New Category -->
+          {#if canEdit}
+            {#if showNewCategoryInput}
+              <div class="new-category-input">
+                <input
+                  type="text"
+                  bind:value={newCategoryName}
+                  onkeydown={handleNewCategoryKeydown}
+                  placeholder={$_('page.shopping.category_name_placeholder')}
+                  class="new-category-field"
+                  use:autofocus
+                />
+              </div>
+            {:else}
+              <button
+                type="button"
+                class="new-category-btn"
+                onclick={() => (showNewCategoryInput = true)}
+              >
+                <Plus size={14} />
+                <span>{$_('page.shopping.new_category')}</span>
+              </button>
+            {/if}
           {/if}
 
           <!-- Checked items (collapsible) -->
@@ -441,6 +580,69 @@
   .action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .uncategorized-header {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    opacity: 0.7;
+  }
+
+  .uncategorized-header::before,
+  .uncategorized-header::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--color-surface-200);
+  }
+
+  .uncategorized-header::before {
+    margin-right: 0.5rem;
+  }
+
+  .uncategorized-header::after {
+    margin-left: 0.5rem;
+  }
+
+  .new-category-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.1s;
+    border-top: 1px solid var(--color-surface-200);
+  }
+
+  .new-category-btn:hover {
+    background: var(--color-surface-100);
+    color: var(--color-text);
+  }
+
+  .new-category-input {
+    display: flex;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--color-surface-200);
+  }
+
+  .new-category-field {
+    flex: 1;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid var(--color-surface-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-100);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
+
+  .new-category-field:focus {
+    outline: none;
+    border-color: var(--color-primary);
   }
 
   .btn-primary {

@@ -498,7 +498,12 @@
         "sweets_snacks": "Sweets & Snacks",
         "household": "Household & Drugstore",
         "other": "Other"
-      }
+      },
+      "new_category": "New Category",
+      "category_name_placeholder": "Category name...",
+      "add_to_category": "Add item...",
+      "uncategorized": "Uncategorized",
+      "sort_warning": "AI sorting will overwrite existing categories. Continue?"
     },
     "sidebar": {
       "close_drawer": "Close drawer",

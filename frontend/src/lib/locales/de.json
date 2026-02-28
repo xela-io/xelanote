@@ -498,7 +498,12 @@
         "sweets_snacks": "Süßwaren & Snacks",
         "household": "Haushalt & Drogerie",
         "other": "Sonstiges"
-      }
+      },
+      "new_category": "Neue Kategorie",
+      "category_name_placeholder": "Kategoriename...",
+      "add_to_category": "Item hinzufügen...",
+      "uncategorized": "Ohne Kategorie",
+      "sort_warning": "Die KI-Sortierung überschreibt bestehende Kategorien. Fortfahren?"
     },
     "sidebar": {
       "close_drawer": "Drawer schließen",

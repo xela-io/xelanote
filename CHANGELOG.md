@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shopping Lists: favorites system with usage-count-based ordering
 - Shopping Lists: live sharing with role-based access control (owner/editor/viewer)
 - Shopping Lists: real-time sync via WebSocket with echo-detection for multi-tab support
+- Shopping Lists: manual category creation with inline per-category item input
+- Shopping Lists: "Uncategorized" section for items without a category when categories exist
+- Shopping Lists: confirmation dialog before AI sort when manual categories are present
 - Shopping Lists: collapsible checked-items section with bulk clear
 - Shopping Lists: optimistic locking with version fields and HTTP 409 conflict detection
 - Shopping Lists: integrated into sidebar, mobile bottom nav, and feature toggle system

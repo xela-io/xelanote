@@ -127,6 +127,7 @@ This addendum reflects the **current remediation status** of the previously repo
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).
    - Doc claim aligned: `docs/e2e-encryption.md:66-77`, `docs/e2e-encryption.md:107-108`
    - README claim aligned: `README.md:95`
+   - Implementation path documented: `docs/security/E2EE-RECOVERY-DEK-REWRAP-IMPLEMENTATION-PLAN-2026-02-28.md`
 
 2. **E2EE does not cover all metadata** (explicitly documented scope limit).
    - `docs/e2e-encryption.md:51-58`

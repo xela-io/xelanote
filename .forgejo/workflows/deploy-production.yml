@@ -105,7 +105,7 @@ jobs:
             --name $IMAGE_NAME \
             --restart unless-stopped \
             -p 127.0.0.1:8080:8080 \
-            -v /home/deploy/xelanote-data:/app/data \  # Adjust to your data directory
+            -v /home/deploy/xelanote-data:/app/data \
             --env-file $ENV_FILE \
             --memory=512m --cpus=1 --pids-limit=200 \
             --security-opt no-new-privileges --cap-drop ALL \

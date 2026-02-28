@@ -180,13 +180,15 @@ Persistenter Lockout (in SQLite, überlebt Server-Neustart).
 
 Kein E-Mail-basierter Reset (Privacy-first). Stattdessen:
 
-1. Bei Account-Erstellung generiert der Client einen **Recovery Key**
-2. Server speichert nur den **Salt** für die Key-Derivation
-3. Wenn User Passwort vergisst:
-   - Recovery Key eingeben
-   - Server verifiziert
-   - Neues Passwort setzen
-   - Verschlüsselungs-KEK wird mit neuem Passwort neu verschlüsselt
+1. Nutzer richtet im entsperrten Zustand einen **Recovery Key** ein.
+2. Server speichert `recovery_key_hash` + `recovery_key_salt` (kein Klartext-Key).
+3. Bei verschlüsselten Accounts erstellt der Client zusätzlich `wrapped_dek_recovery` für alle verschlüsselten Notizen/Versionen.
+4. Wenn User Passwort vergisst:
+   - Recovery Key eingeben (`/auth/recovery/verify`)
+   - Recovery-Wrapper laden (`/auth/recovery/encrypted-deks`)
+   - DEKs clientseitig auf neuen Passwort-KEK re-wrappen
+   - Tokenisierten Reset abschließen (`/auth/recovery/reset-password-v2`)
+5. Ohne vollständige Recovery-Wrapper sind bestehende verschlüsselte Notizen nach Passwortverlust nicht wiederherstellbar.
 
 ## Security Headers
 

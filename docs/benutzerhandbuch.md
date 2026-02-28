@@ -267,12 +267,12 @@ Unterstützt werden u. a.:
 
 - **Titel verschlüsseln**: maximaler Datenschutz, aber keine Titelsuche mehr.
 - **Suchbare Keywords**: ermöglicht Suche, speichert aber Keywords unverschlüsselt (Risiko!).
-- **Uploads**: werden aktuell serverseitig ohne E2EE gespeichert.
+- **Uploads**: aus verschlüsselten Notizen werden als `.xenc` clientseitig verschlüsselt hochgeladen; Uploads aus Klartext-Notizen bleiben serverseitig lesbar.
 
 ### Recovery Key
 
 - Recovery Key kann fuer Account-Recovery gesetzt werden.
-- **Wichtig:** Recovery-Reset fuer bestehende verschluesselte Notizen ist aktuell blockiert (kein Recovery-DEK-Rewrap implementiert).
+- **Wichtig:** Für verschlüsselte Notizen funktioniert Recovery nur, wenn Recovery-Wrapper zuvor vollständig eingerichtet wurden.
 
 ---
 

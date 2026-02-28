@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation: clarified E2EE threat boundaries (metadata visibility, AI plaintext boundary, recovery limitations, encrypted-attachment behavior) across README and docs/wiki pages
 - Documentation/UI: aligned E2EE recovery claims with wrapper-gated encrypted recovery flow (README, API/e2e docs, audit addendum, encryption settings i18n copy)
 - Documentation/UI: updated remaining recovery references (migration page, API reference/wiki, auth recovery endpoint docs, localized recovery conflict text) to match tokenized wrapper-based encrypted recovery
+- Documentation: refreshed handbook/wiki security sections to reflect current encrypted-upload behavior and wrapper-gated recovery flow for encrypted notes
 
 ### Fixed
 

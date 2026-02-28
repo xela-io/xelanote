@@ -2,12 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xela-io/xelanote/internal/llm"
 )
 
 // --- Summary Endpoints ---
@@ -49,7 +51,14 @@ func (s *Server) summarizeNote(w http.ResponseWriter, r *http.Request) {
 				"note_id", noteID,
 				"user_id", userID,
 			)
-			respondError(w, http.StatusInternalServerError, "failed to store summary")
+			switch {
+			case errors.Is(err, llm.ErrNoteNotAIEnabled):
+				respondError(w, http.StatusForbidden, "AI features not enabled for this note")
+			case strings.Contains(err.Error(), "not found"):
+				respondError(w, http.StatusNotFound, "note not found")
+			default:
+				respondError(w, http.StatusInternalServerError, "failed to store summary")
+			}
 			return
 		}
 
@@ -73,12 +82,17 @@ func (s *Server) summarizeNote(w http.ResponseWriter, r *http.Request) {
 			"user_id", userID,
 		)
 
-		// Check for specific error types
-		if strings.Contains(err.Error(), "not found") {
+		switch {
+		case errors.Is(err, llm.ErrNoteNotAIEnabled):
+			respondError(w, http.StatusForbidden, "AI features not enabled for this note")
+			return
+		case errors.Is(err, llm.ErrNoProviderAvailable):
+			respondError(w, http.StatusPreconditionFailed, "AI provider required - add API key in settings")
+			return
+		case strings.Contains(err.Error(), "not found"):
 			respondError(w, http.StatusNotFound, "note not found")
 			return
-		}
-		if strings.Contains(err.Error(), "plaintext content required") {
+		case strings.Contains(err.Error(), "plaintext content required"):
 			respondError(w, http.StatusBadRequest, "plaintext_content is required for encrypted notes")
 			return
 		}
@@ -213,10 +227,14 @@ func (s *Server) summarizeNoteStream(w http.ResponseWriter, r *http.Request) {
 		)
 		// Do not leak raw internal/provider error details to clients.
 		clientError := "failed to generate summary"
-		if strings.Contains(err.Error(), "not found") {
+		switch {
+		case errors.Is(err, llm.ErrNoteNotAIEnabled):
+			clientError = "AI features not enabled for this note"
+		case errors.Is(err, llm.ErrNoProviderAvailable):
+			clientError = "AI provider required - add API key in settings"
+		case strings.Contains(err.Error(), "not found"):
 			clientError = "note not found"
-		}
-		if strings.Contains(err.Error(), "plaintext content required") {
+		case strings.Contains(err.Error(), "plaintext content required"):
 			clientError = "plaintext_content is required for encrypted notes"
 		}
 		errPayload, marshalErr := json.Marshal(map[string]string{"error": clientError})

@@ -1182,6 +1182,25 @@
         "replace": "Replace",
         "replace_all": "Replace all",
         "close": "Close search"
+      },
+      "dictation": {
+        "title": "Voice Dictation",
+        "tooltip": "Dictate text with your voice",
+        "start": "Start dictation",
+        "stop": "Stop dictation",
+        "insert": "Insert",
+        "clear": "Clear",
+        "processing": "Transcribing audio...",
+        "listening_hint": "Speak now — your words will appear here",
+        "idle_hint": "Press the microphone button to start dictating",
+        "mode_browser": "Browser",
+        "mode_server": "Server (Whisper)",
+        "ai_cleanup": "Clean up with AI",
+        "cleanup_error": "AI cleanup failed — inserting raw text",
+        "error_mic_denied": "Microphone access denied. Please allow microphone in your browser settings.",
+        "error_not_supported": "Voice dictation is not supported in this browser.",
+        "error_generic": "Dictation error occurred. Please try again.",
+        "error_transcribe": "Transcription failed. Please try again."
       }
     },
     "version_history": {
@@ -1206,7 +1225,13 @@
       "version_singular": "Version",
       "added": "Added",
       "removed": "Removed",
-      "decrypt_failed": "Decryption failed"
+      "decrypt_failed": "Decryption failed",
+      "delta_analyze": "Analyze changes",
+      "delta_analyzing": "Analyzing changes...",
+      "delta_summary_title": "AI change summary",
+      "delta_error": "Change analysis failed",
+      "delta_ai_disabled": "AI is not enabled for this note",
+      "delta_ai_hint": "This action uses AI"
     },
     "unlock_encryption": {
       "title": "Encryption Locked",
@@ -1319,7 +1344,9 @@
     "informal_desc": "Casual, conversational tone",
     "custom": "Custom prompt...",
     "custom_desc": "Enter your own instruction",
-    "custom_placeholder": "e.g. 'Make this shorter'"
+    "custom_placeholder": "e.g. 'Make this shorter'",
+    "dictation_cleanup": "Clean up dictation",
+    "dictation_cleanup_desc": "Fix punctuation and remove filler words"
   },
   "error": {
     "generic": "An error occurred",

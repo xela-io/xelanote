@@ -441,6 +441,28 @@ export async function aiTransform(
   return response.transformed_content;
 }
 
+/**
+ * Transcribe audio to text using OpenAI Whisper via the backend.
+ * Sends the audio blob as multipart/form-data.
+ */
+export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }> {
+  const formData = new FormData();
+  // Derive filename from MIME type
+  const ext = audioBlob.type.includes('mp4')
+    ? 'mp4'
+    : audioBlob.type.includes('ogg')
+      ? 'ogg'
+      : 'webm';
+  formData.append('file', audioBlob, `recording.${ext}`);
+
+  return request('/llm/transcribe', {
+    method: 'POST',
+    body: formData,
+    _timeout: 90_000, // 90s for audio upload + transcription
+    // Do NOT set Content-Type header — browser sets it with boundary for FormData
+  });
+}
+
 export async function recordTaskEvent(noteId: string, payload: TaskEventPayload): Promise<void> {
   await request(`/notes/${noteId}/task-events`, {
     method: 'POST',

@@ -8,6 +8,7 @@
     Loader2,
     Lock,
     Maximize2,
+    Mic,
     Minimize2,
     MoreVertical,
     Outdent,
@@ -51,6 +52,9 @@
     showInsertMenu?: boolean;
     canUndo?: boolean;
     canRedo?: boolean;
+    isDictating?: boolean;
+    dictationAvailable?: boolean;
+    onDictation: (rect: DOMRect) => void;
     onSave: () => void;
     onUndo: () => void;
     onRedo: () => void;
@@ -84,6 +88,9 @@
     showInsertMenu = false,
     canUndo = false,
     canRedo = false,
+    isDictating = false,
+    dictationAvailable = false,
+    onDictation,
     onSave,
     onUndo,
     onRedo,
@@ -139,6 +146,10 @@
 
   function handleInsertMenuClick(e: MouseEvent) {
     onOpenInsertMenu((e.currentTarget as HTMLElement).getBoundingClientRect());
+  }
+
+  function handleDictationClick(e: MouseEvent) {
+    onDictation((e.currentTarget as HTMLElement).getBoundingClientRect());
   }
 </script>
 
@@ -359,6 +370,29 @@
                     <History size={16} />
                   </button>
                 {/if}
+              </div>
+            {/if}
+
+            {#if dictationAvailable && (editorMode === 'edit' || editorMode === 'split' || editorMode === 'live')}
+              <div class="toolbar-group-pill">
+                <button
+                  type="button"
+                  onclick={handleDictationClick}
+                  class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn relative"
+                  class:text-destructive={isDictating}
+                  aria-label={$_('component.editor.dictation.title')}
+                  title={$_('component.editor.dictation.tooltip')}
+                >
+                  <Mic size={16} />
+                  {#if isDictating}
+                    <span class="absolute top-1 right-1 flex h-2 w-2">
+                      <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"
+                      ></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+                    </span>
+                  {/if}
+                </button>
               </div>
             {/if}
 

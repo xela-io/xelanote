@@ -29,12 +29,20 @@
     noteTitle: string;
     currentVersion: number;
     currentContent: string;
+    aiEnabled: boolean;
     onClose: () => void;
     onRestored: () => void;
   }
 
-  const { noteId, noteTitle, currentVersion, currentContent, onClose, onRestored }: Props =
-    $props();
+  const {
+    noteId,
+    noteTitle,
+    currentVersion,
+    currentContent,
+    aiEnabled,
+    onClose,
+    onRestored,
+  }: Props = $props();
 
   // Extended version type that includes "current" pseudo-version
   type VersionItem =
@@ -103,6 +111,9 @@
   let mode = $state<'preview' | 'compare'>('preview');
   let restoring = $state(false);
   let showRestoreConfirm = $state(false);
+  let deltaSummary = $state<string | null>(null);
+  let deltaError = $state<string | null>(null);
+  let deltaLoading = $state(false);
 
   // Mobile-specific state
   let mobileTab = $state<'versions' | 'content'>('versions');
@@ -268,6 +279,46 @@
     const changes = diffLines(older.content, newer.content);
     return { changes, older, newer };
   });
+
+  $effect(() => {
+    void mode;
+    void selectedVersion?.id;
+    void compareVersion?.id;
+    deltaSummary = null;
+    deltaError = null;
+    deltaLoading = false;
+  });
+
+  async function handleDeltaSummary() {
+    if (!aiEnabled || mode !== 'compare' || !diffResult || deltaLoading) return;
+
+    deltaLoading = true;
+    deltaError = null;
+
+    try {
+      const response = await api.summarizeVersionDelta(
+        noteId,
+        diffResult.older.version,
+        diffResult.newer.version,
+        diffResult.older.content,
+        diffResult.newer.content
+      );
+      deltaSummary = response.summary;
+    } catch (e) {
+      const status =
+        typeof e === 'object' && e !== null && 'status' in e && typeof e.status === 'number'
+          ? e.status
+          : undefined;
+
+      if (status === 403) {
+        deltaError = $_('component.version_history.delta_ai_disabled');
+      } else {
+        deltaError = $_('component.version_history.delta_error');
+      }
+    } finally {
+      deltaLoading = false;
+    }
+  }
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
@@ -600,6 +651,26 @@
             </div>
 
             <div class="flex items-center gap-2">
+              {#if mode === 'compare' && diffResult && aiEnabled}
+                <button
+                  type="button"
+                  onclick={handleDeltaSummary}
+                  disabled={deltaLoading}
+                  class="ui-button ui-button-secondary"
+                  title={$_('component.version_history.delta_ai_hint')}
+                >
+                  <span
+                    class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
+                    >KI</span
+                  >
+                  {#if deltaLoading}
+                    <Loader2 size={14} class="animate-spin" />
+                    {$_('component.version_history.delta_analyzing')}
+                  {:else}
+                    {$_('component.version_history.delta_analyze')}
+                  {/if}
+                </button>
+              {/if}
               {#if !isCurrent(selectedVersion)}
                 {#if !isMobile}
                   <span class="text-xs text-muted-foreground">
@@ -638,6 +709,19 @@
                     diffResult.newer
                   )}
                 </div>
+                {#if deltaError}
+                  <div class="ui-alert ui-alert-danger">
+                    {deltaError}
+                  </div>
+                {/if}
+                {#if deltaSummary}
+                  <div class="ui-panel p-3">
+                    <div class="text-sm font-semibold mb-2">
+                      {$_('component.version_history.delta_summary_title')}
+                    </div>
+                    <pre class="whitespace-pre-wrap text-sm">{deltaSummary}</pre>
+                  </div>
+                {/if}
                 <div class="ui-panel-soft overflow-x-auto p-4 font-mono text-sm">
                   {#each diffResult.changes as change, i (i)}
                     {#if change.added}

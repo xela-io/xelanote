@@ -194,6 +194,28 @@ Text:
 Summary:`, content)
 }
 
+// BuildVersionDeltaSummaryPrompt creates the prompt for summarizing changes between two versions.
+func BuildVersionDeltaSummaryPrompt(fromVersion, toVersion int, fromContent, toContent string) string {
+	return fmt.Sprintf(`IMPORTANT: Respond in the SAME language as the newer version text.
+
+Task: Summarize the most important changes between two note versions.
+
+Rules:
+1. Focus on what changed (additions, removals, and meaning shifts)
+2. Keep it concise (max 8 bullet points)
+3. Mention concrete changed topics, decisions, or tasks
+4. If there are no meaningful changes, state that briefly
+5. Return ONLY markdown bullet points (no intro/outro)
+
+Older version (v%d):
+%s
+
+Newer version (v%d):
+%s
+
+Delta summary:`, fromVersion, fromContent, toVersion, toContent)
+}
+
 // BuildExpandPrompt creates the prompt for expanding text with more details.
 func BuildExpandPrompt(content string) string {
 	return fmt.Sprintf(`Expand the following text with more details and explanations.
@@ -641,4 +663,27 @@ Text to check:
 %s
 
 JSON:`, langName, example, text)
+}
+
+// BuildDictationCleanupPrompt creates the prompt for cleaning up raw speech-to-text output.
+// Fixes punctuation, capitalization, removes filler words, adds paragraphs.
+func BuildDictationCleanupPrompt(content string) string {
+	return fmt.Sprintf(`You are a dictation post-processor. Clean up the following raw speech-to-text transcript.
+
+Rules:
+1. CRITICAL: Keep the SAME language as the original text — do NOT translate
+2. Fix punctuation (periods, commas, question marks, exclamation marks)
+3. Fix capitalization (sentence start, proper nouns)
+4. Remove filler words (um, uh, äh, ähm, also, sozusagen, you know, like, basically)
+5. Remove repeated words or false starts
+6. Add paragraph breaks where topic changes
+7. Format as clean Markdown if appropriate (headings, lists)
+8. Do NOT change the meaning or add new content
+9. Do NOT add explanations — return only the cleaned text
+10. If the text is already clean, return it unchanged
+
+Raw transcript:
+%s
+
+Cleaned text:`, content)
 }

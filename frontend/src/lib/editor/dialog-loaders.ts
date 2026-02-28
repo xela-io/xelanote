@@ -9,6 +9,7 @@ export interface DialogLoaderState {
   versionHistoryDialog?: ComponentType | null;
   shareDialog?: ComponentType | null;
   aiActionsDropdown?: ComponentType | null;
+  dictationPanel?: ComponentType | null;
   conflictDialog?: ComponentType | null;
 }
 
@@ -75,6 +76,15 @@ export async function loadAIActionsDropdown(state: DialogLoaderState) {
   return {
     ...state,
     aiActionsDropdown: loadSvelteComponentFromModule(module, 'AIActionsDropdown'),
+  };
+}
+
+export async function loadDictationPanel(state: DialogLoaderState) {
+  if (state.dictationPanel) return state;
+  const module = await import('$lib/components/DictationPanel.svelte');
+  return {
+    ...state,
+    dictationPanel: loadSvelteComponentFromModule(module, 'DictationPanel'),
   };
 }
 

@@ -326,6 +326,10 @@ export interface CompareResponse {
   version2: NoteVersion;
 }
 
+export interface VersionDeltaSummaryResponse {
+  summary: string;
+}
+
 export interface WebAuthnCredentialInfo {
   id: number;
   credential_id: string;
@@ -607,7 +611,8 @@ export type AIAction =
   | 'translate_en'
   | 'formal'
   | 'informal'
-  | 'custom';
+  | 'custom'
+  | 'dictation_cleanup';
 
 export interface AITransformResponse {
   transformed_content: string;

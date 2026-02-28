@@ -66,6 +66,11 @@
     aiActionsTriggerRect: DOMRect | null;
     onAIActionSelect: (action: AIAction, customPrompt?: string) => void;
     onCloseAIActionsDropdown: () => void;
+    // Dictation panel
+    showDictationPanel: boolean;
+    dictationTriggerRect: DOMRect | null;
+    onDictationInsert: (text: string, withAICleanup: boolean) => void;
+    onCloseDictationPanel: () => void;
     // Table insert dialog
     showTableInsertDialog: boolean;
     onCloseTableInsertDialog: () => void;
@@ -126,6 +131,10 @@
     aiActionsTriggerRect,
     onAIActionSelect,
     onCloseAIActionsDropdown,
+    showDictationPanel,
+    dictationTriggerRect,
+    onDictationInsert,
+    onCloseDictationPanel,
     showTableInsertDialog,
     onCloseTableInsertDialog,
     onTableInsert,
@@ -171,6 +180,7 @@
     noteTitle={note.title}
     currentVersion={note.version}
     currentContent={note.content}
+    aiEnabled={note.ai_enabled ?? false}
     onClose={onCloseVersionHistory}
     onRestored={onVersionRestored}
   />
@@ -222,6 +232,18 @@
     onSelectAction={onAIActionSelect}
     onClose={onCloseAIActionsDropdown}
     triggerRect={aiActionsTriggerRect}
+  />
+{/if}
+
+<!-- Dictation Panel (lazy-loaded) -->
+{#if showDictationPanel && lazyDialogs.dictationPanel}
+  <lazyDialogs.dictationPanel
+    noteId={note?.id ?? ''}
+    {aiEnabled}
+    hasOpenAIKey={false}
+    onInsert={onDictationInsert}
+    onClose={onCloseDictationPanel}
+    triggerRect={dictationTriggerRect}
   />
 {/if}
 

@@ -105,6 +105,12 @@ func (r *ProviderRouter) GetChatGPTProvider(ctx context.Context, userID int) (Pr
 	return r.getChatGPTClient(userID)
 }
 
+// GetChatGPTClient returns the concrete ChatGPT client for a user.
+// Needed for Whisper transcription which is not part of the Provider interface.
+func (r *ProviderRouter) GetChatGPTClient(userID int) (*ChatGPTClient, error) {
+	return r.getChatGPTClient(userID)
+}
+
 // getClaudeClient returns or creates a Claude client for the given user.
 // Clients are cached per user to avoid repeated decryption.
 func (r *ProviderRouter) getClaudeClient(userID int) (*ClaudeClient, error) {

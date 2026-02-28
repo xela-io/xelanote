@@ -882,6 +882,7 @@
     noteTitle={notes.getCurrentNote()!.title}
     currentVersion={notes.getCurrentNote()!.version}
     currentContent={notes.getCurrentNote()!.content}
+    aiEnabled={notes.getCurrentNote()!.ai_enabled ?? false}
     onClose={() => (showVersionHistory = false)}
     onRestored={async () => {
       await notes.loadNote(noteId);

@@ -70,6 +70,9 @@ func TestSummarizeNote_EncryptedRequiresPlaintext(t *testing.T) {
 	if _, err := database.Exec(`UPDATE notes SET content_encrypted = 1 WHERE id = ?`, note.ID); err != nil {
 		t.Fatalf("mark encrypted: %v", err)
 	}
+	if err := database.UpdateNoteAIEnabled(userID, note.ID, true); err != nil {
+		t.Fatalf("enable ai: %v", err)
+	}
 
 	svc := NewSummarizeService(database, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if _, err := svc.SummarizeNote(context.Background(), userID, note.ID, ""); err == nil {

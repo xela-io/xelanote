@@ -36,6 +36,12 @@ func (s *Server) registerProtectedUtilityRoutes(r chi.Router) {
 	// Long-lived WebSocket connections (no timeout)
 	s.registerWebsocketRoutes(r)
 
+	// Transcription needs a longer timeout (audio upload + Whisper processing)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.Timeout(120 * time.Second))
+		s.registerTranscribeRoutes(r)
+	})
+
 	// All other utility routes with request timeout
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Timeout(30 * time.Second))

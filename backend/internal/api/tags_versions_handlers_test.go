@@ -3,12 +3,16 @@
 package api
 
 import (
+	"io"
+	"log/slog"
 	"net/http"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xela-io/xelanote/internal/llm"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 func tagsRouter(ts *testServer) chi.Router {
@@ -33,6 +37,7 @@ func versionsRouter(ts *testServer) chi.Router {
 		r.Get("/{id}", ts.getNote)
 		r.Get("/{id}/versions", ts.listVersions)
 		r.Get("/{id}/versions/compare", ts.compareVersions)
+		r.Post("/{id}/versions/delta-summary", ts.summarizeVersionDelta)
 		r.Get("/{id}/versions/{version}", ts.getVersion)
 		r.Post("/{id}/versions/{version}/restore", ts.restoreVersion)
 	})
@@ -367,6 +372,46 @@ func TestCompareVersions_MissingParams(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		})
 	}
+}
+
+func TestSummarizeVersionDelta_AINotEnabled(t *testing.T) {
+	ts := newTestServer(t)
+	ts.Server.summarizeService = service.NewSummarizeService(
+		ts.db,
+		llm.NewProviderRouter(ts.db),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+	r := versionsRouter(ts)
+	user := ts.createUser(t, "deltasum", "deltasum@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	note := ts.createNoteDirectly(t, user.ID, "Delta Note", "v1 content", "/")
+
+	rec := doJSON(t, r, http.MethodPost, "/api/notes/"+note.ID+"/versions/delta-summary", DeltaSummaryRequest{
+		FromVersion: 1,
+		ToVersion:   2,
+		FromContent: "v1 content",
+		ToContent:   "v2 content",
+	}, token)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func TestSummarizeVersionDelta_Validation(t *testing.T) {
+	ts := newTestServer(t)
+	r := versionsRouter(ts)
+	user := ts.createUser(t, "deltasumval", "deltasumval@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+	note := ts.createNoteDirectly(t, user.ID, "Delta Note", "v1 content", "/")
+
+	rec := doJSON(t, r, http.MethodPost, "/api/notes/"+note.ID+"/versions/delta-summary", DeltaSummaryRequest{
+		FromVersion: 1,
+		ToVersion:   1,
+		FromContent: "same",
+		ToContent:   "same",
+	}, token)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestRestoreVersion_Success(t *testing.T) {

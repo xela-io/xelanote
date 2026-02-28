@@ -68,6 +68,7 @@ function mockCallbacks() {
     onOpenMoreMenu: vi.fn(),
     onIndent: vi.fn(),
     onOutdent: vi.fn(),
+    onDictation: vi.fn(),
   };
 }
 

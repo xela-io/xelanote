@@ -30,8 +30,9 @@ const (
 	ActionTranslateDE AITransformAction = "translate_de"
 	ActionTranslateEN AITransformAction = "translate_en"
 	ActionFormal      AITransformAction = "formal"
-	ActionInformal    AITransformAction = "informal"
-	ActionCustom      AITransformAction = "custom"
+	ActionInformal         AITransformAction = "informal"
+	ActionCustom           AITransformAction = "custom"
+	ActionDictationCleanup AITransformAction = "dictation_cleanup"
 )
 
 // Content limits
@@ -117,6 +118,8 @@ func getMaxTokensForAction(action AITransformAction) int {
 		return 8000
 	case ActionSummarize:
 		return 2000
+	case ActionDictationCleanup:
+		return 4000
 	default:
 		return 4000
 	}
@@ -135,7 +138,7 @@ func getResponseLimitForAction(action AITransformAction) int {
 // isValidAction checks if the action is a known AITransformAction
 func isValidAction(action AITransformAction) bool {
 	switch action {
-	case ActionFormat, ActionSummarize, ActionExpand, ActionTranslateDE, ActionTranslateEN, ActionFormal, ActionInformal, ActionCustom:
+	case ActionFormat, ActionSummarize, ActionExpand, ActionTranslateDE, ActionTranslateEN, ActionFormal, ActionInformal, ActionCustom, ActionDictationCleanup:
 		return true
 	default:
 		return false
@@ -161,6 +164,8 @@ func buildPromptForAction(action AITransformAction, content, customPrompt string
 		return llm.BuildInformalTonePrompt(content)
 	case ActionCustom:
 		return llm.BuildCustomTransformPrompt(content, customPrompt)
+	case ActionDictationCleanup:
+		return llm.BuildDictationCleanupPrompt(content)
 	default:
 		return llm.BuildFormatMarkdownPrompt(content)
 	}
@@ -187,8 +192,16 @@ func (s *SummarizeService) AITransform(
 		return "", ErrCustomPromptRequired
 	}
 
-	// Validate content
-	if err := validateFormatContent(content); err != nil {
+	// Validate content (dictation_cleanup allows shorter input)
+	if action == ActionDictationCleanup {
+		trimmed := strings.TrimSpace(content)
+		if len(trimmed) == 0 {
+			return "", ErrContentEmpty
+		}
+		if len(content) > FormatMaxLength {
+			return "", ErrContentTooLarge
+		}
+	} else if err := validateFormatContent(content); err != nil {
 		return "", err
 	}
 

@@ -45,6 +45,7 @@ func (s *Server) registerNotesRoutes(r chi.Router) {
 		// Version history endpoints
 		r.Get("/{id}/versions", s.listVersions)
 		r.Get("/{id}/versions/compare", s.compareVersions)
+		r.With(rateLimitMiddleware(s.llmLimiter)).Post("/{id}/versions/delta-summary", s.summarizeVersionDelta)
 		r.Get("/{id}/versions/{version}", s.getVersion)
 		r.Post("/{id}/versions/{version}/restore", s.restoreVersion)
 

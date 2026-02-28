@@ -45,7 +45,8 @@ func (s *Server) aiTransform(w http.ResponseWriter, r *http.Request) {
 		service.ActionTranslateEN: true,
 		service.ActionFormal:      true,
 		service.ActionInformal:    true,
-		service.ActionCustom:      true,
+		service.ActionCustom:           true,
+		service.ActionDictationCleanup: true,
 	}
 
 	if !validActions[action] {

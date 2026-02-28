@@ -1182,6 +1182,25 @@
         "replace": "Ersetzen",
         "replace_all": "Alle ersetzen",
         "close": "Suche schließen"
+      },
+      "dictation": {
+        "title": "Spracheingabe",
+        "tooltip": "Text per Sprache diktieren",
+        "start": "Diktat starten",
+        "stop": "Diktat stoppen",
+        "insert": "Einfügen",
+        "clear": "Löschen",
+        "processing": "Audio wird transkribiert...",
+        "listening_hint": "Sprechen Sie jetzt — Ihre Worte erscheinen hier",
+        "idle_hint": "Drücken Sie die Mikrofon-Taste um zu diktieren",
+        "mode_browser": "Browser",
+        "mode_server": "Server (Whisper)",
+        "ai_cleanup": "Mit KI aufbereiten",
+        "cleanup_error": "KI-Aufbereitung fehlgeschlagen — Rohtext wird eingefügt",
+        "error_mic_denied": "Mikrofonzugriff verweigert. Bitte erlauben Sie den Zugriff in den Browsereinstellungen.",
+        "error_not_supported": "Spracheingabe wird in diesem Browser nicht unterstützt.",
+        "error_generic": "Fehler bei der Spracheingabe. Bitte versuchen Sie es erneut.",
+        "error_transcribe": "Transkription fehlgeschlagen. Bitte versuchen Sie es erneut."
       }
     },
     "version_history": {
@@ -1206,7 +1225,13 @@
       "version_singular": "Version",
       "added": "Hinzugefügt",
       "removed": "Entfernt",
-      "decrypt_failed": "Entschlüsselung fehlgeschlagen"
+      "decrypt_failed": "Entschlüsselung fehlgeschlagen",
+      "delta_analyze": "Änderungen auswerten",
+      "delta_analyzing": "Wird ausgewertet...",
+      "delta_summary_title": "KI-Zusammenfassung der Änderungen",
+      "delta_error": "Auswertung der Änderungen fehlgeschlagen",
+      "delta_ai_disabled": "KI ist für diese Notiz nicht aktiviert",
+      "delta_ai_hint": "Diese Aktion nutzt KI"
     },
     "unlock_encryption": {
       "title": "Verschlüsselung gesperrt",
@@ -1319,7 +1344,9 @@
     "informal_desc": "Lockerer, umgangssprachlicher Ton",
     "custom": "Eigener Prompt...",
     "custom_desc": "Freie Anweisung eingeben",
-    "custom_placeholder": "z.B. 'Mache das Ganze kürzer'"
+    "custom_placeholder": "z.B. 'Mache das Ganze kürzer'",
+    "dictation_cleanup": "Diktat aufbereiten",
+    "dictation_cleanup_desc": "Interpunktion korrigieren und Füllwörter entfernen"
   },
   "error": {
     "generic": "Ein Fehler ist aufgetreten",

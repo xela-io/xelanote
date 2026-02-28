@@ -10,6 +10,7 @@
     FileText,
     Languages,
     Loader2,
+    Mic,
     Pencil,
     Wand2,
     X,
@@ -69,6 +70,7 @@
     formal: Briefcase,
     informal: Coffee,
     custom: Pencil,
+    dictation_cleanup: Mic,
   };
 
   // Get the icon component for current action

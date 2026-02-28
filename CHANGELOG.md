@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Dictation: voice input via browser-native Web Speech API (real-time transcript)
+- Dictation: server-side transcription via OpenAI Whisper (`POST /llm/transcribe`)
+- Dictation: AI cleanup action (`dictation_cleanup`) for post-processing raw speech-to-text
+- Dictation: DictationPanel component with bottom-sheet (mobile) / dropdown (desktop) UI
+- Dictation: Mic button in editor toolbar with pulsing indicator when active
+- Dictation: localStorage persistence for dictation mode and AI cleanup toggle
 - Tests: cross-user data isolation tests for user settings, API keys, recovery keys, WebAuthn, due dates, export, task events, and canvas endpoints
 - Mobile: graph view link in bottom navigation "More" sheet
 - Editor: indent/outdent buttons in mobile toolbar and insert menu

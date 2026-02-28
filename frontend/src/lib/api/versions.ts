@@ -1,6 +1,12 @@
-import { request } from './client';
+import { AI_REQUEST_TIMEOUT_MS, request } from './client';
 import { withQuery } from './query';
-import type { CompareResponse, Note, NoteVersion, VersionListResponse } from './types';
+import type {
+  CompareResponse,
+  Note,
+  NoteVersion,
+  VersionDeltaSummaryResponse,
+  VersionListResponse,
+} from './types';
 
 export async function listVersions(
   noteId: string,
@@ -41,5 +47,24 @@ export async function restoreVersion(
     headers: {
       'If-Match': currentVersion.toString(),
     },
+  });
+}
+
+export async function summarizeVersionDelta(
+  noteId: string,
+  fromVersion: number,
+  toVersion: number,
+  fromContent: string,
+  toContent: string
+): Promise<VersionDeltaSummaryResponse> {
+  return request(`/notes/${noteId}/versions/delta-summary`, {
+    method: 'POST',
+    body: JSON.stringify({
+      from_version: fromVersion,
+      to_version: toVersion,
+      from_content: fromContent,
+      to_content: toContent,
+    }),
+    _timeout: AI_REQUEST_TIMEOUT_MS,
   });
 }

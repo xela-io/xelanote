@@ -20,6 +20,7 @@
   import {
     type DialogLoaderState,
     loadAIActionsDropdown,
+    loadDictationPanel,
     loadMarkdownGuideDialog,
     loadMarkdownGuideDropdown,
     loadMoveToFolderDialog,
@@ -157,6 +158,10 @@
   let showTableInsertDialog = $state(false);
   let showAITransformDialog = $state(false);
   let aiTransformState = $state<AITransformState | null>(null);
+  // Dictation state
+  let showDictationPanel = $state(false);
+  let dictationTriggerRect = $state<DOMRect | null>(null);
+  let isDictating = $state(false);
   // Find & Replace state
   let showFindReplace = $state(false);
   let findReplaceQuery = $state('');
@@ -176,6 +181,9 @@
   });
   $effect(() => {
     maybeLoadDialog(showAIActionsDropdown, lazyDialogs, loadAIActionsDropdown, setLazyDialogs);
+  });
+  $effect(() => {
+    maybeLoadDialog(showDictationPanel, lazyDialogs, loadDictationPanel, setLazyDialogs);
   });
   let prevNoteId: string | null = $state(null);
 
@@ -573,6 +581,42 @@
         toast.success($_('component.editor.ai_transform_success'));
       },
     });
+  }
+
+  // ── Dictation ──────────────────────────────────────────────────────
+
+  function openDictation(rect: DOMRect) {
+    dictationTriggerRect = rect;
+    showDictationPanel = true;
+  }
+
+  async function handleDictationInsert(text: string, withAICleanup: boolean) {
+    if (!editorView) return;
+    const currentNote = notes.getCurrentNote();
+    if (!currentNote) return;
+
+    let insertText = text;
+
+    if (withAICleanup && text.length >= 10) {
+      try {
+        const { aiTransform: aiTransformApi } = await import('$lib/api/ai');
+        insertText = await aiTransformApi(currentNote.id, 'dictation_cleanup', text);
+      } catch {
+        // Fall back to raw text on error
+        toast.error($_('component.editor.dictation.cleanup_error'));
+      }
+    }
+
+    // Insert at current cursor position
+    const { from, to } = editorView.state.selection.main;
+    editorView.dispatch({
+      changes: { from, to, insert: insertText },
+    });
+    editorView.focus();
+
+    showDictationPanel = false;
+    isDictating = false;
+    notes.scheduleAutoSave();
   }
 
   // Menu coordination: close other menus when one opens
@@ -1045,6 +1089,9 @@
           ui.getEditorMode() === 'live')}
       canUndo={canMobileUndo()}
       canRedo={canMobileRedo()}
+      {isDictating}
+      dictationAvailable={true}
+      onDictation={openDictation}
       onSave={handleSave}
       onUndo={handleMobileUndo}
       onRedo={handleMobileRedo}
@@ -1236,6 +1283,13 @@
   {aiActionsTriggerRect}
   onAIActionSelect={handleAIActionSelect}
   onCloseAIActionsDropdown={() => (showAIActionsDropdown = false)}
+  {showDictationPanel}
+  {dictationTriggerRect}
+  onDictationInsert={handleDictationInsert}
+  onCloseDictationPanel={() => {
+    showDictationPanel = false;
+    isDictating = false;
+  }}
   {showTableInsertDialog}
   onCloseTableInsertDialog={() => (showTableInsertDialog = false)}
   onTableInsert={handleTableInsert}

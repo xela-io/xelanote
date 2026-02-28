@@ -120,6 +120,12 @@ func (s *Server) registerLLMRoutes(r chi.Router) {
 	})
 }
 
+// registerTranscribeRoutes is registered outside the 30s timeout group
+// because audio upload + Whisper processing can take up to 120s.
+func (s *Server) registerTranscribeRoutes(r chi.Router) {
+	r.With(rateLimitMiddleware(s.llmLimiter)).Post("/llm/transcribe", s.transcribeAudio)
+}
+
 func (s *Server) registerJobRoutes(r chi.Router) {
 	// Jobs endpoints
 	r.Get("/jobs/{id}", s.getJobStatus)

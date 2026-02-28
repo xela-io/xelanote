@@ -157,6 +157,15 @@ func (s *SummarizeService) SummarizeNoteEncrypted(ctx context.Context, userID in
 	unlock := s.acquireLock(noteID)
 	defer unlock()
 
+	// Enforce per-note AI opt-in even for pre-encrypted summary storage.
+	aiEnabled, err := s.db.GetNoteAIEnabled(userID, noteID)
+	if err != nil {
+		return fmt.Errorf("failed to check note AI status: %w", err)
+	}
+	if !aiEnabled {
+		return llm.ErrNoteNotAIEnabled
+	}
+
 	// Get current note state
 	note, err := s.db.GetNote(userID, noteID)
 	if err != nil {

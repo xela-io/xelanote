@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xela-io/xelanote/internal/llm"
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -20,6 +21,19 @@ type VersionListResponse struct {
 type CompareResponse struct {
 	Version1 *service.NoteVersion `json:"version1"`
 	Version2 *service.NoteVersion `json:"version2"`
+}
+
+// DeltaSummaryRequest represents an AI delta-summary request between two versions.
+type DeltaSummaryRequest struct {
+	FromVersion int    `json:"from_version"`
+	ToVersion   int    `json:"to_version"`
+	FromContent string `json:"from_content"`
+	ToContent   string `json:"to_content"`
+}
+
+// DeltaSummaryResponse represents the AI-generated delta summary.
+type DeltaSummaryResponse struct {
+	Summary string `json:"summary"`
 }
 
 // listVersions returns a paginated list of versions for a note.
@@ -174,6 +188,90 @@ func (s *Server) compareVersions(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, CompareResponse{
 		Version1: version1,
 		Version2: version2,
+	})
+}
+
+// summarizeVersionDelta generates an AI summary of differences between two versions.
+// POST /api/notes/{id}/versions/delta-summary
+func (s *Server) summarizeVersionDelta(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	noteID := chi.URLParam(r, "id")
+	if noteID == "" {
+		respondError(w, http.StatusBadRequest, "note ID is required")
+		return
+	}
+
+	var req DeltaSummaryRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.FromVersion <= 0 || req.ToVersion <= 0 {
+		respondError(w, http.StatusBadRequest, "from_version and to_version must be positive")
+		return
+	}
+
+	if req.FromVersion == req.ToVersion {
+		respondError(w, http.StatusBadRequest, "from_version and to_version must be different")
+		return
+	}
+
+	// Verify note exists and belongs to user
+	note, err := s.noteService.GetNote(userID, noteID)
+	if err != nil {
+		s.respondInternalErr(w, "failed to get note for delta summary", err)
+		return
+	}
+	if note == nil {
+		respondError(w, http.StatusNotFound, "note not found")
+		return
+	}
+	if s.summarizeService == nil {
+		respondError(w, http.StatusInternalServerError, "AI service not configured")
+		return
+	}
+
+	summary, err := s.summarizeService.SummarizeVersionDelta(
+		r.Context(),
+		userID,
+		noteID,
+		req.FromVersion,
+		req.ToVersion,
+		req.FromContent,
+		req.ToContent,
+	)
+	if err != nil {
+		s.logger().Error("failed to summarize version delta",
+			"error", err,
+			"note_id", noteID,
+			"user_id", userID,
+		)
+
+		switch {
+		case errors.Is(err, llm.ErrNoteNotAIEnabled):
+			respondError(w, http.StatusForbidden, "AI features not enabled for this note")
+		case errors.Is(err, llm.ErrNoProviderAvailable):
+			respondError(w, http.StatusPreconditionFailed, "AI provider required - add API key in settings")
+		case errors.Is(err, service.ErrContentTooLarge):
+			respondError(w, http.StatusRequestEntityTooLarge, "content too large (max 50KB per version)")
+		case errors.Is(err, service.ErrContentEmpty):
+			respondError(w, http.StatusBadRequest, "from_content and to_content are required")
+		case errors.Is(err, r.Context().Err()):
+			respondError(w, http.StatusGatewayTimeout, "request timed out")
+		default:
+			respondError(w, http.StatusInternalServerError, "failed to summarize delta")
+		}
+		return
+	}
+
+	respondJSON(w, http.StatusOK, DeltaSummaryResponse{
+		Summary: summary,
 	})
 }
 

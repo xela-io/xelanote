@@ -15,22 +15,22 @@ type ShoppingList struct {
 
 // ShoppingItem represents an item in a shopping list.
 type ShoppingItem struct {
-	ID              int      `json:"id"`
-	ListID          int      `json:"list_id"`
-	Name            string   `json:"name"`
-	Quantity        *float64 `json:"quantity,omitempty"`
-	Unit            *string  `json:"unit,omitempty"`
-	Category        *string  `json:"category,omitempty"`
-	CategoryOrder   int      `json:"category_order"`
-	ParentID        *int     `json:"parent_id,omitempty"`
-	IsChecked       bool     `json:"is_checked"`
-	CheckedAt       *string  `json:"checked_at,omitempty"`
-	DisplayOrder    int      `json:"display_order"`
-	Version         int      `json:"version"`
-	AddedByUserID   *int     `json:"added_by_user_id,omitempty"`
-	SourceRecipeID  *string  `json:"source_recipe_id,omitempty"`
-	CreatedAt       string   `json:"created_at"`
-	UpdatedAt       string   `json:"updated_at"`
+	ID             int      `json:"id"`
+	ListID         int      `json:"list_id"`
+	Name           string   `json:"name"`
+	Quantity       *float64 `json:"quantity,omitempty"`
+	Unit           *string  `json:"unit,omitempty"`
+	Category       *string  `json:"category,omitempty"`
+	CategoryOrder  int      `json:"category_order"`
+	ParentID       *int     `json:"parent_id,omitempty"`
+	IsChecked      bool     `json:"is_checked"`
+	CheckedAt      *string  `json:"checked_at,omitempty"`
+	DisplayOrder   int      `json:"display_order"`
+	Version        int      `json:"version"`
+	AddedByUserID  *int     `json:"added_by_user_id,omitempty"`
+	SourceRecipeID *string  `json:"source_recipe_id,omitempty"`
+	CreatedAt      string   `json:"created_at"`
+	UpdatedAt      string   `json:"updated_at"`
 }
 
 // ShoppingFavorite represents a frequently used item template.
@@ -60,10 +60,10 @@ type ShoppingListShare struct {
 // ShoppingListDetail is the full response for GET /api/shopping/lists/{id}.
 type ShoppingListDetail struct {
 	ShoppingList
-	Items      []ShoppingItem     `json:"items"`
-	ItemCount  int                `json:"item_count"`
+	Items      []ShoppingItem      `json:"items"`
+	ItemCount  int                 `json:"item_count"`
 	SharedWith []ShoppingListShare `json:"shared_with,omitempty"`
-	Role       string             `json:"role"`
+	Role       string              `json:"role"`
 }
 
 // ShoppingListSummary is a lightweight list representation for the list overview.

@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: added defense-in-depth guards so `UpdateLinksFromClient`/`SetNoteDueDates` always ignore and clear metadata for encrypted notes
 - Security: `POST /api/users/recovery-key` now returns `409` for accounts with encrypted notes (setup blocked until recovery DEK re-wrap exists)
 - Security: encrypted create/update flows now auto-invalidate stored recovery key material; migration clears legacy recovery keys for users with encrypted notes/versions
+- Security: removed residual encrypted-create keyword persistence hooks across note/journal/recipe/canvas service+DB paths
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
 - PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA
 - CI: relaxed flaky `docChanged:structured` performance threshold from 2.0ms to 5.0ms for slower CI runners

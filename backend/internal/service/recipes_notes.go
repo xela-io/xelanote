@@ -23,9 +23,6 @@ func (s *RecipeService) CreateRecipeNote(userID int, title, content, folderPath 
 	}
 
 	// Invalidate caches
-	if err := s.db.InvalidateRecoveryKey(userID); err != nil {
-		s.notes.logger.Warn("failed to invalidate recovery key after encryption", "user_id", userID, "error", err)
-	}
 	s.notes.invalidateFolderCache(userID)
 	s.notes.invalidateQuickSearchCache(userID)
 	s.notes.invalidateNotesByFolderCache(userID, folderPath)
@@ -45,7 +42,7 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedRecipeNoteWithID(
@@ -57,7 +54,7 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		keywords,
+		nil,
 		folderPath,
 	)
 }
@@ -73,7 +70,7 @@ func (s *RecipeService) CreateEncryptedRecipeNoteWithID(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*db.Note, error) {
 	if err := s.notes.checkNoteLimit(userID); err != nil {
@@ -93,17 +90,8 @@ func (s *RecipeService) CreateEncryptedRecipeNoteWithID(
 		return nil, err
 	}
 
-	// Insert keywords if enabled
-	if len(keywords) > 0 {
-		prefs, err := s.db.GetUserPreferences(userID)
-		if err == nil && prefs.KeywordsEnabled {
-			if err := s.db.InsertNoteKeywords(note.ID, keywords); err != nil {
-				s.notes.logger.Warn("failed to insert keywords", "error", err)
-			}
-		}
-	}
-
 	// Invalidate caches
+	s.notes.invalidateRecoveryKeyBestEffort(userID)
 	s.notes.invalidateFolderCache(userID)
 	s.notes.invalidateQuickSearchCache(userID)
 	s.notes.invalidateNotesByFolderCache(userID, folderPath)

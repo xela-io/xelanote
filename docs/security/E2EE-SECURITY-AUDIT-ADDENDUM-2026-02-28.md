@@ -90,6 +90,11 @@ This addendum reflects the **current remediation status** of the previously repo
 - Migration clears legacy recovery-key rows for users with encrypted notes/versions: `backend/internal/db/migrations/063_invalidate_recovery_keys_for_encrypted_users.sql`
 - Coverage: `backend/internal/service/notes_encryption_test.go`
 
+15. **Encrypted create paths no longer contain residual keyword-persistence hooks.**
+
+- Encrypted note/journal/recipe/canvas create services now ignore keyword inputs entirely: `backend/internal/service/notes_encryption_create.go`, `backend/internal/service/recipes_notes.go`, `backend/internal/service/canvas.go`
+- Canvas DB encrypted create path no longer accepts/stores keywords: `backend/internal/db/canvas.go`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

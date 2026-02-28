@@ -32,7 +32,7 @@ func (db *DB) CreateEncryptedCanvasNote(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*Note, error) {
 	return db.CreateEncryptedCanvasNoteWithID(
@@ -44,7 +44,7 @@ func (db *DB) CreateEncryptedCanvasNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		keywords,
+		nil,
 		folderPath,
 	)
 }
@@ -59,7 +59,7 @@ func (db *DB) CreateEncryptedCanvasNoteWithID(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*Note, error) {
 	id := noteID
@@ -82,13 +82,6 @@ func (db *DB) CreateEncryptedCanvasNoteWithID(
 		wrappedDEK, encryptionMetadata, folderPath, now, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encrypted canvas note: %w", err)
-	}
-
-	// Store keywords if provided
-	if len(keywords) > 0 {
-		if err := db.InsertNoteKeywords(id, keywords); err != nil {
-			return nil, fmt.Errorf("failed to insert keywords for canvas note %s: %w", id, err)
-		}
 	}
 
 	return db.GetNote(userID, id)

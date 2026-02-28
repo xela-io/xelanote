@@ -60,9 +60,6 @@ func (s *CanvasService) CreateCanvasNote(userID int, title, content, folderPath 
 	}
 
 	s.notes.invalidateFolderCache(userID)
-	if err := s.db.InvalidateRecoveryKey(userID); err != nil {
-		s.notes.logger.Warn("failed to invalidate recovery key after encryption", "user_id", userID, "error", err)
-	}
 	s.notes.invalidateQuickSearchCache(userID)
 	s.notes.invalidateNotesByFolderCache(userID, folderPath)
 	if s.notes.graphService != nil {
@@ -81,7 +78,7 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedCanvasNoteWithID(
@@ -93,7 +90,7 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		keywords,
+		nil,
 		folderPath,
 	)
 }
@@ -109,7 +106,7 @@ func (s *CanvasService) CreateEncryptedCanvasNoteWithID(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*db.Note, error) {
 	if err := s.notes.checkNoteLimit(userID); err != nil {
@@ -123,12 +120,13 @@ func (s *CanvasService) CreateEncryptedCanvasNoteWithID(
 	note, err := s.db.CreateEncryptedCanvasNoteWithID(
 		userID, noteID, title, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
-		keywords, folderPath,
+		nil, folderPath,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	s.notes.invalidateRecoveryKeyBestEffort(userID)
 	s.notes.invalidateFolderCache(userID)
 	s.notes.invalidateQuickSearchCache(userID)
 	s.notes.invalidateNotesByFolderCache(userID, folderPath)

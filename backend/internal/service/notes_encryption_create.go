@@ -13,7 +13,7 @@ func (s *NoteService) invalidateRecoveryKeyBestEffort(userID int) {
 	}
 }
 
-// CreateEncryptedNote creates a new encrypted note with optional keywords.
+// CreateEncryptedNote creates a new encrypted note.
 func (s *NoteService) CreateEncryptedNote(
 	userID int,
 	title string,
@@ -22,7 +22,7 @@ func (s *NoteService) CreateEncryptedNote(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedNoteWithID(
@@ -34,7 +34,7 @@ func (s *NoteService) CreateEncryptedNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		keywords,
+		nil,
 		folderPath,
 	)
 }
@@ -49,7 +49,7 @@ func (s *NoteService) CreateEncryptedNoteWithID(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 ) (*db.Note, error) {
 	// Validate
@@ -71,18 +71,6 @@ func (s *NoteService) CreateEncryptedNoteWithID(
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	// Insert keywords ONLY if user has keywords enabled
-	if len(keywords) > 0 {
-		prefs, err := s.db.GetUserPreferences(userID)
-		if err == nil && prefs.KeywordsEnabled {
-			if err := s.db.InsertNoteKeywords(note.ID, keywords); err != nil {
-				s.logger.Warn("failed to insert keywords", "error", err)
-			}
-		} else {
-			s.logger.Warn("keywords sent but user has keywords disabled", "userID", userID)
-		}
 	}
 
 	// Invalidate caches
@@ -125,7 +113,6 @@ func (s *NoteService) CreateJournalNote(userID int, title, content, folderPath, 
 	s.updateDueDates(userID, note.ID, content)
 
 	// Invalidate caches (including folder cache since Journal folder may have been created)
-	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateFolderCache(userID)
 	s.invalidateQuickSearchCache(userID)
 	s.invalidateNotesByFolderCache(userID, folderPath)
@@ -145,7 +132,7 @@ func (s *NoteService) CreateEncryptedJournalNote(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 	journalDate string,
 ) (*db.Note, error) {
@@ -158,7 +145,7 @@ func (s *NoteService) CreateEncryptedJournalNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		keywords,
+		nil,
 		folderPath,
 		journalDate,
 	)
@@ -175,7 +162,7 @@ func (s *NoteService) CreateEncryptedJournalNoteWithID(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	keywords []string,
+	_ []string,
 	folderPath string,
 	journalDate string,
 ) (*db.Note, error) {
@@ -212,17 +199,8 @@ func (s *NoteService) CreateEncryptedJournalNoteWithID(
 		return nil, err
 	}
 
-	// Insert keywords if user has keywords enabled
-	if len(keywords) > 0 {
-		prefs, err := s.db.GetUserPreferences(userID)
-		if err == nil && prefs.KeywordsEnabled {
-			if err := s.db.InsertNoteKeywords(note.ID, keywords); err != nil {
-				s.logger.Warn("failed to insert keywords", "error", err)
-			}
-		}
-	}
-
 	// Invalidate caches (including folder cache since Journal folder may have been created)
+	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateFolderCache(userID)
 	s.invalidateQuickSearchCache(userID)
 	s.invalidateNotesByFolderCache(userID, folderPath)

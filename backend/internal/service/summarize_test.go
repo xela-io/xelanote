@@ -91,6 +91,9 @@ func TestSummarizeNoteEncrypted_StoresSummary(t *testing.T) {
 	if _, err := database.Exec(`UPDATE notes SET content_encrypted = 1 WHERE id = ?`, note.ID); err != nil {
 		t.Fatalf("mark encrypted: %v", err)
 	}
+	if err := database.UpdateNoteAIEnabled(userID, note.ID, true); err != nil {
+		t.Fatalf("enable ai: %v", err)
+	}
 
 	svc := NewSummarizeService(database, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err := svc.SummarizeNoteEncrypted(context.Background(), userID, note.ID, "enc-summary", "hash123"); err != nil {

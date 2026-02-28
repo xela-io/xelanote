@@ -24,12 +24,12 @@ var (
 type AITransformAction string
 
 const (
-	ActionFormat      AITransformAction = "format"
-	ActionSummarize   AITransformAction = "summarize"
-	ActionExpand      AITransformAction = "expand"
-	ActionTranslateDE AITransformAction = "translate_de"
-	ActionTranslateEN AITransformAction = "translate_en"
-	ActionFormal      AITransformAction = "formal"
+	ActionFormat           AITransformAction = "format"
+	ActionSummarize        AITransformAction = "summarize"
+	ActionExpand           AITransformAction = "expand"
+	ActionTranslateDE      AITransformAction = "translate_de"
+	ActionTranslateEN      AITransformAction = "translate_en"
+	ActionFormal           AITransformAction = "formal"
 	ActionInformal         AITransformAction = "informal"
 	ActionCustom           AITransformAction = "custom"
 	ActionDictationCleanup AITransformAction = "dictation_cleanup"

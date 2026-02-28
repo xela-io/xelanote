@@ -38,13 +38,13 @@ func (s *Server) aiTransform(w http.ResponseWriter, r *http.Request) {
 	// Validate action
 	action := service.AITransformAction(req.Action)
 	validActions := map[service.AITransformAction]bool{
-		service.ActionFormat:      true,
-		service.ActionSummarize:   true,
-		service.ActionExpand:      true,
-		service.ActionTranslateDE: true,
-		service.ActionTranslateEN: true,
-		service.ActionFormal:      true,
-		service.ActionInformal:    true,
+		service.ActionFormat:           true,
+		service.ActionSummarize:        true,
+		service.ActionExpand:           true,
+		service.ActionTranslateDE:      true,
+		service.ActionTranslateEN:      true,
+		service.ActionFormal:           true,
+		service.ActionInformal:         true,
 		service.ActionCustom:           true,
 		service.ActionDictationCleanup: true,
 	}

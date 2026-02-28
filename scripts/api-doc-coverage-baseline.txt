@@ -39,6 +39,7 @@ POST /api/2fa/fido2/register/finish
 POST /api/auth/fido2/begin
 POST /api/auth/fido2/finish
 POST /api/llm/spell-check
+POST /api/llm/transcribe
 POST /api/notes/:param/ai-transform
 POST /api/notes/:param/format-markdown
 POST /api/notes/:param/suggest-links
@@ -46,6 +47,7 @@ POST /api/notes/:param/suggest-tags
 POST /api/notes/:param/summarize
 POST /api/notes/:param/summarize/prepare
 POST /api/notes/:param/task-events
+POST /api/notes/:param/versions/delta-summary
 POST /api/notes/reorder
 POST /api/recipes/:param/images
 POST /api/recipes/collections

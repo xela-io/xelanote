@@ -53,14 +53,14 @@ func (s *Server) transcribeAudio(w http.ResponseWriter, r *http.Request) {
 	}
 
 	allowedTypes := map[string]bool{
-		"audio/webm":           true,
-		"audio/ogg":            true,
-		"audio/wav":            true,
-		"audio/mpeg":           true,
-		"audio/mp4":            true,
-		"audio/m4a":            true,
-		"audio/x-m4a":          true,
-		"audio/mp4a-latm":      true,
+		"audio/webm":             true,
+		"audio/ogg":              true,
+		"audio/wav":              true,
+		"audio/mpeg":             true,
+		"audio/mp4":              true,
+		"audio/m4a":              true,
+		"audio/x-m4a":            true,
+		"audio/mp4a-latm":        true,
 		"audio/webm;codecs=opus": true,
 		"audio/ogg;codecs=opus":  true,
 	}

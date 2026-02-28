@@ -164,6 +164,24 @@ export async function toggleUserAdmin(userId: number, isAdmin: boolean): Promise
   }
 }
 
+export async function setUserStorageLimit(
+  userId: number,
+  storageLimitMB: number | null
+): Promise<void> {
+  adminState.error = null;
+  try {
+    await api.setUserStorageLimit(userId, storageLimitMB);
+    // Update local state
+    const user = adminState.users.find((u) => u.id === userId);
+    if (user) {
+      user.storage_limit_mb = storageLimitMB;
+    }
+  } catch (err) {
+    adminState.error = err instanceof Error ? err.message : 'Failed to update storage limit';
+    throw err;
+  }
+}
+
 export async function deleteUser(userId: number): Promise<void> {
   adminState.error = null;
   try {

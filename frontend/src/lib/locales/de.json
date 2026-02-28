@@ -673,7 +673,17 @@
         "admin_toggle_failed": "Admin-Status konnte nicht geändert werden",
         "cannot_delete_self": "Du kannst dich nicht selbst löschen",
         "user_deleted": "Benutzer {username} gelöscht",
-        "delete_failed": "Benutzer konnte nicht gelöscht werden"
+        "delete_failed": "Benutzer konnte nicht gelöscht werden",
+        "quota": "{used} / {limit}",
+        "quota_unlimited": "Unbegrenzt",
+        "quota_global": "Global",
+        "set_storage_limit": "Speicherlimit",
+        "storage_limit_title": "Speicherlimit festlegen",
+        "storage_limit_global": "Globaler Standard",
+        "storage_limit_unlimited": "Unbegrenzt",
+        "storage_limit_custom": "Eigenes Limit (MB)",
+        "storage_limit_updated": "Speicherlimit für {username} aktualisiert",
+        "storage_limit_failed": "Speicherlimit konnte nicht aktualisiert werden"
       },
       "activity": {
         "filter_all": "Alle Aktionen",
@@ -759,6 +769,10 @@
       },
       "subtitle": "Einstellungen und Präferenzen zentral verwalten",
       "data": {
+        "storage_title": "Speicherplatz",
+        "storage_used": "{used} MB von {limit} MB belegt ({percentage}%)",
+        "storage_used_unlimited": "{used} MB belegt (unbegrenzt)",
+        "storage_unlimited": "Unbegrenzt",
         "export_title": "Notizen exportieren",
         "export_description": "Exportiere alle deine Notizen als Markdown-Dateien in einem ZIP-Archiv.",
         "export_button": "Als Markdown exportieren",

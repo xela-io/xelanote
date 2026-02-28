@@ -43,6 +43,7 @@ GET /api/users/ai-provider
 GET /api/users/api-key/status
 GET /api/users/gemini-api-key/status
 GET /api/users/openai-api-key/status
+GET /api/users/storage-quota
 POST /api/2fa/fido2/register/begin
 POST /api/2fa/fido2/register/finish
 POST /api/auth/fido2/begin
@@ -77,6 +78,7 @@ POST /api/shopping/lists/:param/items
 POST /api/shopping/lists/:param/items/batch
 POST /api/shopping/lists/:param/shares
 POST /api/shopping/lists/:param/sort
+PUT /api/admin/users/:param/storage-limit
 PUT /api/features/:param
 PUT /api/folders/:param/ai-enabled
 PUT /api/notes/:param/ai-enabled

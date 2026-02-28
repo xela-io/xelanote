@@ -177,6 +177,134 @@ func TestAdminService_StorageCalculation(t *testing.T) {
 	}
 }
 
+func TestAdminService_GetEffectiveStorageLimitMB(t *testing.T) {
+	svc, _, regularID := setupAdminTest(t)
+
+	t.Run("falls back to global default when no per-user override", func(t *testing.T) {
+		limit, err := svc.GetEffectiveStorageLimitMB(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// Global default is 0 (unlimited) unless changed
+		if limit != 0 {
+			t.Errorf("expected 0 (global default), got %d", limit)
+		}
+	})
+
+	t.Run("returns per-user override when set to 0 (unlimited)", func(t *testing.T) {
+		zero := 0
+		if err := svc.SetUserStorageLimitMB(regularID, &zero); err != nil {
+			t.Fatalf("failed to set limit: %v", err)
+		}
+		limit, err := svc.GetEffectiveStorageLimitMB(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if limit != 0 {
+			t.Errorf("expected 0 (unlimited), got %d", limit)
+		}
+	})
+
+	t.Run("returns per-user override when set to specific value", func(t *testing.T) {
+		val := 500
+		if err := svc.SetUserStorageLimitMB(regularID, &val); err != nil {
+			t.Fatalf("failed to set limit: %v", err)
+		}
+		limit, err := svc.GetEffectiveStorageLimitMB(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if limit != 500 {
+			t.Errorf("expected 500, got %d", limit)
+		}
+	})
+
+	t.Run("falls back to global after clearing override", func(t *testing.T) {
+		if err := svc.SetUserStorageLimitMB(regularID, nil); err != nil {
+			t.Fatalf("failed to clear limit: %v", err)
+		}
+		limit, err := svc.GetEffectiveStorageLimitMB(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if limit != 0 {
+			t.Errorf("expected 0 (global default), got %d", limit)
+		}
+	})
+}
+
+func TestAdminService_SetUserStorageLimitMB(t *testing.T) {
+	svc, _, regularID := setupAdminTest(t)
+
+	t.Run("sets a positive limit", func(t *testing.T) {
+		val := 200
+		err := svc.SetUserStorageLimitMB(regularID, &val)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("clears limit with nil", func(t *testing.T) {
+		err := svc.SetUserStorageLimitMB(regularID, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("rejects negative limit", func(t *testing.T) {
+		neg := -1
+		err := svc.SetUserStorageLimitMB(regularID, &neg)
+		if err == nil {
+			t.Fatal("expected error for negative limit")
+		}
+	})
+}
+
+func TestAdminService_GetUserStorageQuota(t *testing.T) {
+	svc, _, regularID := setupAdminTest(t)
+
+	t.Run("returns quota with global default", func(t *testing.T) {
+		quota, err := svc.GetUserStorageQuota(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if quota.IsCustom {
+			t.Error("expected IsCustom=false for global default")
+		}
+	})
+
+	t.Run("returns quota with per-user override", func(t *testing.T) {
+		val := 1000
+		if err := svc.SetUserStorageLimitMB(regularID, &val); err != nil {
+			t.Fatalf("failed to set limit: %v", err)
+		}
+		quota, err := svc.GetUserStorageQuota(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !quota.IsCustom {
+			t.Error("expected IsCustom=true for per-user override")
+		}
+		if quota.LimitMB != 1000 {
+			t.Errorf("expected LimitMB=1000, got %d", quota.LimitMB)
+		}
+	})
+
+	t.Run("unlimited quota has zero percentage", func(t *testing.T) {
+		zero := 0
+		if err := svc.SetUserStorageLimitMB(regularID, &zero); err != nil {
+			t.Fatalf("failed to set limit: %v", err)
+		}
+		quota, err := svc.GetUserStorageQuota(regularID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if quota.Percentage != 0 {
+			t.Errorf("expected 0%% for unlimited, got %f", quota.Percentage)
+		}
+	})
+}
+
 func TestAdminService_CacheInvalidation(t *testing.T) {
 	svc, adminID, regularID := setupAdminTest(t)
 

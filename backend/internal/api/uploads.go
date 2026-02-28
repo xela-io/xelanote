@@ -98,7 +98,7 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 	uploadMu := s.getUserUploadMu(userID)
 	uploadMu.Lock()
 
-	maxStorageMB, err := s.settingsService.GetMaxStorageMBPerUser()
+	maxStorageMB, err := s.adminService.GetEffectiveStorageLimitMB(userID)
 	if err != nil {
 		uploadMu.Unlock()
 		respondError(w, http.StatusInternalServerError, "failed to check storage limit")

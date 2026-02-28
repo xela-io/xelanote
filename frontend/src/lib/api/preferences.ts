@@ -12,6 +12,7 @@ import type {
   NoteVersion,
   OpenAIAPIKeyStatus,
   OpenTabsPreference,
+  StorageQuota,
   UpdateEncryptionPreferencesRequest,
   UpdatePreferencesRequest,
   UpdateSecurityPreferencesRequest,
@@ -191,6 +192,10 @@ export async function setDietaryPreference(
     method: 'PUT',
     body: JSON.stringify({ dietary_preference: preference }),
   });
+}
+
+export async function getStorageQuota(): Promise<StorageQuota> {
+  return request('/users/storage-quota');
 }
 
 export async function changeEmail(newEmail: string, currentPassword: string): Promise<void> {

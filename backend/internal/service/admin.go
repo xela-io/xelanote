@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -211,6 +212,73 @@ func (s *AdminService) calculateTotalStorageMB() float64 {
 // GetUserStorageMB returns current storage usage in MB for a user
 func (s *AdminService) GetUserStorageMB(userID int) float64 {
 	return s.calculateUserStorageMB(userID)
+}
+
+// StorageQuotaInfo holds storage quota details for a user.
+type StorageQuotaInfo struct {
+	UsedMB     float64 `json:"used_mb"`
+	LimitMB    int     `json:"limit_mb"`    // 0 = unlimited
+	IsCustom   bool    `json:"is_custom"`   // true = per-user override
+	Percentage float64 `json:"percentage"`  // 0-100, 0 when unlimited
+}
+
+// GetEffectiveStorageLimitMB returns the effective storage limit for a user.
+// Per-user override takes precedence; falls back to the global setting.
+func (s *AdminService) GetEffectiveStorageLimitMB(userID int) (int, error) {
+	perUser, err := s.db.GetUserStorageLimitMB(userID)
+	if err != nil {
+		return 0, err
+	}
+	if perUser != nil {
+		return *perUser, nil
+	}
+	return s.db.GetMaxStorageMBPerUser()
+}
+
+// SetUserStorageLimitMB sets or clears the per-user storage limit override.
+func (s *AdminService) SetUserStorageLimitMB(userID int, limitMB *int) error {
+	if limitMB != nil && *limitMB < 0 {
+		return errors.New("storage limit must be >= 0")
+	}
+	if err := s.db.SetUserStorageLimitMB(userID, limitMB); err != nil {
+		return err
+	}
+	s.invalidateStatsCache()
+	return nil
+}
+
+// GetUserStorageQuota returns full storage quota info for a user.
+func (s *AdminService) GetUserStorageQuota(userID int) (*StorageQuotaInfo, error) {
+	usedMB := s.calculateUserStorageMB(userID)
+
+	perUser, err := s.db.GetUserStorageLimitMB(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var limitMB int
+	var isCustom bool
+	if perUser != nil {
+		limitMB = *perUser
+		isCustom = true
+	} else {
+		limitMB, err = s.db.GetMaxStorageMBPerUser()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var percentage float64
+	if limitMB > 0 {
+		percentage = math.Min(usedMB/float64(limitMB)*100, 100)
+	}
+
+	return &StorageQuotaInfo{
+		UsedMB:     usedMB,
+		LimitMB:    limitMB,
+		IsCustom:   isCustom,
+		Percentage: percentage,
+	}, nil
 }
 
 // calculateUserStorageMB calculates storage used by a specific user.

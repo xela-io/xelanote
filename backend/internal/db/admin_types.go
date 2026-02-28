@@ -37,6 +37,7 @@ type AdminUser struct {
 	IsAdmin            bool    `json:"is_admin"`
 	NoteCount          int     `json:"note_count"`
 	StorageMB          float64 `json:"storage_mb"`
+	StorageLimitMB     *int    `json:"storage_limit_mb"` // nil=global, 0=unlimited, >0=MB
 	CreatedAt          string  `json:"created_at"`
 	TOTPEnabled        bool    `json:"totp_enabled"`
 	TOTPVerifiedAt     string  `json:"totp_verified_at"`

@@ -8,6 +8,7 @@ import (
 func (s *Server) registerUserRoutes(r chi.Router) {
 	// User endpoints (preferences, email, password)
 	r.Route("/users", func(r chi.Router) {
+		r.Get("/storage-quota", s.getStorageQuota)
 		r.Get("/preferences", s.getPreferences)
 		r.Put("/preferences", s.updatePreferences)
 		r.Patch("/preferences", s.patchPreferences)
@@ -154,6 +155,7 @@ func (s *Server) registerAdminRoutes(r chi.Router) {
 		r.Get("/users", s.listAllUsers)
 		r.Get("/users/{id}", s.getUserDetails)
 		r.Put("/users/{id}/admin", s.toggleUserAdmin)
+		r.Put("/users/{id}/storage-limit", s.setUserStorageLimit)
 		r.Delete("/users/{id}", s.deleteUserAdmin)
 
 		// Activity logs

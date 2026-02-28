@@ -21,6 +21,7 @@ func adminRouter(ts *testServer) chi.Router {
 		r.Get("/users", ts.listAllUsers)
 		r.Get("/users/{id}", ts.getUserDetails)
 		r.Put("/users/{id}/admin", ts.toggleUserAdmin)
+		r.Put("/users/{id}/storage-limit", ts.setUserStorageLimit)
 		r.Delete("/users/{id}", ts.deleteUserAdmin)
 		r.Get("/settings", ts.getSettings)
 		r.Put("/settings", ts.updateSettings)
@@ -212,6 +213,65 @@ func TestAdminUpdateSettings_EmptyBody(t *testing.T) {
 	token := ts.getAuthToken(t, admin.User)
 
 	rec := doJSON(t, r, http.MethodPut, "/api/admin/settings", UpdateSettingsRequest{}, token)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestSetUserStorageLimit_Success(t *testing.T) {
+	ts := newTestServer(t)
+	r := adminRouter(ts)
+	admin := ts.createUser(t, "admin", "admin@example.com", "password123")
+	ts.makeAdmin(t, admin.User.ID)
+	target := ts.createUser(t, "target", "target@example.com", "password123")
+	token := ts.getAuthToken(t, admin.User)
+
+	// Set a specific limit
+	rec := doJSON(t, r, http.MethodPut, fmt.Sprintf("/api/admin/users/%d/storage-limit", target.User.ID),
+		map[string]interface{}{"storage_limit_mb": 500}, token)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+
+	// Verify it was set
+	rec = doJSON(t, r, http.MethodGet, fmt.Sprintf("/api/admin/users/%d", target.User.ID), nil, token)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var resp AdminUserResponse
+	decodeResponse(t, rec, &resp)
+	require.NotNil(t, resp.StorageLimitMB)
+	assert.Equal(t, 500, *resp.StorageLimitMB)
+
+	// Clear the limit (set to null)
+	rec = doJSON(t, r, http.MethodPut, fmt.Sprintf("/api/admin/users/%d/storage-limit", target.User.ID),
+		map[string]interface{}{"storage_limit_mb": nil}, token)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+
+	// Verify it was cleared
+	rec = doJSON(t, r, http.MethodGet, fmt.Sprintf("/api/admin/users/%d", target.User.ID), nil, token)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	decodeResponse(t, rec, &resp)
+	assert.Nil(t, resp.StorageLimitMB)
+}
+
+func TestSetUserStorageLimit_Forbidden(t *testing.T) {
+	ts := newTestServer(t)
+	r := adminRouter(ts)
+	// First user is auto-promoted to admin, so create a dummy admin first
+	ts.createUser(t, "admin", "admin@example.com", "password123")
+	user := ts.createUser(t, "regular", "regular@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	rec := doJSON(t, r, http.MethodPut, fmt.Sprintf("/api/admin/users/%d/storage-limit", user.User.ID),
+		map[string]interface{}{"storage_limit_mb": 100}, token)
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func TestSetUserStorageLimit_InvalidNegative(t *testing.T) {
+	ts := newTestServer(t)
+	r := adminRouter(ts)
+	admin := ts.createUser(t, "admin", "admin@example.com", "password123")
+	ts.makeAdmin(t, admin.User.ID)
+	target := ts.createUser(t, "target", "target@example.com", "password123")
+	token := ts.getAuthToken(t, admin.User)
+
+	rec := doJSON(t, r, http.MethodPut, fmt.Sprintf("/api/admin/users/%d/storage-limit", target.User.ID),
+		map[string]interface{}{"storage_limit_mb": -1}, token)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 

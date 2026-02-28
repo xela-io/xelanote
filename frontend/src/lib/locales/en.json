@@ -673,7 +673,17 @@
         "admin_toggle_failed": "Failed to update admin status",
         "cannot_delete_self": "Cannot delete yourself",
         "user_deleted": "User {username} deleted",
-        "delete_failed": "Failed to delete user"
+        "delete_failed": "Failed to delete user",
+        "quota": "{used} / {limit}",
+        "quota_unlimited": "Unlimited",
+        "quota_global": "Global",
+        "set_storage_limit": "Storage limit",
+        "storage_limit_title": "Set storage limit",
+        "storage_limit_global": "Global default",
+        "storage_limit_unlimited": "Unlimited",
+        "storage_limit_custom": "Custom limit (MB)",
+        "storage_limit_updated": "Storage limit updated for {username}",
+        "storage_limit_failed": "Failed to update storage limit"
       },
       "activity": {
         "filter_all": "All Actions",
@@ -759,6 +769,10 @@
       },
       "subtitle": "Manage settings and preferences in one place",
       "data": {
+        "storage_title": "Storage",
+        "storage_used": "{used} MB of {limit} MB used ({percentage}%)",
+        "storage_used_unlimited": "{used} MB used (unlimited)",
+        "storage_unlimited": "Unlimited",
         "export_title": "Export Notes",
         "export_description": "Export all your notes as Markdown files in a ZIP archive.",
         "export_button": "Export as Markdown",

@@ -54,6 +54,16 @@ export async function getActivityLogs(
   );
 }
 
+export async function setUserStorageLimit(
+  userId: number,
+  storageLimitMB: number | null
+): Promise<void> {
+  return request(`/admin/users/${userId}/storage-limit`, {
+    method: 'PUT',
+    body: JSON.stringify({ storage_limit_mb: storageLimitMB }),
+  });
+}
+
 export async function getSystemSettings(): Promise<SystemSettings> {
   return request('/admin/settings');
 }

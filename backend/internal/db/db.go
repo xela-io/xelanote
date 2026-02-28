@@ -276,6 +276,7 @@ func (db *DB) runMigrations() error {
 		"056_note_user_state.sql",
 		"057_open_tabs.sql",
 		"058_shopping.sql",
+		"059_user_storage_limit.sql",
 	}
 
 	for _, migrationFile := range migrations {

@@ -469,9 +469,17 @@ export interface AdminUser {
   is_admin: boolean;
   note_count: number;
   storage_mb: number;
+  storage_limit_mb: number | null;
   created_at: string;
   totp_enabled: boolean;
   totp_verified_at?: string;
+}
+
+export interface StorageQuota {
+  used_mb: number;
+  limit_mb: number; // 0 = unlimited
+  is_custom: boolean;
+  percentage: number; // 0-100, 0 when unlimited
 }
 
 export interface ActivityLog {

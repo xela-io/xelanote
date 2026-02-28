@@ -116,7 +116,7 @@ func (s *Server) saveImportedRecipeImage(userID int, data []byte, mimeType strin
 		return "", fmt.Errorf("unsupported image type: %s", mimeType)
 	}
 
-	maxStorageMB, err := s.settingsService.GetMaxStorageMBPerUser()
+	maxStorageMB, err := s.adminService.GetEffectiveStorageLimitMB(userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to check storage limit: %w", err)
 	}

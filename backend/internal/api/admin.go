@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -35,6 +36,7 @@ type AdminUserResponse struct {
 	IsAdmin            bool    `json:"is_admin"`
 	NoteCount          int     `json:"note_count"`
 	StorageMB          float64 `json:"storage_mb"`
+	StorageLimitMB     *int    `json:"storage_limit_mb"`
 	CreatedAt          string  `json:"created_at"`
 	TOTPEnabled        bool    `json:"totp_enabled"`
 	TOTPVerifiedAt     string  `json:"totp_verified_at,omitempty"`
@@ -51,6 +53,7 @@ func toAdminUserResponse(u db.AdminUser) AdminUserResponse {
 		IsAdmin:            u.IsAdmin,
 		NoteCount:          u.NoteCount,
 		StorageMB:          u.StorageMB,
+		StorageLimitMB:     u.StorageLimitMB,
 		CreatedAt:          u.CreatedAt,
 		TOTPEnabled:        u.TOTPEnabled,
 		TOTPVerifiedAt:     u.TOTPVerifiedAt,
@@ -248,6 +251,71 @@ func (s *Server) deleteUserAdmin(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// setUserStorageLimit sets the per-user storage limit override.
+func (s *Server) setUserStorageLimit(w http.ResponseWriter, r *http.Request) {
+	adminID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	targetID, ok := parseIntParam(w, r, "id", "invalid user ID")
+	if !ok {
+		return
+	}
+
+	// Use json.RawMessage to distinguish null from missing
+	var raw struct {
+		StorageLimitMB json.RawMessage `json:"storage_limit_mb"`
+	}
+	if err := decodeJSON(w, r, &raw); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	var limitMB *int
+	if raw.StorageLimitMB != nil && string(raw.StorageLimitMB) != "null" {
+		var v int
+		if err := json.Unmarshal(raw.StorageLimitMB, &v); err != nil {
+			respondError(w, http.StatusBadRequest, "storage_limit_mb must be an integer or null")
+			return
+		}
+		if v < 0 {
+			respondError(w, http.StatusBadRequest, "storage_limit_mb must be >= 0")
+			return
+		}
+		limitMB = &v
+	}
+
+	targetUser, err := s.adminService.GetUserDetails(targetID)
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			respondError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "failed to load target user")
+		return
+	}
+
+	if err := s.adminService.SetUserStorageLimitMB(targetID, limitMB); err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to update storage limit")
+		return
+	}
+
+	// Log the activity
+	ipAddress := getClientIPSafe(r)
+	userAgent := r.UserAgent()
+	_ = s.activityService.LogActivity(&adminID, "user_storage_limit_set", strPtr("user"), strPtr(strconv.Itoa(targetID)), map[string]interface{}{
+		"target_username":  targetUser.Username,
+		"storage_limit_mb": limitMB,
+	}, ipAddress, userAgent) //nolint:gosec // fire-and-forget logging
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// strPtr returns a pointer to a string.
+func strPtr(s string) *string { return &s }
 
 // getActivityLogs returns activity logs with pagination and filters
 func (s *Server) getActivityLogs(w http.ResponseWriter, r *http.Request) {

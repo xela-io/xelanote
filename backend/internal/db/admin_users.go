@@ -10,6 +10,7 @@ func (db *DB) GetAllUsersWithStats() ([]AdminUser, error) {
 	rows, err := db.Query(`
 		SELECT u.id, u.username, u.email, u.is_admin, u.created_at,
 			   COALESCE(n.note_count, 0) as note_count,
+			   u.storage_limit_mb,
 			   COALESCE(u.totp_enabled, 0) as totp_enabled,
 			   COALESCE(u.totp_verified_at, '') as totp_verified_at,
 			   COALESCE(u.totp_disabled_at, '') as totp_disabled_at,
@@ -31,9 +32,15 @@ func (db *DB) GetAllUsersWithStats() ([]AdminUser, error) {
 	var users []AdminUser
 	for rows.Next() {
 		var u AdminUser
+		var storageLimitMB sql.NullInt64
 		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.IsAdmin, &u.CreatedAt, &u.NoteCount,
+			&storageLimitMB,
 			&u.TOTPEnabled, &u.TOTPVerifiedAt, &u.TOTPDisabledAt, &u.TOTPSetupStartedAt); err != nil {
 			return nil, fmt.Errorf("scan user with stats: %w", err)
+		}
+		if storageLimitMB.Valid {
+			v := int(storageLimitMB.Int64)
+			u.StorageLimitMB = &v
 		}
 		users = append(users, u)
 	}
@@ -44,9 +51,11 @@ func (db *DB) GetAllUsersWithStats() ([]AdminUser, error) {
 // GetUserStats returns detailed stats for a single user
 func (db *DB) GetUserStats(userID int) (*AdminUser, error) {
 	var u AdminUser
+	var storageLimitMB sql.NullInt64
 	err := db.QueryRow(`
 		SELECT u.id, u.username, u.email, u.is_admin, u.created_at,
 			   COALESCE(n.note_count, 0) as note_count,
+			   u.storage_limit_mb,
 			   COALESCE(u.totp_enabled, 0) as totp_enabled,
 			   COALESCE(u.totp_verified_at, '') as totp_verified_at,
 			   COALESCE(u.totp_disabled_at, '') as totp_disabled_at,
@@ -60,6 +69,7 @@ func (db *DB) GetUserStats(userID int) (*AdminUser, error) {
 		) n ON u.id = n.user_id
 		WHERE u.id = ?
 	`, userID, userID).Scan(&u.ID, &u.Username, &u.Email, &u.IsAdmin, &u.CreatedAt, &u.NoteCount,
+		&storageLimitMB,
 		&u.TOTPEnabled, &u.TOTPVerifiedAt, &u.TOTPDisabledAt, &u.TOTPSetupStartedAt)
 
 	if err == sql.ErrNoRows {
@@ -67,6 +77,10 @@ func (db *DB) GetUserStats(userID int) (*AdminUser, error) {
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query user stats: %w", err)
+	}
+	if storageLimitMB.Valid {
+		v := int(storageLimitMB.Int64)
+		u.StorageLimitMB = &v
 	}
 
 	return &u, nil
@@ -198,6 +212,7 @@ func (db *DB) GetRecentUsers(limit int) ([]AdminUser, error) {
 	rows, err := db.Query(`
 		SELECT u.id, u.username, u.email, u.is_admin, u.created_at,
 			   COALESCE(n.note_count, 0) as note_count,
+			   u.storage_limit_mb,
 			   COALESCE(u.totp_enabled, 0) as totp_enabled,
 			   COALESCE(u.totp_verified_at, '') as totp_verified_at,
 			   COALESCE(u.totp_disabled_at, '') as totp_disabled_at,
@@ -220,14 +235,54 @@ func (db *DB) GetRecentUsers(limit int) ([]AdminUser, error) {
 	var users []AdminUser
 	for rows.Next() {
 		var u AdminUser
+		var storageLimitMB sql.NullInt64
 		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.IsAdmin, &u.CreatedAt, &u.NoteCount,
+			&storageLimitMB,
 			&u.TOTPEnabled, &u.TOTPVerifiedAt, &u.TOTPDisabledAt, &u.TOTPSetupStartedAt); err != nil {
 			return nil, fmt.Errorf("scan recent user: %w", err)
+		}
+		if storageLimitMB.Valid {
+			v := int(storageLimitMB.Int64)
+			u.StorageLimitMB = &v
 		}
 		users = append(users, u)
 	}
 
 	return users, nil
+}
+
+// GetUserStorageLimitMB returns the per-user storage limit override.
+// Returns nil if no override is set (use global default).
+func (db *DB) GetUserStorageLimitMB(userID int) (*int, error) {
+	var storageLimitMB sql.NullInt64
+	err := db.QueryRow("SELECT storage_limit_mb FROM users WHERE id = ?", userID).Scan(&storageLimitMB)
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query user storage limit: %w", err)
+	}
+	if !storageLimitMB.Valid {
+		return nil, nil
+	}
+	v := int(storageLimitMB.Int64)
+	return &v, nil
+}
+
+// SetUserStorageLimitMB sets or clears the per-user storage limit override.
+// Pass nil to clear the override (revert to global default).
+func (db *DB) SetUserStorageLimitMB(userID int, limitMB *int) error {
+	var result sql.Result
+	var err error
+	if limitMB == nil {
+		result, err = db.Exec("UPDATE users SET storage_limit_mb = NULL, updated_at = datetime('now') WHERE id = ?", userID)
+	} else {
+		result, err = db.Exec("UPDATE users SET storage_limit_mb = ?, updated_at = datetime('now') WHERE id = ?", *limitMB, userID)
+	}
+	if err != nil {
+		return fmt.Errorf("set user storage limit: %w", err)
+	}
+	return ensureRowsAffected(result)
 }
 
 // IsUserAdmin checks if a user is an admin

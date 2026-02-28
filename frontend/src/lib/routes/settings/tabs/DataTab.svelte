@@ -1,8 +1,9 @@
 <script lang="ts">
   import { Download, Loader2, Upload } from 'lucide-svelte';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import { getExportUrl, importMarkdown } from '$lib/api';
+  import { getExportUrl, getStorageQuota, importMarkdown, type StorageQuota } from '$lib/api';
   import {
     handleExport as handleExportHelper,
     handleImportClick as handleImportClickHelper,
@@ -12,6 +13,21 @@
 
   let importInput: HTMLInputElement;
   let importing = $state(false);
+  let storageQuota = $state<StorageQuota | null>(null);
+
+  onMount(async () => {
+    try {
+      storageQuota = await getStorageQuota();
+    } catch {
+      // Non-critical — don't block the page
+    }
+  });
+
+  function getProgressColor(percentage: number): string {
+    if (percentage > 90) return 'bg-destructive';
+    if (percentage > 70) return 'bg-warning';
+    return 'bg-success';
+  }
 
   function handleExport() {
     handleExportHelper({
@@ -50,6 +66,38 @@
 </script>
 
 <div class="space-y-8">
+  <!-- Storage -->
+  {#if storageQuota}
+    <div>
+      <h3 class="text-lg font-medium text-foreground mb-2">
+        {$_('page.settings.data.storage_title')}
+      </h3>
+      {#if storageQuota.limit_mb === 0}
+        <p class="text-sm text-muted-foreground">
+          {$_('page.settings.data.storage_used_unlimited', {
+            values: { used: storageQuota.used_mb.toFixed(1) },
+          })}
+        </p>
+      {:else}
+        <p class="text-sm text-muted-foreground mb-2">
+          {$_('page.settings.data.storage_used', {
+            values: {
+              used: storageQuota.used_mb.toFixed(1),
+              limit: storageQuota.limit_mb,
+              percentage: storageQuota.percentage.toFixed(0),
+            },
+          })}
+        </p>
+        <div class="w-full h-3 bg-muted rounded-full overflow-hidden">
+          <div
+            class="h-full rounded-full transition-all {getProgressColor(storageQuota.percentage)}"
+            style="width: {Math.min(storageQuota.percentage, 100)}%"
+          ></div>
+        </div>
+      {/if}
+    </div>
+  {/if}
+
   <!-- Export -->
   <div>
     <h3 class="text-lg font-medium text-foreground mb-2">

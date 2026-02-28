@@ -28,6 +28,12 @@
   // Delete confirmation
   let deleteConfirmUser = $state<AdminUser | null>(null);
 
+  // Storage limit dialog
+  let storageLimitUser = $state<AdminUser | null>(null);
+  type StorageLimitMode = 'global' | 'unlimited' | 'custom';
+  let storageLimitMode = $state<StorageLimitMode>('global');
+  let storageLimitCustomValue = $state(500);
+
   onMount(() => {
     loadTabData('dashboard');
   });
@@ -114,6 +120,60 @@
     } catch (err) {
       toast.error(err instanceof Error ? err.message : $_(`${a}.users.delete_failed`));
     }
+  }
+
+  function openStorageLimitDialog(user: AdminUser) {
+    storageLimitUser = user;
+    if (user.storage_limit_mb === null) {
+      storageLimitMode = 'global';
+    } else if (user.storage_limit_mb === 0) {
+      storageLimitMode = 'unlimited';
+    } else {
+      storageLimitMode = 'custom';
+      storageLimitCustomValue = user.storage_limit_mb;
+    }
+  }
+
+  async function handleSaveStorageLimit() {
+    if (!storageLimitUser) return;
+
+    let value: number | null;
+    if (storageLimitMode === 'global') {
+      value = null;
+    } else if (storageLimitMode === 'unlimited') {
+      value = 0;
+    } else {
+      value = storageLimitCustomValue;
+    }
+
+    try {
+      await admin.setUserStorageLimit(storageLimitUser.id, value);
+      toast.success(
+        $_(`${a}.users.storage_limit_updated`, {
+          values: { username: storageLimitUser.username },
+        })
+      );
+      storageLimitUser = null;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : $_(`${a}.users.storage_limit_failed`));
+    }
+  }
+
+  function formatStorageQuota(user: AdminUser): string {
+    const used = formatStorage(user.storage_mb);
+    if (user.storage_limit_mb === null) {
+      return used;
+    }
+    if (user.storage_limit_mb === 0) {
+      return used;
+    }
+    return `${used} / ${formatStorage(user.storage_limit_mb)}`;
+  }
+
+  function getStorageLimitBadge(user: AdminUser): string {
+    if (user.storage_limit_mb === null) return $_(`${a}.users.quota_global`);
+    if (user.storage_limit_mb === 0) return $_(`${a}.users.quota_unlimited`);
+    return formatStorage(user.storage_limit_mb);
   }
 
   async function handleSaveSettings() {
@@ -375,9 +435,19 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"
                     >{user.note_count}</td
                   >
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"
-                    >{formatStorage(user.storage_mb)}</td
-                  >
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                    <button
+                      onclick={() => openStorageLimitDialog(user)}
+                      class="hover:text-foreground text-left"
+                      title={$_(`${a}.users.set_storage_limit`)}
+                    >
+                      <span>{formatStorageQuota(user)}</span>
+                      <span
+                        class="ml-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+                        >{getStorageLimitBadge(user)}</span
+                      >
+                    </button>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     {#if user.totp_enabled}
                       <span
@@ -713,6 +783,79 @@
       class="px-4 py-2 text-sm font-medium text-destructive-foreground bg-destructive rounded-lg hover:bg-destructive/90"
     >
       {$_('page.admin.delete_dialog.confirm')}
+    </button>
+  {/snippet}
+</BaseDialog>
+
+<!-- Storage Limit Dialog -->
+<BaseDialog
+  open={storageLimitUser !== null}
+  title={$_(`${a}.users.storage_limit_title`)}
+  onClose={() => (storageLimitUser = null)}
+  size="sm"
+>
+  {#snippet content()}
+    <div class="space-y-4">
+      <p class="text-sm text-muted-foreground">
+        {storageLimitUser?.username ?? ''}
+      </p>
+      <div class="space-y-3">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="storage-limit-mode"
+            value="global"
+            checked={storageLimitMode === 'global'}
+            onchange={() => (storageLimitMode = 'global')}
+            class="accent-primary"
+          />
+          <span class="text-sm text-foreground">{$_(`${a}.users.storage_limit_global`)}</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="storage-limit-mode"
+            value="unlimited"
+            checked={storageLimitMode === 'unlimited'}
+            onchange={() => (storageLimitMode = 'unlimited')}
+            class="accent-primary"
+          />
+          <span class="text-sm text-foreground">{$_(`${a}.users.storage_limit_unlimited`)}</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="storage-limit-mode"
+            value="custom"
+            checked={storageLimitMode === 'custom'}
+            onchange={() => (storageLimitMode = 'custom')}
+            class="accent-primary"
+          />
+          <span class="text-sm text-foreground">{$_(`${a}.users.storage_limit_custom`)}</span>
+        </label>
+        {#if storageLimitMode === 'custom'}
+          <input
+            type="number"
+            bind:value={storageLimitCustomValue}
+            min="1"
+            class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground ml-6"
+          />
+        {/if}
+      </div>
+    </div>
+  {/snippet}
+  {#snippet footer()}
+    <button
+      onclick={() => (storageLimitUser = null)}
+      class="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-lg hover:bg-muted"
+    >
+      {$_('page.admin.delete_dialog.cancel')}
+    </button>
+    <button
+      onclick={handleSaveStorageLimit}
+      class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90"
+    >
+      {$_('page.admin.settings.save')}
     </button>
   {/snippet}
 </BaseDialog>

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Per-User Storage Quota: individual storage limits per user with `NULL` = global default, `0` = unlimited, `>0` = limit in MB
+- Per-User Storage Quota: admin panel UI to view and set per-user storage limits (global/unlimited/custom)
+- Per-User Storage Quota: user settings page shows storage usage with progress bar (green/yellow/red)
+- Per-User Storage Quota: `GET /api/users/storage-quota` endpoint for users to check their quota
+- Per-User Storage Quota: `PUT /api/admin/users/{id}/storage-limit` endpoint for admins to set per-user limits
 - Shopping Lists: dedicated shopping list feature with multiple lists per user, color-coded tabs, and full CRUD
 - Shopping Lists: quick-input parser supporting German quantities/units (e.g., "3 Äpfel, 500g Hack, 2,5l Milch")
 - Shopping Lists: AI-powered sorting into 14 German supermarket categories via LLM

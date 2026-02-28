@@ -37,11 +37,11 @@ This addendum reflects the **current remediation status** of the previously repo
    - Full deterministic client-side validation (no sampling): `frontend/src/lib/crypto/e2e.ts:592-665`
    - Server rejects missing/extra IDs and malformed wrapped DEKs: `backend/internal/service/user_account.go:137-171`, `backend/internal/service/user_account.go:228-245`
 
-6. **Recovery reset is blocked for encrypted users until secure DEK recovery re-wrap exists.**
-   - `backend/internal/service/user_recovery.go:61-68`
-   - `backend/internal/service/user_recovery.go:138-145`
-   - `backend/internal/service/user_types.go:55`
-   - Tests: `backend/internal/service/user_account_recovery_test.go:182-211`, `backend/internal/service/user_account_recovery_test.go:287-317`
+6. **Recovery reset for encrypted users is implemented via tokenized client-side DEK re-wrap (no server plaintext).**
+   - `backend/internal/service/user_recovery.go` (`BeginRecoveryResetByEmail`, `GetRecoveryWrappedDEKs`, `FinalizeRecoveryResetWithToken`)
+   - `backend/internal/api/auth_user.go` (`/auth/recovery/verify`, `/auth/recovery/encrypted-deks`, `/auth/recovery/reset-password-v2`)
+   - `frontend/src/routes/recovery/+page.svelte`
+   - Tests: `backend/internal/service/user_account_recovery_test.go` (`TestUserService_RecoveryResetTokenFlow_WithEncryptedContent`), `backend/internal/api/auth_recovery_flow_test.go`
 
 7. **Encrypted-note attachments are uploaded as encrypted blobs (`.xenc`).**
    - Client encrypts attachment bytes before upload: `frontend/src/lib/components/Editor.svelte:906-918`
@@ -78,10 +78,11 @@ This addendum reflects the **current remediation status** of the previously repo
 - Migration removes existing encrypted-note metadata rows: `backend/internal/db/migrations/062_delete_links_due_dates_for_encrypted_notes.sql`
 - Defense-in-depth guards reject persistence even if future callers send metadata for encrypted notes: `backend/internal/service/notes_links.go`
 
-13. **Recovery-key setup is blocked for encrypted accounts to avoid false recovery guarantees.**
+13. **Recovery-key setup for encrypted accounts requires full recovery-wrapper coverage and is stored atomically.**
 
-- Service rejects `SetRecoveryKey` when encrypted notes/versions exist: `backend/internal/service/user_recovery.go`
-- API returns `409 Conflict` for blocked setup: `backend/internal/api/users_encryption.go`
+- Service enforces complete note/version maps for encrypted users and validates wrapper payloads: `backend/internal/service/user_recovery.go`
+- Service stores recovery key + `wrapped_dek_recovery` in one transaction: `backend/internal/service/user_recovery.go`, `backend/internal/db/preferences_encryption.go`
+- API accepts `recovery_wrapped_note_deks` / `recovery_wrapped_version_deks` and returns `409` on incomplete coverage: `backend/internal/api/users_encryption.go`
 - Coverage: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
 
 14. **Recovery-key material is auto-invalidated when encrypted content exists.**
@@ -95,11 +96,11 @@ This addendum reflects the **current remediation status** of the previously repo
 - Encrypted note/journal/recipe/canvas create services now ignore keyword inputs entirely: `backend/internal/service/notes_encryption_create.go`, `backend/internal/service/recipes_notes.go`, `backend/internal/service/canvas.go`
 - Canvas DB encrypted create path no longer accepts/stores keywords: `backend/internal/db/canvas.go`
 
-16. **Recovery-key salt retrieval is blocked for encrypted accounts (including legacy seeded keys).**
+16. **Recovery-key salt retrieval for encrypted accounts is gated on recovery-wrapper readiness.**
 
-- Service blocks direct and email-based salt lookup when encrypted notes/versions exist: `backend/internal/service/user_recovery.go`
-- API maps the block to `404` on `GET /api/users/recovery-key/salt`: `backend/internal/api/users_encryption.go`
-- Coverage includes service + API isolation tests for legacy-seeded recovery rows: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
+- Service returns salt only when all encrypted notes/versions have `wrapped_dek_recovery`; otherwise not-found/generic unavailable: `backend/internal/service/user_recovery.go`
+- API maps non-ready state to `404` on `GET /api/users/recovery-key/salt`: `backend/internal/api/users_encryption.go`
+- Coverage includes service + API tests for both incomplete and ready states: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
 
 17. **Server-side note tags are disabled for encrypted notes; legacy encrypted-tag rows are purged.**
 
@@ -124,10 +125,9 @@ This addendum reflects the **current remediation status** of the previously repo
 
 ## Remaining Limitations / Open Product Decisions
 
-1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).
-   - Doc claim aligned: `docs/e2e-encryption.md:66-77`, `docs/e2e-encryption.md:107-108`
-   - README claim aligned: `README.md:95`
-   - Implementation path documented: `docs/security/E2EE-RECOVERY-DEK-REWRAP-IMPLEMENTATION-PLAN-2026-02-28.md`
+1. **Recovery decryption depends on pre-provisioned recovery wrappers.**
+   - Encrypted recovery reset requires previously stored `wrapped_dek_recovery` coverage for all encrypted notes/versions.
+   - Legacy/incomplete states remain non-recoverable by design until wrappers are re-established while unlocked.
 
 2. **E2EE does not cover all metadata** (explicitly documented scope limit).
    - `docs/e2e-encryption.md:51-58`

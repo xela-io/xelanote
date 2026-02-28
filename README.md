@@ -92,7 +92,7 @@ xelanote is a privacy-first, self-hosted note-taking app that combines modern kn
 - **End-to-end encryption** — XChaCha20-Poly1305 with Argon2id KDF and per-note data encryption keys for note payloads
 - **Per-note toggle** — encrypt or decrypt individual notes; set folder-level encryption defaults
 - **Encrypted search** — client-side MiniSearch index so encrypted notes are fully searchable without server access
-- **Recovery key** — account recovery exists, but encrypted-note decryption via recovery reset is not available yet
+- **Recovery key** — account recovery supports encrypted-note decryption when recovery wrappers were provisioned before password loss
 - **AI boundary** — encrypted notes block server-side AI processing; plaintext notes may transmit content to backend/provider when AI features are used
 - **Two-factor authentication** — TOTP (any authenticator app) + WebAuthn/FIDO2 hardware keys + backup codes
 - **Auth hardening** — JWT with refresh token rotation, HttpOnly cookies only (no localStorage), CSRF double-submit protection

@@ -4274,7 +4274,11 @@ Content-Type: application/json
 
 Setzt einen Recovery Key für den authentifizierten Benutzer.
 
-**Wichtig:** Fuer Accounts mit bestehenden verschluesselten Notizen ist das Setzen aktuell blockiert (kein Recovery-DEK-Rewrap). Der Endpoint antwortet dann mit `409 Conflict`.
+**Wichtig (verschluesselte Accounts):**
+- Fuer Accounts mit bestehenden verschluesselten Notizen/Versionen muessen zusaetzlich vollstaendige Recovery-Rewrap-Maps uebergeben werden:
+  - `recovery_wrapped_note_deks` (noteID -> wrapped_dek_recovery)
+  - `recovery_wrapped_version_deks` (versionID -> wrapped_dek_recovery)
+- Fehlt die Vollstaendigkeit, antwortet der Endpoint mit `409 Conflict`.
 
 #### Request
 
@@ -4287,7 +4291,13 @@ Content-Type: application/json
 ```json
 {
   "recovery_key_hash": "argon2id-hash-des-recovery-keys",
-  "salt": "base64-encoded-salt"
+  "salt": "base64-encoded-salt",
+  "recovery_wrapped_note_deks": {
+    "note-1": "base64-wrapped-dek-recovery"
+  },
+  "recovery_wrapped_version_deks": {
+    "101": "base64-wrapped-dek-recovery"
+  }
 }
 ```
 
@@ -4307,7 +4317,8 @@ Content-Type: application/json
 
 ```http
 400 Bad Request - "recovery_key_hash is required", "salt is required", "invalid base64 salt"
-409 Conflict - "recovery key setup is unavailable for accounts with encrypted notes"
+400 Bad Request - "missing ...", "invalid ...", "unexpected ..." (inkonsistente Recovery-Rewrap-Payload)
+409 Conflict - "recovery key setup for encrypted accounts requires full recovery DEK re-wrapping"
 401 Unauthorized - Keine gültige Authentifizierung
 500 Internal Server Error - Fehler beim Setzen
 ```
@@ -4318,7 +4329,9 @@ Content-Type: application/json
 
 Ruft das Recovery Key Salt für den authentifizierten Benutzer ab.
 
-**Wichtig:** Fuer Accounts mit bestehenden verschluesselten Notizen ist der Endpoint nicht verfuegbar und liefert ebenfalls `404 Not Found`.
+**Wichtig (verschluesselte Accounts):**
+- `200 OK` nur wenn fuer alle verschluesselten Notizen/Versionen `wrapped_dek_recovery` vorhanden ist.
+- Legacy-/inkomplette Zustaende liefern `404 Not Found`.
 
 #### Request
 

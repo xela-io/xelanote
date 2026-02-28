@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor: moved indent/outdent from "More" menu to toolbar and insert menu for quicker access
 - E2EE: KEK derivation for login and password-change rewrap now uses Worker-based Argon2id by default and falls back to synchronous derivation only if Worker setup fails
 - Documentation: clarified E2EE threat boundaries (metadata visibility, AI plaintext boundary, recovery limitations, encrypted-attachment behavior) across README and docs/wiki pages
+- Documentation/UI: aligned E2EE recovery claims with wrapper-gated encrypted recovery flow (README, API/e2e docs, audit addendum, encryption settings i18n copy)
 
 ### Fixed
 

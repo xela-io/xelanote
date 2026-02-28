@@ -68,14 +68,14 @@ Die verschluesselte Payload enthaelt:
 
 Wichtig:
 
-- Recovery-Key-Management (Setzen/Salt) ist nur fuer Konten ohne bestehende verschluesselte Notizen verfuegbar.
-- Der Recovery-Reset fuer Konten mit verschluesselten Notizen ist derzeit absichtlich blockiert.
-- Sobald verschluesselte Notizen/Versionen existieren, werden vorhandene Recovery-Key-Daten invalidiert.
-- Grund: Ein sicherer Recovery-basierter DEK-Rewrap-Flow ist noch nicht implementiert.
+- Recovery fuer verschluesselte Konten ist nur moeglich, wenn `wrapped_dek_recovery` fuer alle verschluesselten Notizen/Versionen vorhanden ist.
+- Beim Setzen des Recovery-Keys fuer verschluesselte Konten muss der Client vollstaendige Recovery-Rewrap-Payloads hochladen.
+- `GET /api/users/recovery-key/salt` liefert fuer verschluesselte Konten nur dann `200`, wenn die Recovery-Wrapper vollstaendig vorhanden sind (sonst `404`).
+- Verschluesselte Create/Update-Flows invalidieren weiterhin vorhandene Recovery-Key-Daten defensiv; Nutzer muessen danach Recovery erneut einrichten.
 
 Konsequenz:
 
-- Wenn du dein Passwort verlierst, sind bestehende verschluesselte Notizen aktuell nicht wiederherstellbar.
+- Wenn du dein Passwort verlierst **und** kein vollstaendiger Recovery-Wrapper-Stand eingerichtet war, sind verschluesselte Notizen nicht wiederherstellbar.
 
 ## Passwortaenderung
 
@@ -106,7 +106,7 @@ Nicht ohne Passwort/Schluesselmaterial. Sichtbar bleiben jedoch nicht-E2EE-Metad
 Nein. Zero-Knowledge gilt nur fuer geschuetzte Payload-Bereiche, nicht fuer alle Metadaten. Uploads aus verschluesselten Notizen sind verschluesselt; Upload-Metadaten bleiben sichtbar.
 
 **Kann ich mit Recovery-Key verschluesselte Notizen nach Passwortverlust wiederherstellen?**  
-Aktuell nein.
+Ja, aber nur wenn Recovery-Wrapper vor dem Verlust vollstaendig eingerichtet wurden.
 
 **Sind verschluesselte Notizen durchsuchbar?**  
 Ja, clientseitig.

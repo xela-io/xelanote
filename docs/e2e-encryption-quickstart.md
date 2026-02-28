@@ -37,8 +37,8 @@
 
 ## Wichtige Grenzen (Stand: 2026-02-28)
 
-- Recovery-Reset zur Entschluesselung bereits verschluesselter Notizen ist aktuell **nicht verfuegbar**.
-- Wenn du dein Passwort verlierst, sind bestehende verschluesselte Notizen derzeit nicht wiederherstellbar.
+- Recovery-Reset fuer verschluesselte Notizen funktioniert nur, wenn Recovery-Wrapper vorher vollstaendig eingerichtet wurden.
+- Wenn du dein Passwort verlierst und kein vollstaendiger Recovery-Wrapper-Stand vorliegt, sind verschluesselte Notizen nicht wiederherstellbar.
 - AI-Features koennen (je nach Aktion) Klartext an Backend/Provider senden.
 - AI-Zusammenfassung ist fuer verschluesselte Notizen derzeit deaktiviert.
 
@@ -59,6 +59,6 @@ A: Ohne Passwort/Keymaterial nicht. Sichtbar bleiben aber nicht-E2EE-Metadaten.
 A: Nein. Verschluesselte Notizen muessen vor dem Teilen entschluesselt werden.
 
 **F: Hilft der Recovery Key bei Passwortverlust fuer verschluesselte Notizen?**  
-A: Aktuell nein. Der Recovery-Reset fuer verschluesselte Notizen ist blockiert, bis DEK-Rewrap im Recovery-Flow umgesetzt ist.
+A: Ja, wenn Recovery-Wrapper vor dem Passwortverlust vollstaendig eingerichtet wurden.
 
 Weitere Details: [E2E-Verschluesselung (vollstaendig)](./e2e-encryption.md)

@@ -14,7 +14,9 @@ Alle Endpunkte unter `/api/`. Antworten sind JSON. Auth via HttpOnly Cookie oder
 | `POST` | `/auth/fido2/begin` | FIDO2-Login starten | Nein |
 | `POST` | `/auth/fido2/finish` | FIDO2-Login abschließen | Nein |
 | `POST` | `/auth/recovery/verify` | Recovery Key prüfen | Nein |
-| `POST` | `/auth/recovery/reset` | Passwort mit Recovery Key zurücksetzen | Nein |
+| `GET` | `/auth/recovery/encrypted-deks` | Recovery-Wrapper für verschlüsselte Notizen laden | Nein |
+| `POST` | `/auth/recovery/reset-password` | Legacy-Reset (nur unverschlüsselte Accounts) | Nein |
+| `POST` | `/auth/recovery/reset-password-v2` | Tokenisierter Reset mit DEK-Rewrap | Nein |
 
 ## Zwei-Faktor-Authentifizierung
 

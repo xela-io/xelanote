@@ -442,7 +442,11 @@ Content-Type: application/json
 
 Öffentlicher Endpunkt zum Zurücksetzen des Passworts mit Recovery Key.
 
-**Wichtig:** Fuer Accounts mit bestehenden verschluesselten Notizen ist der Reset aktuell blockiert (kein Recovery-DEK-Rewrap). Der Endpoint antwortet in diesem Fall ebenfalls mit einer generischen `401`.
+**Wichtig:** Dieser Legacy-Endpoint ist nur fuer Accounts ohne verschluesselte Notizen/Versionen geeignet.
+Fuer verschluesselte Accounts ist der tokenisierte Flow zu verwenden:
+1. `POST /api/auth/recovery/verify`
+2. `GET /api/auth/recovery/encrypted-deks`
+3. `POST /api/auth/recovery/reset-password-v2`
 
 #### Request
 
@@ -479,6 +483,93 @@ Content-Type: application/json
 ```
 
 **Hinweis**: Gibt generische Fehlermeldung zurück um Informationslecks zu verhindern.
+
+---
+
+### GET /api/auth/recovery/encrypted-deks
+
+Liefert fuer einen gueltigen Recovery-Reset-Token die Recovery-Wrapper aller verschluesselten Notizen/Versionen.
+
+#### Request
+
+```http
+GET /api/auth/recovery/encrypted-deks
+Authorization: Bearer <recovery_reset_token>
+```
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "notes": [
+    { "id": "note-1", "wrapped_dek_recovery": "base64..." }
+  ],
+  "versions": [
+    { "id": "101", "wrapped_dek_recovery": "base64..." }
+  ]
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - "recovery reset token is required"
+401 Unauthorized - "invalid or expired recovery reset token"
+409 Conflict - "encrypted recovery wrappers are missing"
+500 Internal Server Error - "failed to load encrypted recovery data"
+```
+
+---
+
+### POST /api/auth/recovery/reset-password-v2
+
+Finalisiert den Recovery-Reset mit One-Time-Token und (bei verschluesselten Accounts) clientseitig re-wrapped DEKs.
+
+#### Request
+
+```http
+POST /api/auth/recovery/reset-password-v2
+Content-Type: application/json
+```
+
+```json
+{
+  "recovery_reset_token": "<token-aus-verify>",
+  "new_password": "neues-sicheres-passwort",
+  "re_wrapped_note_deks": {
+    "note-1": "base64-wrapped-dek"
+  },
+  "re_wrapped_version_deks": {
+    "101": "base64-wrapped-dek"
+  }
+}
+```
+
+#### Response
+
+```http
+200 OK
+```
+
+```json
+{
+  "message": "password reset successfully, please login with your new password"
+}
+```
+
+#### Errors
+
+```http
+400 Bad Request - "recovery_reset_token is required", "new_password is required"
+400 Bad Request - "password must be at least 8 characters"
+400 Bad Request - "missing re-wrapped DEK ...", "invalid re-wrapped DEK ...", "unexpected re-wrapped DEK ..."
+401 Unauthorized - "invalid or expired recovery reset token"
+500 Internal Server Error - "failed to reset password"
+```
 
 ---
 

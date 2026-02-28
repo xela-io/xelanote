@@ -269,7 +269,7 @@
       "error_password_mismatch": "Passwörter stimmen nicht überein.",
       "error_invalid_credentials": "Ungültige E-Mail oder Recovery-Key.",
       "error_missing_encryption_salt": "Encryption-Salt für verschlüsselte Wiederherstellung fehlt.",
-      "error_conflict": "Recovery-Reset ist für diesen Account derzeit nicht verfügbar.",
+      "error_conflict": "Verschlüsseltes Recovery ist für diesen Account noch nicht eingerichtet.",
       "error_bad_request": "Recovery-Anfrage ist ungültig.",
       "error_generic": "Recovery-Reset fehlgeschlagen. Bitte erneut versuchen."
     },

@@ -288,8 +288,8 @@
             </h3>
             <ul class="space-y-2 text-sm text-yellow-800 dark:text-yellow-300">
               <li>
-                • <strong>Recovery Key:</strong> Kann für Account-Recovery gesetzt werden, entsperrt aktuell
-                aber keine bestehenden verschlüsselten Notizen.
+                • <strong>Recovery Key:</strong> Funktioniert für verschlüsselte Notizen nur, wenn Recovery-Wrapper
+                vor Passwortverlust vollständig eingerichtet wurden.
               </li>
               <li>
                 • <strong>Backup:</strong> Erstelle ein Backup deiner Notizen vor der Migration (optional,

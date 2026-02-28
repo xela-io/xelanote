@@ -269,7 +269,7 @@
       "error_password_mismatch": "Passwords do not match.",
       "error_invalid_credentials": "Invalid email or recovery key.",
       "error_missing_encryption_salt": "Missing encryption salt for encrypted recovery flow.",
-      "error_conflict": "Recovery reset is not available for this account yet.",
+      "error_conflict": "Encrypted recovery is not configured for this account yet.",
       "error_bad_request": "Recovery request is invalid.",
       "error_generic": "Recovery reset failed. Please try again."
     },

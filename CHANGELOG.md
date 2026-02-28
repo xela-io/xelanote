@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-Tab Editor: dirty indicator (dot) on tabs with unsaved changes
 - Multi-Tab Editor: keyboard shortcuts — Ctrl+PageDown/PageUp for tab switching, Ctrl+W (desktop only) for close
 - Multi-Tab Editor: automatic tab cleanup when notes are deleted (local or remote via WebSocket)
+- Multi-Tab Editor: dedicated drag handle on tabs instead of whole-tab dragging for better UX
+- Multi-Tab Editor: keyboard tab reorder via Alt+ArrowLeft/ArrowRight
+- Multi-Tab Editor: duplicate close guard preventing double-click and rapid middle-click issues
+- Multi-Tab Editor: middle-click close uses `onauxclick` for correct event handling
+- Multi-Tab Editor: E2E regression tests for tab close (X button, middle-click) and drag reorder
 - Multi-Tab Editor: offline-safe temp-ID replacement when offline-created notes sync
 - Multi-Tab Editor: E2E encryption compatible — only note IDs persisted server-side, no titles
 - Dictation: voice input via browser-native Web Speech API (real-time transcript)

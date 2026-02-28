@@ -18,10 +18,32 @@ const (
 // ErrTooManyLinks is returned when a note has more links than allowed.
 var ErrTooManyLinks = errors.New("too many links (max 500)")
 
+func (s *NoteService) getOwnedNoteForMetadataUpdate(userID int, noteID string) (*db.Note, error) {
+	note, err := s.db.GetNote(userID, noteID)
+	if err != nil {
+		return nil, err
+	}
+	if note == nil {
+		return nil, db.ErrNotFound
+	}
+	return note, nil
+}
+
 // UpdateLinksFromClient processes client-submitted link titles and updates the links tables.
 // This is used for E2E encrypted notes where the server cannot parse the content.
 // Links are validated, deduplicated, and resolved against existing notes.
 func (s *NoteService) UpdateLinksFromClient(userID int, noteID string, linkTitles []string) error {
+	note, err := s.getOwnedNoteForMetadataUpdate(userID, noteID)
+	if err != nil {
+		return err
+	}
+
+	// Defense-in-depth: encrypted notes must never persist plaintext link metadata.
+	// Always clear, regardless of any client-provided link titles.
+	if note.ContentEncrypted {
+		return s.db.SetLinks(noteID, nil, nil)
+	}
+
 	// Validate total count
 	if len(linkTitles) > MaxLinksPerNote {
 		return ErrTooManyLinks
@@ -53,9 +75,9 @@ func (s *NoteService) UpdateLinksFromClient(userID int, noteID string, linkTitle
 		seen[titleNorm] = true
 
 		// Try to find the target note (within user's notes only)
-		targetNote, err := s.db.GetNoteByTitle(userID, title)
-		if err != nil && !errors.Is(err, db.ErrNotFound) {
-			return fmt.Errorf("failed to lookup note %q: %w", title, err)
+		targetNote, lookupErr := s.db.GetNoteByTitle(userID, title)
+		if lookupErr != nil && !errors.Is(lookupErr, db.ErrNotFound) {
+			return fmt.Errorf("failed to lookup note %q: %w", title, lookupErr)
 		}
 
 		if targetNote != nil {
@@ -71,6 +93,17 @@ func (s *NoteService) UpdateLinksFromClient(userID int, noteID string, linkTitle
 // SetNoteDueDates sets due dates for a note from client-provided data.
 // Used by the API layer for encrypted notes where the server cannot parse content.
 func (s *NoteService) SetNoteDueDates(noteID string, userID int, dueDates []parser.DueDate) error {
+	note, err := s.getOwnedNoteForMetadataUpdate(userID, noteID)
+	if err != nil {
+		return err
+	}
+
+	// Defense-in-depth: encrypted notes must never persist plaintext due-date metadata.
+	// Always clear, regardless of any client-provided due-date payload.
+	if note.ContentEncrypted {
+		return s.db.SetNoteDueDates(noteID, userID, nil)
+	}
+
 	return s.db.SetNoteDueDates(noteID, userID, dueDates)
 }
 

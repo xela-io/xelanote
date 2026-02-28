@@ -76,6 +76,7 @@ This addendum reflects the **current remediation status** of the previously repo
 - Encrypted updates now clear links + unresolved links + due dates in service layer: `backend/internal/service/notes_encryption_update.go`
 - API encrypted update path now only ignores client metadata (no duplicated clearing logic): `backend/internal/api/notes_crud_update.go`
 - Migration removes existing encrypted-note metadata rows: `backend/internal/db/migrations/062_delete_links_due_dates_for_encrypted_notes.sql`
+- Defense-in-depth guards reject persistence even if future callers send metadata for encrypted notes: `backend/internal/service/notes_links.go`
 
 ## Remaining Limitations / Open Product Decisions
 

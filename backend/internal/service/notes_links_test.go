@@ -2,6 +2,8 @@ package service
 
 import (
 	"testing"
+
+	"github.com/xela-io/xelanote/internal/parser"
 )
 
 func TestUpdateLinksFromClient_ResolvedLinks(t *testing.T) {
@@ -407,5 +409,99 @@ func TestUpdateLinksFromClient_ReplacesExistingLinks(t *testing.T) {
 	}
 	if len(backlinks2) != 1 {
 		t.Errorf("expected 1 backlink to target2, got %d", len(backlinks2))
+	}
+}
+
+func TestUpdateLinksFromClient_EncryptedNoteClearsAndIgnoresInput(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "enc-link-user")
+
+	target, err := service.CreateNote(user.ID, "Target", "content", "/")
+	if err != nil {
+		t.Fatalf("failed to create target: %v", err)
+	}
+
+	source, err := service.CreateEncryptedNote(
+		user.ID,
+		"Encrypted Source",
+		nil,
+		false,
+		[]byte("encrypted-content"),
+		"wrapped-dek",
+		"v3",
+		nil,
+		"/",
+	)
+	if err != nil {
+		t.Fatalf("failed to create encrypted source: %v", err)
+	}
+
+	if err := service.UpdateLinksFromClient(user.ID, source.ID, []string{"Target", "Ghost"}); err != nil {
+		t.Fatalf("UpdateLinksFromClient failed: %v", err)
+	}
+
+	var linksCount, unresolvedCount int
+	if err := database.QueryRow(`SELECT COUNT(*) FROM links WHERE source_id = ?`, source.ID).Scan(&linksCount); err != nil {
+		t.Fatalf("count links failed: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM unresolved_links WHERE source_id = ?`, source.ID).Scan(&unresolvedCount); err != nil {
+		t.Fatalf("count unresolved links failed: %v", err)
+	}
+	if linksCount != 0 {
+		t.Fatalf("expected 0 links for encrypted note, got %d", linksCount)
+	}
+	if unresolvedCount != 0 {
+		t.Fatalf("expected 0 unresolved links for encrypted note, got %d", unresolvedCount)
+	}
+
+	backlinks, err := service.GetBacklinks(user.ID, target.ID)
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	if len(backlinks) != 0 {
+		t.Fatalf("expected 0 backlinks from encrypted note metadata path, got %d", len(backlinks))
+	}
+}
+
+func TestSetNoteDueDates_EncryptedNoteIgnoresInput(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "enc-due-user")
+
+	note, err := service.CreateEncryptedNote(
+		user.ID,
+		"Encrypted Due",
+		nil,
+		false,
+		[]byte("encrypted-content"),
+		"wrapped-dek",
+		"v3",
+		nil,
+		"/",
+	)
+	if err != nil {
+		t.Fatalf("failed to create encrypted note: %v", err)
+	}
+
+	dueDates := []parser.DueDate{
+		{
+			Date:        "2026-03-20",
+			LineText:    "- [ ] hidden",
+			LineIndex:   0,
+			IsTaskItem:  true,
+			IsCompleted: false,
+		},
+	}
+	if err := service.SetNoteDueDates(note.ID, user.ID, dueDates); err != nil {
+		t.Fatalf("SetNoteDueDates failed: %v", err)
+	}
+
+	var dueCount int
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_due_dates WHERE note_id = ?`, note.ID).Scan(&dueCount); err != nil {
+		t.Fatalf("count due dates failed: %v", err)
+	}
+	if dueCount != 0 {
+		t.Fatalf("expected 0 due dates for encrypted note, got %d", dueCount)
 	}
 }

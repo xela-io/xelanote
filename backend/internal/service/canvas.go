@@ -60,6 +60,9 @@ func (s *CanvasService) CreateCanvasNote(userID int, title, content, folderPath 
 	}
 
 	s.notes.invalidateFolderCache(userID)
+	if err := s.db.InvalidateRecoveryKey(userID); err != nil {
+		s.notes.logger.Warn("failed to invalidate recovery key after encryption", "user_id", userID, "error", err)
+	}
 	s.notes.invalidateQuickSearchCache(userID)
 	s.notes.invalidateNotesByFolderCache(userID, folderPath)
 	if s.notes.graphService != nil {

@@ -23,6 +23,9 @@ func (s *RecipeService) CreateRecipeNote(userID int, title, content, folderPath 
 	}
 
 	// Invalidate caches
+	if err := s.db.InvalidateRecoveryKey(userID); err != nil {
+		s.notes.logger.Warn("failed to invalidate recovery key after encryption", "user_id", userID, "error", err)
+	}
 	s.notes.invalidateFolderCache(userID)
 	s.notes.invalidateQuickSearchCache(userID)
 	s.notes.invalidateNotesByFolderCache(userID, folderPath)

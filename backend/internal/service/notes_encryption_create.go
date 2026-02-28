@@ -7,6 +7,12 @@ import (
 	"github.com/xela-io/xelanote/internal/db"
 )
 
+func (s *NoteService) invalidateRecoveryKeyBestEffort(userID int) {
+	if err := s.db.InvalidateRecoveryKey(userID); err != nil {
+		s.logger.Warn("failed to invalidate recovery key after encryption", "user_id", userID, "error", err)
+	}
+}
+
 // CreateEncryptedNote creates a new encrypted note with optional keywords.
 func (s *NoteService) CreateEncryptedNote(
 	userID int,
@@ -80,6 +86,7 @@ func (s *NoteService) CreateEncryptedNoteWithID(
 	}
 
 	// Invalidate caches
+	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateQuickSearchCache(userID)
 
 	return note, nil
@@ -118,6 +125,7 @@ func (s *NoteService) CreateJournalNote(userID int, title, content, folderPath, 
 	s.updateDueDates(userID, note.ID, content)
 
 	// Invalidate caches (including folder cache since Journal folder may have been created)
+	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateFolderCache(userID)
 	s.invalidateQuickSearchCache(userID)
 	s.invalidateNotesByFolderCache(userID, folderPath)

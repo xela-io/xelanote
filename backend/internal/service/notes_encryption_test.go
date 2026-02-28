@@ -2,6 +2,8 @@ package service
 
 import (
 	"testing"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestNoteService_CreateEncryptedNote(t *testing.T) {
@@ -86,6 +88,85 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 		}
 		if !note.TitleEncrypted {
 			t.Error("expected TitleEncrypted to be true")
+		}
+	})
+}
+
+func TestNoteService_EncryptedFlowsInvalidateRecoveryKey(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "enc-recovery-invalidate")
+
+	t.Run("create encrypted note invalidates recovery key", func(t *testing.T) {
+		hash, err := bcrypt.GenerateFromPassword([]byte("create-recovery-key"), 12)
+		if err != nil {
+			t.Fatalf("failed to hash recovery key: %v", err)
+		}
+		if err := database.SetRecoveryKey(user.ID, string(hash), []byte("salt-create")); err != nil {
+			t.Fatalf("failed to seed recovery key: %v", err)
+		}
+
+		_, err = service.CreateEncryptedNote(
+			user.ID,
+			"Encrypted Title",
+			nil,
+			false,
+			[]byte("encrypted-content"),
+			"wrapped-dek",
+			"v3",
+			nil,
+			"/",
+		)
+		if err != nil {
+			t.Fatalf("unexpected error creating encrypted note: %v", err)
+		}
+
+		prefs, err := database.GetUserPreferences(user.ID)
+		if err != nil {
+			t.Fatalf("failed to load preferences: %v", err)
+		}
+		if prefs.RecoveryKeyHash != nil || prefs.RecoveryKeySalt != nil {
+			t.Fatal("expected recovery key to be invalidated after encrypted create")
+		}
+	})
+
+	t.Run("encrypted update invalidates recovery key", func(t *testing.T) {
+		plain, err := service.CreateNote(user.ID, "Plain", "content", "/")
+		if err != nil {
+			t.Fatalf("failed to create plaintext note: %v", err)
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte("update-recovery-key"), 12)
+		if err != nil {
+			t.Fatalf("failed to hash recovery key: %v", err)
+		}
+		if err := database.SetRecoveryKey(user.ID, string(hash), []byte("salt-update")); err != nil {
+			t.Fatalf("failed to seed recovery key: %v", err)
+		}
+
+		_, err = service.UpdateEncryptedNote(
+			user.ID,
+			plain.ID,
+			"Encrypted",
+			nil,
+			false,
+			[]byte("encrypted-content"),
+			"wrapped-dek",
+			`{"algorithm":"XChaCha20-Poly1305","version":3}`,
+			"/",
+			nil,
+			plain.Version,
+		)
+		if err != nil {
+			t.Fatalf("unexpected error updating encrypted note: %v", err)
+		}
+
+		prefs, err := database.GetUserPreferences(user.ID)
+		if err != nil {
+			t.Fatalf("failed to load preferences: %v", err)
+		}
+		if prefs.RecoveryKeyHash != nil || prefs.RecoveryKeySalt != nil {
+			t.Fatal("expected recovery key to be invalidated after encrypted update")
 		}
 	})
 }

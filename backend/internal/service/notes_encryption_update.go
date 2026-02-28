@@ -119,6 +119,7 @@ func (s *NoteService) UpdateEncryptedNote(
 	}
 
 	// Invalidate caches
+	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateNoteCache(userID, noteID)
 	s.invalidateQuickSearchCache(userID)
 

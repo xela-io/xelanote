@@ -84,6 +84,12 @@ This addendum reflects the **current remediation status** of the previously repo
 - API returns `409 Conflict` for blocked setup: `backend/internal/api/users_encryption.go`
 - Coverage: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
 
+14. **Recovery-key material is auto-invalidated when encrypted content exists.**
+
+- Encrypted create/update flows invalidate stored recovery key state: `backend/internal/service/notes_encryption_create.go`, `backend/internal/service/notes_encryption_update.go`, `backend/internal/service/recipes_notes.go`, `backend/internal/service/canvas.go`
+- Migration clears legacy recovery-key rows for users with encrypted notes/versions: `backend/internal/db/migrations/063_invalidate_recovery_keys_for_encrypted_users.sql`
+- Coverage: `backend/internal/service/notes_encryption_test.go`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

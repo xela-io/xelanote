@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed UNION ALL column mismatch in shared-note folder query (missing `wrapped_dek_recovery`)
+
 ### Added
 
 - Per-User Storage Quota: individual storage limits per user with `NULL` = global default, `0` = unlimited, `>0` = limit in MB

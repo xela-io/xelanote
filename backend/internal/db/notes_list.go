@@ -331,12 +331,12 @@ func sharedSelectColumns(slim bool) string {
 		return `n.id, n.title, '' as content, n.folder_path, n.version, 99999 as display_order,
 	n.color, n.created_at, n.updated_at,
 	NULL as encrypted_content, n.content_encrypted, n.encrypted_title, n.title_encrypted,
-	n.wrapped_dek, n.encryption_version, n.encryption_metadata,
+	n.wrapped_dek, n.wrapped_dek_recovery, n.encryption_version, n.encryption_metadata,
 	n.note_type, n.journal_date, n.ai_enabled, n.is_deleted`
 	}
 	return `n.id, n.title, n.content, n.folder_path, n.version, 99999 as display_order,
 	n.color, n.created_at, n.updated_at,
 	n.encrypted_content, n.content_encrypted, n.encrypted_title, n.title_encrypted,
-	n.wrapped_dek, n.encryption_version, n.encryption_metadata,
+	n.wrapped_dek, n.wrapped_dek_recovery, n.encryption_version, n.encryption_metadata,
 	n.note_type, n.journal_date, n.ai_enabled, n.is_deleted`
 }

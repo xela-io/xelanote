@@ -102,6 +102,7 @@ Xelanote bietet eine RESTful HTTP API für alle Note-Operationen. Die API folgt 
   - [GET /api/due-dates](#get-apidue-dates)
 - [Uploads](#uploads)
   - [POST /api/uploads](#post-apiuploads)
+  - [POST /api/uploads/encrypted](#post-apiuploadsencrypted)
   - [GET /api/uploads/{user_id}/{filename}](#get-apiuploadsuser_idfilename)
 - [Import](#import)
   - [POST /api/import/markdown](#post-apiimportmarkdown)
@@ -430,7 +431,7 @@ Content-Type: application/json
 
 ```http
 400 Bad Request - "email is required"
-404 Not Found - "no recovery key found for this email"
+404 Not Found - "recovery key not available"
 ```
 
 **Hinweis**: Gibt generische Fehlermeldung zurück um User-Enumeration zu verhindern.
@@ -440,6 +441,8 @@ Content-Type: application/json
 ### POST /api/auth/recovery/reset-password
 
 Öffentlicher Endpunkt zum Zurücksetzen des Passworts mit Recovery Key.
+
+**Wichtig:** Fuer Accounts mit bestehenden verschluesselten Notizen ist der Reset aktuell blockiert (kein Recovery-DEK-Rewrap). Der Endpoint antwortet in diesem Fall ebenfalls mit einer generischen `401`.
 
 #### Request
 
@@ -2766,7 +2769,7 @@ Content-Type: application/json
 
 ### POST /api/uploads
 
-Image Upload (multipart/form-data, Feldname `file`).
+Image Upload (multipart/form-data, Feldname `file`) fuer Klartext-Notizen.
 
 - Max 10MB per file
 - Allowed Types: PNG, JPEG, GIF, WebP
@@ -2793,6 +2796,31 @@ Error Responses:
 
 - `400 Bad Request`: File too large (>10MB), invalid file type, or no file provided
 - `403 Forbidden`: Storage limit exceeded or would be exceeded by this upload
+- `500 Internal Server Error`: Server-side error during upload
+
+### POST /api/uploads/encrypted
+
+Opaque encrypted blob upload (multipart/form-data, Feldname `file`) fuer E2EE-Anhaenge.
+
+- Max 10MB per file
+- Keine MIME-Sniffing-Validierung (Payload wird als Ciphertext behandelt)
+- Speicherung als `.xenc` in user-scoped Upload-Verzeichnis
+- Signed URL in der Response, analog zu `/api/uploads`
+
+Response:
+
+```json
+{
+  "url": "/api/uploads/1/4f5d....xenc?signature=XYZ&expires=1234567890",
+  "filename": "attachment.xenc"
+}
+```
+
+Error Responses:
+
+- `400 Bad Request`: File too large (>10MB) oder no file provided
+- `403 Forbidden`: Storage limit exceeded or would be exceeded by this upload
+- `401 Unauthorized`: Missing/invalid authentication
 - `500 Internal Server Error`: Server-side error during upload
 
 ### GET /api/uploads/{user_id}/{filename}

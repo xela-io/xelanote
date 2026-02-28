@@ -2,6 +2,21 @@
 
 Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 
+## Wiki (Architektur-Überblick)
+
+-   **[Wiki-Startseite](./wiki/Home.md)** — Übersicht und Einstieg ins Wiki
+-   **[Architektur-Überblick](./wiki/Architektur-Überblick.md)** — Wie Backend und Frontend zusammenspielen
+-   **[Backend](./wiki/Backend.md)** — Go-Server, Chi-Router, Middleware, Services, WebSocket, Jobs
+-   **[Frontend](./wiki/Frontend.md)** — SvelteKit, Svelte 5 Runes, Editor, Offline-Modus
+-   **[Datenbank](./wiki/Datenbank.md)** — SQLite-Schema, 59 Migrationen, FTS5-Volltextsuche
+-   **[Notizen und Wikilinks](./wiki/Notizen-und-Wikilinks.md)** — Editor, Wikilinks, Graph, Versionshistorie
+-   **[Auth und Sicherheit](./wiki/Authentifizierung-und-Sicherheit.md)** — Auth-Flow, 2FA, CSRF, Rate-Limiting
+-   **[E2E-Verschlüsselung](./wiki/Verschlüsselung.md)** — KEK/DEK, XChaCha20, Security Levels
+-   **[KI-Integration](./wiki/KI-Integration.md)** — BYOK LLM-Provider, alle KI-Features
+-   **[Features im Detail](./wiki/Features-im-Detail.md)** — Journal, Rezepte, Einkaufslisten, Canvas, Suche
+-   **[API-Referenz](./wiki/API-Referenz.md)** — Alle REST-Endpunkte auf einen Blick
+-   **[Entwicklung Setup](./wiki/Entwicklung-Setup.md)** — Lokale Entwicklungsumgebung einrichten
+
 ## Für Benutzer
 
 -   **[Benutzerhandbuch](./benutzerhandbuch.md)** — Ausführliche Anleitung mit Benutzer- und Adminsicht
@@ -22,7 +37,7 @@ Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 
 ## Sicherheit
 
--   **[Ende-zu-Ende-Verschlüsselung](./e2e-encryption.md)** — AES-256-GCM, Zero-Knowledge-Architektur
+-   **[Ende-zu-Ende-Verschlüsselung](./e2e-encryption.md)** — Argon2id + XChaCha20-Poly1305, inkl. aktueller E2EE-Grenzen
 -   **[E2E Quickstart](./e2e-encryption-quickstart.md)** — Schnellanleitung für E2E-Verschlüsselung
 -   **[E2E Deployment](./e2e-encryption-deployment.md)** — E2E-Verschlüsselung in Produktion
 -   **[Encryption v2](./encryption-v2.md)** — Verschlüsselungs-Upgrade (v1 → v2)
@@ -31,6 +46,8 @@ Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 -   **[CAPTCHA](./captcha.md)** — Cloudflare Turnstile Integration
 -   **[Signed URLs](./signed-urls.md)** — Authentifizierte Bild-Zugriffe
 -   **[Security Audit](./security_audit_findings.md)** — Penetration-Test-Ergebnisse und Fixes
+-   **[E2EE Audit Addendum (2026-02-28)](./security/E2EE-SECURITY-AUDIT-ADDENDUM-2026-02-28.md)** — Konsolidierte E2EE-Befunde inkl. Delta-Review
+-   **[E2EE Remediation Plan (2026-02-28)](./security/E2EE-REMEDIATION-PLAN-2026-02-28.md)** — PR-basierter Umsetzungsplan für die Findings
 
 ## Deployment & Betrieb
 

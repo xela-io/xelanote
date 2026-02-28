@@ -67,8 +67,8 @@ Seit 2026-02-06 wird das Staging-Deployment vollautomatisch ueber Forgejo Action
 2. **Checkout** (SHA-pinned `actions/checkout@v4`)
 3. **Pre-Flight Checks:**
    - Env-File lesbar (`/home/container/.xelanote.env`)
-   - Pflicht-Variablen vorhanden (`JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `XELANOTE_DB`, `XELANOTE_ENV`, `TRUSTED_PROXIES`)
-   - `JWT_SECRET` mindestens 64 Zeichen
+   - Pflicht-Variablen vorhanden (`JWT_SECRET`, `XELANOTE_API_KEY_SECRET`, `CORS_ALLOWED_ORIGINS`, `XELANOTE_DB`, `XELANOTE_ENV`, `TRUSTED_PROXIES`)
+   - `JWT_SECRET` und `XELANOTE_API_KEY_SECRET` mindestens 64 Zeichen
    - Docker-Daemon erreichbar
    - Docker-Netzwerk `nginx_default` existiert
    - Vorheriges Image fuer Rollback gespeichert
@@ -252,9 +252,10 @@ cd xelanote
 
 ### 2. Configure Environment
 ```bash
-# Create .env file with JWT secret
+# Create .env file with secrets
 cat <<EOF > .env
 JWT_SECRET=$(openssl rand -hex 32)
+XELANOTE_API_KEY_SECRET=$(openssl rand -hex 32)
 XELANOTE_ENV=production
 EOF
 ```
@@ -339,6 +340,7 @@ ssh <PROD_SSH_ALIAS> "sudo docker logs xelanote --tail 20"
 | Variable | Wert | Beschreibung |
 |----------|------|--------------|
 | `JWT_SECRET` | (siehe Server `.env`) | Auth-Token-Signierung (64 Zeichen hex) |
+| `XELANOTE_API_KEY_SECRET` | (siehe Server `.env`) | Schluessel fuer API-Key-Verschluesselung (64 Zeichen hex, muss sich von `JWT_SECRET` unterscheiden) |
 | `XELANOTE_DB` | `/app/data/xelanote.db` | Datenbank-Pfad im Container |
 | `XELANOTE_ENV` | `production` | Aktiviert Secure Cookies (SameSite=Strict) |
 | `CORS_ALLOWED_ORIGINS` | `https://<STAGING_URL>` | Erlaubte Origins für CORS & WebSocket |
@@ -366,6 +368,7 @@ docker run -d --name xelanote --restart unless-stopped \
 
 **Wichtig:** `~/.xelanote.env` muss folgende Variablen enthalten:
 - `JWT_SECRET` (64+ Zeichen)
+- `XELANOTE_API_KEY_SECRET` (64+ Zeichen, ungleich `JWT_SECRET`)
 - `XELANOTE_DB=/app/data/xelanote.db`
 - `XELANOTE_ENV=production`
 - `CORS_ALLOWED_ORIGINS=https://your-domain.com`

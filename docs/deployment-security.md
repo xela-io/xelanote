@@ -38,6 +38,7 @@ sudo systemctl enable fail2ban
 # Secrets NIEMALS in Git oder Command-Line!
 cat > ~/.xelanote.env << 'EOF'
 JWT_SECRET=<64-zeichen-hex>
+XELANOTE_API_KEY_SECRET=<64-zeichen-hex-anders-als-jwt-secret>
 XELANOTE_DB=/app/data/xelanote.db
 XELANOTE_ENV=production
 CORS_ALLOWED_ORIGINS=https://deine-domain.com

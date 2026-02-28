@@ -124,6 +124,7 @@ Editor tippt
 ### Wichtige Umgebungsvariablen
 
 - `JWT_SECRET` (Pflicht)
+- `XELANOTE_API_KEY_SECRET` (Pflicht, getrennt von `JWT_SECRET`)
 - `XELANOTE_DB` (Pfad der Datenbank)
 - `XELANOTE_ENV` (development/production)
 - `CORS_ALLOWED_ORIGINS` (Production)

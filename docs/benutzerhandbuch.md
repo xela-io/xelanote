@@ -260,18 +260,19 @@ Unterstützt werden u. a.:
 ### Ende-zu-Ende-Verschlüsselung (E2E)
 
 - Verschlüsselung passiert im Browser, bevor Daten an den Server gehen.
-- Server speichert nur verschlüsselten Text.
+- Notizinhalte werden verschluesselt gespeichert; bestimmte Metadaten bleiben sichtbar.
 - Verwendet moderne Kryptografie (Argon2id + XChaCha20-Poly1305).
 
 **Wichtige Optionen:**
 
 - **Titel verschlüsseln**: maximaler Datenschutz, aber keine Titelsuche mehr.
 - **Suchbare Keywords**: ermöglicht Suche, speichert aber Keywords unverschlüsselt (Risiko!).
+- **Uploads**: werden aktuell serverseitig ohne E2EE gespeichert.
 
 ### Recovery Key
 
-- Recovery Key ist die einzige Möglichkeit, verschlüsselte Notizen bei Passwortverlust zu retten.
-- **Hinweis:** Die Wiederherstellung per Recovery Key ist laut Doku noch nicht vollständig implementiert.
+- Recovery Key kann fuer Account-Recovery gesetzt werden.
+- **Wichtig:** Recovery-Reset fuer bestehende verschluesselte Notizen ist aktuell blockiert (kein Recovery-DEK-Rewrap implementiert).
 
 ---
 
@@ -416,6 +417,7 @@ Die API ist eine klassische REST-API mit JSON:
 **Wichtige Umgebungsvariablen:**
 
 - `JWT_SECRET` (Pflicht)
+- `XELANOTE_API_KEY_SECRET` (Pflicht, muss sich von `JWT_SECRET` unterscheiden)
 - `XELANOTE_DB` (Datenbankpfad)
 - `XELANOTE_ENV` (development/production)
 - `CORS_ALLOWED_ORIGINS` (für Production)

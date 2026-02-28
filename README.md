@@ -89,15 +89,16 @@ xelanote is a privacy-first, self-hosted note-taking app that combines modern kn
 
 ### Security & Encryption
 
-- **End-to-end encryption** — XChaCha20-Poly1305 with Argon2id KDF, per-note data encryption keys, zero-knowledge architecture
+- **End-to-end encryption** — XChaCha20-Poly1305 with Argon2id KDF and per-note data encryption keys for note payloads
 - **Per-note toggle** — encrypt or decrypt individual notes; set folder-level encryption defaults
 - **Encrypted search** — client-side MiniSearch index so encrypted notes are fully searchable without server access
-- **Recovery key** — regain access to encrypted notes if you forget your encryption password
+- **Recovery key** — account recovery exists, but encrypted-note decryption via recovery reset is not available yet
+- **AI boundary** — AI features may transmit plaintext note content to backend/provider when used
 - **Two-factor authentication** — TOTP (any authenticator app) + WebAuthn/FIDO2 hardware keys + backup codes
 - **Auth hardening** — JWT with refresh token rotation, HttpOnly cookies only (no localStorage), CSRF double-submit protection
 - **Rate limiting & lockout** — per-endpoint rate limits, exponential-backoff account lockout
 - **Security headers** — HSTS, CSP, X-Frame-Options, and more
-- **Upload security** — owner-only serving, HMAC-signed URLs, MIME type validation, 10 MB limit
+- **Upload security** — owner-only serving, HMAC-signed URLs, MIME type validation, 10 MB limit; encrypted-note attachments are uploaded as encrypted `.xenc` blobs (uploads in plaintext notes remain server-visible)
 
 ### Sharing & Collaboration
 
@@ -187,7 +188,7 @@ xelanote is a privacy-first, self-hosted note-taking app that combines modern kn
 
 <p align="center">
   <img src="docs/pr-assets/screenshots/desktop/settings-encryption.png" alt="Encryption Settings" width="800" />
-  <br /><sub>End-to-end encryption settings with zero-knowledge architecture</sub>
+  <br /><sub>End-to-end encryption settings with explicit privacy boundaries</sub>
 </p>
 
 ### Mobile (PWA)
@@ -212,6 +213,7 @@ xelanote is a privacy-first, self-hosted note-taking app that combines modern kn
 # 1. Create environment file
 cat > .env.local << 'EOF'
 JWT_SECRET=$(openssl rand -hex 32)
+XELANOTE_API_KEY_SECRET=$(openssl rand -hex 32)
 XELANOTE_ENV=production
 CORS_ALLOWED_ORIGINS=https://notes.example.com
 EOF
@@ -232,6 +234,7 @@ cd xelanote
 make init
 
 export JWT_SECRET="$(openssl rand -hex 32)"
+export XELANOTE_API_KEY_SECRET="$(openssl rand -hex 32)"
 
 # Terminal 1 — backend with hot-reload on :8080
 make dev
@@ -251,6 +254,7 @@ Open `http://localhost:5173`.
 | Variable | Description |
 |----------|-------------|
 | `JWT_SECRET` | Min. 64 characters. Generate with `openssl rand -hex 32` |
+| `XELANOTE_API_KEY_SECRET` | Min. 64 characters. Required for API-key encryption at rest; must be different from `JWT_SECRET` |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated allowed origins (e.g. `https://notes.example.com`) |
 
 ### Optional

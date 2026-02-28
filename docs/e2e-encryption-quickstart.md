@@ -1,170 +1,64 @@
-# E2E-Verschlüsselung - Quick Start Guide
+# E2E-Verschluesselung - Quick Start Guide
 
-## 🚀 In 5 Minuten zur verschlüsselten Notiz
+## Schnellstart
 
-### Schritt 1: Anmelden (30 Sekunden)
+### 1. Anmelden
 
-Melde dich normal bei xelanote an:
-- Gib deinen Benutzernamen und Passwort ein
-- Klicke auf "Anmelden"
-- ⏱️ Erste Anmeldung dauert ~600ms länger (Schlüsselableitung)
+- Melde dich normal an.
+- Beim Login wird der Schluessel aus Passwort + Salt lokal abgeleitet (Argon2id).
+- Nach erfolgreichem Login ist die Verschluesselung entsperrt.
 
-**✅ Fertig!** Die Verschlüsselung ist jetzt aktiv.
+### 2. Notiz erstellen
 
-### Schritt 2: Notiz erstellen (1 Minute)
+- Neue Notiz erstellen und speichern.
+- Der Notizinhalt wird clientseitig verschluesselt gespeichert.
+- Optional kannst du in den Einstellungen auch Titel verschluesseln.
 
-Erstelle eine neue Notiz wie gewohnt:
-- Klicke auf "Neue Notiz"
-- Schreibe deinen Text
-- Klicke auf "Speichern" (oder warte auf Auto-Save)
+### 3. Bestehende Notizen migrieren (optional)
 
-**✅ Deine Notiz ist jetzt Ende-zu-Ende verschlüsselt!**
+- Gehe zu `Einstellungen -> Migration`.
+- Verschluessle alte Klartext-Notizen mit dem Migrations-Flow.
 
-### Schritt 3: Recovery Key erstellen (2 Minuten)
+## Was ist durch E2EE geschuetzt?
 
-**WICHTIG:** Ohne Recovery Key kannst du bei vergessenem Passwort nicht mehr auf deine Notizen zugreifen!
+### Geschuetzt
 
-1. Gehe zu **Einstellungen → Verschlüsselung**
-2. Scrolle zu "Recovery Key"
-3. Klicke auf **"Recovery Key erstellen"**
-4. Klicke auf **"Recovery Key generieren"**
-5. Klicke auf **"Als Textdatei herunterladen"**
-6. Speichere die Datei an einem sicheren Ort:
-   - ✅ Passwort-Manager (empfohlen)
-   - ✅ Verschlüsselter USB-Stick
-   - ✅ Ausdrucken und in Safe legen
-   - ❌ NICHT auf dem Desktop oder in der Cloud!
+- Notizinhalt (`encrypted_content`)
+- Optional: Notiztitel (`encrypted_title`)
+- Uploads/Anhaenge aus verschluesselten Notizen (`.xenc`, clientseitig verschluesselt)
 
-**✅ Du bist jetzt vollständig geschützt!**
+### Nicht durch E2EE geschuetzt
 
-### Schritt 4: Alte Notizen migrieren (Optional, 2-10 Minuten)
+- Ordnerpfade und strukturelle Metadaten (z. B. Zeitstempel)
+- Tags
+- Keywords (wenn die Option aktiv ist)
+- Upload-Dateien/Anhaenge in unverschluesselten Notizen
+- Upload-Metadaten (z. B. Zeitpunkt, Groesse, Storage-Pfad)
 
-Wenn du bereits Notizen hast, verschlüssele sie:
+## Wichtige Grenzen (Stand: 2026-02-28)
 
-1. Gehe zu **Einstellungen → Migration**
-2. Prüfe die Statistiken:
-   - Wie viele Notizen sind noch Klartext?
-   - Wie viele sind bereits verschlüsselt?
-3. Klicke auf **"Migration starten"**
-4. Warte, bis alle Notizen verschlüsselt sind
-5. ✅ Fertig! Alle Notizen sind jetzt geschützt.
+- Recovery-Reset zur Entschluesselung bereits verschluesselter Notizen ist aktuell **nicht verfuegbar**.
+- Wenn du dein Passwort verlierst, sind bestehende verschluesselte Notizen derzeit nicht wiederherstellbar.
+- AI-Features koennen (je nach Aktion) Klartext an Backend/Provider senden.
+- AI-Zusammenfassung ist fuer verschluesselte Notizen derzeit deaktiviert.
 
-**Dauer:**
-- 10 Notizen: ~1 Sekunde
-- 100 Notizen: ~5-10 Sekunden
-- 1000 Notizen: ~1-2 Minuten
+## Empfehlungen
 
----
+1. Nutze ein starkes, einzigartiges Passwort (am besten aus Passwortmanager).
+2. Aktiviere Titelverschluesselung, wenn du Titel-Metadaten minimieren willst.
+3. Lass Keyword-Extraktion deaktiviert, wenn du Metadaten-Leakage reduzieren willst.
+4. Verwende keine sensiblen Informationen in Ordnernamen/Tags.
+5. Beruecksichtige: Uploads aus verschluesselten Notizen sind E2EE, in Klartext-Notizen nicht.
 
-## 🔒 Was wird verschlüsselt?
+## FAQ
 
-### ✅ Immer geschützt
-- **Notiz-Inhalt** - Nur du kannst ihn lesen
+**F: Kann ein Server-Admin meinen verschluesselten Notizinhalt lesen?**  
+A: Ohne Passwort/Keymaterial nicht. Sichtbar bleiben aber nicht-E2EE-Metadaten.
 
-### ⚙️ Optional geschützt
-- **Notiz-Titel** - Aktiviere "Titel verschlüsseln" in den Einstellungen
+**F: Kann ich verschluesselte Notizen teilen?**  
+A: Nein. Verschluesselte Notizen muessen vor dem Teilen entschluesselt werden.
 
-### ⚠️ Nicht verschlüsselt
-- Ordner-Namen
-- Erstellungs-/Änderungsdatum
-- Anzahl der Notizen
+**F: Hilft der Recovery Key bei Passwortverlust fuer verschluesselte Notizen?**  
+A: Aktuell nein. Der Recovery-Reset fuer verschluesselte Notizen ist blockiert, bis DEK-Rewrap im Recovery-Flow umgesetzt ist.
 
----
-
-## 🛡️ Maximale Sicherheit (Optional)
-
-Für maximalen Datenschutz:
-
-1. **Aktiviere "Titel verschlüsseln"**
-   - Gehe zu **Einstellungen → Verschlüsselung**
-   - Aktiviere "Titel verschlüsseln"
-   - Akzeptiere, dass Titel-Suche nicht mehr funktioniert
-
-2. **Deaktiviere "Keywords extrahieren"** (Standard)
-   - Sollte bereits deaktiviert sein
-   - Wenn nicht: Deaktiviere es sofort
-   - Verhindert Datenlecks
-
-3. **Verwende generische Ordnernamen**
-   - ❌ "/Privat/Arzttermine/Kardiologie"
-   - ✅ "/Privat/Gesundheit"
-
-4. **Starkes Passwort verwenden**
-   - Mindestens 12 Zeichen
-   - Zufällig generiert (Passwort-Manager)
-   - Einzigartig für xelanote
-
----
-
-## ❓ Häufige Fragen
-
-**F: Ist das wirklich sicher?**
-A: Ja! Der Server sieht nur verschlüsselte Daten. Selbst Admins können deine Notizen nicht lesen.
-
-**F: Wird die App langsamer?**
-A: Nur minimal. ~600ms bei der Anmeldung, ~1-2ms pro gespeicherter Notiz.
-
-**F: Was wenn ich mein Passwort vergesse?**
-A: Mit Recovery Key: Wiederherstellung möglich. Ohne Recovery Key: Daten unwiederbringlich verloren!
-
-**F: Kann ich verschlüsselte Notizen teilen?**
-A: Aktuell nein. Jeder User hat seinen eigenen Schlüssel.
-
-**F: Kann der Admin meine Notizen lesen?**
-A: Nein! Selbst mit Datenbank-Zugriff nur verschlüsselte Daten sichtbar.
-
----
-
-## 🚨 WICHTIG: Das musst du wissen!
-
-### ⚠️ Recovery Key ist KRITISCH
-
-Ohne Recovery Key UND ohne Passwort sind deine Notizen **unwiederbringlich verloren**!
-
-**Erstelle JETZT einen Recovery Key!**
-
-### 🔐 Passwort niemals teilen
-
-- Teile dein Passwort mit niemandem
-- Teile deinen Recovery Key mit niemandem
-- xelanote wird dich niemals nach deinem Passwort fragen
-
-### 💾 Regelmäßige Backups
-
-Auch verschlüsselte Notizen sollten gesichert werden:
-- Exportiere Notizen regelmäßig
-- Speichere Backups verschlüsselt
-- Teste die Wiederherstellung
-
----
-
-## 📚 Mehr erfahren
-
-Ausführliche Dokumentation: [E2E-Verschlüsselung Vollständige Dokumentation](./e2e-encryption.md)
-
-Themen:
-- Technische Details (Argon2id, AES-GCM-256)
-- Sicherheitshinweise
-- Erweiterte Einstellungen
-- Fehlerbehandlung
-- FAQ
-
----
-
-## ✅ Checkliste: Bin ich geschützt?
-
-- [ ] Ich habe mich angemeldet (Verschlüsselung ist aktiv)
-- [ ] Ich habe eine verschlüsselte Notiz erstellt
-- [ ] Ich habe einen Recovery Key erstellt
-- [ ] Ich habe den Recovery Key sicher aufbewahrt
-- [ ] Ich habe meine alten Notizen migriert (optional)
-- [ ] Ich verwende ein starkes, einzigartiges Passwort
-- [ ] Ich weiß, dass ich ohne Passwort+Recovery Key keinen Zugriff mehr habe
-
-**Alle Punkte abgehakt? Dann bist du vollständig geschützt! 🎉**
-
----
-
-**⏱️ Gesamtzeit:** 5-10 Minuten
-**🔒 Sicherheit:** Maximum
-**💡 Nächster Schritt:** Notizen schreiben und genießen!
+Weitere Details: [E2E-Verschluesselung (vollstaendig)](./e2e-encryption.md)

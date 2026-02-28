@@ -409,6 +409,9 @@ func TestUserService_RecoveryResetTokenFlow_WithEncryptedContent(t *testing.T) {
 	defer testDB.Close()
 
 	userID := createTestUserForPasswordTests(t, testDB, "tokenrecov", "tokenrecov@example.com", "oldpassword1")
+	if err := testDB.SetUserEncryptionSalt(userID, []byte("0123456789abcdef")); err != nil {
+		t.Fatalf("failed to set encryption salt: %v", err)
+	}
 
 	recoveryKey := "token-recovery-key"
 	hash, err := bcrypt.GenerateFromPassword([]byte(recoveryKey), 12)
@@ -437,15 +440,18 @@ func TestUserService_RecoveryResetTokenFlow_WithEncryptedContent(t *testing.T) {
 		t.Fatalf("failed to create encrypted note version: %v", err)
 	}
 
-	resetToken, err := userService.BeginRecoveryResetByEmail("tokenrecov@example.com", recoveryKey)
+	verifyResult, err := userService.BeginRecoveryResetByEmail("tokenrecov@example.com", recoveryKey)
 	if err != nil {
 		t.Fatalf("BeginRecoveryResetByEmail failed: %v", err)
 	}
-	if resetToken == "" {
+	if verifyResult.RecoveryResetToken == "" {
 		t.Fatal("expected non-empty recovery reset token")
 	}
+	if verifyResult.EncryptionSalt == "" {
+		t.Fatal("expected encryption_salt in verify result")
+	}
 
-	notes, versions, err := userService.GetRecoveryWrappedDEKs(resetToken)
+	notes, versions, err := userService.GetRecoveryWrappedDEKs(verifyResult.RecoveryResetToken)
 	if err != nil {
 		t.Fatalf("GetRecoveryWrappedDEKs failed: %v", err)
 	}
@@ -454,7 +460,7 @@ func TestUserService_RecoveryResetTokenFlow_WithEncryptedContent(t *testing.T) {
 	}
 
 	err = userService.FinalizeRecoveryResetWithToken(
-		resetToken,
+		verifyResult.RecoveryResetToken,
 		"newpassword1",
 		map[string]string{"token-rec-note-1": validWrappedDEK(9)},
 		map[string]string{"101": validWrappedDEK(8)},
@@ -512,7 +518,7 @@ func TestUserService_RecoveryResetTokenFlow_WithEncryptedContent(t *testing.T) {
 	}
 
 	if err := userService.FinalizeRecoveryResetWithToken(
-		resetToken,
+		verifyResult.RecoveryResetToken,
 		"anotherpassword1",
 		map[string]string{},
 		map[string]string{},

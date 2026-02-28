@@ -51,6 +51,7 @@ type RecoveryResetPasswordWithTokenRequest struct {
 
 type recoveryVerifyResponse struct {
 	RecoveryResetToken string `json:"recovery_reset_token"`
+	EncryptionSalt     string `json:"encryption_salt,omitempty"`
 }
 
 type recoveryWrappedDEKResponseItem struct {

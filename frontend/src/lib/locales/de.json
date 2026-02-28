@@ -239,6 +239,7 @@
       "login_failed": "Login fehlgeschlagen",
       "what_is_xelanote": "Was ist xelanote?",
       "about_app": "Über die App",
+      "recovery_link": "Passwort vergessen?",
       "no_account_yet": "Noch kein Account?",
       "twofa_title": "Zwei-Faktor-Authentifizierung",
       "totp_code": "6-stelliger Code",
@@ -253,6 +254,24 @@
       "back_to_login": "Zurück zur Anmeldung",
       "encryption_locked_info": "🔒 Bitte erneut einloggen um die Verschlüsselung zu aktivieren. Deine Session wurde aus Sicherheitsgründen beendet.",
       "captcha_hint": "Bitte löse das CAPTCHA oben, um fortzufahren."
+    },
+    "recovery": {
+      "title": "Account wiederherstellen",
+      "subtitle": "Setze dein Passwort mit deinem Recovery-Key zurück. Bei verschlüsselten Accounts werden Notiz-Schlüssel lokal im Browser neu verpackt.",
+      "recovery_key": "Recovery-Key",
+      "new_password": "Neues Passwort",
+      "confirm_password": "Passwort bestätigen",
+      "submit": "Passwort zurücksetzen",
+      "submitting": "Wird verarbeitet...",
+      "success": "Passwort erfolgreich zurückgesetzt. Du kannst dich jetzt mit dem neuen Passwort anmelden.",
+      "error_required_fields": "Bitte alle Felder ausfüllen.",
+      "error_password_length": "Passwort muss mindestens 8 Zeichen lang sein.",
+      "error_password_mismatch": "Passwörter stimmen nicht überein.",
+      "error_invalid_credentials": "Ungültige E-Mail oder Recovery-Key.",
+      "error_missing_encryption_salt": "Encryption-Salt für verschlüsselte Wiederherstellung fehlt.",
+      "error_conflict": "Recovery-Reset ist für diesen Account derzeit nicht verfügbar.",
+      "error_bad_request": "Recovery-Anfrage ist ungültig.",
+      "error_generic": "Recovery-Reset fehlgeschlagen. Bitte erneut versuchen."
     },
     "register": {
       "title": "Erstelle einen Account",

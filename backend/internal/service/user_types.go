@@ -66,6 +66,11 @@ type RecoveryWrappedDEKEntry struct {
 	WrappedDEKRecovery string `json:"wrapped_dek_recovery"`
 }
 
+type RecoveryVerifyResult struct {
+	RecoveryResetToken string
+	EncryptionSalt     string
+}
+
 // Valid theme IDs (must match frontend themes/index.ts)
 var validThemes = map[string]bool{
 	"default-light":    true,

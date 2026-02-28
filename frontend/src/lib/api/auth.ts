@@ -3,6 +3,8 @@ import { refreshWithMutex, request } from './client';
 import type {
   AuthResponse,
   FIDO2CredentialInfo,
+  RecoveryVerifyResponse,
+  RecoveryWrappedDEKsResponse,
   RefreshResponse,
   RefreshResult,
   TwoFactorSetup,
@@ -176,4 +178,44 @@ export async function finishFIDO2Auth(
     throw new Error(error.error || 'Authentication failed');
   }
   return response.json();
+}
+
+export async function getRecoverySaltByEmail(email: string): Promise<{ salt: string }> {
+  return request('/auth/recovery/salt', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function verifyRecoveryKey(
+  email: string,
+  recoveryKey: string
+): Promise<RecoveryVerifyResponse> {
+  return request('/auth/recovery/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, recovery_key: recoveryKey }),
+  });
+}
+
+export async function getRecoveryWrappedDEKs(
+  recoveryResetToken: string
+): Promise<RecoveryWrappedDEKsResponse> {
+  return request('/auth/recovery/encrypted-deks', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${recoveryResetToken}`,
+    },
+  });
+}
+
+export async function resetPasswordWithRecoveryToken(payload: {
+  recovery_reset_token: string;
+  new_password: string;
+  re_wrapped_note_deks?: Record<string, string>;
+  re_wrapped_version_deks?: Record<string, string>;
+}): Promise<{ message: string }> {
+  return request('/auth/recovery/reset-password-v2', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }

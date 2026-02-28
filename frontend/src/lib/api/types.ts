@@ -18,6 +18,21 @@ export interface AuthResponse {
   encryption_salt?: string; // Base64-encoded salt for E2E encryption
 }
 
+export interface RecoveryVerifyResponse {
+  recovery_reset_token: string;
+  encryption_salt?: string;
+}
+
+export interface RecoveryWrappedDEKItem {
+  id: string;
+  wrapped_dek_recovery: string;
+}
+
+export interface RecoveryWrappedDEKsResponse {
+  notes: RecoveryWrappedDEKItem[];
+  versions: RecoveryWrappedDEKItem[];
+}
+
 // SEC-001: Fields are optional — web clients receive empty JSON (tokens only in cookies)
 export interface RefreshResponse {
   access_token?: string;

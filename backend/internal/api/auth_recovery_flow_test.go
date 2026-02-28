@@ -30,6 +30,7 @@ func TestRecoveryResetTokenFlow_EncryptedAccount(t *testing.T) {
 	r := recoveryRouter(ts)
 
 	user := ts.createUser(t, "recoveryv2", "recoveryv2@example.com", "oldpassword1")
+	require.NoError(t, ts.db.SetUserEncryptionSalt(user.ID, []byte("0123456789abcdef")))
 
 	recoveryKey := "api-recovery-key"
 	hash, err := bcrypt.GenerateFromPassword([]byte(recoveryKey), 12)
@@ -59,6 +60,7 @@ func TestRecoveryResetTokenFlow_EncryptedAccount(t *testing.T) {
 	var verifyResp recoveryVerifyResponse
 	decodeResponse(t, verifyRec, &verifyResp)
 	require.NotEmpty(t, verifyResp.RecoveryResetToken)
+	require.NotEmpty(t, verifyResp.EncryptionSalt)
 
 	wrappedRec := doJSONWithHeaders(
 		t,

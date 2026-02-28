@@ -183,3 +183,38 @@ describe('E2EEncryption AAD behavior', () => {
     expect(sodiumMocks.encrypt.mock.calls[1][2]).toBeUndefined();
   });
 });
+
+describe('E2EEncryption recovery rewrap', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('re-wraps recovery DEKs into password DEKs', async () => {
+    const recoveryKEK = new Uint8Array([7, 7, 7, 7]);
+    const newKEK = new Uint8Array([8, 8, 8, 8]);
+    const unwrappedDEK = new Uint8Array(32).fill(5);
+
+    sodiumMocks.deriveKeyAsync.mockResolvedValueOnce(recoveryKEK).mockResolvedValueOnce(newKEK);
+    sodiumMocks.fromBase64Standard.mockReturnValue(new Uint8Array([1, 2, 3]));
+    sodiumMocks.decrypt.mockReturnValue(new Uint8Array(unwrappedDEK));
+    sodiumMocks.encrypt.mockReturnValue(new Uint8Array([9, 9, 9]));
+    sodiumMocks.toBase64Standard
+      .mockReturnValueOnce('wrapped-note')
+      .mockReturnValueOnce('wrapped-version');
+
+    const encryption = new E2EEncryption();
+    const result = await encryption.reWrapRecoveryDEKs(
+      [{ id: 'note-1', wrapped_dek_recovery: 'note-recovery-b64' }],
+      [{ id: '101', wrapped_dek_recovery: 'version-recovery-b64' }],
+      'recovery-key',
+      'new-password',
+      new Uint8Array([1, 1, 1, 1]),
+      new Uint8Array([2, 2, 2, 2])
+    );
+
+    expect(result.notes.get('note-1')).toBe('wrapped-note');
+    expect(result.versions.get('101')).toBe('wrapped-version');
+    expect(sodiumMocks.decrypt).toHaveBeenCalledTimes(2);
+    expect(sodiumMocks.encrypt).toHaveBeenCalledTimes(2);
+  });
+});

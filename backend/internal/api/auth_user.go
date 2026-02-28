@@ -99,7 +99,7 @@ func (s *Server) verifyRecoveryKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.userService.BeginRecoveryResetByEmail(req.Email, req.RecoveryKey)
+	verifyResult, err := s.userService.BeginRecoveryResetByEmail(req.Email, req.RecoveryKey)
 	if err != nil {
 		s.logger().Warn("recovery verify failed", "email", req.Email, "error", err.Error())
 		respondError(w, http.StatusUnauthorized, "invalid email or recovery key")
@@ -107,7 +107,8 @@ func (s *Server) verifyRecoveryKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, recoveryVerifyResponse{
-		RecoveryResetToken: token,
+		RecoveryResetToken: verifyResult.RecoveryResetToken,
+		EncryptionSalt:     verifyResult.EncryptionSalt,
 	})
 }
 

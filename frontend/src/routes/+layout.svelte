@@ -119,7 +119,7 @@
   });
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/about'];
+  const publicRoutes = ['/login', '/register', '/about', '/recovery'];
   // Navigation guard: Only runs when URL changes (not when auth state changes)
   // This prevents race conditions during login/register operations
   $effect(() => {

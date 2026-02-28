@@ -227,46 +227,49 @@ func (s *UserService) GetRecoveryKeySaltByEmail(email string) ([]byte, error) {
 }
 
 // BeginRecoveryResetByEmail verifies recovery credentials and creates a short-lived one-time reset token.
-func (s *UserService) BeginRecoveryResetByEmail(email, recoveryKey string) (string, error) {
+func (s *UserService) BeginRecoveryResetByEmail(email, recoveryKey string) (*RecoveryVerifyResult, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	if email == "" || recoveryKey == "" {
-		return "", errors.New("invalid email or recovery key")
+		return nil, errors.New("invalid email or recovery key")
 	}
 
 	user, err := s.db.GetUserByEmail(email)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			_ = bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(recoveryKey))
-			return "", errors.New("invalid email or recovery key")
+			return nil, errors.New("invalid email or recovery key")
 		}
-		return "", err
+		return nil, err
 	}
 
 	prefs, err := s.db.GetUserPreferences(user.ID)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
-			return "", errors.New("invalid email or recovery key")
+			return nil, errors.New("invalid email or recovery key")
 		}
-		return "", err
+		return nil, err
 	}
 	if prefs.RecoveryKeyHash == nil || *prefs.RecoveryKeyHash == "" {
-		return "", errors.New("invalid email or recovery key")
+		return nil, errors.New("invalid email or recovery key")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(*prefs.RecoveryKeyHash), []byte(recoveryKey)); err != nil {
-		return "", errors.New("invalid email or recovery key")
+		return nil, errors.New("invalid email or recovery key")
 	}
 
 	rawToken, tokenHash, err := generateRecoveryResetToken()
 	if err != nil {
-		return "", fmt.Errorf("failed to generate recovery reset token: %w", err)
+		return nil, fmt.Errorf("failed to generate recovery reset token: %w", err)
 	}
 
 	if err := s.db.CreateRecoveryResetToken(user.ID, tokenHash, time.Now().UTC().Add(recoveryResetTokenTTL)); err != nil {
-		return "", fmt.Errorf("failed to store recovery reset token: %w", err)
+		return nil, fmt.Errorf("failed to store recovery reset token: %w", err)
 	}
 
-	return rawToken, nil
+	return &RecoveryVerifyResult{
+		RecoveryResetToken: rawToken,
+		EncryptionSalt:     derefString(user.EncryptionSalt),
+	}, nil
 }
 
 // GetRecoveryWrappedDEKs lists encrypted note/version recovery wrappers for a valid reset token.
@@ -421,4 +424,11 @@ func generateRecoveryResetToken() (string, string, error) {
 func hashRecoveryResetToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+func derefString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }

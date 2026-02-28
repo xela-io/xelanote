@@ -15,6 +15,11 @@ export type EncryptionVersion = 2 | 3;
 
 type PayloadPurpose = 'note' | 'title';
 
+export interface RecoveryWrappedDEKEntry {
+  id: string;
+  wrapped_dek_recovery: string;
+}
+
 export interface AttachmentKeyContext {
   noteID: string;
   wrappedDEK: string;
@@ -77,9 +82,13 @@ export class E2EEncryption {
   private buildAAD(
     noteID: string,
     purpose: PayloadPurpose,
-    material: 'content' | 'dek'
+    material: 'content' | 'dek' | 'dek_recovery'
   ): Uint8Array {
     return stringToBytes(`xelanote:e2ee:v3:${purpose}:${material}:${noteID}`);
+  }
+
+  private buildVersionRecoveryAAD(versionID: string): Uint8Array {
+    return stringToBytes(`xelanote:e2ee:v3:version:dek_recovery:${versionID}`);
   }
 
   private buildAttachmentAAD(noteID: string, filename: string): Uint8Array {
@@ -669,6 +678,82 @@ export class E2EEncryption {
     // Clean up KEKs from memory
     oldKEK.fill(0);
     newKEK.fill(0);
+
+    return {
+      notes: reWrappedNotes,
+      versions: reWrappedVersions,
+    };
+  }
+
+  /**
+   * Re-wrap DEKs from recovery wrappers to password wrappers.
+   * Used during password recovery reset for encrypted accounts.
+   */
+  async reWrapRecoveryDEKs(
+    notes: RecoveryWrappedDEKEntry[],
+    versions: RecoveryWrappedDEKEntry[],
+    recoveryKey: string,
+    newPassword: string,
+    recoverySalt: Uint8Array,
+    encryptionSalt: Uint8Array
+  ): Promise<{
+    notes: Map<string, string>;
+    versions: Map<string, string>;
+  }> {
+    if (!isInitialized()) throw new Error('libsodium not initialized');
+
+    const recoveryKEK = await this.deriveKEK(recoveryKey, recoverySalt);
+    const newKEK = await this.deriveKEK(newPassword, encryptionSalt);
+
+    const reWrappedNotes = new Map<string, string>();
+    const reWrappedVersions = new Map<string, string>();
+
+    try {
+      for (const note of notes) {
+        if (!note.id || !note.wrapped_dek_recovery) {
+          throw new Error('Invalid note recovery wrapper payload');
+        }
+
+        const wrappedDEK = fromBase64Standard(note.wrapped_dek_recovery);
+        const aad = this.buildAAD(note.id, 'note', 'dek_recovery');
+        // Compatibility fallback for legacy wrappers without AAD.
+        let dek = this.unwrapDEK(wrappedDEK, recoveryKEK, aad);
+        if (dek === null) {
+          dek = this.unwrapDEK(wrappedDEK, recoveryKEK);
+        }
+        if (dek === null) {
+          throw new Error(`Failed to unwrap recovery DEK for note ${note.id}`);
+        }
+
+        const newWrappedDEK = this.wrapDEK(dek, newKEK, this.buildAAD(note.id, 'note', 'dek'));
+        reWrappedNotes.set(note.id, toBase64Standard(newWrappedDEK));
+        dek.fill(0);
+      }
+
+      for (const version of versions) {
+        if (!version.id || !version.wrapped_dek_recovery) {
+          throw new Error('Invalid version recovery wrapper payload');
+        }
+
+        const wrappedDEK = fromBase64Standard(version.wrapped_dek_recovery);
+        const aad = this.buildVersionRecoveryAAD(version.id);
+        // Compatibility fallback for legacy wrappers without AAD.
+        let dek = this.unwrapDEK(wrappedDEK, recoveryKEK, aad);
+        if (dek === null) {
+          dek = this.unwrapDEK(wrappedDEK, recoveryKEK);
+        }
+        if (dek === null) {
+          throw new Error(`Failed to unwrap recovery DEK for version ${version.id}`);
+        }
+
+        const newWrappedDEK = this.wrapDEK(dek, newKEK);
+        reWrappedVersions.set(version.id, toBase64Standard(newWrappedDEK));
+        dek.fill(0);
+      }
+    } finally {
+      recoveryKEK.fill(0);
+      newKEK.fill(0);
+    }
 
     return {
       notes: reWrappedNotes,

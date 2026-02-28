@@ -589,6 +589,8 @@
         <span>{$_('page.login.no_account_yet')}</span>
         <a href="/register">{$_('common.register')}</a>
         <span class="separator">·</span>
+        <a href="/recovery">{$_('page.login.recovery_link')}</a>
+        <span class="separator">·</span>
         <a href="/about">{$_('page.login.about_app')}</a>
       </div>
 

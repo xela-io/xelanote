@@ -239,6 +239,7 @@
       "login_failed": "Login failed",
       "what_is_xelanote": "What is xelanote?",
       "about_app": "About the app",
+      "recovery_link": "Forgot password?",
       "no_account_yet": "No account yet?",
       "twofa_title": "Two-Factor Authentication",
       "totp_code": "6-digit code",
@@ -253,6 +254,24 @@
       "back_to_login": "Back to login",
       "encryption_locked_info": "🔒 Please log in again to activate encryption. Your session has been terminated for security reasons.",
       "captcha_hint": "Please complete the CAPTCHA above to continue."
+    },
+    "recovery": {
+      "title": "Recover account",
+      "subtitle": "Reset your password with your recovery key. For encrypted accounts, note keys are re-wrapped locally in your browser.",
+      "recovery_key": "Recovery key",
+      "new_password": "New password",
+      "confirm_password": "Confirm password",
+      "submit": "Reset password",
+      "submitting": "Processing...",
+      "success": "Password reset successful. You can now sign in with your new password.",
+      "error_required_fields": "Please fill all fields.",
+      "error_password_length": "Password must be at least 8 characters.",
+      "error_password_mismatch": "Passwords do not match.",
+      "error_invalid_credentials": "Invalid email or recovery key.",
+      "error_missing_encryption_salt": "Missing encryption salt for encrypted recovery flow.",
+      "error_conflict": "Recovery reset is not available for this account yet.",
+      "error_bad_request": "Recovery request is invalid.",
+      "error_generic": "Recovery reset failed. Please try again."
     },
     "register": {
       "title": "Create an account",

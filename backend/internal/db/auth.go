@@ -391,11 +391,21 @@ func (tx *Tx) UpdateUserPasswordTx(userID int, newPasswordHash string) error {
 // GetUserByEmail retrieves a user by their email address
 func (db *DB) GetUserByEmail(email string) (*User, error) {
 	var user User
+	var encryptionSaltBytes []byte
 	err := db.QueryRow(`
-		SELECT id, username, email, password_hash, is_admin, created_at, updated_at
+		SELECT id, username, email, password_hash, is_admin, created_at, updated_at, encryption_salt
 		FROM users
 		WHERE email = ?
-	`, email).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
+	`, email).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.IsAdmin,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&encryptionSaltBytes,
+	)
 
 	if err == sql.ErrNoRows {
 		return nil, ErrNotFound
@@ -403,6 +413,7 @@ func (db *DB) GetUserByEmail(email string) (*User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query user by email: %w", err)
 	}
+	user.EncryptionSalt = decodeEncryptionSalt(encryptionSaltBytes)
 	return &user, nil
 }
 

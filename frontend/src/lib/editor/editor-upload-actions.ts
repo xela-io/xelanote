@@ -21,15 +21,19 @@ interface UploadImagesFromEditorParams {
   setUploading: (value: boolean) => void;
   toast: UploadToast;
   messages: UploadMessages;
+  uploadFile?: (file: File) => Promise<{ url: string }>;
+  buildMarkdown?: (file: File, url: string) => string;
 }
 
 export async function uploadImagesFromEditorAction(
   params: UploadImagesFromEditorParams
 ): Promise<void> {
-  const { files, editorView, setUploading, toast, messages } = params;
+  const { files, editorView, setUploading, toast, messages, uploadFile, buildMarkdown } = params;
 
   await uploadImages(files, {
     editorView,
+    uploadFile,
+    buildMarkdown,
     onStatus: (value) => {
       setUploading(value);
     },

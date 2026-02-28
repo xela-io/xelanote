@@ -17,7 +17,7 @@
     onSummaryUpdated?: (summary: string) => void;
   }
 
-  const { note, decryptedContent, onSummaryUpdated }: Props = $props();
+  const { note, decryptedContent: _decryptedContent, onSummaryUpdated }: Props = $props();
 
   let loading = $state(false);
   let expanded = $state(true);
@@ -54,25 +54,22 @@
   const hasSummary = $derived(!!summary || (note.summary_encrypted && note.encrypted_summary));
   const isEncrypted = $derived(note.content_encrypted || false);
   const kekAvailable = $derived(isEncryptionUnlocked());
-  const canGenerate = $derived(!isEncrypted || (isEncrypted && !!decryptedContent));
+  const canGenerate = $derived(!isEncrypted);
 
   // Show streaming text while generating, otherwise show saved summary
   const displaySummary = $derived(loading && streamingSummary ? streamingSummary : summary);
 
   async function generateSummary() {
+    if (isEncrypted) {
+      error = $_('summary.encrypted_note');
+      return;
+    }
+
     loading = true;
     error = null;
     streamingSummary = '';
 
     try {
-      const plaintextContent = isEncrypted ? decryptedContent : undefined;
-
-      if (isEncrypted && !plaintextContent) {
-        error = $_('summary.encrypted_note');
-        loading = false;
-        return;
-      }
-
       await api.summarizeNoteStream(
         note.id,
         // onToken - called for each token
@@ -97,7 +94,7 @@
           error = errorMsg || $_('summary.error');
           toast.error($_('summary.error'));
         },
-        plaintextContent
+        undefined
       );
     } catch (err) {
       console.error('Failed to generate summary:', err);
@@ -160,10 +157,10 @@
         </div>
       {:else if error}
         <p class="text-sm text-destructive">{error}</p>
+      {:else if isEncrypted}
+        <p class="text-sm text-muted-foreground italic">{$_('summary.encrypted_note')}</p>
       {:else if hasSummary && displaySummary}
         <p class="text-sm text-muted-foreground leading-relaxed">{displaySummary}</p>
-      {:else if isEncrypted && !kekAvailable}
-        <p class="text-sm text-muted-foreground italic">{$_('summary.encrypted_note')}</p>
       {:else}
         <p class="text-sm text-muted-foreground italic">{$_('summary.empty')}</p>
       {/if}

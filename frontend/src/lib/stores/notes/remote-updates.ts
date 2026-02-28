@@ -1,5 +1,6 @@
 import type { Note } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { migrateLegacyEncryptedAttachmentLinks } from '$lib/editor/encrypted-attachment-markdown';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 export interface RemoteUpdateDeps {
@@ -16,7 +17,8 @@ export interface RemoteUpdateDeps {
   isEncryptionUnlocked: () => boolean;
   decryptNote: (
     encryptedTitle: string | null,
-    payload: EncryptedPayload
+    payload: EncryptedPayload,
+    noteId?: string
   ) => { title: string | null; content: string };
   warn: (message: string, options: { label: string; handler: () => void }) => void;
   loadNote: (id: string) => void;
@@ -72,11 +74,16 @@ export function handleRemoteUpdate(remoteNote: Note, deps: RemoteUpdateDeps) {
           ciphertext: remoteNote.encrypted_content,
           metadata: parseEncryptionMetadata(remoteNote.encryption_metadata),
         };
-        const decrypted = deps.decryptNote(remoteNote.encrypted_title || null, encryptedPayload);
+        const decrypted = deps.decryptNote(
+          remoteNote.encrypted_title || null,
+          encryptedPayload,
+          remoteNote.id
+        );
+        const migrated = migrateLegacyEncryptedAttachmentLinks(decrypted.content);
         processedNote = {
           ...remoteNote,
           title: decrypted.title || remoteNote.title,
-          content: decrypted.content,
+          content: migrated.content,
         };
       } catch (err) {
         console.error('[WebSocket] Failed to decrypt remote note:', err);

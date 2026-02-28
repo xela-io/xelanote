@@ -54,6 +54,7 @@ export function register(md: MarkdownIt, escapeHtml: (s: string) => string): voi
     const token = tokens[idx];
     const src = token.attrGet('src') || '';
     const alt = token.content || '';
+    const title = token.attrGet('title') || '';
 
     const currentIndex = typeof env.imageIndex === 'number' ? env.imageIndex : 0;
     const imageIndex = currentIndex + 1;
@@ -64,6 +65,9 @@ export function register(md: MarkdownIt, escapeHtml: (s: string) => string): voi
 
     let html = `<span class="resizable-image-wrapper" data-image-index="${imageIndex}">`;
     html += `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}"`;
+    if (title) {
+      html += ` title="${escapeHtml(title)}"`;
+    }
     html += ` data-original-src="${escapeHtml(src)}"`;
     html += ` data-image-index="${imageIndex}"`;
 

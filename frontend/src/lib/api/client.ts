@@ -270,6 +270,8 @@ function normalizeNotePayload(body: Record<string, unknown>): NotePayload {
     title: asString(body.title) ?? '',
   };
 
+  const id = asString(body.id);
+  if (id !== undefined) payload.id = id;
   const content = asString(body.content);
   if (content !== undefined) payload.content = content;
   const folderPath = asString(body.folder_path);
@@ -310,7 +312,8 @@ async function handleOfflineMutation<T>(path: string, options: ExtendedRequestIn
 
   if (method === 'POST' && path === '/notes') {
     // CREATE
-    const tempId = `temp_${crypto.randomUUID()}`;
+    const requestedId = asString(body.id);
+    const tempId = requestedId || `temp_${crypto.randomUUID()}`;
     const encMetadata = safeJsonParse(asString(body.encryption_metadata));
     const folderPath = asString(body.folder_path) || '/';
 

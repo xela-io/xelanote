@@ -80,10 +80,14 @@
             return;
           }
           try {
-            const decrypted = encryption.decryptNote(note.encrypted_title || null, {
-              ciphertext: note.encrypted_content,
-              metadata: parseEncryptionMetadata(note.encryption_metadata),
-            });
+            const decrypted = encryption.decryptNote(
+              note.encrypted_title || null,
+              {
+                ciphertext: note.encrypted_content,
+                metadata: parseEncryptionMetadata(note.encryption_metadata),
+              },
+              note.id
+            );
             noteContent = decrypted.content;
             loadedNote = {
               ...note,
@@ -153,7 +157,8 @@
         }
         const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(
           note.title,
-          content
+          content,
+          note.id
         );
         updated = await updateNote(
           note.id,
@@ -166,8 +171,6 @@
             encryption_metadata: JSON.stringify(encryptedContent.metadata),
             keywords,
             folder_path: note.folder_path,
-            links: uniqueLinks.map((l) => ({ target_title: l.title })),
-            due_dates: extractDueDatesDetailed(content),
           },
           note.version
         );
@@ -175,10 +178,14 @@
 
       let processed = updated;
       if (updated.content_encrypted && updated.encrypted_content) {
-        const decrypted = encryption.decryptNote(updated.encrypted_title || null, {
-          ciphertext: updated.encrypted_content,
-          metadata: parseEncryptionMetadata(updated.encryption_metadata),
-        });
+        const decrypted = encryption.decryptNote(
+          updated.encrypted_title || null,
+          {
+            ciphertext: updated.encrypted_content,
+            metadata: parseEncryptionMetadata(updated.encryption_metadata),
+          },
+          updated.id
+        );
         processed = {
           ...updated,
           title: decrypted.title || updated.title,

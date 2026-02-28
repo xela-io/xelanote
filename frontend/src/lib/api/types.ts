@@ -235,6 +235,7 @@ export interface QuickSearchFilters {
 }
 
 export interface NotePayload {
+  id?: string; // Optional client-provided UUID (used for encrypted create + AAD binding)
   title: string;
   content?: string; // Optional for encrypted notes
   folder_path?: string;

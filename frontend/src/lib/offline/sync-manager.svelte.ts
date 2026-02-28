@@ -362,7 +362,8 @@ export async function resolveConflict(
           // Re-encrypt local content and send to server with server version
           const { encryptedTitle, encryptedContent } = encryption.encryptNote(
             conflict.localTitle,
-            conflict.localContent
+            conflict.localContent,
+            conflict.noteId
           );
 
           const payload: NotePayload = {
@@ -387,12 +388,15 @@ export async function resolveConflict(
       case 'keep_both': {
         // Keep server version + create a copy with local content
         const copyTitle = conflict.localTitle + ' (Offline-Kopie)';
+        const copyID = crypto.randomUUID();
         const { encryptedTitle, encryptedContent } = encryption.encryptNote(
           copyTitle,
-          conflict.localContent
+          conflict.localContent,
+          copyID
         );
 
         const payload: NotePayload = {
+          id: copyID,
           title: encryptedTitle ? '' : copyTitle,
           encrypted_title: encryptedTitle,
           title_encrypted: !!encryptedTitle,
@@ -467,7 +471,8 @@ function decryptServerNote(note: Note): Note {
 
     const { title, content } = encryption.decryptNote(
       note.encrypted_title || null,
-      encryptedPayload
+      encryptedPayload,
+      note.id
     );
 
     return {
@@ -497,7 +502,8 @@ function decryptPayload(notePayload: NotePayload): { title: string; content: str
 
     const { title, content } = encryption.decryptNote(
       notePayload.encrypted_title || null,
-      encryptedPayload
+      encryptedPayload,
+      notePayload.id
     );
 
     return {

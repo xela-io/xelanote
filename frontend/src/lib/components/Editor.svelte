@@ -12,7 +12,7 @@
 
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import type { AIAction } from '$lib/api';
+  import { type AIAction, type Note, uploadEncryptedBlob } from '$lib/api';
   import { DeleteCommand } from '$lib/commands/DeleteCommand';
   import { FEATURE_FLAGS } from '$lib/config';
   import type { AITransformState } from '$lib/editor/ai-actions';
@@ -58,6 +58,11 @@
     resetInputEventValue,
   } from '$lib/editor/editor-ui-actions';
   import { uploadImagesFromEditorAction } from '$lib/editor/editor-upload-actions';
+  import {
+    encodeEncryptedAttachmentMetadata,
+    inferMimeTypeFromFilename,
+    isImageMimeType,
+  } from '$lib/editor/encrypted-attachment-metadata';
   import { readFindReplaceState, writeFindReplaceState } from '$lib/editor/find-replace-state';
   import {
     closeFindReplace as closeFindReplaceUI,
@@ -73,7 +78,11 @@
     handleEditorPaste,
   } from '$lib/editor/image-upload';
   import { indentSelection, outdentSelection } from '$lib/editor/indentation';
-  import { extractHeadings, renderMarkdown } from '$lib/editor/markdown';
+  import {
+    extractHeadings,
+    migrateLegacyEncryptedAttachmentLinks,
+    renderMarkdown,
+  } from '$lib/editor/markdown';
   import { renderMarkdownAsync } from '$lib/editor/markdown-worker-client';
   import {
     exportNoteMarkdown,
@@ -91,6 +100,7 @@
   import * as auth from '$lib/stores/auth.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as encryption from '$lib/stores/encryption.svelte';
+  import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
   import * as focusMode from '$lib/stores/focus-mode.svelte';
   import * as folders from '$lib/stores/folders.svelte';
   import * as history from '$lib/stores/history.svelte';
@@ -308,27 +318,28 @@
     if (!note) return;
     // Capture reactive deps synchronously for Svelte tracking
     const composedContent = composeEditorContent(note);
+    const renderedSource = migrateLegacyEncryptedAttachmentLinks(composedContent).content;
     const map = titleToIdMap;
     const mode = ui.getEditorMode();
 
     if (mode === 'split') {
       const timer = setTimeout(() => {
         if (FEATURE_FLAGS.workerMarkdown) {
-          renderMarkdownAsync(composedContent, { titleToIdMap: map }).then((html) => {
+          renderMarkdownAsync(renderedSource, { titleToIdMap: map }).then((html) => {
             if (!html) return; // Cancelled request
             renderedContent = html;
             taskCollapseOptions.revision = renderedContent;
             taskSortableOptions.revision = renderedContent;
           });
         } else {
-          renderedContent = renderMarkdown(composedContent, { titleToIdMap: map });
+          renderedContent = renderMarkdown(renderedSource, { titleToIdMap: map });
           taskCollapseOptions.revision = renderedContent;
           taskSortableOptions.revision = renderedContent;
         }
       }, 150);
       return () => clearTimeout(timer);
     } else {
-      renderedContent = renderMarkdown(composedContent, { titleToIdMap: map });
+      renderedContent = renderMarkdown(renderedSource, { titleToIdMap: map });
       taskCollapseOptions.revision = renderedContent;
       taskSortableOptions.revision = renderedContent;
     }
@@ -813,7 +824,108 @@
   // Upload Logic
   let _uploading = $state(false);
 
+  function getEncryptedUploadContext(
+    note: Note
+  ): { wrappedDEK: string; metadataVersion: 2 | 3 } | null {
+    if (note.encryption_metadata) {
+      try {
+        const metadata = parseEncryptionMetadata(note.encryption_metadata);
+        return { wrappedDEK: metadata.wrapped_dek, metadataVersion: metadata.version };
+      } catch {
+        // Fall through to legacy wrapped_dek field if metadata is unavailable/corrupt.
+      }
+    }
+
+    if (note.wrapped_dek) {
+      return {
+        wrappedDEK: note.wrapped_dek,
+        metadataVersion: note.encryption_version === 3 ? 3 : 2,
+      };
+    }
+
+    return null;
+  }
+
+  function getEncryptedPreviewContext(): {
+    noteID: string;
+    wrappedDEK: string;
+    metadataVersion: 2 | 3;
+  } | null {
+    const note = notes.getCurrentNote();
+    if (!note || note.content_encrypted !== true || !encryption.isEncryptionUnlocked()) {
+      return null;
+    }
+
+    const context = getEncryptedUploadContext(note);
+    if (!context) return null;
+
+    return {
+      noteID: note.id,
+      wrappedDEK: context.wrappedDEK,
+      metadataVersion: context.metadataVersion,
+    };
+  }
+
+  function escapeMarkdownText(text: string): string {
+    return text.replace(/[[\]\\]/g, '\\$&');
+  }
+
+  function buildEncryptedAttachmentMarkdown(url: string, file: File): string {
+    const name = file.name || 'attachment';
+    const mime = file.type || inferMimeTypeFromFilename(name);
+    const metadataTitle = encodeEncryptedAttachmentMetadata({ name, type: mime });
+
+    if (isImageMimeType(mime)) {
+      return `\n![${escapeMarkdownText(name)}](${url} "${metadataTitle}")\n`;
+    }
+    return `\n[Encrypted attachment: ${name}](${url} "${metadataTitle}")\n`;
+  }
+
   async function uploadImagesFromEditor(files: File[]) {
+    const activeNote = notes.getCurrentNote();
+    if (!activeNote) {
+      return;
+    }
+
+    const encryptedUpload = activeNote.content_encrypted === true;
+    let uploadFile: ((file: File) => Promise<{ url: string }>) | undefined;
+    let buildMarkdown: ((file: File, url: string) => string) | undefined;
+
+    if (encryptedUpload) {
+      if (!encryption.isEncryptionUnlocked()) {
+        toast.warning($_('component.editor.upload_encrypted_unavailable'));
+        return;
+      }
+
+      const context = getEncryptedUploadContext(activeNote);
+      if (!context) {
+        toast.warning($_('component.editor.upload_encrypted_unavailable'));
+        return;
+      }
+
+      uploadFile = async (file: File) => {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        try {
+          const encryptedBytes = encryption.encryptAttachment(bytes, {
+            noteID: activeNote.id,
+            wrappedDEK: context.wrappedDEK,
+            metadataVersion: context.metadataVersion,
+            filename: file.name,
+          });
+          const encryptedBuffer = new Uint8Array(encryptedBytes).buffer;
+          const encryptedBlob = new Blob([encryptedBuffer], { type: 'application/octet-stream' });
+          // Do not leak original attachment names via multipart filename.
+          return uploadEncryptedBlob(encryptedBlob, 'attachment.xenc');
+        } finally {
+          bytes.fill(0);
+        }
+      };
+
+      buildMarkdown = (file, url) => {
+        return buildEncryptedAttachmentMarkdown(url, file);
+      };
+    }
+
     await uploadImagesFromEditorAction({
       files,
       editorView,
@@ -826,9 +938,17 @@
         error: (message) => toast.error(message),
       },
       messages: {
-        success: (filename) => $_('component.editor.upload_success', { values: { filename } }),
-        copiedToClipboard: $_('component.editor.upload_clipboard'),
-        fallback: (url) => $_('component.editor.upload_fallback', { values: { url } }),
+        success: (filename) =>
+          encryptedUpload
+            ? $_('component.editor.upload_encrypted_success', { values: { filename } })
+            : $_('component.editor.upload_success', { values: { filename } }),
+        copiedToClipboard: encryptedUpload
+          ? $_('component.editor.upload_encrypted_clipboard')
+          : $_('component.editor.upload_clipboard'),
+        fallback: (url) =>
+          encryptedUpload
+            ? $_('component.editor.upload_encrypted_fallback', { values: { url } })
+            : $_('component.editor.upload_fallback', { values: { url } }),
         error: (filename, message) =>
           $_('component.editor.status.error_upload', {
             values: {
@@ -837,6 +957,8 @@
             },
           }),
       },
+      uploadFile,
+      buildMarkdown,
     });
   }
 
@@ -1206,6 +1328,7 @@
             previewThemeClass={ui.getEffectivePreviewThemeClass()}
             {taskCollapseOptions}
             {taskSortableOptions}
+            encryptedAttachmentContext={getEncryptedPreviewContext()}
             {showFindReplace}
             {findReplaceQuery}
             {findReplaceCaseSensitive}

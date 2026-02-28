@@ -1,5 +1,11 @@
-import { ApiError, type Backlink, type Note } from '$lib/api';
+import { ApiError, type Backlink, type Note, type NotePayload } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { migrateLegacyEncryptedAttachmentLinks } from '$lib/editor/encrypted-attachment-markdown';
+import {
+  recordEncryptedAttachmentMigrationDetected,
+  recordEncryptedAttachmentMigrationFailed,
+  recordEncryptedAttachmentMigrationPersisted,
+} from '$lib/stores/encrypted-attachment-migration-audit.svelte';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 /** Max pagination iterations to prevent infinite loops (500 notes/page × 100 = 50,000 notes) */
@@ -7,12 +13,31 @@ const MAX_PAGINATION_ITERATIONS = 100;
 
 /** Default page size for list requests */
 const PAGE_SIZE = 500;
+const MIGRATION_PERSIST_IN_FLIGHT = new Set<string>();
 
 /** Deterministic sort: updated_at DESC, then id DESC (for stable UI order) */
 function byUpdatedAtDescThenIdDesc(a: Note, b: Note): number {
   const timeCompare = b.updated_at.localeCompare(a.updated_at);
   if (timeCompare !== 0) return timeCompare;
   return b.id.localeCompare(a.id);
+}
+
+function buildEncryptedUpdatePayload(
+  note: Note,
+  encryptedTitle: string | null,
+  encryptedContent: EncryptedPayload,
+  keywords: string[]
+): NotePayload {
+  return {
+    title: encryptedTitle ? '' : note.title,
+    encrypted_title: encryptedTitle,
+    title_encrypted: !!encryptedTitle,
+    encrypted_content: encryptedContent.ciphertext,
+    wrapped_dek: encryptedContent.metadata.wrapped_dek,
+    encryption_metadata: JSON.stringify(encryptedContent.metadata),
+    keywords,
+    folder_path: note.folder_path,
+  };
 }
 
 export interface LoadNotesDeps {
@@ -195,8 +220,20 @@ export interface LoadNoteDeps {
   isEncryptionUnlocked: () => boolean;
   decryptNote: (
     encryptedTitle: string | null,
-    payload: EncryptedPayload
+    payload: EncryptedPayload,
+    noteId?: string
   ) => { title: string | null; content: string };
+  encryptNote: (
+    title: string,
+    content: string,
+    noteId: string
+  ) => {
+    encryptedTitle: string | null;
+    encryptedContent: EncryptedPayload;
+    keywords: string[];
+  };
+  updateNote: (id: string, payload: NotePayload, version: number) => Promise<Note>;
+  isConflictError: (err: unknown) => boolean;
   setIsLoading: (value: boolean) => void;
   setError: (value: string | null) => void;
   setAutoSaveStatus: (status: 'idle' | 'pending' | 'saving' | 'saved' | 'error') => void;
@@ -251,6 +288,7 @@ export async function loadNote(deps: LoadNoteDeps) {
       }
 
       try {
+        let migratedCount = 0;
         const encryptedPayload: EncryptedPayload = {
           ciphertext: note.encrypted_content,
           metadata: parseEncryptionMetadata(note.encryption_metadata),
@@ -260,10 +298,81 @@ export async function loadNote(deps: LoadNoteDeps) {
           encryptedPayload.metadata.wrapped_dek?.length || 0
         );
 
-        const { title, content } = deps.decryptNote(note.encrypted_title || null, encryptedPayload);
+        const { title, content } = deps.decryptNote(
+          note.encrypted_title || null,
+          encryptedPayload,
+          note.id
+        );
+        const migrated = migrateLegacyEncryptedAttachmentLinks(content);
+        migratedCount = migrated.migratedCount;
         console.log('[NOTES] Note decrypted after load, content length:', content.length);
         note.title = title || note.title;
-        note.content = content;
+        note.content = migrated.content;
+
+        if (migratedCount > 0) {
+          recordEncryptedAttachmentMigrationDetected(migratedCount);
+
+          if (deps.isOnline()) {
+            const persistKey = `${note.id}:${note.version}`;
+            if (!MIGRATION_PERSIST_IN_FLIGHT.has(persistKey)) {
+              MIGRATION_PERSIST_IN_FLIGHT.add(persistKey);
+              try {
+                const { encryptedTitle, encryptedContent, keywords } = deps.encryptNote(
+                  note.title,
+                  note.content,
+                  note.id
+                );
+                const payload = buildEncryptedUpdatePayload(
+                  note,
+                  encryptedTitle,
+                  encryptedContent,
+                  keywords
+                );
+
+                const persisted = await deps.updateNote(note.id, payload, note.version);
+                note = {
+                  ...persisted,
+                  title: note.title,
+                  content: note.content,
+                };
+
+                if (persisted.content_encrypted && persisted.encrypted_content) {
+                  try {
+                    const refreshedPayload: EncryptedPayload = {
+                      ciphertext: persisted.encrypted_content,
+                      metadata: parseEncryptionMetadata(persisted.encryption_metadata),
+                    };
+                    const refreshed = deps.decryptNote(
+                      persisted.encrypted_title || null,
+                      refreshedPayload,
+                      persisted.id
+                    );
+                    const refreshedMigrated = migrateLegacyEncryptedAttachmentLinks(
+                      refreshed.content
+                    );
+                    note.title = refreshed.title || note.title;
+                    note.content = refreshedMigrated.content;
+                  } catch (decryptErr) {
+                    console.warn(
+                      '[ENCRYPTION] Migration persisted, but refresh decrypt failed; keeping in-memory decrypted content',
+                      decryptErr
+                    );
+                  }
+                }
+
+                recordEncryptedAttachmentMigrationPersisted(migratedCount);
+              } catch (persistErr) {
+                if (deps.isConflictError(persistErr)) {
+                  recordEncryptedAttachmentMigrationFailed(migratedCount, 'conflict');
+                } else {
+                  recordEncryptedAttachmentMigrationFailed(migratedCount, 'update_failed');
+                }
+              } finally {
+                MIGRATION_PERSIST_IN_FLIGHT.delete(persistKey);
+              }
+            }
+          }
+        }
       } catch (decryptError) {
         console.error('[NOTES] Failed to decrypt note:', decryptError);
         deps.setError(deps.decryptFailedMessage);

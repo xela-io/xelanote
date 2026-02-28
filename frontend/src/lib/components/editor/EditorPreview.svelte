@@ -3,6 +3,10 @@
   import { _ } from 'svelte-i18n';
 
   import { FEATURE_FLAGS } from '$lib/config';
+  import {
+    type EncryptedAttachmentContext,
+    encryptedAttachmentRenderer,
+  } from '$lib/editor/encrypted-attachment-renderer';
   import { imageResize } from '$lib/editor/image-resize';
   import { mathRenderer } from '$lib/editor/math-action';
   import { mermaidRenderer } from '$lib/editor/mermaid-action';
@@ -30,6 +34,7 @@
     previewThemeClass: string;
     taskCollapseOptions: TaskCollapseOptions;
     taskSortableOptions: TaskSortableOptions;
+    encryptedAttachmentContext: EncryptedAttachmentContext | null;
     showFindReplace: boolean;
     findReplaceQuery: string;
     findReplaceCaseSensitive: boolean;
@@ -49,6 +54,7 @@
     previewThemeClass,
     taskCollapseOptions,
     taskSortableOptions,
+    encryptedAttachmentContext,
     showFindReplace,
     findReplaceQuery,
     findReplaceCaseSensitive,
@@ -200,6 +206,10 @@
     use:mermaidRenderer={{ revision: renderedContent }}
     use:taskCollapse={taskCollapseOptions}
     use:taskSortable={taskSortableOptions}
+    use:encryptedAttachmentRenderer={{
+      revision: renderedContent,
+      context: encryptedAttachmentContext,
+    }}
     use:imageResize={{ onResize: onImageResize }}
     use:highlightSearchTerms={{
       query: showFindReplace ? findReplaceQuery : '',

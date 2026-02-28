@@ -28,7 +28,7 @@ export function parseEncryptionMetadata(
   };
 
   if (
-    metadata.version !== 2 ||
+    (metadata.version !== 2 && metadata.version !== 3) ||
     metadata.algorithm !== 'XChaCha20-Poly1305' ||
     metadata.kdf !== 'Argon2id' ||
     metadata.kdf_strength !== 'interactive' ||
@@ -39,7 +39,7 @@ export function parseEncryptionMetadata(
   }
 
   return {
-    version: 2,
+    version: metadata.version,
     algorithm: 'XChaCha20-Poly1305',
     kdf: 'Argon2id',
     kdf_strength: 'interactive',

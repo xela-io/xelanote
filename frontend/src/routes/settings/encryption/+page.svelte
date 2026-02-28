@@ -207,6 +207,9 @@
                 {@html sanitize($_('page.settings.encryption.visible_metadata'))}
               </li>
               <li>{@html sanitize($_('page.settings.encryption.visible_keywords'))}</li>
+              <li>{@html sanitize($_('page.settings.encryption.visible_tags'))}</li>
+              <li>{@html sanitize($_('page.settings.encryption.visible_uploads'))}</li>
+              <li>{@html sanitize($_('page.settings.encryption.visible_ai'))}</li>
             </ul>
           </div>
         </div>

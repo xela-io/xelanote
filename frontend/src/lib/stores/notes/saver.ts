@@ -1,5 +1,6 @@
 import type { Note, NotePayload, OfflineNoteContext, TaskEventPayload } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { migrateLegacyEncryptedAttachmentLinks } from '$lib/editor/encrypted-attachment-markdown';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 import type { TaskEventQueue } from '$lib/stores/notes/task-events';
 
@@ -25,7 +26,8 @@ export interface SaveNoteDeps {
   isEncryptionUnlocked: () => boolean;
   encryptNote: (
     title: string,
-    content: string
+    content: string,
+    noteId: string
   ) => {
     encryptedTitle: string | null;
     encryptedContent: EncryptedPayload;
@@ -33,7 +35,8 @@ export interface SaveNoteDeps {
   };
   decryptNote: (
     encryptedTitle: string | null,
-    payload: EncryptedPayload
+    payload: EncryptedPayload,
+    noteId?: string
   ) => { title: string | null; content: string };
   encryptTaskText: (text: string) => { ciphertext: string; metadata: { wrapped_dek?: string } };
   extractUniqueLinks: (content: string) => { title: string }[];
@@ -108,7 +111,8 @@ export async function saveNote(deps: SaveNoteDeps) {
 
       const { encryptedTitle, encryptedContent, keywords } = deps.encryptNote(
         currentNote.title,
-        currentNote.content
+        currentNote.content,
+        currentNote.id
       );
 
       const payload = {
@@ -120,8 +124,6 @@ export async function saveNote(deps: SaveNoteDeps) {
         encryption_metadata: JSON.stringify(encryptedContent.metadata),
         keywords,
         folder_path: currentNote.folder_path,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-        due_dates: deps.extractDueDates(currentNote.content),
       };
 
       const offlineContext: OfflineNoteContext = {
@@ -145,18 +147,14 @@ export async function saveNote(deps: SaveNoteDeps) {
       );
       console.log(
         '[NOTES] Payload encrypted_content (base64) length:',
-        encryptedContent.ciphertext.length,
-        'first 50 chars:',
-        encryptedContent.ciphertext.substring(0, 50)
+        encryptedContent.ciphertext.length
       );
       updated = await deps.updateNote(currentNote.id, payload, currentNote.version, offlineContext);
       console.log(
         '[NOTES] Save successful, backend returned version:',
         updated.version,
         'encrypted_content from backend length:',
-        updated.encrypted_content?.length || 0,
-        'first 50 chars:',
-        updated.encrypted_content?.substring(0, 50) || ''
+        updated.encrypted_content?.length || 0
       );
 
       processedUpdate = updated;
@@ -167,12 +165,17 @@ export async function saveNote(deps: SaveNoteDeps) {
             metadata: parseEncryptionMetadata(updated.encryption_metadata),
           };
 
-          const decrypted = deps.decryptNote(updated.encrypted_title || null, encryptedPayload);
+          const decrypted = deps.decryptNote(
+            updated.encrypted_title || null,
+            encryptedPayload,
+            updated.id
+          );
+          const migrated = migrateLegacyEncryptedAttachmentLinks(decrypted.content);
 
           processedUpdate = {
             ...updated,
             title: decrypted.title || updated.title,
-            content: decrypted.content,
+            content: migrated.content,
           };
           console.log('[NOTES] Update decrypted, content length:', decrypted.content.length);
         } catch (err) {

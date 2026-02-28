@@ -50,8 +50,8 @@ function asStreamToken(value: unknown): string | null {
 
 /**
  * Generate or retrieve a summary for a note.
- * For plaintext notes: call without arguments to generate server-side
- * For encrypted notes: provide decrypted content for LLM processing
+ * For plaintext notes: call without arguments to generate server-side.
+ * For encrypted notes: server-side summarization is currently disabled.
  */
 export async function summarizeNote(
   noteId: string,
@@ -72,6 +72,7 @@ export async function summarizeNote(
 /**
  * Generate a summary with streaming output for progress display.
  * Uses fetch with ReadableStream to stream tokens as they are generated.
+ * Note: encrypted notes are rejected server-side.
  */
 export async function summarizeNoteStream(
   noteId: string,

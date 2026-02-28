@@ -1,6 +1,11 @@
 import * as api from '$lib/api';
 import { isDesktop } from '$lib/config';
-import { DecryptionError, e2eEncryption, type EncryptedPayload } from '$lib/crypto/e2e';
+import {
+  type AttachmentKeyContext,
+  DecryptionError,
+  e2eEncryption,
+  type EncryptedPayload,
+} from '$lib/crypto/e2e';
 import {
   clearPersistedKEK,
   loadPersistedKEK,
@@ -166,24 +171,27 @@ export function isEncryptionUnlocked(): boolean {
  *
  * @param title - Plaintext title
  * @param content - Plaintext content
+ * @param noteId - Note-ID (für AAD-Bindung bei Protokoll v3)
  * @returns Encrypted data including optional title and keywords
  * @throws Error if encryption is locked
  */
 export function encryptNote(
   title: string,
-  content: string
+  content: string,
+  noteId: string
 ): {
   encryptedTitle: string | null;
   encryptedContent: EncryptedPayload;
   keywords: string[];
 } {
   if (!isUnlocked) throw new Error('Encryption locked - please re-login');
+  if (!noteId) throw new Error('noteId is required for note encryption');
 
   // Encrypt content (always)
-  const encryptedContent = e2eEncryption.encryptNote(content);
+  const encryptedContent = e2eEncryption.encryptNote(content, noteId);
 
   // Encrypt title (optional)
-  const encryptedTitle = settings.encryptTitles ? e2eEncryption.encryptTitle(title) : null;
+  const encryptedTitle = settings.encryptTitles ? e2eEncryption.encryptTitle(title, noteId) : null;
 
   // Extract keywords (opt-in with warning)
   const keywords = settings.extractKeywords ? e2eEncryption.extractKeywords(content) : [];
@@ -201,21 +209,50 @@ export function encryptTaskText(text: string): EncryptedPayload {
 }
 
 /**
+ * Encrypt attachment bytes using an existing note DEK.
+ *
+ * @param data - Binary attachment payload
+ * @param context - note key context (note ID + wrapped DEK)
+ * @returns Encrypted bytes (nonce + ciphertext + tag)
+ */
+export function encryptAttachment(data: Uint8Array, context: AttachmentKeyContext): Uint8Array {
+  if (!isUnlocked) throw new Error('Encryption locked - please re-login');
+  return e2eEncryption.encryptAttachment(data, context);
+}
+
+/**
+ * Decrypt attachment bytes using the note DEK context.
+ *
+ * @param encrypted - Encrypted payload (nonce + ciphertext + tag)
+ * @param context - note key context (note ID + wrapped DEK)
+ * @returns Decrypted binary payload
+ */
+export function decryptAttachment(
+  encrypted: Uint8Array,
+  context: AttachmentKeyContext
+): Uint8Array {
+  if (!isUnlocked) throw new Error('Encryption locked - please re-login');
+  return e2eEncryption.decryptAttachment(encrypted, context);
+}
+
+/**
  * Decrypt note.
  *
  * @param encryptedTitle - Encrypted title (JSON string) or null
  * @param encryptedContent - Encrypted payload with metadata
+ * @param noteId - Note-ID (erforderlich für Protokoll v3)
  * @returns Decrypted title and content
  * @throws DecryptionError if encryption is locked or decryption fails
  */
 export function decryptNote(
   encryptedTitle: string | null,
-  encryptedContent: EncryptedPayload
+  encryptedContent: EncryptedPayload,
+  noteId?: string
 ): { title: string | null; content: string } {
   if (!isUnlocked) throw new DecryptionError('NOT_INITIALIZED');
 
-  const content = e2eEncryption.decryptNote(encryptedContent);
-  const title = encryptedTitle ? e2eEncryption.decryptTitle(encryptedTitle) : null;
+  const content = e2eEncryption.decryptNote(encryptedContent, noteId);
+  const title = encryptedTitle ? e2eEncryption.decryptTitle(encryptedTitle, noteId) : null;
 
   return { title, content };
 }
@@ -224,12 +261,13 @@ export function decryptNote(
  * Decrypt only the title of an encrypted note.
  *
  * @param encryptedTitle - Encrypted title JSON string
+ * @param noteId - Note-ID (erforderlich für Protokoll v3)
  * @returns Decrypted plaintext title, or null if encryption is locked
  */
-export function decryptTitle(encryptedTitle: string): string | null {
+export function decryptTitle(encryptedTitle: string, noteId?: string): string | null {
   if (!isUnlocked) return null;
   try {
-    return e2eEncryption.decryptTitle(encryptedTitle);
+    return e2eEncryption.decryptTitle(encryptedTitle, noteId);
   } catch {
     return null;
   }

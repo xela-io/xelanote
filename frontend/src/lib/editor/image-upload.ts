@@ -3,12 +3,18 @@ import type { EditorView } from '@codemirror/view';
 import * as api from '$lib/api';
 import { ApiError } from '$lib/api';
 
+interface UploadFileResult {
+  url: string;
+}
+
 export interface ImageUploadHandlers {
   editorView?: EditorView | null;
   onStatus: (uploading: boolean) => void;
   onSuccess: (message: string, context?: { filename: string }) => void;
   onWarning: (message: string, context?: { filename?: string; url?: string }) => void;
   onError: (message: string, context?: { filename: string; error: string }) => void;
+  uploadFile?: (file: File) => Promise<UploadFileResult>;
+  buildMarkdown?: (file: File, url: string) => string;
 }
 
 export function handleEditorDrop(e: DragEvent, upload: (files: File[]) => void) {
@@ -43,13 +49,16 @@ export function handleEditorPaste(e: ClipboardEvent, upload: (files: File[]) => 
 
 export async function uploadImages(files: File[], handlers: ImageUploadHandlers) {
   handlers.onStatus(true);
+  const uploadFile = handlers.uploadFile ?? ((file: File) => api.uploadImage(file));
+  const buildMarkdown =
+    handlers.buildMarkdown ?? ((file: File, url: string) => `\n![${file.name}](${url})\n`);
 
   for (const file of files) {
     try {
-      const { url } = await api.uploadImage(file);
+      const { url } = await uploadFile(file);
 
       // Insert markdown at cursor
-      const markdown = `\n![${file.name}](${url})\n`;
+      const markdown = buildMarkdown(file, url);
       const inserted = insertTextAtCursor(markdown, handlers);
 
       if (inserted) {

@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests: cross-user data isolation tests for user settings, API keys, recovery keys, WebAuthn, due dates, export, task events, and canvas endpoints
 - Mobile: graph view link in bottom navigation "More" sheet
 - Editor: indent/outdent buttons in mobile toolbar and insert menu
+- E2EE Frontend: encrypted attachments for encrypted notes (`.xenc`) with client-side upload encryption, preview-time decryption, legacy attachment metadata migration, and note-id-bound encryption context across search/sync/editor flows
 
 ### Changed
 

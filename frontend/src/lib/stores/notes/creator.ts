@@ -1,5 +1,6 @@
 import type { Backlink, Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { migrateLegacyEncryptedAttachmentLinks } from '$lib/editor/encrypted-attachment-markdown';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 export interface CreateNoteDeps {
@@ -12,7 +13,8 @@ export interface CreateNoteDeps {
   isEncryptionUnlocked: () => boolean;
   encryptNote: (
     title: string,
-    content: string
+    content: string,
+    noteId: string
   ) => {
     encryptedTitle: string | null;
     encryptedContent: EncryptedPayload;
@@ -20,7 +22,8 @@ export interface CreateNoteDeps {
   };
   decryptNote: (
     encryptedTitle: string | null,
-    payload: EncryptedPayload
+    payload: EncryptedPayload,
+    noteId?: string
   ) => { title: string | null; content: string };
   extractUniqueLinks: (content: string) => { title: string }[];
   extractDueDates: (content: string) => NotePayload['due_dates'];
@@ -82,13 +85,16 @@ export async function createNote(deps: CreateNoteDeps) {
         throw new Error('ENCRYPTION_LOCKED');
       }
 
+      const noteID = crypto.randomUUID();
+
       const { encryptedTitle, encryptedContent, keywords } = deps.encryptNote(
         deps.title,
-        deps.content
+        deps.content,
+        noteID
       );
-      const uniqueLinks = deps.extractUniqueLinks(deps.content);
 
       const payload: NotePayload = {
+        id: noteID,
         title: encryptedTitle ? '' : deps.title,
         encrypted_title: encryptedTitle,
         title_encrypted: !!encryptedTitle,
@@ -97,8 +103,6 @@ export async function createNote(deps: CreateNoteDeps) {
         encryption_metadata: JSON.stringify(encryptedContent.metadata),
         keywords,
         folder_path: deps.folderPath,
-        links: uniqueLinks.map((l) => ({ target_title: l.title })),
-        due_dates: deps.extractDueDates(deps.content),
         ...(deps.journalOptions && {
           note_type: deps.journalOptions.note_type,
           journal_date: deps.journalOptions.journal_date,
@@ -122,12 +126,17 @@ export async function createNote(deps: CreateNoteDeps) {
             metadata: parseEncryptionMetadata(note.encryption_metadata),
           };
 
-          const decrypted = deps.decryptNote(note.encrypted_title || null, encryptedPayload);
+          const decrypted = deps.decryptNote(
+            note.encrypted_title || null,
+            encryptedPayload,
+            note.id
+          );
+          const migrated = migrateLegacyEncryptedAttachmentLinks(decrypted.content);
 
           processedNote = {
             ...note,
             title: decrypted.title || note.title,
-            content: decrypted.content,
+            content: migrated.content,
           };
           console.log('[NOTES] Note decrypted, content length:', decrypted.content.length);
         } catch (err) {

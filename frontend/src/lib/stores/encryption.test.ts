@@ -67,11 +67,11 @@ describe('encryption store', () => {
 
     await encryption.setupEncryption('pw', 1, new Uint8Array([1, 2, 3]));
 
-    const encrypted = encryption.encryptNote('title', 'content');
-    expect(encryptNote).toHaveBeenCalledWith('content');
+    const encrypted = encryption.encryptNote('title', 'content', 'note-1');
+    expect(encryptNote).toHaveBeenCalledWith('content', 'note-1');
     expect(encrypted.encryptedTitle).toBe(null);
 
-    const decrypted = encryption.decryptNote(null, encrypted.encryptedContent);
+    const decrypted = encryption.decryptNote(null, encrypted.encryptedContent, 'note-1');
     expect(decryptNote).toHaveBeenCalled();
     expect(decrypted.content).toBe('content');
   });
@@ -82,8 +82,8 @@ describe('encryption store', () => {
     await encryption.setupEncryption('pw', 1, new Uint8Array([1, 2, 3]));
     await encryption.updateSettings({ encryptTitles: true, extractKeywords: true });
 
-    const encrypted = encryption.encryptNote('title', 'content');
-    expect(encryptTitle).toHaveBeenCalledWith('title');
+    const encrypted = encryption.encryptNote('title', 'content', 'note-1');
+    expect(encryptTitle).toHaveBeenCalledWith('title', 'note-1');
     expect(extractKeywords).toHaveBeenCalledWith('content');
     expect(encrypted.encryptedTitle).toBe('enc:title');
     expect(encrypted.keywords).toEqual(['kw']);

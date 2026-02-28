@@ -8,9 +8,8 @@ import {
 } from './client';
 import type { UploadResponse } from './types';
 
-export async function uploadImage(file: File): Promise<UploadResponse> {
-  const formData = new FormData();
-  formData.append('file', file);
+async function uploadWithRetry(path: string, formData: FormData): Promise<UploadResponse> {
+  const baseUrl = getApiBaseUrl();
 
   const accessToken = getAccessTokenValue();
   const headers = new Headers();
@@ -25,7 +24,7 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
   }
 
   // SEC-006: Include credentials for cookie-based authentication
-  const response = await fetch(`${getApiBaseUrl()}/uploads`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     method: 'POST',
     headers: headers,
     body: formData,
@@ -52,7 +51,7 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
         retryHeaders.set('X-CSRF-Token', newCsrfToken);
       }
 
-      const retryResponse = await fetch(`${getApiBaseUrl()}/uploads`, {
+      const retryResponse = await fetch(`${baseUrl}${path}`, {
         method: 'POST',
         headers: retryHeaders,
         body: formData,
@@ -78,4 +77,19 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
   }
 
   return response.json();
+}
+
+export async function uploadImage(file: File): Promise<UploadResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return uploadWithRetry('/uploads', formData);
+}
+
+export async function uploadEncryptedBlob(
+  blob: Blob,
+  filename = 'attachment.xenc'
+): Promise<UploadResponse> {
+  const formData = new FormData();
+  formData.append('file', blob, filename);
+  return uploadWithRetry('/uploads/encrypted', formData);
 }

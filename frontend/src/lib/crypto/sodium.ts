@@ -208,9 +208,10 @@ export async function deriveKeyAsync(password: string, salt: Uint8Array): Promis
  *
  * @param plaintext - Zu verschlüsselnde Daten
  * @param key - 32-byte Schlüssel
+ * @param aad - Optional Additional Authenticated Data (wird mit-authentifiziert)
  * @returns Nonce (24 bytes) + Ciphertext + Auth-Tag (16 bytes)
  */
-export function encrypt(plaintext: Uint8Array, key: Uint8Array): Uint8Array {
+export function encrypt(plaintext: Uint8Array, key: Uint8Array, aad?: Uint8Array): Uint8Array {
   // Try libsodium if available and properly initialized
   const readySodium = sodium;
   if (
@@ -224,7 +225,7 @@ export function encrypt(plaintext: Uint8Array, key: Uint8Array): Uint8Array {
     // Verschlüssle mit XChaCha20-Poly1305
     const ciphertext = readySodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       plaintext,
-      null, // No additional data
+      aad ?? null,
       null, // No secret nonce
       nonce,
       key
@@ -253,9 +254,14 @@ export function encrypt(plaintext: Uint8Array, key: Uint8Array): Uint8Array {
  *
  * @param combined - Nonce (24 bytes) + Ciphertext + Auth-Tag (16 bytes)
  * @param key - 32-byte Schlüssel
+ * @param aad - Optional Additional Authenticated Data (muss identisch zum Encrypt sein)
  * @returns Plaintext oder null bei Fehler/Manipulation
  */
-export function decrypt(combined: Uint8Array, key: Uint8Array): Uint8Array | null {
+export function decrypt(
+  combined: Uint8Array,
+  key: Uint8Array,
+  aad?: Uint8Array
+): Uint8Array | null {
   // Mindestlänge: Nonce (24) + Auth-Tag (16) = 40 bytes
   if (combined.length < NONCE_BYTES + TAG_BYTES) {
     console.warn('[SODIUM] Ciphertext too short');
@@ -278,7 +284,7 @@ export function decrypt(combined: Uint8Array, key: Uint8Array): Uint8Array | nul
       const plaintext = readySodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
         null, // No secret nonce
         ciphertext,
-        null, // No additional data
+        aad ?? null,
         nonce,
         key
       ) as Uint8Array;

@@ -197,7 +197,11 @@ export async function loadNote(id: string) {
     },
     getBacklinks: (noteId) => api.getBacklinks(noteId),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+    decryptNote: (encryptedTitle, payload, noteId) =>
+      encryption.decryptNote(encryptedTitle, payload, noteId),
+    encryptNote: (title, content, noteId) => encryption.encryptNote(title, content, noteId),
+    updateNote: (noteId, payload, version) => api.updateNote(noteId, payload, version),
+    isConflictError: (err) => err instanceof ApiError && err.status === 409,
     setIsLoading: (value) => {
       isLoading = value;
     },
@@ -242,8 +246,10 @@ export async function createNote(
     assertOnline: () => assertOnlineForParanoidMode(),
     getFolders: () => foldersStore.getFolders(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-    encryptNote: (noteTitle, noteContent) => encryption.encryptNote(noteTitle, noteContent),
-    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+    encryptNote: (noteTitle, noteContent, noteId) =>
+      encryption.encryptNote(noteTitle, noteContent, noteId),
+    decryptNote: (encryptedTitle, payload, noteId) =>
+      encryption.decryptNote(encryptedTitle, payload, noteId),
     extractUniqueLinks: (noteContent) => extractUniqueWikilinks(noteContent),
     extractDueDates: (noteContent) => extractDueDatesDetailed(noteContent),
     createNote: (payload, offlineContext) => api.createNote(payload, offlineContext),
@@ -313,8 +319,9 @@ export async function saveNote() {
     taskEventQueue,
     assertOnline: () => assertOnlineForParanoidMode(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-    encryptNote: (title, content) => encryption.encryptNote(title, content),
-    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+    encryptNote: (title, content, noteId) => encryption.encryptNote(title, content, noteId),
+    decryptNote: (encryptedTitle, payload, noteId) =>
+      encryption.decryptNote(encryptedTitle, payload, noteId),
     encryptTaskText: (text) => encryption.encryptTaskText(text),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
     extractDueDates: (content) => extractDueDatesDetailed(content),
@@ -360,8 +367,10 @@ export async function toggleEncryption(): Promise<void> {
     },
     cancelAutoSave: () => cancelAutoSave(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-    encryptNote: (noteTitle, noteContent) => encryption.encryptNote(noteTitle, noteContent),
-    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+    encryptNote: (noteTitle, noteContent, noteId) =>
+      encryption.encryptNote(noteTitle, noteContent, noteId),
+    decryptNote: (encryptedTitle, payload, noteId) =>
+      encryption.decryptNote(encryptedTitle, payload, noteId),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
     updateNote: (noteId, payload, version) => api.updateNote(noteId, payload, version),
     decryptNoteApi: (noteId, noteTitle, noteContent, version, recipeData) =>
@@ -610,9 +619,10 @@ export async function moveNote(id: string, folderPath: string) {
       error = value;
     },
     getNote: (noteId) => api.getNote(noteId),
-    decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+    decryptNote: (encryptedTitle, payload, noteId) =>
+      encryption.decryptNote(encryptedTitle, payload, noteId),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-    encryptNote: (title, content) => encryption.encryptNote(title, content),
+    encryptNote: (title, content, noteId) => encryption.encryptNote(title, content, noteId),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
     extractDueDates: (content) => extractDueDatesDetailed(content),
     updateNote: (noteId, payload, version, offlineContext) =>
@@ -737,7 +747,8 @@ export function handleRemoteUpdate(remoteNote: Note) {
           invalidateNoteMap();
         },
         isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
-        decryptNote: (encryptedTitle, payload) => encryption.decryptNote(encryptedTitle, payload),
+        decryptNote: (encryptedTitle, payload, noteId) =>
+          encryption.decryptNote(encryptedTitle, payload, noteId),
         warn: (message, options) => toast.warning(message, options),
         loadNote: (noteId) => {
           void loadNote(noteId);

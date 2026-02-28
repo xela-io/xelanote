@@ -1,5 +1,6 @@
 import type { Backlink, Note, NotePayload, OfflineNoteContext } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { migrateLegacyEncryptedAttachmentLinks } from '$lib/editor/encrypted-attachment-markdown';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 export interface DeleteNoteDeps {
@@ -52,12 +53,14 @@ export interface MoveNoteDeps {
   getNote: (id: string) => Promise<Note>;
   decryptNote: (
     encryptedTitle: string | null,
-    payload: EncryptedPayload
+    payload: EncryptedPayload,
+    noteId?: string
   ) => { title: string | null; content: string };
   isEncryptionUnlocked: () => boolean;
   encryptNote: (
     title: string,
-    content: string
+    content: string,
+    noteId: string
   ) => {
     encryptedTitle: string | null;
     encryptedContent: EncryptedPayload;
@@ -87,8 +90,9 @@ export async function moveNote(deps: MoveNoteDeps) {
           ciphertext: note.encrypted_content,
           metadata: parseEncryptionMetadata(note.encryption_metadata),
         };
-        const decrypted = deps.decryptNote(note.encrypted_title || null, encryptedPayload);
-        note.content = decrypted.content;
+        const decrypted = deps.decryptNote(note.encrypted_title || null, encryptedPayload, note.id);
+        const migrated = migrateLegacyEncryptedAttachmentLinks(decrypted.content);
+        note.content = migrated.content;
         note.title = decrypted.title || note.title;
       }
     } catch (err) {
@@ -117,9 +121,9 @@ export async function moveNote(deps: MoveNoteDeps) {
   try {
     const { encryptedTitle, encryptedContent, keywords } = deps.encryptNote(
       note.title,
-      note.content
+      note.content,
+      note.id
     );
-    const uniqueLinks = deps.extractUniqueLinks(note.content);
 
     const payload = {
       title: encryptedTitle ? '' : note.title,
@@ -130,8 +134,6 @@ export async function moveNote(deps: MoveNoteDeps) {
       encryption_metadata: JSON.stringify(encryptedContent.metadata),
       keywords,
       folder_path: deps.folderPath,
-      links: uniqueLinks.map((l) => ({ target_title: l.title })),
-      due_dates: deps.extractDueDates(note.content),
     };
 
     const offlineContext: OfflineNoteContext = {
@@ -151,11 +153,16 @@ export async function moveNote(deps: MoveNoteDeps) {
         ciphertext: updated.encrypted_content,
         metadata: parseEncryptionMetadata(updated.encryption_metadata),
       };
-      const decrypted = deps.decryptNote(updated.encrypted_title || null, encryptedPayload);
+      const decrypted = deps.decryptNote(
+        updated.encrypted_title || null,
+        encryptedPayload,
+        updated.id
+      );
+      const migrated = migrateLegacyEncryptedAttachmentLinks(decrypted.content);
       processedUpdate = {
         ...updated,
         title: decrypted.title || updated.title,
-        content: decrypted.content,
+        content: migrated.content,
       };
     }
 

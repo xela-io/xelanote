@@ -93,7 +93,8 @@
 
       const { title, content } = encryption.decryptNote(
         version.encrypted_title || null,
-        encryptedPayload
+        encryptedPayload,
+        version.note_id || noteId
       );
 
       version.content = content;

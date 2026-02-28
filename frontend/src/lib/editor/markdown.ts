@@ -11,6 +11,7 @@ import { addDragHandlesToTasks, getRenderedTaskLineNumbers } from './markdown/ta
 import { createConfiguredMarkdownIt } from './markdown-config';
 
 // Re-export public API from sub-modules
+export { migrateLegacyEncryptedAttachmentLinks } from './encrypted-attachment-markdown';
 export { sanitizeColor } from './markdown/color-plugin';
 export { getDueDateStatus, isValidDueDate } from './markdown/duedate-plugin';
 export type { DueDateInfo, TocEntry } from './markdown/extractors';

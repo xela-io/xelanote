@@ -74,6 +74,7 @@ function createMiniSearchInstance(): MiniSearch {
 }
 
 function decryptNotePayload(note: {
+  id: string;
   encrypted_title?: string | null;
   encrypted_content?: string | null;
   encryption_metadata?: string | null;
@@ -82,7 +83,7 @@ function decryptNotePayload(note: {
     ciphertext: note.encrypted_content!,
     metadata: parseEncryptionMetadata(note.encryption_metadata),
   };
-  return encryption.decryptNote(note.encrypted_title || null, encryptedPayload);
+  return encryption.decryptNote(note.encrypted_title || null, encryptedPayload, note.id);
 }
 
 function escapeHtml(s: string): string {

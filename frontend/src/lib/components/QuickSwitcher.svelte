@@ -229,7 +229,7 @@
       // Decrypt titles for encrypted server results
       const serverResults = response.notes.map((note) => {
         if (note.title_encrypted && note.encrypted_title && encryption.isEncryptionUnlocked()) {
-          const decrypted = encryption.decryptTitle(note.encrypted_title);
+          const decrypted = encryption.decryptTitle(note.encrypted_title, note.id);
           if (decrypted) return { ...note, title: decrypted };
         }
         return note;

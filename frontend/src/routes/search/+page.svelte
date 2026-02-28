@@ -46,7 +46,7 @@
 
   function getDisplayTitle(result: SearchResult): string {
     if (result.title_encrypted && result.encrypted_title) {
-      const decrypted = encryption.decryptTitle(result.encrypted_title);
+      const decrypted = encryption.decryptTitle(result.encrypted_title, result.id);
       return decrypted ?? result.id.substring(0, 8) + '...';
     }
     return result.title || result.id.substring(0, 8) + '...';

@@ -707,6 +707,11 @@ describe('image resize', () => {
       expect(result).toContain('<span class="resize-handle"></span>');
     });
 
+    it('preserves image title attribute', () => {
+      const result = renderMarkdown('![Alt text](https://example.com/image.png "xenc:image/png")');
+      expect(result).toContain('title="xenc:image/png"');
+    });
+
     it('renders image with pixel width', () => {
       const result = renderMarkdown('![Alt text](https://example.com/image.png){width=300}');
       expect(result).toContain('width="300"');

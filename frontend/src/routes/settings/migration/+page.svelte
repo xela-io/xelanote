@@ -59,7 +59,8 @@
         // Encrypt the note
         const { encryptedTitle, encryptedContent, keywords } = encryption.encryptNote(
           note.title,
-          note.content
+          note.content,
+          note.id
         );
 
         // Update the note with encrypted content
@@ -205,8 +206,8 @@
                 <li>• Die Migration kann einige Minuten dauern</li>
                 <li>• Du kannst während der Migration weiterarbeiten</li>
                 <li>
-                  • <strong class="text-foreground">WICHTIG:</strong> Stelle sicher, dass du einen Recovery-Key
-                  hast!
+                  • <strong class="text-foreground">WICHTIG:</strong> Bewahre dein Passwort sicher auf
+                  (Recovery entsperrt aktuell keine bestehenden verschlüsselten Notizen).
                 </li>
               </ul>
             </div>
@@ -287,8 +288,8 @@
             </h3>
             <ul class="space-y-2 text-sm text-yellow-800 dark:text-yellow-300">
               <li>
-                • <strong>Recovery Key:</strong> Stelle sicher, dass du einen Recovery-Key erstellt und
-                sicher aufbewahrt hast, bevor du die Migration startest!
+                • <strong>Recovery Key:</strong> Kann für Account-Recovery gesetzt werden, entsperrt aktuell
+                aber keine bestehenden verschlüsselten Notizen.
               </li>
               <li>
                 • <strong>Backup:</strong> Erstelle ein Backup deiner Notizen vor der Migration (optional,
@@ -296,7 +297,7 @@
               </li>
               <li>
                 • <strong>Irreversibel:</strong> Nach der Migration können die Notizen nur noch mit deinem
-                Passwort oder Recovery-Key entschlüsselt werden.
+                Passwort entschlüsselt werden.
               </li>
               <li>
                 • <strong>Geschwindigkeit:</strong> Die Migration kann je nach Anzahl der Notizen mehrere

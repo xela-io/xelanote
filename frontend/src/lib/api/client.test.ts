@@ -119,6 +119,59 @@ describe('api client', () => {
     });
   });
 
+  it('uses client-provided note id for offline create', async () => {
+    const navigatorBackup = globalThis.navigator;
+    Object.defineProperty(globalThis, 'navigator', {
+      value: { onLine: false },
+      configurable: true,
+    });
+
+    const randomUUID = vi.fn().mockReturnValueOnce('op-id');
+    const cryptoBackup = globalThis.crypto;
+    Object.defineProperty(globalThis, 'crypto', {
+      value: { randomUUID },
+      configurable: true,
+    });
+
+    const { request } = await import('$lib/api/client');
+    const providedId = '550e8400-e29b-41d4-a716-446655440000';
+
+    const created = await request<{ id: string; folder_path: string; content_encrypted?: boolean }>(
+      '/notes',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          id: providedId,
+          folder_path: '/work',
+          encrypted_content: 'cipher',
+          encryption_metadata: JSON.stringify({ version: 3 }),
+        }),
+        _offlineAllowed: true,
+      }
+    );
+
+    expect(created.id).toBe(providedId);
+    expect(enqueueOperation).toHaveBeenCalledTimes(1);
+    expect(enqueueOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        noteId: providedId,
+        payload: expect.objectContaining({
+          type: 'create',
+          notePayload: expect.objectContaining({ id: providedId }),
+        }),
+      })
+    );
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: navigatorBackup,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis, 'crypto', {
+      value: cryptoBackup,
+      configurable: true,
+    });
+  });
+
   it('refreshes on 401 and retries with new token', async () => {
     const { initApiAuth, request } = await import('$lib/api/client');
     let accessToken = 'old-token';

@@ -1,5 +1,6 @@
 import type { Note, NotePayload, RecipeIngredient, RecipeMetadata } from '$lib/api';
 import type { EncryptedPayload } from '$lib/crypto/e2e';
+import { migrateLegacyEncryptedAttachmentLinks } from '$lib/editor/encrypted-attachment-markdown';
 import { parseEncryptionMetadata } from '$lib/stores/encryption-metadata';
 
 type RecipeDecryptPayload = {
@@ -79,7 +80,8 @@ export interface ToggleEncryptionDeps {
   isEncryptionUnlocked: () => boolean;
   encryptNote: (
     title: string,
-    content: string
+    content: string,
+    noteId: string
   ) => {
     encryptedTitle: string | null;
     encryptedContent: EncryptedPayload;
@@ -87,7 +89,8 @@ export interface ToggleEncryptionDeps {
   };
   decryptNote: (
     encryptedTitle: string | null,
-    payload: EncryptedPayload
+    payload: EncryptedPayload,
+    noteId?: string
   ) => { title: string | null; content: string };
   extractUniqueLinks: (content: string) => { title: string }[];
   updateNote: (id: string, payload: NotePayload, version: number) => Promise<Note>;
@@ -181,9 +184,9 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
 
     const { encryptedTitle, encryptedContent, keywords } = deps.encryptNote(
       currentNote.title,
-      contentToEncrypt
+      contentToEncrypt,
+      currentNote.id
     );
-    const uniqueLinks = deps.extractUniqueLinks(currentNote.content);
 
     const payload: NotePayload = {
       title: encryptedTitle ? '' : currentNote.title,
@@ -194,7 +197,6 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
       encryption_metadata: JSON.stringify(encryptedContent.metadata),
       keywords,
       folder_path: currentNote.folder_path,
-      links: uniqueLinks.map((l) => ({ target_title: l.title })),
     };
 
     const updated = await deps.updateNote(currentNote.id, payload, currentNote.version);
@@ -206,12 +208,13 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
         metadata: parseEncryptionMetadata(updated.encryption_metadata),
       };
 
-      const dec = deps.decryptNote(updated.encrypted_title || null, encryptedPayload);
+      const dec = deps.decryptNote(updated.encrypted_title || null, encryptedPayload, updated.id);
+      const migrated = migrateLegacyEncryptedAttachmentLinks(dec.content);
 
       processedUpdate = {
         ...updated,
         title: dec.title || updated.title,
-        content: dec.content,
+        content: migrated.content,
       };
     }
 

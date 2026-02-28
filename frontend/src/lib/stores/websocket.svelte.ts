@@ -191,7 +191,8 @@ function handleMessage(message: WebSocketMessage) {
               };
               const decrypted = encryption.decryptNote(
                 notePayload.encrypted_title || null,
-                encryptedPayload
+                encryptedPayload,
+                notePayload.id
               );
               searchIndex.updateInIndex(
                 notePayload.id,
@@ -227,7 +228,8 @@ function handleMessage(message: WebSocketMessage) {
               };
               const decrypted = encryption.decryptNote(
                 notePayload.encrypted_title || null,
-                encryptedPayload
+                encryptedPayload,
+                notePayload.id
               );
               searchIndex.addToIndex(
                 notePayload.id,

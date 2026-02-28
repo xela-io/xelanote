@@ -124,6 +124,13 @@ describe('loadNote encrypted attachment migration persistence', () => {
       failedNotes: 0,
       failedLinks: 0,
     });
+
+    const logSpy = vi.mocked(console.log);
+    const flattenedLogs = logSpy.mock.calls.flatMap((args: unknown[]) =>
+      args.map((entry: unknown) => String(entry))
+    );
+    expect(flattenedLogs.some((line: string) => line.includes('first 50 chars'))).toBe(false);
+    expect(flattenedLogs.some((line: string) => line.includes('cipher-old'))).toBe(false);
   });
 
   it('records failed persistence but still loads migrated content', async () => {

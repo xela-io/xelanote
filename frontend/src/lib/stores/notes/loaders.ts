@@ -273,9 +273,7 @@ export async function loadNote(deps: LoadNoteDeps) {
         'content_encrypted:',
         note.content_encrypted,
         'encrypted_content (base64) length:',
-        note.encrypted_content?.length || 0,
-        'first 50 chars:',
-        note.encrypted_content?.substring(0, 50) || ''
+        note.encrypted_content?.length || 0
       );
     }
 

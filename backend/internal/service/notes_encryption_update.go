@@ -18,7 +18,7 @@ func (s *NoteService) UpdateEncryptedNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
-	keywords []string,
+	_ []string,
 	expectedVersion int,
 ) (*db.Note, error) {
 	// Validate
@@ -85,20 +85,10 @@ func (s *NoteService) UpdateEncryptedNote(
 		return nil, err
 	}
 
-	// Update keywords if provided
-	if len(keywords) > 0 {
-		// Delete old keywords
-		if err := s.db.DeleteNoteKeywords(noteID); err != nil {
-			s.logger.Warn("failed to delete old keywords", "error", err)
-		}
-
-		// Insert new keywords if user has enabled keyword extraction
-		prefs, err := s.db.GetUserPreferences(userID)
-		if err == nil && prefs.KeywordsEnabled {
-			if err := s.db.InsertNoteKeywords(noteID, keywords); err != nil {
-				s.logger.Warn("failed to insert keywords", "error", err)
-			}
-		}
+	// Privacy hardening: encrypted notes must not persist plaintext keyword metadata.
+	// Always clear any legacy keywords for this note.
+	if err := s.db.DeleteNoteKeywords(noteID); err != nil {
+		s.logger.Warn("failed to clear keywords for encrypted note", "error", err)
 	}
 
 	// Business rule: encrypting a note removes all shares

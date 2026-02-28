@@ -65,7 +65,7 @@ describe('saveNote security behavior', () => {
         ciphertext: 'cipher-new',
         metadata,
       },
-      keywords: ['alpha'],
+      keywords: [],
     }));
     const decryptNote = vi.fn((_: string | null, __: unknown, ___?: string) => ({
       title: 'Decrypted Title',
@@ -153,7 +153,7 @@ describe('saveNote security behavior', () => {
     const payload = updateNote.mock.calls[0]?.[1] as Record<string, unknown>;
     expect(payload).not.toHaveProperty('links');
     expect(payload).not.toHaveProperty('due_dates');
-    expect(payload.keywords).toEqual(['alpha']);
+    expect(payload.keywords).toEqual([]);
 
     expect(encryptNote).toHaveBeenCalledWith('Encrypted Title', 'Encrypted content body', 'note-1');
     expect(decryptNote).toHaveBeenCalled();

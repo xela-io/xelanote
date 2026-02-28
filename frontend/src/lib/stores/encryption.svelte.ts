@@ -166,7 +166,9 @@ export function isEncryptionUnlocked(): boolean {
 /**
  * Encrypt note with current settings.
  *
- * This function applies user preferences for title encryption and keyword extraction.
+ * This function applies user preferences for title encryption.
+ * Plaintext keyword extraction for encrypted notes is intentionally disabled
+ * to avoid metadata leakage to the backend.
  * The encrypted content and wrapped DEK are returned for storage in the backend.
  *
  * @param title - Plaintext title
@@ -193,8 +195,8 @@ export function encryptNote(
   // Encrypt title (optional)
   const encryptedTitle = settings.encryptTitles ? e2eEncryption.encryptTitle(title, noteId) : null;
 
-  // Extract keywords (opt-in with warning)
-  const keywords = settings.extractKeywords ? e2eEncryption.extractKeywords(content) : [];
+  // Privacy hardening: never send plaintext-derived keywords for encrypted notes.
+  const keywords: string[] = [];
 
   return { encryptedTitle, encryptedContent, keywords };
 }

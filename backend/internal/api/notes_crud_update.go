@@ -88,7 +88,7 @@ func (s *Server) executeNoteUpdate(w http.ResponseWriter, userID int, id string,
 		note, err := s.noteService.UpdateEncryptedNote(
 			userID, id, req.Title, req.EncryptedTitle, req.TitleEncrypted,
 			encryptedBlob, req.WrappedDEK, req.EncryptionMetadata,
-			req.FolderPath, req.Keywords, version,
+			req.FolderPath, nil, version, // Privacy hardening: drop plaintext keywords for encrypted notes.
 		)
 		if err != nil {
 			respondNoteUpdateError(s, w, err, "failed to update encrypted note")

@@ -53,7 +53,6 @@ Die verschluesselte Payload enthaelt:
 - Ordnerpfade
 - Strukturmetadaten (z. B. Timestamps)
 - Tags
-- Keywords (wenn aktiviert)
 - Uploads/Anhaenge in unverschluesselten Notizen
 - Upload-Metadaten (z. B. Upload-Zeitpunkt, Groesse, user-scoped Storage-Pfad)
 
@@ -91,10 +90,9 @@ Konsequenz:
 
 1. Starkes, einzigartiges Passwort verwenden.
 2. Titelverschluesselung aktivieren, wenn Titel-Metadaten relevant sind.
-3. Keywords deaktiviert lassen, wenn Metadaten-Leakage minimiert werden soll.
-4. Sensible Infos nicht in Ordnernamen/Tags ablegen.
-5. Bei Uploads beachten: Nur Uploads aus verschluesselten Notizen sind E2EE (`.xenc`).
-6. AI bei unverschluesselten Notizen nur nutzen, wenn Klartextuebertragung fuer den konkreten Inhalt akzeptabel ist.
+3. Sensible Infos nicht in Ordnernamen/Tags ablegen.
+4. Bei Uploads beachten: Nur Uploads aus verschluesselten Notizen sind E2EE (`.xenc`).
+5. AI bei unverschluesselten Notizen nur nutzen, wenn Klartextuebertragung fuer den konkreten Inhalt akzeptabel ist.
 
 ## FAQ
 
@@ -108,7 +106,7 @@ Nein. Zero-Knowledge gilt nur fuer geschuetzte Payload-Bereiche, nicht fuer alle
 Aktuell nein.
 
 **Sind verschluesselte Notizen durchsuchbar?**  
-Ja, clientseitig. Optional koennen Keywords serverseitig im Klartext gespeichert werden (Trade-off).
+Ja, clientseitig.
 
 **Kann ich verschluesselte Notizen teilen?**  
 Nein, nicht direkt.

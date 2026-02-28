@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: API-key encryption now requires dedicated `XELANOTE_API_KEY_SECRET` (min 64 chars, must differ from `JWT_SECRET`), derives keys via HKDF-SHA256, and enforces secret checks in server startup plus staging/production deployment validation
 - Security: removed encrypted ciphertext preview fragments from note-load debug logs and added regression coverage to prevent reintroduction
 - Security: deprecated and server-rejected legacy `plaintext_content` on AI suggest/format/transform endpoints; frontend no longer sends plaintext payloads for these routes
+- Security: encrypted notes no longer persist plaintext keyword metadata (API drops `keywords`, encrypted updates clear legacy keywords, migration removes existing rows)
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
 - PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA
 - CI: relaxed flaky `docChanged:structured` performance threshold from 2.0ms to 5.0ms for slower CI runners

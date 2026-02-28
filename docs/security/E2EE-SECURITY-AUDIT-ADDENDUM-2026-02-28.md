@@ -58,6 +58,12 @@ This addendum reflects the **current remediation status** of the previously repo
    - `frontend/src/lib/crypto/e2e.ts:170-172`
    - Unit tests: `frontend/src/lib/crypto/e2e.test.ts:34-64`
 
+10. **Plaintext keyword persistence for encrypted notes is disabled.**
+
+- Encrypted create/update API paths drop `keywords` payloads: `backend/internal/api/notes_crud_create_helpers.go`, `backend/internal/api/notes_crud_update.go`
+- Encrypted updates clear legacy keywords: `backend/internal/service/notes_encryption_update.go`
+- Migration removes existing keyword rows for encrypted notes: `backend/internal/db/migrations/060_delete_keywords_for_encrypted_notes.sql`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

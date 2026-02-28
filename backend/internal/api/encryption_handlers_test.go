@@ -175,6 +175,7 @@ func TestCreateEncryptedNote_IgnoresClientLinksAndDueDates(t *testing.T) {
 				IsCompleted: false,
 			},
 		},
+		Keywords: []string{"secret", "metadata"},
 	}, token)
 
 	require.Equal(t, http.StatusCreated, rec.Code)
@@ -186,10 +187,12 @@ func TestCreateEncryptedNote_IgnoresClientLinksAndDueDates(t *testing.T) {
 	linksCount := countRowsForNote(t, ts, "SELECT COUNT(*) FROM links WHERE source_id = ?", noteID)
 	unresolvedCount := countRowsForNote(t, ts, "SELECT COUNT(*) FROM unresolved_links WHERE source_id = ?", noteID)
 	dueDatesCount := countRowsForNote(t, ts, "SELECT COUNT(*) FROM note_due_dates WHERE note_id = ?", noteID)
+	keywordsCount := countRowsForNote(t, ts, "SELECT COUNT(*) FROM note_keywords WHERE note_id = ?", noteID)
 
 	assert.Equal(t, 0, linksCount)
 	assert.Equal(t, 0, unresolvedCount)
 	assert.Equal(t, 0, dueDatesCount)
+	assert.Equal(t, 0, keywordsCount)
 }
 
 func TestCreateEncryptedNote_InvalidDEK(t *testing.T) {
@@ -336,8 +339,12 @@ func TestUpdateEncryptedNote_ClearsExistingLinksAndDueDates(t *testing.T) {
 	// Verify metadata exists before encrypted update.
 	linksBefore := countRowsForNote(t, ts, "SELECT COUNT(*) FROM links WHERE source_id = ?", sourceID)
 	dueDatesBefore := countRowsForNote(t, ts, "SELECT COUNT(*) FROM note_due_dates WHERE note_id = ?", sourceID)
+	_, err := ts.db.Exec(`INSERT INTO note_keywords (note_id, keyword) VALUES (?, ?)`, sourceID, "legacy")
+	require.NoError(t, err)
+	keywordsBefore := countRowsForNote(t, ts, "SELECT COUNT(*) FROM note_keywords WHERE note_id = ?", sourceID)
 	assert.Greater(t, linksBefore, 0)
 	assert.Greater(t, dueDatesBefore, 0)
+	assert.Greater(t, keywordsBefore, 0)
 
 	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
 	rec := doJSONWithHeaders(t, r, http.MethodPut, "/api/notes/"+sourceID, NoteRequest{
@@ -365,9 +372,11 @@ func TestUpdateEncryptedNote_ClearsExistingLinksAndDueDates(t *testing.T) {
 	linksAfter := countRowsForNote(t, ts, "SELECT COUNT(*) FROM links WHERE source_id = ?", sourceID)
 	unresolvedAfter := countRowsForNote(t, ts, "SELECT COUNT(*) FROM unresolved_links WHERE source_id = ?", sourceID)
 	dueDatesAfter := countRowsForNote(t, ts, "SELECT COUNT(*) FROM note_due_dates WHERE note_id = ?", sourceID)
+	keywordsAfter := countRowsForNote(t, ts, "SELECT COUNT(*) FROM note_keywords WHERE note_id = ?", sourceID)
 	assert.Equal(t, 0, linksAfter)
 	assert.Equal(t, 0, unresolvedAfter)
 	assert.Equal(t, 0, dueDatesAfter)
+	assert.Equal(t, 0, keywordsAfter)
 }
 
 func TestDecryptNote_Success(t *testing.T) {

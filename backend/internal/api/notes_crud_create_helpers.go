@@ -125,7 +125,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			encryptedBlob,
 			req.WrappedDEK,
 			req.EncryptionMetadata,
-			req.Keywords,
+			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
 			*req.JournalDate,
 		)
@@ -139,7 +139,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			encryptedBlob,
 			req.WrappedDEK,
 			req.EncryptionMetadata,
-			req.Keywords,
+			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
 		)
 	case "canvas":
@@ -152,7 +152,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			encryptedBlob,
 			req.WrappedDEK,
 			req.EncryptionMetadata,
-			req.Keywords,
+			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
 		)
 	default:
@@ -165,7 +165,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			encryptedBlob,
 			req.WrappedDEK,
 			req.EncryptionMetadata,
-			req.Keywords,
+			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
 		)
 	}

@@ -76,7 +76,7 @@ describe('encryption store', () => {
     expect(decrypted.content).toBe('content');
   });
 
-  it('should respect settings for encryptTitles and extractKeywords', async () => {
+  it('should encrypt title but never emit plaintext keywords for encrypted notes', async () => {
     const encryption = await import('$lib/stores/encryption.svelte');
 
     await encryption.setupEncryption('pw', 1, new Uint8Array([1, 2, 3]));
@@ -84,9 +84,9 @@ describe('encryption store', () => {
 
     const encrypted = encryption.encryptNote('title', 'content', 'note-1');
     expect(encryptTitle).toHaveBeenCalledWith('title', 'note-1');
-    expect(extractKeywords).toHaveBeenCalledWith('content');
+    expect(extractKeywords).not.toHaveBeenCalled();
     expect(encrypted.encryptedTitle).toBe('enc:title');
-    expect(encrypted.keywords).toEqual(['kw']);
+    expect(encrypted.keywords).toEqual([]);
   });
 
   it('should restore KEK and unlock state when persisted', async () => {

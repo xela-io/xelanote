@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: encrypted note `folder_path` is now normalized to `/` on create/update across note/journal/recipe/canvas flows, with migration cleanup for existing encrypted rows
 - Security: encrypted note create/update now rejects outdated `encryption_metadata.version` (< 3) to harden against protocol downgrade writes
 - Security: introduced recovery-wrapped DEK persistence (`wrapped_dek_recovery`) for notes and note_versions with migration, read-path wiring, and transactional DB helpers (`BulkUpdateRecoveryWrappedDEKs`, `ClearRecoveryWrappedDEKs`)
+- Security: added phased recovery-reset backend for encrypted accounts (`/auth/recovery/verify`, `/auth/recovery/encrypted-deks`, `/auth/recovery/reset-password-v2`) with one-time reset tokens, atomic password+DEK rewrap finalize, and token/session/recovery-wrapper invalidation
 - Security Tests: expanded `frontend/src/lib/crypto/e2e.test.ts` with decrypt-failure and AAD-behavior regression coverage (invalid wrapped DEK, tampered ciphertext path, corrupted metadata)
 - Security Planning: added concrete implementation plan for recovery-based DEK rewrap on encrypted accounts (`docs/security/E2EE-RECOVERY-DEK-REWRAP-IMPLEMENTATION-PLAN-2026-02-28.md`)
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area

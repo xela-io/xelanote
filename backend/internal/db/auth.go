@@ -333,6 +333,14 @@ func (db *DB) DeleteAllUserRefreshTokens(userID int) error {
 	return nil
 }
 
+// DeleteAllUserRefreshTokensTx deletes all refresh tokens for a user in a transaction.
+func (tx *Tx) DeleteAllUserRefreshTokensTx(userID int) error {
+	if _, err := tx.Exec(`DELETE FROM refresh_tokens WHERE user_id = ?`, userID); err != nil {
+		return fmt.Errorf("delete all user refresh tokens in tx: %w", err)
+	}
+	return nil
+}
+
 // UpdateUserEmail updates a user's email address
 func (db *DB) UpdateUserEmail(userID int, newEmail string) error {
 	result, err := db.Exec(`

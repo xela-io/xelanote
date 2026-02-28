@@ -54,9 +54,17 @@ var (
 	ErrInvalidEmail                = errors.New("invalid email format")
 	ErrRecoveryResetNeedsDEKRewrap = errors.New("password recovery blocked: encrypted notes require DEK re-wrapping")
 	ErrRecoveryKeyBlockedEncrypted = errors.New("recovery key setup blocked: encrypted notes require recovery DEK re-wrapping support")
+	ErrInvalidRecoveryResetToken   = errors.New("invalid recovery reset token")
+	ErrRecoveryRewrapNotConfigured = errors.New("recovery reset unavailable: encrypted DEK recovery wrappers are missing")
 	ErrInvalidHomeDashboardLayout  = errors.New("invalid home dashboard layout")
 	ErrInvalidOpenTabs             = errors.New("invalid open tabs")
 )
+
+// RecoveryWrappedDEKEntry is returned by recovery reset preparation endpoints.
+type RecoveryWrappedDEKEntry struct {
+	ID                 string `json:"id"`
+	WrappedDEKRecovery string `json:"wrapped_dek_recovery"`
+}
 
 // Valid theme IDs (must match frontend themes/index.ts)
 var validThemes = map[string]bool{

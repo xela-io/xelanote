@@ -107,69 +107,9 @@ func (s *UserService) ChangePasswordWithDEKRewrap(
 		return ErrInvalidPassword
 	}
 
-	// Check if user has encrypted notes/versions
-	encryptedNotes, err := s.db.GetAllEncryptedNotesForUser(userID)
+	shouldUpdateWrappedDEKs, err := s.validateReWrappedDEKCoverage(userID, reWrappedNotes, reWrappedVersions)
 	if err != nil {
-		return fmt.Errorf("failed to check encrypted notes: %w", err)
-	}
-
-	encryptedVersions, err := s.db.GetAllEncryptedVersionsForUser(userID)
-	if err != nil {
-		return fmt.Errorf("failed to check encrypted versions: %w", err)
-	}
-
-	hasEncryptedContent := len(encryptedNotes) > 0 || len(encryptedVersions) > 0
-
-	// Backwards compatibility: if no re-wrapped DEKs provided
-	if len(reWrappedNotes) == 0 && len(reWrappedVersions) == 0 {
-		if hasEncryptedContent {
-			return errors.New("DEK re-wrapping required: user has encrypted notes or versions")
-		}
-		// User has no encrypted content, proceed with simple password change
-	} else {
-		if !hasEncryptedContent {
-			return errors.New("no encrypted content to re-wrap")
-		}
-
-		allowedNoteIDs := make(map[string]struct{}, len(encryptedNotes))
-		allowedVersionIDs := make(map[string]struct{}, len(encryptedVersions))
-
-		// Validate that all encrypted notes are included in reWrappedNotes
-		for _, note := range encryptedNotes {
-			allowedNoteIDs[note.ID] = struct{}{}
-			if _, ok := reWrappedNotes[note.ID]; !ok {
-				return fmt.Errorf("missing re-wrapped DEK for note %s", note.ID)
-			}
-			if err := validateReWrappedDEKValue(reWrappedNotes[note.ID]); err != nil {
-				return fmt.Errorf("invalid re-wrapped DEK for note %s: %w", note.ID, err)
-			}
-		}
-
-		// Validate that all encrypted versions are included in reWrappedVersions
-		for _, version := range encryptedVersions {
-			versionIDStr := fmt.Sprintf("%d", version.ID)
-			allowedVersionIDs[versionIDStr] = struct{}{}
-			if _, ok := reWrappedVersions[versionIDStr]; !ok {
-				return fmt.Errorf("missing re-wrapped DEK for version %d", version.ID)
-			}
-			if err := validateReWrappedDEKValue(reWrappedVersions[versionIDStr]); err != nil {
-				return fmt.Errorf("invalid re-wrapped DEK for version %d: %w", version.ID, err)
-			}
-		}
-
-		// Reject unexpected note IDs to avoid silently accepting untrusted extras.
-		for noteID := range reWrappedNotes {
-			if _, ok := allowedNoteIDs[noteID]; !ok {
-				return fmt.Errorf("unexpected re-wrapped DEK for note %s", noteID)
-			}
-		}
-
-		// Reject unexpected version IDs to avoid silently accepting untrusted extras.
-		for versionID := range reWrappedVersions {
-			if _, ok := allowedVersionIDs[versionID]; !ok {
-				return fmt.Errorf("unexpected re-wrapped DEK for version %s", versionID)
-			}
-		}
+		return err
 	}
 
 	// Hash new password
@@ -192,7 +132,7 @@ func (s *UserService) ChangePasswordWithDEKRewrap(
 	}
 
 	// Update wrapped DEKs within the SAME transaction
-	if len(reWrappedNotes) > 0 || len(reWrappedVersions) > 0 {
+	if shouldUpdateWrappedDEKs {
 		err = tx.BulkUpdateWrappedDEKsTx(userID, reWrappedNotes, reWrappedVersions)
 		if err != nil {
 			return fmt.Errorf("failed to update wrapped DEKs: %w", err)
@@ -223,6 +163,73 @@ func (s *UserService) ChangePasswordWithDEKRewrap(
 	}
 
 	return nil
+}
+
+func (s *UserService) validateReWrappedDEKCoverage(
+	userID int,
+	reWrappedNotes map[string]string,
+	reWrappedVersions map[string]string,
+) (bool, error) {
+	encryptedNotes, err := s.db.GetAllEncryptedNotesForUser(userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check encrypted notes: %w", err)
+	}
+
+	encryptedVersions, err := s.db.GetAllEncryptedVersionsForUser(userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check encrypted versions: %w", err)
+	}
+
+	hasEncryptedContent := len(encryptedNotes) > 0 || len(encryptedVersions) > 0
+
+	if len(reWrappedNotes) == 0 && len(reWrappedVersions) == 0 {
+		if hasEncryptedContent {
+			return false, errors.New("DEK re-wrapping required: user has encrypted notes or versions")
+		}
+		return false, nil
+	}
+
+	if !hasEncryptedContent {
+		return false, errors.New("no encrypted content to re-wrap")
+	}
+
+	allowedNoteIDs := make(map[string]struct{}, len(encryptedNotes))
+	allowedVersionIDs := make(map[string]struct{}, len(encryptedVersions))
+
+	for _, note := range encryptedNotes {
+		allowedNoteIDs[note.ID] = struct{}{}
+		if _, ok := reWrappedNotes[note.ID]; !ok {
+			return false, fmt.Errorf("missing re-wrapped DEK for note %s", note.ID)
+		}
+		if err := validateReWrappedDEKValue(reWrappedNotes[note.ID]); err != nil {
+			return false, fmt.Errorf("invalid re-wrapped DEK for note %s: %w", note.ID, err)
+		}
+	}
+
+	for _, version := range encryptedVersions {
+		versionIDStr := fmt.Sprintf("%d", version.ID)
+		allowedVersionIDs[versionIDStr] = struct{}{}
+		if _, ok := reWrappedVersions[versionIDStr]; !ok {
+			return false, fmt.Errorf("missing re-wrapped DEK for version %d", version.ID)
+		}
+		if err := validateReWrappedDEKValue(reWrappedVersions[versionIDStr]); err != nil {
+			return false, fmt.Errorf("invalid re-wrapped DEK for version %d: %w", version.ID, err)
+		}
+	}
+
+	for noteID := range reWrappedNotes {
+		if _, ok := allowedNoteIDs[noteID]; !ok {
+			return false, fmt.Errorf("unexpected re-wrapped DEK for note %s", noteID)
+		}
+	}
+
+	for versionID := range reWrappedVersions {
+		if _, ok := allowedVersionIDs[versionID]; !ok {
+			return false, fmt.Errorf("unexpected re-wrapped DEK for version %s", versionID)
+		}
+	}
+
+	return true, nil
 }
 
 func validateReWrappedDEKValue(base64DEK string) error {

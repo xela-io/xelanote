@@ -101,3 +101,15 @@ func (db *DB) InvalidateRecoveryKey(userID int) error {
 	`, now, userID)
 	return err
 }
+
+// InvalidateRecoveryKeyTx clears recovery key data within an existing transaction.
+func (tx *Tx) InvalidateRecoveryKeyTx(userID int) error {
+	now := time.Now().Format(time.RFC3339)
+
+	_, err := tx.Exec(`
+		UPDATE user_preferences
+		SET recovery_key_hash = NULL, recovery_key_salt = NULL, updated_at = ?
+		WHERE user_id = ?
+	`, now, userID)
+	return err
+}

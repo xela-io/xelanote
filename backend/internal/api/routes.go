@@ -56,7 +56,10 @@ func (s *Server) registerPublicRoutes(r chi.Router) {
 
 	// Public recovery endpoints (rate-limited)
 	r.With(rateLimitMiddleware(s.recoveryLimiter)).Post("/auth/recovery/salt", s.getRecoveryKeySaltByEmail)
+	r.With(rateLimitMiddleware(s.recoveryLimiter)).Post("/auth/recovery/verify", s.verifyRecoveryKey)
+	r.With(rateLimitMiddleware(s.recoveryLimiter)).Get("/auth/recovery/encrypted-deks", s.getRecoveryWrappedDEKs)
 	r.With(rateLimitMiddleware(s.recoveryLimiter)).Post("/auth/recovery/reset-password", s.resetPasswordWithRecoveryKey)
+	r.With(rateLimitMiddleware(s.recoveryLimiter)).Post("/auth/recovery/reset-password-v2", s.resetPasswordWithRecoveryToken)
 
 	// Error reporting (public, rate-limited)
 	r.With(rateLimitMiddleware(s.errorReportLimiter)).Post("/error-reports", s.submitErrorReport)

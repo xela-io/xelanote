@@ -28,11 +28,39 @@ type RecoverySaltRequest struct {
 	Email string `json:"email"`
 }
 
+// RecoveryVerifyRequest verifies email + recovery key and issues a short-lived reset token.
+type RecoveryVerifyRequest struct {
+	Email       string `json:"email"`
+	RecoveryKey string `json:"recovery_key"`
+}
+
 // RecoveryResetPasswordRequest represents the request to reset password with recovery key
 type RecoveryResetPasswordRequest struct {
 	Email       string `json:"email"`
 	RecoveryKey string `json:"recovery_key"`
 	NewPassword string `json:"new_password"`
+}
+
+// RecoveryResetPasswordWithTokenRequest finalizes password recovery with a one-time reset token.
+type RecoveryResetPasswordWithTokenRequest struct {
+	RecoveryResetToken   string            `json:"recovery_reset_token"`
+	NewPassword          string            `json:"new_password"`
+	ReWrappedNoteDEKs    map[string]string `json:"re_wrapped_note_deks,omitempty"`    // noteID -> wrapped_dek
+	ReWrappedVersionDEKs map[string]string `json:"re_wrapped_version_deks,omitempty"` // versionID -> wrapped_dek
+}
+
+type recoveryVerifyResponse struct {
+	RecoveryResetToken string `json:"recovery_reset_token"`
+}
+
+type recoveryWrappedDEKResponseItem struct {
+	ID                 string `json:"id"`
+	WrappedDEKRecovery string `json:"wrapped_dek_recovery"`
+}
+
+type recoveryWrappedDEKsResponse struct {
+	Notes    []recoveryWrappedDEKResponseItem `json:"notes"`
+	Versions []recoveryWrappedDEKResponseItem `json:"versions"`
 }
 
 // AuthResponse represents the response for successful authentication

@@ -1,6 +1,9 @@
 package service
 
 import (
+	"bytes"
+	"database/sql"
+	"encoding/base64"
 	"strings"
 	"testing"
 
@@ -8,6 +11,10 @@ import (
 
 	"github.com/xela-io/xelanote/internal/db"
 )
+
+func validWrappedDEK(seed byte) string {
+	return base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{seed}, 48))
+}
 
 func TestUserService_ChangeEmail(t *testing.T) {
 	testDB, userService := setupUserServiceTest(t)
@@ -395,6 +402,123 @@ func TestUserService_GetRecoveryKeySaltByEmail(t *testing.T) {
 			t.Fatalf("expected generic unavailable error, got: %v", err)
 		}
 	})
+}
+
+func TestUserService_RecoveryResetTokenFlow_WithEncryptedContent(t *testing.T) {
+	testDB, userService := setupUserServiceTest(t)
+	defer testDB.Close()
+
+	userID := createTestUserForPasswordTests(t, testDB, "tokenrecov", "tokenrecov@example.com", "oldpassword1")
+
+	recoveryKey := "token-recovery-key"
+	hash, err := bcrypt.GenerateFromPassword([]byte(recoveryKey), 12)
+	if err != nil {
+		t.Fatalf("failed to hash recovery key: %v", err)
+	}
+	if err := testDB.SetRecoveryKey(userID, string(hash), []byte("salt")); err != nil {
+		t.Fatalf("failed to set recovery key: %v", err)
+	}
+
+	_, err = testDB.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, wrapped_dek_recovery, encryption_version)
+		VALUES ('token-rec-note-1', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, ?, ?, 2)
+	`, userID, validWrappedDEK(1), validWrappedDEK(2))
+	if err != nil {
+		t.Fatalf("failed to create encrypted note: %v", err)
+	}
+
+	_, err = testDB.Exec(`
+		INSERT INTO note_versions (id, note_id, user_id, version, title, content, snapshot_at,
+		                           content_encrypted, wrapped_dek, wrapped_dek_recovery, encryption_version)
+		VALUES (101, 'token-rec-note-1', ?, 1, 'V1', '', datetime('now'), 1, ?, ?, 2)
+	`, userID, validWrappedDEK(3), validWrappedDEK(4))
+	if err != nil {
+		t.Fatalf("failed to create encrypted note version: %v", err)
+	}
+
+	resetToken, err := userService.BeginRecoveryResetByEmail("tokenrecov@example.com", recoveryKey)
+	if err != nil {
+		t.Fatalf("BeginRecoveryResetByEmail failed: %v", err)
+	}
+	if resetToken == "" {
+		t.Fatal("expected non-empty recovery reset token")
+	}
+
+	notes, versions, err := userService.GetRecoveryWrappedDEKs(resetToken)
+	if err != nil {
+		t.Fatalf("GetRecoveryWrappedDEKs failed: %v", err)
+	}
+	if len(notes) != 1 || len(versions) != 1 {
+		t.Fatalf("expected 1 note and 1 version wrapper, got %d and %d", len(notes), len(versions))
+	}
+
+	err = userService.FinalizeRecoveryResetWithToken(
+		resetToken,
+		"newpassword1",
+		map[string]string{"token-rec-note-1": validWrappedDEK(9)},
+		map[string]string{"101": validWrappedDEK(8)},
+	)
+	if err != nil {
+		t.Fatalf("FinalizeRecoveryResetWithToken failed: %v", err)
+	}
+
+	user, err := testDB.GetUserByID(userID)
+	if err != nil {
+		t.Fatalf("failed to get user: %v", err)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte("newpassword1")); err != nil {
+		t.Fatal("expected password to be updated after recovery finalize")
+	}
+
+	var noteWrappedDEK string
+	if err := testDB.QueryRow(`SELECT wrapped_dek FROM notes WHERE id = 'token-rec-note-1'`).Scan(&noteWrappedDEK); err != nil {
+		t.Fatalf("failed to read note wrapped_dek: %v", err)
+	}
+	if noteWrappedDEK != validWrappedDEK(9) {
+		t.Fatalf("expected updated note wrapped_dek, got %q", noteWrappedDEK)
+	}
+
+	var versionWrappedDEK string
+	if err := testDB.QueryRow(`SELECT wrapped_dek FROM note_versions WHERE id = 101`).Scan(&versionWrappedDEK); err != nil {
+		t.Fatalf("failed to read version wrapped_dek: %v", err)
+	}
+	if versionWrappedDEK != validWrappedDEK(8) {
+		t.Fatalf("expected updated version wrapped_dek, got %q", versionWrappedDEK)
+	}
+
+	prefs, err := testDB.GetUserPreferences(userID)
+	if err != nil {
+		t.Fatalf("failed to read user preferences: %v", err)
+	}
+	if prefs.RecoveryKeyHash != nil || prefs.RecoveryKeySalt != nil {
+		t.Fatal("expected recovery key material to be invalidated after finalize")
+	}
+
+	var noteRecovery sql.NullString
+	if err := testDB.QueryRow(`SELECT wrapped_dek_recovery FROM notes WHERE id = 'token-rec-note-1'`).Scan(&noteRecovery); err != nil {
+		t.Fatalf("failed to read note wrapped_dek_recovery: %v", err)
+	}
+	if noteRecovery.Valid {
+		t.Fatal("expected note wrapped_dek_recovery to be cleared")
+	}
+
+	var versionRecovery sql.NullString
+	if err := testDB.QueryRow(`SELECT wrapped_dek_recovery FROM note_versions WHERE id = 101`).Scan(&versionRecovery); err != nil {
+		t.Fatalf("failed to read version wrapped_dek_recovery: %v", err)
+	}
+	if versionRecovery.Valid {
+		t.Fatal("expected version wrapped_dek_recovery to be cleared")
+	}
+
+	if err := userService.FinalizeRecoveryResetWithToken(
+		resetToken,
+		"anotherpassword1",
+		map[string]string{},
+		map[string]string{},
+	); err != ErrInvalidRecoveryResetToken {
+		t.Fatalf("expected ErrInvalidRecoveryResetToken when reusing token, got %v", err)
+	}
 }
 
 // Ensure GetRecoveryKeySalt and GetRecoveryKeySaltByEmail use UserService

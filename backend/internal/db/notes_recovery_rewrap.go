@@ -58,6 +58,19 @@ func (db *DB) ClearRecoveryWrappedDEKs(userID int) error {
 	}
 	defer tx.Rollback()
 
+	if err := (&Tx{Tx: tx}).ClearRecoveryWrappedDEKsTx(userID); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+// ClearRecoveryWrappedDEKsTx clears all wrapped_dek_recovery values for a user inside an existing transaction.
+func (tx *Tx) ClearRecoveryWrappedDEKsTx(userID int) error {
 	if _, err := tx.Exec(`
 		UPDATE notes
 		SET wrapped_dek_recovery = NULL
@@ -72,10 +85,6 @@ func (db *DB) ClearRecoveryWrappedDEKs(userID int) error {
 		WHERE user_id = ?
 	`, userID); err != nil {
 		return fmt.Errorf("failed to clear version wrapped_dek_recovery values: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil

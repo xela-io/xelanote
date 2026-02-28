@@ -1,13 +1,24 @@
 package service
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/xela-io/xelanote/internal/db"
+)
+
+const (
+	recoveryResetTokenTTL   = 15 * time.Minute
+	recoveryResetTokenBytes = 32
 )
 
 // SetRecoveryKey sets a recovery key for password recovery
@@ -215,6 +226,174 @@ func (s *UserService) GetRecoveryKeySaltByEmail(email string) ([]byte, error) {
 	return salt, nil
 }
 
+// BeginRecoveryResetByEmail verifies recovery credentials and creates a short-lived one-time reset token.
+func (s *UserService) BeginRecoveryResetByEmail(email, recoveryKey string) (string, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+	if email == "" || recoveryKey == "" {
+		return "", errors.New("invalid email or recovery key")
+	}
+
+	user, err := s.db.GetUserByEmail(email)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			_ = bcrypt.CompareHashAndPassword([]byte(dummyBcryptHash), []byte(recoveryKey))
+			return "", errors.New("invalid email or recovery key")
+		}
+		return "", err
+	}
+
+	prefs, err := s.db.GetUserPreferences(user.ID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return "", errors.New("invalid email or recovery key")
+		}
+		return "", err
+	}
+	if prefs.RecoveryKeyHash == nil || *prefs.RecoveryKeyHash == "" {
+		return "", errors.New("invalid email or recovery key")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(*prefs.RecoveryKeyHash), []byte(recoveryKey)); err != nil {
+		return "", errors.New("invalid email or recovery key")
+	}
+
+	rawToken, tokenHash, err := generateRecoveryResetToken()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate recovery reset token: %w", err)
+	}
+
+	if err := s.db.CreateRecoveryResetToken(user.ID, tokenHash, time.Now().UTC().Add(recoveryResetTokenTTL)); err != nil {
+		return "", fmt.Errorf("failed to store recovery reset token: %w", err)
+	}
+
+	return rawToken, nil
+}
+
+// GetRecoveryWrappedDEKs lists encrypted note/version recovery wrappers for a valid reset token.
+func (s *UserService) GetRecoveryWrappedDEKs(recoveryResetToken string) ([]RecoveryWrappedDEKEntry, []RecoveryWrappedDEKEntry, error) {
+	if recoveryResetToken == "" {
+		return nil, nil, ErrInvalidRecoveryResetToken
+	}
+
+	userID, err := s.db.ValidateRecoveryResetToken(hashRecoveryResetToken(recoveryResetToken))
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return nil, nil, ErrInvalidRecoveryResetToken
+		}
+		return nil, nil, err
+	}
+
+	notes, err := s.db.GetAllEncryptedNotesForUser(userID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch encrypted notes: %w", err)
+	}
+	versions, err := s.db.GetAllEncryptedVersionsForUser(userID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch encrypted versions: %w", err)
+	}
+
+	noteEntries := make([]RecoveryWrappedDEKEntry, 0, len(notes))
+	for _, note := range notes {
+		if note.WrappedDEKRecovery == "" {
+			return nil, nil, ErrRecoveryRewrapNotConfigured
+		}
+		noteEntries = append(noteEntries, RecoveryWrappedDEKEntry{
+			ID:                 note.ID,
+			WrappedDEKRecovery: note.WrappedDEKRecovery,
+		})
+	}
+
+	versionEntries := make([]RecoveryWrappedDEKEntry, 0, len(versions))
+	for _, version := range versions {
+		if version.WrappedDEKRecovery == "" {
+			return nil, nil, ErrRecoveryRewrapNotConfigured
+		}
+		versionEntries = append(versionEntries, RecoveryWrappedDEKEntry{
+			ID:                 fmt.Sprintf("%d", version.ID),
+			WrappedDEKRecovery: version.WrappedDEKRecovery,
+		})
+	}
+
+	return noteEntries, versionEntries, nil
+}
+
+// FinalizeRecoveryResetWithToken updates password and wrapped DEKs atomically using a one-time recovery token.
+func (s *UserService) FinalizeRecoveryResetWithToken(
+	recoveryResetToken string,
+	newPassword string,
+	reWrappedNotes map[string]string,
+	reWrappedVersions map[string]string,
+) error {
+	if len(newPassword) < 8 {
+		return ErrPasswordTooShort
+	}
+	if recoveryResetToken == "" {
+		return ErrInvalidRecoveryResetToken
+	}
+
+	tokenHash := hashRecoveryResetToken(recoveryResetToken)
+	userID, err := s.db.ValidateRecoveryResetToken(tokenHash)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return ErrInvalidRecoveryResetToken
+		}
+		return err
+	}
+
+	shouldUpdateWrappedDEKs, err := s.validateReWrappedDEKCoverage(userID, reWrappedNotes, reWrappedVersions)
+	if err != nil {
+		return err
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	tx, err := s.db.BeginTx(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	tokenUserID, err := tx.ConsumeRecoveryResetTokenTx(tokenHash)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return ErrInvalidRecoveryResetToken
+		}
+		return fmt.Errorf("failed to consume recovery reset token: %w", err)
+	}
+	if tokenUserID != userID {
+		return ErrInvalidRecoveryResetToken
+	}
+
+	if err := tx.UpdateUserPasswordTx(userID, string(newPasswordHash)); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	if shouldUpdateWrappedDEKs {
+		if err := tx.BulkUpdateWrappedDEKsTx(userID, reWrappedNotes, reWrappedVersions); err != nil {
+			return fmt.Errorf("failed to update wrapped DEKs: %w", err)
+		}
+	}
+
+	if err := tx.InvalidateRecoveryKeyTx(userID); err != nil {
+		return fmt.Errorf("failed to invalidate recovery key: %w", err)
+	}
+	if err := tx.ClearRecoveryWrappedDEKsTx(userID); err != nil {
+		return fmt.Errorf("failed to clear recovery wrapped DEKs: %w", err)
+	}
+	if err := tx.DeleteAllUserRefreshTokensTx(userID); err != nil {
+		return fmt.Errorf("failed to invalidate user sessions: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit recovery reset: %w", err)
+	}
+
+	return nil
+}
+
 func (s *UserService) hasEncryptedNotesOrVersions(userID int) (bool, error) {
 	encryptedNotes, err := s.db.GetAllEncryptedNotesForUser(userID)
 	if err != nil {
@@ -227,4 +406,19 @@ func (s *UserService) hasEncryptedNotesOrVersions(userID int) (bool, error) {
 	}
 
 	return len(encryptedNotes) > 0 || len(encryptedVersions) > 0, nil
+}
+
+func generateRecoveryResetToken() (string, string, error) {
+	raw := make([]byte, recoveryResetTokenBytes)
+	if _, err := rand.Read(raw); err != nil {
+		return "", "", err
+	}
+
+	token := base64.RawURLEncoding.EncodeToString(raw)
+	return token, hashRecoveryResetToken(token), nil
+}
+
+func hashRecoveryResetToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }

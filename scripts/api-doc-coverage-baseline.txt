@@ -48,6 +48,7 @@ POST /api/2fa/fido2/register/begin
 POST /api/2fa/fido2/register/finish
 POST /api/auth/fido2/begin
 POST /api/auth/fido2/finish
+POST /api/auth/recovery/verify
 POST /api/llm/spell-check
 POST /api/llm/transcribe
 POST /api/notes/:param/ai-transform

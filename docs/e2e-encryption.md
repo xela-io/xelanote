@@ -50,7 +50,8 @@ Die verschluesselte Payload enthaelt:
 
 ### Nicht durch E2EE geschuetzt (serverseitig sichtbar)
 
-- Ordnerpfade
+- Ordnerpfade fuer unverschluesselte Notizen
+- Bei verschluesselten Notizen wird `folder_path` serverseitig auf `/` normalisiert
 - Strukturmetadaten (z. B. Timestamps)
 - Tags
 - Uploads/Anhaenge in unverschluesselten Notizen
@@ -91,7 +92,7 @@ Konsequenz:
 
 1. Starkes, einzigartiges Passwort verwenden.
 2. Titelverschluesselung aktivieren, wenn Titel-Metadaten relevant sind.
-3. Sensible Infos nicht in Ordnernamen/Tags ablegen.
+3. Sensible Infos nicht in Tags oder Ordnernamen unverschluesselter Notizen ablegen.
 4. Bei Uploads beachten: Nur Uploads aus verschluesselten Notizen sind E2EE (`.xenc`).
 5. AI bei unverschluesselten Notizen nur nutzen, wenn Klartextuebertragung fuer den konkreten Inhalt akzeptabel ist.
 

@@ -23,7 +23,7 @@ func (s *NoteService) CreateEncryptedNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	_ []string,
-	folderPath string,
+	_ string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedNoteWithID(
 		userID,
@@ -35,7 +35,7 @@ func (s *NoteService) CreateEncryptedNote(
 		wrappedDEK,
 		encryptionMetadata,
 		nil,
-		folderPath,
+		"",
 	)
 }
 
@@ -50,12 +50,14 @@ func (s *NoteService) CreateEncryptedNoteWithID(
 	wrappedDEK string,
 	encryptionMetadata string,
 	_ []string,
-	folderPath string,
+	_ string,
 ) (*db.Note, error) {
 	// Validate
 	if len(encryptedContent) == 0 || wrappedDEK == "" {
 		return nil, errors.New("encrypted content and wrapped DEK required")
 	}
+
+	encryptedFolderPath := normalizedEncryptedFolderPath()
 
 	// Create note in DB
 	note, err := s.db.CreateEncryptedNoteWithID(
@@ -67,7 +69,7 @@ func (s *NoteService) CreateEncryptedNoteWithID(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		folderPath,
+		encryptedFolderPath,
 	)
 	if err != nil {
 		return nil, err
@@ -76,6 +78,7 @@ func (s *NoteService) CreateEncryptedNoteWithID(
 	// Invalidate caches
 	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateQuickSearchCache(userID)
+	s.invalidateNotesByFolderCache(userID, encryptedFolderPath)
 
 	return note, nil
 }
@@ -133,7 +136,7 @@ func (s *NoteService) CreateEncryptedJournalNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	_ []string,
-	folderPath string,
+	_ string,
 	journalDate string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedJournalNoteWithID(
@@ -146,7 +149,7 @@ func (s *NoteService) CreateEncryptedJournalNote(
 		wrappedDEK,
 		encryptionMetadata,
 		nil,
-		folderPath,
+		"",
 		journalDate,
 	)
 }
@@ -163,7 +166,7 @@ func (s *NoteService) CreateEncryptedJournalNoteWithID(
 	wrappedDEK string,
 	encryptionMetadata string,
 	_ []string,
-	folderPath string,
+	_ string,
 	journalDate string,
 ) (*db.Note, error) {
 	if err := s.checkNoteLimit(userID); err != nil {
@@ -189,11 +192,13 @@ func (s *NoteService) CreateEncryptedJournalNoteWithID(
 		return nil, errors.New("encrypted content and wrapped DEK required")
 	}
 
+	encryptedFolderPath := normalizedEncryptedFolderPath()
+
 	// Create encrypted journal note (also creates /Journal folder if needed)
 	note, err := s.db.CreateEncryptedJournalNoteWithID(
 		userID, noteID, title, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
-		folderPath, journalDate,
+		encryptedFolderPath, journalDate,
 	)
 	if err != nil {
 		return nil, err
@@ -203,7 +208,7 @@ func (s *NoteService) CreateEncryptedJournalNoteWithID(
 	s.invalidateRecoveryKeyBestEffort(userID)
 	s.invalidateFolderCache(userID)
 	s.invalidateQuickSearchCache(userID)
-	s.invalidateNotesByFolderCache(userID, folderPath)
+	s.invalidateNotesByFolderCache(userID, encryptedFolderPath)
 	if s.graphService != nil {
 		s.graphService.InvalidateGraphCache(userID)
 	}

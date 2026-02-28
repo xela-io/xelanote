@@ -43,7 +43,7 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	_ []string,
-	folderPath string,
+	_ string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedRecipeNoteWithID(
 		userID,
@@ -55,7 +55,7 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 		wrappedDEK,
 		encryptionMetadata,
 		nil,
-		folderPath,
+		"",
 	)
 }
 
@@ -71,7 +71,7 @@ func (s *RecipeService) CreateEncryptedRecipeNoteWithID(
 	wrappedDEK string,
 	encryptionMetadata string,
 	_ []string,
-	folderPath string,
+	_ string,
 ) (*db.Note, error) {
 	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
@@ -82,9 +82,11 @@ func (s *RecipeService) CreateEncryptedRecipeNoteWithID(
 		return nil, err
 	}
 
+	encryptedFolderPath := normalizedEncryptedFolderPath()
+
 	note, err := s.db.CreateEncryptedRecipeNoteWithID(
 		userID, noteID, title, encryptedTitle, titleEncrypted,
-		encryptedContent, wrappedDEK, encryptionMetadata, folderPath,
+		encryptedContent, wrappedDEK, encryptionMetadata, encryptedFolderPath,
 	)
 	if err != nil {
 		return nil, err
@@ -94,7 +96,7 @@ func (s *RecipeService) CreateEncryptedRecipeNoteWithID(
 	s.notes.invalidateRecoveryKeyBestEffort(userID)
 	s.notes.invalidateFolderCache(userID)
 	s.notes.invalidateQuickSearchCache(userID)
-	s.notes.invalidateNotesByFolderCache(userID, folderPath)
+	s.notes.invalidateNotesByFolderCache(userID, encryptedFolderPath)
 	if s.notes.graphService != nil {
 		s.notes.graphService.InvalidateGraphCache(userID)
 	}

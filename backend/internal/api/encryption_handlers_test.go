@@ -195,6 +195,28 @@ func TestCreateEncryptedNote_IgnoresClientLinksAndDueDates(t *testing.T) {
 	assert.Equal(t, 0, keywordsCount)
 }
 
+func TestCreateEncryptedNote_NormalizesFolderPathToRoot(t *testing.T) {
+	ts := newTestServer(t)
+	r := encryptionRouter(ts)
+	user := ts.createUser(t, "encuser-folder-create", "enc-folder-create@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
+
+	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		Title:              "Encrypted Note",
+		FolderPath:         "/Sensitive/Finance",
+		EncryptedContent:   encContent,
+		WrappedDEK:         wrappedDEK,
+		EncryptionMetadata: meta,
+	}, token)
+
+	require.Equal(t, http.StatusCreated, rec.Code)
+	var note map[string]interface{}
+	decodeResponse(t, rec, &note)
+	assert.Equal(t, "/", note["folder_path"])
+}
+
 func TestCreateEncryptedNote_InvalidDEK(t *testing.T) {
 	ts := newTestServer(t)
 	r := encryptionRouter(ts)
@@ -377,6 +399,42 @@ func TestUpdateEncryptedNote_ClearsExistingLinksAndDueDates(t *testing.T) {
 	assert.Equal(t, 0, unresolvedAfter)
 	assert.Equal(t, 0, dueDatesAfter)
 	assert.Equal(t, 0, keywordsAfter)
+}
+
+func TestUpdateEncryptedNote_NormalizesFolderPathToRoot(t *testing.T) {
+	ts := newTestServer(t)
+	r := encryptionRouter(ts)
+	user := ts.createUser(t, "encuser-folder-update", "enc-folder-update@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	plainRec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		Title:      "Plain",
+		Content:    "content",
+		FolderPath: "/Private/Area",
+	}, token)
+	require.Equal(t, http.StatusCreated, plainRec.Code)
+	etag := plainRec.Header().Get("ETag")
+	require.NotEmpty(t, etag)
+
+	var plain map[string]interface{}
+	decodeResponse(t, plainRec, &plain)
+	noteID := plain["id"].(string)
+
+	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
+	updateRec := doJSONWithHeaders(t, r, http.MethodPut, "/api/notes/"+noteID, NoteRequest{
+		Title:              "Encrypted",
+		FolderPath:         "/Still/Private",
+		EncryptedContent:   encContent,
+		WrappedDEK:         wrappedDEK,
+		EncryptionMetadata: meta,
+	}, token, map[string]string{"If-Match": etag})
+
+	require.Equal(t, http.StatusOK, updateRec.Code)
+
+	var updated map[string]interface{}
+	decodeResponse(t, updateRec, &updated)
+	assert.Equal(t, "/", updated["folder_path"])
+	assert.Equal(t, true, updated["content_encrypted"])
 }
 
 func TestDecryptNote_Success(t *testing.T) {

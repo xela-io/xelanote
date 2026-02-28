@@ -109,6 +109,13 @@ This addendum reflects the **current remediation status** of the previously repo
 - Migration removes legacy encrypted-note tag rows and orphaned tag entries: `backend/internal/db/migrations/064_delete_tags_for_encrypted_notes.sql`
 - Coverage: `backend/internal/api/tags_versions_handlers_test.go`, `backend/internal/service/notes_encryption_test.go`
 
+18. **Encrypted note folder paths are normalized to root (`/`) to reduce metadata leakage.**
+
+- Encrypted create/update service flows no longer persist client folder paths: `backend/internal/service/notes_encryption_create.go`, `backend/internal/service/notes_encryption_update.go`, `backend/internal/service/recipes_notes.go`, `backend/internal/service/canvas.go`
+- Shared helper enforces a single normalized encrypted folder path: `backend/internal/service/notes_encryption_paths.go`
+- Migration rewrites existing encrypted-note folder paths to `/`: `backend/internal/db/migrations/065_set_encrypted_notes_folder_root.sql`
+- Coverage: `backend/internal/api/encryption_handlers_test.go`, `backend/internal/service/notes_encryption_test.go`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

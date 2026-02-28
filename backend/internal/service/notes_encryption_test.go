@@ -22,7 +22,7 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 			"wrapped-dek-value",
 			"v2",
 			nil, // no keywords
-			"/",
+			"/Sensitive",
 		)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -35,6 +35,9 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 		}
 		if note.WrappedDEK != "wrapped-dek-value" {
 			t.Errorf("expected wrapped DEK 'wrapped-dek-value', got %q", note.WrappedDEK)
+		}
+		if note.FolderPath != "/" {
+			t.Errorf("expected encrypted note folder path '/' , got %q", note.FolderPath)
 		}
 	})
 
@@ -208,7 +211,7 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	}
 
 	sourceContent := "[[Target]]\n- [ ] hidden @due(2026-03-10)"
-	source, err := service.CreateNote(user.ID, "Source", sourceContent, "/")
+	source, err := service.CreateNote(user.ID, "Source", sourceContent, "/Private")
 	if err != nil {
 		t.Fatalf("failed to create source note: %v", err)
 	}
@@ -260,7 +263,7 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 		[]byte("encrypted-content"),
 		"wrapped-dek",
 		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
-		"/",
+		"/StillPrivate",
 		nil,
 		source.Version,
 	)
@@ -299,6 +302,13 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	}
 	if tagsAfter != 0 {
 		t.Fatalf("expected tags cleared, got %d", tagsAfter)
+	}
+	updatedSource, err := database.GetNote(user.ID, source.ID)
+	if err != nil {
+		t.Fatalf("reload encrypted source failed: %v", err)
+	}
+	if updatedSource.FolderPath != "/" {
+		t.Fatalf("expected encrypted note folder path '/', got %q", updatedSource.FolderPath)
 	}
 
 	// Keep target used to avoid accidental linter optimization assumptions.

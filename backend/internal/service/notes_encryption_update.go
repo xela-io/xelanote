@@ -17,7 +17,7 @@ func (s *NoteService) UpdateEncryptedNote(
 	encryptedContent []byte,
 	wrappedDEK string,
 	encryptionMetadata string,
-	folderPath string,
+	_ string,
 	_ []string,
 	expectedVersion int,
 ) (*db.Note, error) {
@@ -68,6 +68,8 @@ func (s *NoteService) UpdateEncryptedNote(
 		}
 	}
 
+	encryptedFolderPath := normalizedEncryptedFolderPath()
+
 	// Update note in DB
 	note, err := s.db.UpdateEncryptedNote(
 		userID,
@@ -78,7 +80,7 @@ func (s *NoteService) UpdateEncryptedNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
-		folderPath,
+		encryptedFolderPath,
 		expectedVersion,
 	)
 	if err != nil {

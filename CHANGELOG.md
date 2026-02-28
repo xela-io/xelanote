@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: removed residual encrypted-create keyword persistence hooks across note/journal/recipe/canvas service+DB paths
 - Security: `GET /api/users/recovery-key/salt` now also blocks encrypted accounts (returns `404`), including legacy rows with stored recovery salts
 - Security: encrypted notes no longer support server-side tags (`PUT /api/notes/:id/tags` returns `409`, `GET` returns `[]`), and migration removes legacy encrypted-note tag rows
+- Security: encrypted note `folder_path` is now normalized to `/` on create/update across note/journal/recipe/canvas flows, with migration cleanup for existing encrypted rows
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
 - PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA
 - CI: relaxed flaky `docChanged:structured` performance threshold from 2.0ms to 5.0ms for slower CI runners

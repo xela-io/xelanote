@@ -94,6 +94,7 @@ func (s *Server) registerProtectedRoutes(r chi.Router) {
 
 		// Upload endpoints (SEC-002: Both upload and serving require authentication)
 		r.With(rateLimitMiddleware(s.uploadLimiter)).Post("/uploads", s.uploadImage)
+		r.With(rateLimitMiddleware(s.uploadLimiter)).Post("/uploads/encrypted", s.uploadEncryptedBlob)
 		r.Get("/uploads/{user_id}/{filename}", s.serveUpload) // Authenticated serving with ownership verification
 
 		// Import endpoints (rate-limited to prevent CPU/memory exhaustion)

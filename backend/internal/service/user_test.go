@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/base64"
+	"strings"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
@@ -43,6 +45,14 @@ func createTestUserForPasswordTests(t *testing.T, testDB *db.DB, username, email
 	return int(userID)
 }
 
+func makeWrappedDEK(seed byte, size int) string {
+	buf := make([]byte, size)
+	for i := range buf {
+		buf[i] = seed
+	}
+	return base64.StdEncoding.EncodeToString(buf)
+}
+
 func TestChangePasswordWithDEKRewrap_NoEncryptedNotes(t *testing.T) {
 	testDB, userService := setupUserServiceTest(t)
 	defer testDB.Close()
@@ -83,11 +93,12 @@ func TestChangePasswordWithDEKRewrap_WithEncryptedNotes_MissingDEKs(t *testing.T
 	userID := createTestUserForPasswordTests(t, testDB, "testuser", "test@example.com", "oldpassword123")
 
 	// Create encrypted note
+	oldWrappedDEK := makeWrappedDEK(0x11, 72)
 	_, err := testDB.Exec(`
 		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
 		                   content_encrypted, wrapped_dek, encryption_version)
-		VALUES ('note1', 'Encrypted Note', 'encrypted note', '', '/', ?, datetime('now'), datetime('now'), 1, 'old_dek', 2)
-	`, userID)
+		VALUES ('note1', 'Encrypted Note', 'encrypted note', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, userID, oldWrappedDEK)
 	if err != nil {
 		t.Fatalf("Failed to create encrypted note: %v", err)
 	}
@@ -124,38 +135,49 @@ func TestChangePasswordWithDEKRewrap_WithEncryptedNotes_Success(t *testing.T) {
 
 	userID := createTestUserForPasswordTests(t, testDB, "testuser", "test@example.com", "oldpassword123")
 
+	oldNoteDEK1 := makeWrappedDEK(0x21, 72)
+	oldNoteDEK2 := makeWrappedDEK(0x22, 72)
+
 	// Create encrypted notes
 	_, err := testDB.Exec(`
 		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
 		                   content_encrypted, wrapped_dek, encryption_version)
 		VALUES
-			('note1', 'Note 1', 'note 1', '', '/', ?, datetime('now'), datetime('now'), 1, 'old_dek_1', 2),
-			('note2', 'Note 2', 'note 2', '', '/', ?, datetime('now'), datetime('now'), 1, 'old_dek_2', 2)
-	`, userID, userID)
+			('note1', 'Note 1', 'note 1', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2),
+			('note2', 'Note 2', 'note 2', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, userID, oldNoteDEK1, userID, oldNoteDEK2)
 	if err != nil {
 		t.Fatalf("Failed to create encrypted notes: %v", err)
 	}
+
+	oldVersionDEK1 := makeWrappedDEK(0x31, 72)
+	oldVersionDEK2 := makeWrappedDEK(0x32, 72)
 
 	// Create encrypted versions
 	_, err = testDB.Exec(`
 		INSERT INTO note_versions (note_id, user_id, version, title, content, snapshot_at,
 		                           content_encrypted, wrapped_dek, encryption_version)
 		VALUES
-			('note1', ?, 1, 'V1', '', datetime('now'), 1, 'old_v_dek_1', 2),
-			('note1', ?, 2, 'V2', '', datetime('now'), 1, 'old_v_dek_2', 2)
-	`, userID, userID)
+			('note1', ?, 1, 'V1', '', datetime('now'), 1, ?, 2),
+			('note1', ?, 2, 'V2', '', datetime('now'), 1, ?, 2)
+	`, userID, oldVersionDEK1, userID, oldVersionDEK2)
 	if err != nil {
 		t.Fatalf("Failed to create encrypted versions: %v", err)
 	}
 
+	newNoteDEK1 := makeWrappedDEK(0x41, 72)
+	newNoteDEK2 := makeWrappedDEK(0x42, 72)
+	newVersionDEK1 := makeWrappedDEK(0x51, 72)
+	newVersionDEK2 := makeWrappedDEK(0x52, 72)
+
 	// Prepare re-wrapped DEKs
 	reWrappedNotes := map[string]string{
-		"note1": "new_dek_1",
-		"note2": "new_dek_2",
+		"note1": newNoteDEK1,
+		"note2": newNoteDEK2,
 	}
 	reWrappedVersions := map[string]string{
-		"1": "new_v_dek_1",
-		"2": "new_v_dek_2",
+		"1": newVersionDEK1,
+		"2": newVersionDEK2,
 	}
 
 	// Test password change with re-wrapped DEKs
@@ -185,16 +207,16 @@ func TestChangePasswordWithDEKRewrap_WithEncryptedNotes_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to query note1: %v", err)
 	}
-	if wrappedDEK != "new_dek_1" {
-		t.Errorf("note1 wrapped_dek not updated: expected 'new_dek_1', got '%s'", wrappedDEK)
+	if wrappedDEK != newNoteDEK1 {
+		t.Errorf("note1 wrapped_dek not updated: expected '%s', got '%s'", newNoteDEK1, wrappedDEK)
 	}
 
 	err = testDB.QueryRow(`SELECT wrapped_dek FROM note_versions WHERE id = 1`).Scan(&wrappedDEK)
 	if err != nil {
 		t.Fatalf("Failed to query version 1: %v", err)
 	}
-	if wrappedDEK != "new_v_dek_1" {
-		t.Errorf("version 1 wrapped_dek not updated: expected 'new_v_dek_1', got '%s'", wrappedDEK)
+	if wrappedDEK != newVersionDEK1 {
+		t.Errorf("version 1 wrapped_dek not updated: expected '%s', got '%s'", newVersionDEK1, wrappedDEK)
 	}
 }
 
@@ -204,21 +226,25 @@ func TestChangePasswordWithDEKRewrap_MissingNoteInMap(t *testing.T) {
 
 	userID := createTestUserForPasswordTests(t, testDB, "testuser", "test@example.com", "oldpassword123")
 
+	oldNoteDEK1 := makeWrappedDEK(0x61, 72)
+	oldNoteDEK2 := makeWrappedDEK(0x62, 72)
+
 	// Create 2 encrypted notes
 	_, err := testDB.Exec(`
 		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
 		                   content_encrypted, wrapped_dek, encryption_version)
 		VALUES
-			('note1', 'Note 1', 'note 1', '', '/', ?, datetime('now'), datetime('now'), 1, 'old_dek_1', 2),
-			('note2', 'Note 2', 'note 2', '', '/', ?, datetime('now'), datetime('now'), 1, 'old_dek_2', 2)
-	`, userID, userID)
+			('note1', 'Note 1', 'note 1', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2),
+			('note2', 'Note 2', 'note 2', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, userID, oldNoteDEK1, userID, oldNoteDEK2)
 	if err != nil {
 		t.Fatalf("Failed to create encrypted notes: %v", err)
 	}
 
 	// Only provide re-wrapped DEK for note1 (missing note2!)
+	newNoteDEK1 := makeWrappedDEK(0x71, 72)
 	reWrappedNotes := map[string]string{
-		"note1": "new_dek_1",
+		"note1": newNoteDEK1,
 		// Missing "note2"!
 	}
 
@@ -245,6 +271,118 @@ func TestChangePasswordWithDEKRewrap_MissingNoteInMap(t *testing.T) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte("oldpassword123"))
 	if err != nil {
 		t.Errorf("Password should not have been changed after validation failure")
+	}
+}
+
+func TestChangePasswordWithDEKRewrap_InvalidWrappedDEKFormat(t *testing.T) {
+	testDB, userService := setupUserServiceTest(t)
+	defer testDB.Close()
+
+	userID := createTestUserForPasswordTests(t, testDB, "testuser", "test@example.com", "oldpassword123")
+
+	oldWrappedDEK := makeWrappedDEK(0x81, 72)
+	_, err := testDB.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, encryption_version)
+		VALUES ('note1', 'Encrypted Note', 'encrypted note', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, userID, oldWrappedDEK)
+	if err != nil {
+		t.Fatalf("Failed to create encrypted note: %v", err)
+	}
+
+	reWrappedNotes := map[string]string{
+		"note1": "not-base64!!!",
+	}
+
+	err = userService.ChangePasswordWithDEKRewrap(
+		userID,
+		"oldpassword123",
+		"newpassword456",
+		reWrappedNotes,
+		nil,
+		"",
+	)
+
+	if err == nil {
+		t.Fatal("expected validation error for invalid wrapped DEK format")
+	}
+	if !strings.Contains(err.Error(), "invalid re-wrapped DEK for note note1") {
+		t.Errorf("expected invalid re-wrapped DEK error, got: %v", err)
+	}
+}
+
+func TestChangePasswordWithDEKRewrap_UnexpectedNoteInMap(t *testing.T) {
+	testDB, userService := setupUserServiceTest(t)
+	defer testDB.Close()
+
+	userID := createTestUserForPasswordTests(t, testDB, "testuser", "test@example.com", "oldpassword123")
+
+	oldWrappedDEK := makeWrappedDEK(0x91, 72)
+	_, err := testDB.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, encryption_version)
+		VALUES ('note1', 'Encrypted Note', 'encrypted note', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, userID, oldWrappedDEK)
+	if err != nil {
+		t.Fatalf("Failed to create encrypted note: %v", err)
+	}
+
+	reWrappedNotes := map[string]string{
+		"note1":         makeWrappedDEK(0xA1, 72),
+		"unexpected-id": makeWrappedDEK(0xA2, 72),
+	}
+
+	err = userService.ChangePasswordWithDEKRewrap(
+		userID,
+		"oldpassword123",
+		"newpassword456",
+		reWrappedNotes,
+		nil,
+		"",
+	)
+
+	if err == nil {
+		t.Fatal("expected validation error for unexpected note id")
+	}
+	if err.Error() != "unexpected re-wrapped DEK for note unexpected-id" {
+		t.Errorf("expected unexpected note error, got: %v", err)
+	}
+}
+
+func TestChangePasswordWithDEKRewrap_WrappedDEKTooShort(t *testing.T) {
+	testDB, userService := setupUserServiceTest(t)
+	defer testDB.Close()
+
+	userID := createTestUserForPasswordTests(t, testDB, "testuser", "test@example.com", "oldpassword123")
+
+	oldWrappedDEK := makeWrappedDEK(0xB1, 72)
+	_, err := testDB.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, encryption_version)
+		VALUES ('note1', 'Encrypted Note', 'encrypted note', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, userID, oldWrappedDEK)
+	if err != nil {
+		t.Fatalf("Failed to create encrypted note: %v", err)
+	}
+
+	reWrappedNotes := map[string]string{
+		"note1": makeWrappedDEK(0xC1, 8),
+	}
+
+	err = userService.ChangePasswordWithDEKRewrap(
+		userID,
+		"oldpassword123",
+		"newpassword456",
+		reWrappedNotes,
+		nil,
+		"",
+	)
+
+	if err == nil {
+		t.Fatal("expected validation error for short wrapped DEK")
+	}
+	if !strings.Contains(err.Error(), "wrapped DEK too short") {
+		t.Errorf("expected wrapped DEK too short error, got: %v", err)
 	}
 }
 

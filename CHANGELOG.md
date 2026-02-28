@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sidebar: increased minimum resize width so header toolbar buttons are never clipped
 - Quality: fixed prettier formatting and svelte-check type error in PWA test
 - Quality: removed unused variables in task-sortable.ts and task-toggle.ts (eslint no-unused-vars)
+- Security: hardened encrypted-note backend flows (recovery reset now blocked for encrypted accounts, server-side AI summary disabled for encrypted notes, encrypted-title schema validation aligned, deterministic DEK re-wrap validation, encrypted server-export markers, and encrypted upload endpoint)
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
 - PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA
 - CI: relaxed flaky `docChanged:structured` performance threshold from 2.0ms to 5.0ms for slower CI runners

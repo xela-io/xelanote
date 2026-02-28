@@ -45,6 +45,34 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 	keywords []string,
 	folderPath string,
 ) (*db.Note, error) {
+	return s.CreateEncryptedRecipeNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		keywords,
+		folderPath,
+	)
+}
+
+// CreateEncryptedRecipeNoteWithID creates a new encrypted recipe note with
+// optional client-provided note ID.
+func (s *RecipeService) CreateEncryptedRecipeNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	keywords []string,
+	folderPath string,
+) (*db.Note, error) {
 	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
 	}
@@ -54,8 +82,8 @@ func (s *RecipeService) CreateEncryptedRecipeNote(
 		return nil, err
 	}
 
-	note, err := s.db.CreateEncryptedRecipeNote(
-		userID, title, encryptedTitle, titleEncrypted,
+	note, err := s.db.CreateEncryptedRecipeNoteWithID(
+		userID, noteID, title, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata, folderPath,
 	)
 	if err != nil {

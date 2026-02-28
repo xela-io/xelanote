@@ -34,6 +34,7 @@ type ClientDueDate struct {
 
 // NoteRequest represents the request body for creating/updating a note.
 type NoteRequest struct {
+	ID         string `json:"id,omitempty"`
 	Title      string `json:"title"`
 	Content    string `json:"content"`
 	FolderPath string `json:"folder_path,omitempty"`

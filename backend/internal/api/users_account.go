@@ -106,7 +106,10 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) {
 			errMsg := err.Error()
 			if errMsg == "DEK re-wrapping required: user has encrypted notes or versions" {
 				respondError(w, http.StatusBadRequest, "DEK re-wrapping required")
-			} else if strings.HasPrefix(errMsg, "missing") {
+			} else if strings.HasPrefix(errMsg, "missing") ||
+				strings.HasPrefix(errMsg, "invalid re-wrapped DEK") ||
+				strings.HasPrefix(errMsg, "unexpected re-wrapped DEK") ||
+				errMsg == "no encrypted content to re-wrap" {
 				// "missing re-wrapped DEK for note X"
 				respondError(w, http.StatusBadRequest, errMsg)
 			} else {

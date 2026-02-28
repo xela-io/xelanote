@@ -82,6 +82,32 @@ func (db *DB) CreateEncryptedRecipeNote(
 	encryptionMetadata string,
 	folderPath string,
 ) (*Note, error) {
+	return db.CreateEncryptedRecipeNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		folderPath,
+	)
+}
+
+// CreateEncryptedRecipeNoteWithID creates a new encrypted recipe note with optional client-provided ID.
+// Automatically creates the /Rezepte folder if it doesn't exist.
+func (db *DB) CreateEncryptedRecipeNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	folderPath string,
+) (*Note, error) {
 	if folderPath == "/Rezepte" {
 		folder, err := db.CreateFolder(userID, "/Rezepte", nil)
 		if err != nil {
@@ -91,7 +117,10 @@ func (db *DB) CreateEncryptedRecipeNote(
 		_ = db.UpdateFolderEncryptionDefault(userID, folder.ID, false)
 	}
 
-	id := uuid.New().String()
+	id := noteID
+	if id == "" {
+		id = uuid.New().String()
+	}
 	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 

@@ -21,7 +21,35 @@ func (db *DB) CreateEncryptedNote(
 	encryptionMetadata string,
 	folderPath string,
 ) (*Note, error) {
-	id := uuid.New().String()
+	return db.CreateEncryptedNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		folderPath,
+	)
+}
+
+// CreateEncryptedNoteWithID creates a new encrypted note with optional client-provided ID.
+func (db *DB) CreateEncryptedNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	folderPath string,
+) (*Note, error) {
+	id := noteID
+	if id == "" {
+		id = uuid.New().String()
+	}
 	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 
@@ -96,6 +124,34 @@ func (db *DB) CreateEncryptedJournalNote(
 	folderPath string,
 	journalDate string,
 ) (*Note, error) {
+	return db.CreateEncryptedJournalNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		folderPath,
+		journalDate,
+	)
+}
+
+// CreateEncryptedJournalNoteWithID creates a new encrypted journal note for a specific date
+// with optional client-provided ID.
+func (db *DB) CreateEncryptedJournalNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	folderPath string,
+	journalDate string,
+) (*Note, error) {
 	// Ensure Journal folder exists (idempotent)
 	if folderPath == "/Journal" {
 		_, err := db.CreateFolder(userID, "/Journal", nil)
@@ -104,7 +160,10 @@ func (db *DB) CreateEncryptedJournalNote(
 		}
 	}
 
-	id := uuid.New().String()
+	id := noteID
+	if id == "" {
+		id = uuid.New().String()
+	}
 	titleNorm := utils.NormalizeTitle(title)
 	now := time.Now().UTC()
 

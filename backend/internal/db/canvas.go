@@ -35,7 +35,37 @@ func (db *DB) CreateEncryptedCanvasNote(
 	keywords []string,
 	folderPath string,
 ) (*Note, error) {
-	id := uuid.New().String()
+	return db.CreateEncryptedCanvasNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		keywords,
+		folderPath,
+	)
+}
+
+// CreateEncryptedCanvasNoteWithID creates a new encrypted canvas note with optional client-provided ID.
+func (db *DB) CreateEncryptedCanvasNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	keywords []string,
+	folderPath string,
+) (*Note, error) {
+	id := noteID
+	if id == "" {
+		id = uuid.New().String()
+	}
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	titleEnc := 0

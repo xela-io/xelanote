@@ -81,6 +81,34 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 	keywords []string,
 	folderPath string,
 ) (*db.Note, error) {
+	return s.CreateEncryptedCanvasNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		keywords,
+		folderPath,
+	)
+}
+
+// CreateEncryptedCanvasNoteWithID creates a new encrypted canvas note with
+// optional client-provided note ID.
+func (s *CanvasService) CreateEncryptedCanvasNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	keywords []string,
+	folderPath string,
+) (*db.Note, error) {
 	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
 	}
@@ -89,8 +117,8 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 		return nil, err
 	}
 
-	note, err := s.db.CreateEncryptedCanvasNote(
-		userID, title, encryptedTitle, titleEncrypted,
+	note, err := s.db.CreateEncryptedCanvasNoteWithID(
+		userID, noteID, title, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
 		keywords, folderPath,
 	)

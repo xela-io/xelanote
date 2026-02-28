@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,6 +10,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/xela-io/xelanote/internal/db"
+)
+
+const (
+	minReWrappedDEKBytes = 32
+	maxReWrappedDEKBytes = 256
 )
 
 // ChangeEmail changes a user's email with password verification and session invalidation
@@ -121,18 +127,47 @@ func (s *UserService) ChangePasswordWithDEKRewrap(
 		}
 		// User has no encrypted content, proceed with simple password change
 	} else {
+		if !hasEncryptedContent {
+			return errors.New("no encrypted content to re-wrap")
+		}
+
+		allowedNoteIDs := make(map[string]struct{}, len(encryptedNotes))
+		allowedVersionIDs := make(map[string]struct{}, len(encryptedVersions))
+
 		// Validate that all encrypted notes are included in reWrappedNotes
 		for _, note := range encryptedNotes {
+			allowedNoteIDs[note.ID] = struct{}{}
 			if _, ok := reWrappedNotes[note.ID]; !ok {
 				return fmt.Errorf("missing re-wrapped DEK for note %s", note.ID)
+			}
+			if err := validateReWrappedDEKValue(reWrappedNotes[note.ID]); err != nil {
+				return fmt.Errorf("invalid re-wrapped DEK for note %s: %w", note.ID, err)
 			}
 		}
 
 		// Validate that all encrypted versions are included in reWrappedVersions
 		for _, version := range encryptedVersions {
 			versionIDStr := fmt.Sprintf("%d", version.ID)
+			allowedVersionIDs[versionIDStr] = struct{}{}
 			if _, ok := reWrappedVersions[versionIDStr]; !ok {
 				return fmt.Errorf("missing re-wrapped DEK for version %d", version.ID)
+			}
+			if err := validateReWrappedDEKValue(reWrappedVersions[versionIDStr]); err != nil {
+				return fmt.Errorf("invalid re-wrapped DEK for version %d: %w", version.ID, err)
+			}
+		}
+
+		// Reject unexpected note IDs to avoid silently accepting untrusted extras.
+		for noteID := range reWrappedNotes {
+			if _, ok := allowedNoteIDs[noteID]; !ok {
+				return fmt.Errorf("unexpected re-wrapped DEK for note %s", noteID)
+			}
+		}
+
+		// Reject unexpected version IDs to avoid silently accepting untrusted extras.
+		for versionID := range reWrappedVersions {
+			if _, ok := allowedVersionIDs[versionID]; !ok {
+				return fmt.Errorf("unexpected re-wrapped DEK for version %s", versionID)
 			}
 		}
 	}
@@ -185,6 +220,26 @@ func (s *UserService) ChangePasswordWithDEKRewrap(
 			// Log but don't fail the operation
 			// The password was already changed successfully
 		}
+	}
+
+	return nil
+}
+
+func validateReWrappedDEKValue(base64DEK string) error {
+	if base64DEK == "" {
+		return errors.New("wrapped DEK is required")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(base64DEK)
+	if err != nil {
+		return fmt.Errorf("invalid base64 encoding: %w", err)
+	}
+
+	if len(decoded) < minReWrappedDEKBytes {
+		return fmt.Errorf("wrapped DEK too short (%d bytes)", len(decoded))
+	}
+	if len(decoded) > maxReWrappedDEKBytes {
+		return fmt.Errorf("wrapped DEK too long (%d bytes)", len(decoded))
 	}
 
 	return nil

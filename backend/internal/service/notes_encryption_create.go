@@ -19,14 +19,42 @@ func (s *NoteService) CreateEncryptedNote(
 	keywords []string,
 	folderPath string,
 ) (*db.Note, error) {
+	return s.CreateEncryptedNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		keywords,
+		folderPath,
+	)
+}
+
+// CreateEncryptedNoteWithID creates a new encrypted note with optional client-provided note ID.
+func (s *NoteService) CreateEncryptedNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	keywords []string,
+	folderPath string,
+) (*db.Note, error) {
 	// Validate
 	if len(encryptedContent) == 0 || wrappedDEK == "" {
 		return nil, errors.New("encrypted content and wrapped DEK required")
 	}
 
 	// Create note in DB
-	note, err := s.db.CreateEncryptedNote(
+	note, err := s.db.CreateEncryptedNoteWithID(
 		userID,
+		noteID,
 		title,
 		encryptedTitle,
 		titleEncrypted,
@@ -113,6 +141,36 @@ func (s *NoteService) CreateEncryptedJournalNote(
 	folderPath string,
 	journalDate string,
 ) (*db.Note, error) {
+	return s.CreateEncryptedJournalNoteWithID(
+		userID,
+		"",
+		title,
+		encryptedTitle,
+		titleEncrypted,
+		encryptedContent,
+		wrappedDEK,
+		encryptionMetadata,
+		keywords,
+		folderPath,
+		journalDate,
+	)
+}
+
+// CreateEncryptedJournalNoteWithID creates a new encrypted journal note for a specific date
+// with optional client-provided note ID.
+func (s *NoteService) CreateEncryptedJournalNoteWithID(
+	userID int,
+	noteID string,
+	title string,
+	encryptedTitle *string,
+	titleEncrypted bool,
+	encryptedContent []byte,
+	wrappedDEK string,
+	encryptionMetadata string,
+	keywords []string,
+	folderPath string,
+	journalDate string,
+) (*db.Note, error) {
 	if err := s.checkNoteLimit(userID); err != nil {
 		return nil, err
 	}
@@ -137,8 +195,8 @@ func (s *NoteService) CreateEncryptedJournalNote(
 	}
 
 	// Create encrypted journal note (also creates /Journal folder if needed)
-	note, err := s.db.CreateEncryptedJournalNote(
-		userID, title, encryptedTitle, titleEncrypted,
+	note, err := s.db.CreateEncryptedJournalNoteWithID(
+		userID, noteID, title, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
 		folderPath, journalDate,
 	)

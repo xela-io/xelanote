@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/llm"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // --- Summary Endpoints ---
@@ -89,6 +90,9 @@ func (s *Server) summarizeNote(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, llm.ErrNoProviderAvailable):
 			respondError(w, http.StatusPreconditionFailed, "AI provider required - add API key in settings")
 			return
+		case errors.Is(err, service.ErrEncryptedNoteServerSummarizationDisabled):
+			respondError(w, http.StatusForbidden, "server-side AI summarization is disabled for encrypted notes")
+			return
 		case strings.Contains(err.Error(), "not found"):
 			respondError(w, http.StatusNotFound, "note not found")
 			return
@@ -118,6 +122,25 @@ func (s *Server) prepareSummarizeStream(w http.ResponseWriter, r *http.Request) 
 	noteID := chi.URLParam(r, "id")
 	if noteID == "" {
 		respondError(w, http.StatusBadRequest, "note ID is required")
+		return
+	}
+
+	// Never accept plaintext uploads for encrypted notes.
+	note, err := s.noteService.GetNote(userID, noteID)
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			respondError(w, http.StatusNotFound, "note not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "failed to load note")
+		return
+	}
+	if note == nil {
+		respondError(w, http.StatusNotFound, "note not found")
+		return
+	}
+	if note.ContentEncrypted {
+		respondError(w, http.StatusForbidden, "server-side AI summarization is disabled for encrypted notes")
 		return
 	}
 
@@ -232,6 +255,8 @@ func (s *Server) summarizeNoteStream(w http.ResponseWriter, r *http.Request) {
 			clientError = "AI features not enabled for this note"
 		case errors.Is(err, llm.ErrNoProviderAvailable):
 			clientError = "AI provider required - add API key in settings"
+		case errors.Is(err, service.ErrEncryptedNoteServerSummarizationDisabled):
+			clientError = "server-side AI summarization is disabled for encrypted notes"
 		case strings.Contains(err.Error(), "not found"):
 			clientError = "note not found"
 		case strings.Contains(err.Error(), "plaintext content required"):

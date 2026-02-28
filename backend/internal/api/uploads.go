@@ -24,8 +24,10 @@ func (s *Server) getUserUploadMu(userID int) *sync.Mutex {
 }
 
 const (
-	MaxUploadSize = 10 << 20 // 10MB
-	UploadDir     = "uploads"
+	MaxUploadSize           = 10 << 20 // 10MB
+	UploadDir               = "uploads"
+	EncryptedUploadFileExt  = ".xenc"
+	DefaultEncryptedPayload = "encrypted-attachment"
 )
 
 var allowedTypes = map[string]string{
@@ -34,6 +36,19 @@ var allowedTypes = map[string]string{
 	"image/jpg":  ".jpg",
 	"image/gif":  ".gif",
 	"image/webp": ".webp",
+}
+
+func (s *Server) signedUploadURL(userID int, filename string) string {
+	signature, expires, err := auth.GenerateUploadSignature(userID, filename, s.jwtSecret)
+	if err != nil {
+		s.log.Warn("failed to generate upload signature",
+			"user_id", userID,
+			"filename", filename,
+			"error", err.Error())
+		return fmt.Sprintf("/api/uploads/%d/%s", userID, filename)
+	}
+
+	return fmt.Sprintf("/api/uploads/%d/%s?signature=%s&expires=%d", userID, filename, signature, expires)
 }
 
 // uploadImage handles image file uploads
@@ -154,21 +169,7 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 	// Generate thumbnail for image types (non-fatal)
 	thumbFilename := generateThumbnail(filePath, contentType)
 
-	// SEC-L04: Generate signed URL for secure access (7 days expiry)
-	signature, expires, err := auth.GenerateUploadSignature(userID, filename, s.jwtSecret)
-	if err != nil {
-		s.log.Warn("failed to generate upload signature",
-			"user_id", userID,
-			"filename", filename,
-			"error", err.Error())
-		signature = "" // Non-fatal: Cookie fallback will be used
-	}
-
-	// Return URL with signature if available, otherwise plain URL (cookie fallback)
-	url := fmt.Sprintf("/api/uploads/%d/%s", userID, filename)
-	if signature != "" {
-		url = fmt.Sprintf("%s?signature=%s&expires=%d", url, signature, expires)
-	}
+	url := s.signedUploadURL(userID, filename)
 
 	resp := map[string]string{
 		"url":      url,
@@ -185,6 +186,102 @@ func (s *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, resp)
+}
+
+// uploadEncryptedBlob handles opaque encrypted attachment uploads.
+// Payload bytes are treated as ciphertext and stored without MIME sniffing.
+func (s *Server) uploadEncryptedBlob(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadSize)
+	if err := r.ParseMultipartForm(MaxUploadSize); err != nil {
+		respondError(w, http.StatusBadRequest, "file too large (max 10MB)")
+		return
+	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "no file provided")
+		return
+	}
+	defer file.Close()
+
+	uuid, err := generateUUID()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to generate file id")
+		return
+	}
+	filename := uuid + EncryptedUploadFileExt
+
+	userUploadDir := filepath.Join(s.dataDir, UploadDir, fmt.Sprintf("%d", userID))
+	if err := os.MkdirAll(userUploadDir, 0750); err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to create upload directory")
+		return
+	}
+
+	uploadMu := s.getUserUploadMu(userID)
+	uploadMu.Lock()
+	defer uploadMu.Unlock()
+
+	maxStorageMB, err := s.adminService.GetEffectiveStorageLimitMB(userID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to check storage limit")
+		return
+	}
+
+	// Pre-write quota check using multipart header size when available.
+	if maxStorageMB > 0 && header.Size > 0 {
+		currentUsageMB := s.adminService.GetUserStorageMB(userID)
+		fileSizeMB := float64(header.Size) / (1024 * 1024)
+		if currentUsageMB+fileSizeMB > float64(maxStorageMB) {
+			respondError(w, http.StatusForbidden, "storage limit would be exceeded")
+			return
+		}
+	}
+
+	filePath := filepath.Join(userUploadDir, filename)
+	dst, err := os.Create(filePath) //nolint:gosec // path is generated UUID in user-scoped directory
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to save file")
+		return
+	}
+
+	if _, err := io.Copy(dst, file); err != nil {
+		dst.Close()
+		respondError(w, http.StatusInternalServerError, "failed to write file")
+		return
+	}
+	if err := dst.Close(); err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to finalize file")
+		return
+	}
+
+	// Post-write quota check for unknown multipart sizes (safety net).
+	if maxStorageMB > 0 {
+		usedMB := s.adminService.GetUserStorageMB(userID)
+		if usedMB > float64(maxStorageMB) {
+			_ = os.Remove(filePath)
+			respondError(w, http.StatusForbidden, "storage limit exceeded")
+			return
+		}
+	}
+
+	originalName := strings.TrimSpace(header.Filename)
+	if originalName == "" {
+		originalName = DefaultEncryptedPayload
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"url":      s.signedUploadURL(userID, filename),
+		"filename": originalName,
+	})
 }
 
 // serveUpload serves uploaded files with user isolation (SEC-002)

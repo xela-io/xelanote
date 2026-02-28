@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/xela-io/xelanote/internal/service"
 	"github.com/xela-io/xelanote/internal/websocket"
 )
@@ -23,13 +24,26 @@ func decodeAndValidateCreateNoteRequest(w http.ResponseWriter, r *http.Request) 
 		return nil, false
 	}
 
-	if err := validateNoteFields(req.Title, req.Content, req.FolderPath); err != nil {
+	titleForValidation := req.Title
+	if titleForValidation == "" && req.TitleEncrypted && req.EncryptedTitle != nil && *req.EncryptedTitle != "" {
+		// Encrypted titles intentionally keep plaintext title empty.
+		titleForValidation = "encrypted-title"
+	}
+
+	if err := validateNoteFields(titleForValidation, req.Content, req.FolderPath); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return nil, false
 	}
 
 	if req.FolderPath == "" {
 		req.FolderPath = "/"
+	}
+
+	if req.ID != "" {
+		if _, err := uuid.Parse(req.ID); err != nil {
+			respondError(w, http.StatusBadRequest, "invalid id format")
+			return nil, false
+		}
 	}
 
 	return &req, true
@@ -91,6 +105,10 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 		return nil, fmt.Errorf("%w: %v", errCreateValidationEncryptedPayload, err)
 	}
 
+	if metadataVersion := parseEncryptionMetadataVersion(req.EncryptionMetadata); metadataVersion >= 3 && req.ID == "" {
+		return nil, fmt.Errorf("%w: missing id for encryption metadata version %d", errCreateValidationEncryptedPayload, metadataVersion)
+	}
+
 	encryptedBlob, err := base64.StdEncoding.DecodeString(req.EncryptedContent)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errCreateValidationEncryptedContent, err)
@@ -98,8 +116,9 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 
 	switch req.NoteType {
 	case "journal":
-		return s.noteService.CreateEncryptedJournalNote(
+		return s.noteService.CreateEncryptedJournalNoteWithID(
 			userID,
+			req.ID,
 			req.Title,
 			req.EncryptedTitle,
 			req.TitleEncrypted,
@@ -111,8 +130,9 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			*req.JournalDate,
 		)
 	case "recipe":
-		return s.recipeService.CreateEncryptedRecipeNote(
+		return s.recipeService.CreateEncryptedRecipeNoteWithID(
 			userID,
+			req.ID,
 			req.Title,
 			req.EncryptedTitle,
 			req.TitleEncrypted,
@@ -123,8 +143,9 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.FolderPath,
 		)
 	case "canvas":
-		return s.canvasService.CreateEncryptedCanvasNote(
+		return s.canvasService.CreateEncryptedCanvasNoteWithID(
 			userID,
+			req.ID,
 			req.Title,
 			req.EncryptedTitle,
 			req.TitleEncrypted,
@@ -135,8 +156,9 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.FolderPath,
 		)
 	default:
-		return s.noteService.CreateEncryptedNote(
+		return s.noteService.CreateEncryptedNoteWithID(
 			userID,
+			req.ID,
 			req.Title,
 			req.EncryptedTitle,
 			req.TitleEncrypted,
@@ -147,6 +169,20 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.FolderPath,
 		)
 	}
+}
+
+func parseEncryptionMetadataVersion(raw string) int {
+	if raw == "" {
+		return 0
+	}
+
+	var metadata struct {
+		Version int `json:"version"`
+	}
+	if err := json.Unmarshal([]byte(raw), &metadata); err != nil {
+		return 0
+	}
+	return metadata.Version
 }
 
 func (s *Server) createPlaintextNoteFromRequest(userID int, req *NoteRequest) (*service.Note, error) {
@@ -163,6 +199,11 @@ func (s *Server) createPlaintextNoteFromRequest(userID int, req *NoteRequest) (*
 }
 
 func (s *Server) applyCreateNotePostProcessing(w http.ResponseWriter, userID int, req *NoteRequest, note *service.Note) bool {
+	// Privacy hardening: do not persist client-extracted metadata for encrypted payloads.
+	if req.EncryptedContent != "" && req.WrappedDEK != "" {
+		return true
+	}
+
 	if len(req.Links) > 0 {
 		linkTitles, ok := validateClientLinks(w, req.Links)
 		if !ok {

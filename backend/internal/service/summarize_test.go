@@ -59,7 +59,7 @@ func TestSummarizeNote_ReturnsExistingSummaryWhenHashMatches(t *testing.T) {
 	}
 }
 
-func TestSummarizeNote_EncryptedRequiresPlaintext(t *testing.T) {
+func TestSummarizeNote_EncryptedServerProcessingDisabled(t *testing.T) {
 	database, userID := setupSummarizeTestDB(t)
 	defer database.Close()
 
@@ -75,8 +75,12 @@ func TestSummarizeNote_EncryptedRequiresPlaintext(t *testing.T) {
 	}
 
 	svc := NewSummarizeService(database, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	if _, err := svc.SummarizeNote(context.Background(), userID, note.ID, ""); err == nil {
-		t.Fatalf("expected error for missing plaintext")
+	if _, err := svc.SummarizeNote(context.Background(), userID, note.ID, ""); err != ErrEncryptedNoteServerSummarizationDisabled {
+		t.Fatalf("expected ErrEncryptedNoteServerSummarizationDisabled, got: %v", err)
+	}
+
+	if _, err := svc.SummarizeNote(context.Background(), userID, note.ID, "decrypted plaintext"); err != ErrEncryptedNoteServerSummarizationDisabled {
+		t.Fatalf("expected ErrEncryptedNoteServerSummarizationDisabled for plaintext input, got: %v", err)
 	}
 }
 

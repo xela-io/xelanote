@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -10,6 +11,14 @@ import (
 
 	"github.com/xela-io/xelanote/internal/db"
 	"github.com/xela-io/xelanote/internal/llm"
+)
+
+var (
+	// ErrEncryptedNoteServerSummarizationDisabled is returned when a request tries
+	// to process plaintext of an encrypted note on the server.
+	ErrEncryptedNoteServerSummarizationDisabled = errors.New(
+		"server-side summarization is disabled for encrypted notes",
+	)
 )
 
 // SummarizeService handles LLM-based note summarization.
@@ -59,11 +68,8 @@ func (s *SummarizeService) SummarizeNote(ctx context.Context, userID int, noteID
 	// Determine content source
 	var content string
 	if note.ContentEncrypted {
-		// Encrypted note: use provided plaintext content
-		if plaintextContent == "" {
-			return "", fmt.Errorf("plaintext content required for encrypted notes")
-		}
-		content = plaintextContent
+		// P0 hotfix: never process encrypted-note plaintext on the server.
+		return "", ErrEncryptedNoteServerSummarizationDisabled
 	} else {
 		// Unencrypted note: use content from database
 		content = note.Content

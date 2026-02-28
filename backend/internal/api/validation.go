@@ -32,6 +32,14 @@ const (
 	// 256-bit DEK (32 bytes) + AES-GCM overhead (12-byte IV + 16-byte tag) = 60 bytes.
 	// We allow 32 bytes minimum for flexibility.
 	MinWrappedDEKSize = 32
+
+	// MaxWrappedDEKSize is a sanity upper bound for wrapped DEK byte length.
+	// Real payloads are currently ~72 bytes (XChaCha20-Poly1305 nonce+ciphertext+tag).
+	MaxWrappedDEKSize = 256
+
+	// MaxWrappedDEKBase64 limits base64 input size before decode.
+	// 256 raw bytes expand to <= 344 base64 chars; 512 leaves compatibility margin.
+	MaxWrappedDEKBase64 = 512
 )
 
 // Validation errors
@@ -41,6 +49,7 @@ var (
 	ErrEncryptedContentTooShort = errors.New("encrypted content too short (min 16 bytes)")
 	ErrEncryptedContentTooLong  = errors.New("encrypted content too long")
 	ErrWrappedDEKTooShort       = errors.New("wrapped DEK too short (min 32 bytes)")
+	ErrWrappedDEKTooLong        = errors.New("wrapped DEK too long")
 	ErrEncryptedTitleTooShort   = errors.New("encrypted title too short")
 )
 
@@ -77,6 +86,10 @@ func ValidateWrappedDEK(base64DEK string) error {
 		return errors.New("wrapped DEK is required")
 	}
 
+	if len(base64DEK) > MaxWrappedDEKBase64 {
+		return ErrWrappedDEKTooLong
+	}
+
 	// Decode base64
 	decoded, err := base64.StdEncoding.DecodeString(base64DEK)
 	if err != nil {
@@ -86,6 +99,9 @@ func ValidateWrappedDEK(base64DEK string) error {
 	// Check minimum length
 	if len(decoded) < MinWrappedDEKSize {
 		return ErrWrappedDEKTooShort
+	}
+	if len(decoded) > MaxWrappedDEKSize {
+		return ErrWrappedDEKTooLong
 	}
 
 	return nil
@@ -115,15 +131,18 @@ func ValidateEncryptedTitle(jsonTitle string) error {
 	}
 
 	// Validate JSON structure
-	var titleData map[string]interface{}
+	var titleData map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(jsonTitle), &titleData); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidJSON, err)
 	}
 
-	// Check for required fields in encrypted title structure
-	// Expected format: {"ciphertext": "base64", "iv": "base64"}
-	ciphertext, hasCiphertext := titleData["ciphertext"].(string)
-	if !hasCiphertext || ciphertext == "" {
+	rawCiphertext, hasCiphertext := titleData["ciphertext"]
+	if !hasCiphertext {
+		return errors.New("encrypted title missing 'ciphertext' field")
+	}
+
+	var ciphertext string
+	if err := json.Unmarshal(rawCiphertext, &ciphertext); err != nil || ciphertext == "" {
 		return errors.New("encrypted title missing 'ciphertext' field")
 	}
 
@@ -137,13 +156,43 @@ func ValidateEncryptedTitle(jsonTitle string) error {
 		return ErrEncryptedTitleTooShort
 	}
 
-	// Validate IV field exists, is non-empty, and is valid base64
-	iv, hasIV := titleData["iv"].(string)
-	if !hasIV || iv == "" {
-		return errors.New("encrypted title missing 'iv' field")
+	rawMetadata, hasMetadata := titleData["metadata"]
+	if !hasMetadata {
+		return errors.New("encrypted title missing 'metadata' field")
 	}
-	if _, err := base64.StdEncoding.DecodeString(iv); err != nil {
-		return fmt.Errorf("encrypted title iv is not valid base64: %v", err)
+
+	var metadata struct {
+		Version     int    `json:"version"`
+		Algorithm   string `json:"algorithm"`
+		KDF         string `json:"kdf"`
+		KDFStrength string `json:"kdf_strength"`
+		NonceBytes  int    `json:"nonce_bytes"`
+		WrappedDEK  string `json:"wrapped_dek"`
+	}
+	if err := json.Unmarshal(rawMetadata, &metadata); err != nil {
+		return errors.New("encrypted title 'metadata' field is invalid")
+	}
+
+	if metadata.Version != 2 && metadata.Version != 3 {
+		return errors.New("encrypted title metadata has unsupported 'version'")
+	}
+	if metadata.Algorithm != "XChaCha20-Poly1305" {
+		return errors.New("encrypted title metadata has invalid 'algorithm'")
+	}
+	if metadata.KDF != "Argon2id" {
+		return errors.New("encrypted title metadata has invalid 'kdf'")
+	}
+	if metadata.KDFStrength != "interactive" {
+		return errors.New("encrypted title metadata has invalid 'kdf_strength'")
+	}
+	if metadata.NonceBytes != 24 {
+		return errors.New("encrypted title metadata has invalid 'nonce_bytes'")
+	}
+	if metadata.WrappedDEK == "" {
+		return errors.New("encrypted title metadata missing 'wrapped_dek'")
+	}
+	if err := ValidateWrappedDEK(metadata.WrappedDEK); err != nil {
+		return fmt.Errorf("encrypted title metadata wrapped_dek invalid: %w", err)
 	}
 
 	return nil

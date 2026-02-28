@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -55,6 +56,15 @@ func (s *UserService) RecoverPasswordWithRecoveryKey(userID int, recoveryKey, ne
 	err = bcrypt.CompareHashAndPassword([]byte(*prefs.RecoveryKeyHash), []byte(recoveryKey))
 	if err != nil {
 		return errors.New("invalid recovery key")
+	}
+
+	// Hard block for encrypted users until recovery-based DEK re-wrap is implemented.
+	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(userID)
+	if err != nil {
+		return fmt.Errorf("failed to check encrypted content: %w", err)
+	}
+	if hasEncryptedContent {
+		return ErrRecoveryResetNeedsDEKRewrap
 	}
 
 	// Hash new password
@@ -125,6 +135,15 @@ func (s *UserService) RecoverPasswordWithRecoveryKeyByEmail(email, recoveryKey, 
 		return errors.New("invalid email or recovery key")
 	}
 
+	// Hard block for encrypted users until recovery-based DEK re-wrap is implemented.
+	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(user.ID)
+	if err != nil {
+		return fmt.Errorf("failed to check encrypted content: %w", err)
+	}
+	if hasEncryptedContent {
+		return ErrRecoveryResetNeedsDEKRewrap
+	}
+
 	// Hash new password
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
 	if err != nil {
@@ -170,4 +189,18 @@ func (s *UserService) GetRecoveryKeySaltByEmail(email string) ([]byte, error) {
 		return nil, errors.New("recovery key not available")
 	}
 	return salt, nil
+}
+
+func (s *UserService) hasEncryptedNotesOrVersions(userID int) (bool, error) {
+	encryptedNotes, err := s.db.GetAllEncryptedNotesForUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	encryptedVersions, err := s.db.GetAllEncryptedVersionsForUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	return len(encryptedNotes) > 0 || len(encryptedVersions) > 0, nil
 }

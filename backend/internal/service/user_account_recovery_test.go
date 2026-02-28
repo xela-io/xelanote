@@ -178,6 +178,37 @@ func TestUserService_RecoverPasswordWithRecoveryKey(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
+
+	t.Run("blocks recovery when encrypted notes exist", func(t *testing.T) {
+		encryptedUserID := createTestUserForPasswordTests(
+			t,
+			testDB,
+			"enc-recover-user",
+			"enc-recover@example.com",
+			"oldpassword1",
+		)
+
+		hash3, err := bcrypt.GenerateFromPassword([]byte("enc-recovery-key"), 12)
+		if err != nil {
+			t.Fatalf("failed to hash recovery key: %v", err)
+		}
+		if err := testDB.SetRecoveryKey(encryptedUserID, string(hash3), []byte("salt")); err != nil {
+			t.Fatalf("failed to set recovery key: %v", err)
+		}
+
+		if _, err := testDB.Exec(`
+			INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+			                   content_encrypted, wrapped_dek, encryption_version)
+			VALUES ('enc-note-1', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+		`, encryptedUserID); err != nil {
+			t.Fatalf("failed to create encrypted note: %v", err)
+		}
+
+		err = userService.RecoverPasswordWithRecoveryKey(encryptedUserID, "enc-recovery-key", "newpassword1")
+		if err != ErrRecoveryResetNeedsDEKRewrap {
+			t.Fatalf("expected ErrRecoveryResetNeedsDEKRewrap, got: %v", err)
+		}
+	})
 }
 
 func TestUserService_RecoverPasswordWithRecoveryKeyByEmail(t *testing.T) {
@@ -251,6 +282,38 @@ func TestUserService_RecoverPasswordWithRecoveryKeyByEmail(t *testing.T) {
 		)
 		// May succeed or fail depending on DB email case - this tests the normalization
 		_ = err
+	})
+
+	t.Run("blocks recovery by email when encrypted notes exist", func(t *testing.T) {
+		encryptedUserID := createTestUserForPasswordTests(
+			t,
+			testDB,
+			"enc-email-recover-user",
+			"enc-email-recover@example.com",
+			"oldpassword1",
+		)
+
+		hash2, _ := bcrypt.GenerateFromPassword([]byte("enc-email-key"), 12)
+		if err := testDB.SetRecoveryKey(encryptedUserID, string(hash2), []byte("salt")); err != nil {
+			t.Fatalf("failed to set recovery key: %v", err)
+		}
+
+		if _, err := testDB.Exec(`
+			INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+			                   content_encrypted, wrapped_dek, encryption_version)
+			VALUES ('enc-email-note-1', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+		`, encryptedUserID); err != nil {
+			t.Fatalf("failed to create encrypted note: %v", err)
+		}
+
+		err := userService.RecoverPasswordWithRecoveryKeyByEmail(
+			"enc-email-recover@example.com",
+			"enc-email-key",
+			"newpassword1",
+		)
+		if err != ErrRecoveryResetNeedsDEKRewrap {
+			t.Fatalf("expected ErrRecoveryResetNeedsDEKRewrap, got: %v", err)
+		}
 	})
 }
 

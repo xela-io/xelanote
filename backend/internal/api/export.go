@@ -11,6 +11,10 @@ import (
 	"github.com/xela-io/xelanote/internal/service"
 )
 
+const encryptedExportPlaceholder = "" +
+	"[Encrypted note omitted in server-side export.]\n\n" +
+	"Decrypt this note in the client and export locally to include plaintext content."
+
 func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from context
 	userID, ok := getUserID(r)
@@ -66,8 +70,21 @@ func (s *Server) exportMarkdown(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			// Write content (add YAML frontmatter for Obsidian compatibility)
-			content := fmt.Sprintf("---\ntitle: %q\n---\n\n%s", note.Title, note.Content)
+			// Write content (add YAML frontmatter for Obsidian compatibility).
+			// Encrypted notes cannot be exported as plaintext server-side.
+			title := note.Title
+			if title == "" && note.TitleEncrypted {
+				title = fmt.Sprintf("encrypted-note-%s", note.ID)
+			}
+			content := fmt.Sprintf("---\ntitle: %q\n---\n\n%s", title, note.Content)
+			if note.ContentEncrypted {
+				content = fmt.Sprintf(
+					"---\ntitle: %q\nx-xelanote-encrypted: true\nx-xelanote-note-id: %q\n---\n\n%s",
+					title,
+					note.ID,
+					encryptedExportPlaceholder,
+				)
+			}
 			if _, err := fw.Write([]byte(content)); err != nil {
 				s.logger().Error("failed to write zip content", "path", finalPath, "error", err)
 			}

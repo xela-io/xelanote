@@ -36,7 +36,13 @@ func (s *Server) updateNote(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if err := validateNoteFields(req.Title, req.Content, req.FolderPath); err != nil {
+	titleForValidation := req.Title
+	if titleForValidation == "" && req.TitleEncrypted && req.EncryptedTitle != nil && *req.EncryptedTitle != "" {
+		// Encrypted titles intentionally keep plaintext title empty.
+		titleForValidation = "encrypted-title"
+	}
+
+	if err := validateNoteFields(titleForValidation, req.Content, req.FolderPath); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -114,6 +120,21 @@ func respondNoteUpdateError(s *Server, w http.ResponseWriter, err error, logMsg 
 // applyNoteUpdateSideEffects processes links, due dates, and graph cache after an update.
 // Returns false if link validation failed (response already written).
 func (s *Server) applyNoteUpdateSideEffects(w http.ResponseWriter, userID int, id string, req NoteRequest) bool {
+	// Privacy hardening: encrypted notes must not leak links/due-dates metadata server-side.
+	// Always clear previously persisted metadata and ignore client-provided values.
+	if req.EncryptedContent != "" && req.WrappedDEK != "" {
+		if err := s.noteService.UpdateLinksFromClient(userID, id, []string{}); err != nil {
+			s.logger().Error("failed to clear links for encrypted note", "err", err, "note_id", id)
+		}
+		if err := s.noteService.SetNoteDueDates(id, userID, nil); err != nil {
+			s.logger().Error("failed to clear due dates for encrypted note", "err", err, "note_id", id)
+		}
+		if s.graphService != nil {
+			s.graphService.InvalidateGraphCache(userID)
+		}
+		return true
+	}
+
 	if len(req.Links) > 0 {
 		linkTitles, ok := validateClientLinks(w, req.Links)
 		if !ok {

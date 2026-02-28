@@ -3,13 +3,17 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -488,5 +492,98 @@ func TestServeUpload_UserIsolation(t *testing.T) {
 	if rec.Code != http.StatusForbidden {
 		t.Errorf("expected 403 for cross-user access, got %d (body: %s)",
 			rec.Code, rec.Body.String())
+	}
+}
+
+func TestUploadEncryptedBlob_Success(t *testing.T) {
+	ts := newTestServer(t)
+	ts.dataDir = t.TempDir()
+
+	user := ts.createUser(t, "encuser", "enc@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	router := ts.testRouter()
+	router.Post("/api/uploads/encrypted", ts.uploadEncryptedBlob)
+
+	payload := []byte("nonce-ciphertext-tag-test-bytes")
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, err := writer.CreateFormFile("file", "attachment.png")
+	if err != nil {
+		t.Fatalf("create form file failed: %v", err)
+	}
+	if _, err := part.Write(payload); err != nil {
+		t.Fatalf("write multipart payload failed: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close multipart writer failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/uploads/encrypted", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d (body: %s)", rec.Code, rec.Body.String())
+	}
+
+	var resp map[string]string
+	decodeResponse(t, rec, &resp)
+
+	if resp["filename"] != "attachment.png" {
+		t.Fatalf("expected original filename in response, got %q", resp["filename"])
+	}
+	if !strings.Contains(resp["url"], fmt.Sprintf("/api/uploads/%d/", user.ID)) {
+		t.Fatalf("unexpected signed url format: %s", resp["url"])
+	}
+
+	parsedURL, err := neturl.Parse(resp["url"])
+	if err != nil {
+		t.Fatalf("parse upload url failed: %v", err)
+	}
+	storedName := filepath.Base(parsedURL.Path)
+	if filepath.Ext(storedName) != EncryptedUploadFileExt {
+		t.Fatalf("expected %s extension, got %s", EncryptedUploadFileExt, filepath.Ext(storedName))
+	}
+
+	storedPath := filepath.Join(ts.dataDir, UploadDir, strconv.Itoa(user.ID), storedName)
+	storedPayload, err := os.ReadFile(storedPath)
+	if err != nil {
+		t.Fatalf("failed to read stored encrypted blob: %v", err)
+	}
+	if !bytes.Equal(storedPayload, payload) {
+		t.Fatal("stored payload differs from uploaded payload")
+	}
+}
+
+func TestUploadEncryptedBlob_Unauthorized(t *testing.T) {
+	ts := newTestServer(t)
+	ts.dataDir = t.TempDir()
+
+	router := ts.testRouter()
+	router.Post("/api/uploads/encrypted", ts.uploadEncryptedBlob)
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, err := writer.CreateFormFile("file", "attachment.png")
+	if err != nil {
+		t.Fatalf("create form file failed: %v", err)
+	}
+	if _, err := part.Write([]byte("ciphertext")); err != nil {
+		t.Fatalf("write multipart payload failed: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close multipart writer failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/uploads/encrypted", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d (body: %s)", rec.Code, rec.Body.String())
 	}
 }

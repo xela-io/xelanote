@@ -66,6 +66,10 @@ func (s *Server) setRecoveryKey(w http.ResponseWriter, r *http.Request) {
 	// Set recovery key
 	err = s.userService.SetRecoveryKey(userID, req.RecoveryKeyHash, salt)
 	if err != nil {
+		if errors.Is(err, service.ErrRecoveryKeyBlockedEncrypted) {
+			respondError(w, http.StatusConflict, "recovery key setup is unavailable for accounts with encrypted notes")
+			return
+		}
 		s.logger().Error("failed to set recovery key", "error", err)
 		respondError(w, http.StatusInternalServerError, "failed to set recovery key")
 		return

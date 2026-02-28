@@ -4267,7 +4267,9 @@ Content-Type: application/json
 
 ### POST /api/users/recovery-key
 
-Setzt einen Recovery Key für den authentifizierten Benutzer. Ermöglicht Passwort-Wiederherstellung.
+Setzt einen Recovery Key für den authentifizierten Benutzer.
+
+**Wichtig:** Fuer Accounts mit bestehenden verschluesselten Notizen ist das Setzen aktuell blockiert (kein Recovery-DEK-Rewrap). Der Endpoint antwortet dann mit `409 Conflict`.
 
 #### Request
 
@@ -4300,6 +4302,7 @@ Content-Type: application/json
 
 ```http
 400 Bad Request - "recovery_key_hash is required", "salt is required", "invalid base64 salt"
+409 Conflict - "recovery key setup is unavailable for accounts with encrypted notes"
 401 Unauthorized - Keine gültige Authentifizierung
 500 Internal Server Error - Fehler beim Setzen
 ```

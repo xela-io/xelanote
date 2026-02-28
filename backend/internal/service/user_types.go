@@ -53,6 +53,7 @@ var (
 	ErrPasswordTooShort            = errors.New("password must be at least 8 characters")
 	ErrInvalidEmail                = errors.New("invalid email format")
 	ErrRecoveryResetNeedsDEKRewrap = errors.New("password recovery blocked: encrypted notes require DEK re-wrapping")
+	ErrRecoveryKeyBlockedEncrypted = errors.New("recovery key setup blocked: encrypted notes require recovery DEK re-wrapping support")
 	ErrInvalidHomeDashboardLayout  = errors.New("invalid home dashboard layout")
 	ErrInvalidOpenTabs             = errors.New("invalid open tabs")
 )

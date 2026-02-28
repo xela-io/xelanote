@@ -264,6 +264,27 @@ func TestRecoveryKey_UserIsolation(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
+func TestRecoveryKey_SetBlockedForEncryptedUsers(t *testing.T) {
+	ts := newTestServer(t)
+	r := usersRouter(ts)
+	user := ts.createUser(t, "recoveryenc", "recoveryenc@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	_, err := ts.db.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, encryption_version)
+		VALUES ('user-enc-note', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+	`, user.ID)
+	require.NoError(t, err)
+
+	salt := base64.StdEncoding.EncodeToString([]byte("random-salt-bytes123"))
+	rec := doJSON(t, r, http.MethodPost, "/api/users/recovery-key", setRecoveryKeyRequest{
+		RecoveryKeyHash: "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012",
+		Salt:            salt,
+	}, token)
+	require.Equal(t, http.StatusConflict, rec.Code)
+}
+
 func TestWebAuthnCredentials_UserIsolation(t *testing.T) {
 	ts := newTestServer(t)
 	r := usersRouter(ts)

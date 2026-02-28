@@ -66,7 +66,7 @@ Die verschluesselte Payload enthaelt:
 
 Wichtig:
 
-- Recovery-Key-Management (Setzen/Salt) ist vorhanden.
+- Recovery-Key-Management (Setzen/Salt) ist nur fuer Konten ohne bestehende verschluesselte Notizen verfuegbar.
 - Der Recovery-Reset fuer Konten mit verschluesselten Notizen ist derzeit absichtlich blockiert.
 - Grund: Ein sicherer Recovery-basierter DEK-Rewrap-Flow ist noch nicht implementiert.
 

@@ -78,6 +78,12 @@ This addendum reflects the **current remediation status** of the previously repo
 - Migration removes existing encrypted-note metadata rows: `backend/internal/db/migrations/062_delete_links_due_dates_for_encrypted_notes.sql`
 - Defense-in-depth guards reject persistence even if future callers send metadata for encrypted notes: `backend/internal/service/notes_links.go`
 
+13. **Recovery-key setup is blocked for encrypted accounts to avoid false recovery guarantees.**
+
+- Service rejects `SetRecoveryKey` when encrypted notes/versions exist: `backend/internal/service/user_recovery.go`
+- API returns `409 Conflict` for blocked setup: `backend/internal/api/users_encryption.go`
+- Coverage: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

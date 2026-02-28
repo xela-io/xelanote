@@ -124,6 +124,27 @@ func TestUserService_SetRecoveryKey(t *testing.T) {
 			t.Fatal("expected error for empty salt")
 		}
 	})
+
+	t.Run("blocks setup when encrypted notes exist", func(t *testing.T) {
+		encUserID := createTestUserForPasswordTests(t, testDB, "recovenc", "recovenc@example.com", "password123")
+		if _, err := testDB.Exec(`
+			INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+			                   content_encrypted, wrapped_dek, encryption_version)
+			VALUES ('recov-enc-note', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+		`, encUserID); err != nil {
+			t.Fatalf("failed to create encrypted note: %v", err)
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte("blocked-recovery-key"), 12)
+		if err != nil {
+			t.Fatalf("failed to hash: %v", err)
+		}
+
+		err = userService.SetRecoveryKey(encUserID, string(hash), []byte("salt-bytes"))
+		if err != ErrRecoveryKeyBlockedEncrypted {
+			t.Fatalf("expected ErrRecoveryKeyBlockedEncrypted, got: %v", err)
+		}
+	})
 }
 
 func TestUserService_RecoverPasswordWithRecoveryKey(t *testing.T) {

@@ -20,6 +20,13 @@ func (s *UserService) SetRecoveryKey(userID int, recoveryKeyHash string, salt []
 	if len(salt) == 0 {
 		return errors.New("recovery key salt is required")
 	}
+	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(userID)
+	if err != nil {
+		return fmt.Errorf("failed to check encrypted content: %w", err)
+	}
+	if hasEncryptedContent {
+		return ErrRecoveryKeyBlockedEncrypted
+	}
 
 	return s.db.SetRecoveryKey(userID, recoveryKeyHash, salt)
 }

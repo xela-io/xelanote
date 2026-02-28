@@ -100,6 +100,11 @@ func (s *NoteService) UpdateEncryptedNote(
 	if err := s.db.SetNoteDueDates(noteID, userID, nil); err != nil {
 		s.logger.Warn("failed to clear due dates for encrypted note", "error", err)
 	}
+	// Privacy hardening: encrypted notes must not persist plaintext tags metadata.
+	// Always clear note tags for this note.
+	if err := s.db.SetNoteTags(noteID, userID, nil); err != nil {
+		s.logger.Warn("failed to clear tags for encrypted note", "error", err)
+	}
 
 	// Business rule: encrypting a note removes all shares
 	if err := s.db.DeleteAllSharesForNote(noteID); err != nil {

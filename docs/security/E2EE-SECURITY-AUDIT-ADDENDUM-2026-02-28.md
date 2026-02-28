@@ -101,6 +101,14 @@ This addendum reflects the **current remediation status** of the previously repo
 - API maps the block to `404` on `GET /api/users/recovery-key/salt`: `backend/internal/api/users_encryption.go`
 - Coverage includes service + API isolation tests for legacy-seeded recovery rows: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
 
+17. **Server-side note tags are disabled for encrypted notes; legacy encrypted-tag rows are purged.**
+
+- Service blocks `SetNoteTags` on encrypted notes with dedicated error guard: `backend/internal/service/notes_tags.go`
+- API returns `409` on `PUT /api/notes/:id/tags` for encrypted notes and returns `[]` on `GET`, with best-effort legacy cleanup: `backend/internal/api/tags.go`
+- Encrypted update flow now clears existing note-tag mappings: `backend/internal/service/notes_encryption_update.go`
+- Migration removes legacy encrypted-note tag rows and orphaned tag entries: `backend/internal/db/migrations/064_delete_tags_for_encrypted_notes.sql`
+- Coverage: `backend/internal/api/tags_versions_handlers_test.go`, `backend/internal/service/notes_encryption_test.go`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

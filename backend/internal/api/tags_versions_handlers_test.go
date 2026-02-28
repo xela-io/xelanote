@@ -117,6 +117,73 @@ func TestGetNoteTags_NoteNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
+func TestSetNoteTags_EncryptedNoteBlocked(t *testing.T) {
+	ts := newTestServer(t)
+	r := tagsRouter(ts)
+	user := ts.createUser(t, "encsettag", "encsettag@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	encNote, err := ts.noteService.CreateEncryptedNote(
+		user.ID,
+		"Encrypted",
+		nil,
+		false,
+		[]byte("encrypted-content"),
+		"wrapped-dek",
+		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
+		nil,
+		"/",
+	)
+	require.NoError(t, err)
+
+	rec := doJSON(t, r, http.MethodPut, "/api/notes/"+encNote.ID+"/tags", SetNoteTagsRequest{
+		Tags: []string{"secret"},
+	}, token)
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var total int
+	require.NoError(t, ts.db.QueryRow(`SELECT COUNT(*) FROM note_tags WHERE note_id = ?`, encNote.ID).Scan(&total))
+	assert.Equal(t, 0, total)
+}
+
+func TestGetNoteTags_EncryptedNoteReturnsEmptyAndClearsLegacy(t *testing.T) {
+	ts := newTestServer(t)
+	r := tagsRouter(ts)
+	user := ts.createUser(t, "encgettag", "encgettag@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	encNote, err := ts.noteService.CreateEncryptedNote(
+		user.ID,
+		"Encrypted",
+		nil,
+		false,
+		[]byte("encrypted-content"),
+		"wrapped-dek",
+		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
+		nil,
+		"/",
+	)
+	require.NoError(t, err)
+
+	res, err := ts.db.Exec(`INSERT INTO tags (name, name_norm, user_id) VALUES (?, ?, ?)`, "legacy", "legacy", user.ID)
+	require.NoError(t, err)
+	tagID, err := res.LastInsertId()
+	require.NoError(t, err)
+	_, err = ts.db.Exec(`INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)`, encNote.ID, tagID)
+	require.NoError(t, err)
+
+	rec := doJSON(t, r, http.MethodGet, "/api/notes/"+encNote.ID+"/tags", nil, token)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var tags []interface{}
+	decodeResponse(t, rec, &tags)
+	assert.Empty(t, tags)
+
+	var total int
+	require.NoError(t, ts.db.QueryRow(`SELECT COUNT(*) FROM note_tags WHERE note_id = ?`, encNote.ID).Scan(&total))
+	assert.Equal(t, 0, total)
+}
+
 func TestSetNoteTags_ReplacesExisting(t *testing.T) {
 	ts := newTestServer(t)
 	r := tagsRouter(ts)

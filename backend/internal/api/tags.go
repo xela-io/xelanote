@@ -1,9 +1,11 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xela-io/xelanote/internal/service"
 )
 
 // Tag API Request/Response types
@@ -56,6 +58,14 @@ func (s *Server) getNoteTags(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, "note not found")
 		return
 	}
+	if note.ContentEncrypted {
+		// Defense-in-depth: clear any legacy plaintext tags for encrypted notes.
+		if err := s.noteService.ClearNoteTags(noteID, userID); err != nil {
+			s.logger().Warn("failed to clear legacy tags for encrypted note", "err", err, "note_id", noteID)
+		}
+		respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
 
 	tags, err := s.noteService.GetNoteTags(noteID)
 	if err != nil {
@@ -92,6 +102,14 @@ func (s *Server) setNoteTags(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, "note not found")
 		return
 	}
+	if note.ContentEncrypted {
+		// Defense-in-depth: clear any legacy plaintext tags for encrypted notes.
+		if err := s.noteService.ClearNoteTags(noteID, userID); err != nil {
+			s.logger().Warn("failed to clear legacy tags for encrypted note", "err", err, "note_id", noteID)
+		}
+		respondError(w, http.StatusConflict, "encrypted notes do not support server-side tags")
+		return
+	}
 
 	var req SetNoteTagsRequest
 	if err := decodeJSON(w, r, &req); err != nil {
@@ -100,6 +118,10 @@ func (s *Server) setNoteTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.noteService.SetNoteTags(noteID, userID, req.Tags); err != nil {
+		if errors.Is(err, service.ErrEncryptedNoteTagsDisabled) {
+			respondError(w, http.StatusConflict, "encrypted notes do not support server-side tags")
+			return
+		}
 		s.respondInternalErr(w, "failed to set note tags", err)
 		return
 	}

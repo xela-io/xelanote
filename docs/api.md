@@ -2407,6 +2407,8 @@ Authorization: Bearer <access_token>
 ### GET /api/notes/:id/tags
 
 Gibt alle Tags einer Notiz zurück.
+Für verschlüsselte Notizen gibt der Endpoint immer ein leeres Array zurück und bereinigt
+ggf. vorhandene Legacy-Tag-Zuordnungen.
 
 #### Request
 
@@ -2436,6 +2438,7 @@ Authorization: Bearer <access_token>
 ### PUT /api/notes/:id/tags
 
 Setzt die Tags einer Notiz (überschreibt bestehende Tags).
+Für verschlüsselte Notizen ist das Setzen von Tags deaktiviert.
 
 #### Request
 
@@ -2481,6 +2484,7 @@ Content-Type: application/json
 - Tags werden automatisch erstellt, wenn sie nicht existieren
 - Leere Tags werden ignoriert
 - Case-insensitive: "Work" und "work" sind dasselbe Tag
+- Für `content_encrypted=true` antwortet der Endpoint mit `409 Conflict`
 
 ---
 

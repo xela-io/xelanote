@@ -95,15 +95,17 @@
 {/if}
 
 <!-- Tag editor panel -->
-<section class="editor-panel-section">
-  <TagEditor
-    bind:this={tagEditorRef}
-    noteId={note.id}
-    onTagsChanged={(tags) => {
-      currentTags = tags;
-    }}
-  />
-</section>
+{#if !note.content_encrypted}
+  <section class="editor-panel-section">
+    <TagEditor
+      bind:this={tagEditorRef}
+      noteId={note.id}
+      onTagsChanged={(tags) => {
+        currentTags = tags;
+      }}
+    />
+  </section>
+{/if}
 
 <style>
   .editor-panel-section {

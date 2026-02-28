@@ -281,6 +281,7 @@ func (db *DB) runMigrations() error {
 		"061_disable_keywords_encryption_preference.sql",
 		"062_delete_links_due_dates_for_encrypted_notes.sql",
 		"063_invalidate_recovery_keys_for_encrypted_users.sql",
+		"064_delete_tags_for_encrypted_notes.sql",
 	}
 
 	for _, migrationFile := range migrations {

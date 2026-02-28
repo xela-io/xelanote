@@ -92,6 +92,32 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 	})
 }
 
+func TestNoteService_SetNoteTags_BlockedForEncryptedNotes(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "enctagblock")
+
+	encNote, err := service.CreateEncryptedNote(
+		user.ID,
+		"Encrypted",
+		nil,
+		false,
+		[]byte("encrypted-content"),
+		"wrapped-dek",
+		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
+		nil,
+		"/",
+	)
+	if err != nil {
+		t.Fatalf("failed to create encrypted note: %v", err)
+	}
+
+	err = service.SetNoteTags(encNote.ID, user.ID, []string{"should-fail"})
+	if err != ErrEncryptedNoteTagsDisabled {
+		t.Fatalf("expected ErrEncryptedNoteTagsDisabled, got: %v", err)
+	}
+}
+
 func TestNoteService_EncryptedFlowsInvalidateRecoveryKey(t *testing.T) {
 	database := setupTestDB(t)
 	service := NewNoteService(database)
@@ -191,8 +217,11 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to seed legacy keyword: %v", err)
 	}
+	if err := service.SetNoteTags(source.ID, user.ID, []string{"legacy-tag"}); err != nil {
+		t.Fatalf("failed to seed legacy tags: %v", err)
+	}
 
-	var linksBefore, unresolvedBefore, dueDatesBefore, keywordsBefore int
+	var linksBefore, unresolvedBefore, dueDatesBefore, keywordsBefore, tagsBefore int
 	if err := database.QueryRow(`SELECT COUNT(*) FROM links WHERE source_id = ?`, source.ID).Scan(&linksBefore); err != nil {
 		t.Fatalf("count links before: %v", err)
 	}
@@ -205,6 +234,9 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	if err := database.QueryRow(`SELECT COUNT(*) FROM note_keywords WHERE note_id = ?`, source.ID).Scan(&keywordsBefore); err != nil {
 		t.Fatalf("count keywords before: %v", err)
 	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_tags WHERE note_id = ?`, source.ID).Scan(&tagsBefore); err != nil {
+		t.Fatalf("count tags before: %v", err)
+	}
 
 	if linksBefore == 0 {
 		t.Fatal("expected resolved links before encryption")
@@ -214,6 +246,9 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	}
 	if keywordsBefore == 0 {
 		t.Fatal("expected keywords before encryption")
+	}
+	if tagsBefore == 0 {
+		t.Fatal("expected tags before encryption")
 	}
 
 	_, err = service.UpdateEncryptedNote(
@@ -233,7 +268,7 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 		t.Fatalf("update encrypted note failed: %v", err)
 	}
 
-	var linksAfter, unresolvedAfter, dueDatesAfter, keywordsAfter int
+	var linksAfter, unresolvedAfter, dueDatesAfter, keywordsAfter, tagsAfter int
 	if err := database.QueryRow(`SELECT COUNT(*) FROM links WHERE source_id = ?`, source.ID).Scan(&linksAfter); err != nil {
 		t.Fatalf("count links after: %v", err)
 	}
@@ -245,6 +280,9 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	}
 	if err := database.QueryRow(`SELECT COUNT(*) FROM note_keywords WHERE note_id = ?`, source.ID).Scan(&keywordsAfter); err != nil {
 		t.Fatalf("count keywords after: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_tags WHERE note_id = ?`, source.ID).Scan(&tagsAfter); err != nil {
+		t.Fatalf("count tags after: %v", err)
 	}
 
 	if linksAfter != 0 {
@@ -258,6 +296,9 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 	}
 	if keywordsAfter != 0 {
 		t.Fatalf("expected keywords cleared, got %d", keywordsAfter)
+	}
+	if tagsAfter != 0 {
+		t.Fatalf("expected tags cleared, got %d", tagsAfter)
 	}
 
 	// Keep target used to avoid accidental linter optimization assumptions.

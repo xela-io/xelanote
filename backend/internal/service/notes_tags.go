@@ -1,7 +1,15 @@
 // Package service contains the business logic for xelanote.
 package service
 
-import "github.com/xela-io/xelanote/internal/db"
+import (
+	"errors"
+
+	"github.com/xela-io/xelanote/internal/db"
+)
+
+var (
+	ErrEncryptedNoteTagsDisabled = errors.New("tags are disabled for encrypted notes")
+)
 
 // --- Tag Management Functions ---
 
@@ -17,6 +25,14 @@ func (s *NoteService) GetNoteTags(noteID string) ([]db.Tag, error) {
 
 // SetNoteTags sets the tags for a note, replacing any existing tags.
 func (s *NoteService) SetNoteTags(noteID string, userID int, tagNames []string) error {
+	note, err := s.db.GetNote(userID, noteID)
+	if err != nil {
+		return err
+	}
+	if note.ContentEncrypted {
+		return ErrEncryptedNoteTagsDisabled
+	}
+
 	if err := s.db.SetNoteTags(noteID, userID, tagNames); err != nil {
 		return err
 	}
@@ -25,6 +41,16 @@ func (s *NoteService) SetNoteTags(noteID string, userID int, tagNames []string) 
 	s.invalidateNoteCache(userID, noteID)
 	s.invalidateQuickSearchCache(userID)
 
+	return nil
+}
+
+// ClearNoteTags clears all tags for a note.
+func (s *NoteService) ClearNoteTags(noteID string, userID int) error {
+	if err := s.db.SetNoteTags(noteID, userID, nil); err != nil {
+		return err
+	}
+	s.invalidateNoteCache(userID, noteID)
+	s.invalidateQuickSearchCache(userID)
 	return nil
 }
 

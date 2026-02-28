@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Canvas: disabled by default for new users (can be enabled in Settings > Editor)
 - UI: introduced CSS custom properties for typography scale, replacing hardcoded font sizes
 - Editor: moved indent/outdent from "More" menu to toolbar and insert menu for quicker access
 

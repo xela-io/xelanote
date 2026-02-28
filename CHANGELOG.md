@@ -71,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: deprecated and server-rejected legacy `plaintext_content` on AI suggest/format/transform endpoints; frontend no longer sends plaintext payloads for these routes
 - Security: encrypted notes no longer persist plaintext keyword metadata (API drops `keywords`, encrypted updates clear legacy keywords, migration removes existing rows)
 - Security: deprecated `keywords_enabled` encryption preference end-to-end (settings toggle removed, backend clamps to `false`, migration resets legacy enabled flags)
+- Security: encrypted-note updates now clear legacy `links`/`unresolved_links`/`note_due_dates` metadata in service layer, plus migration cleanup for existing encrypted rows
 - Editor: checked children within an unchecked parent no longer form separate completed task groups, ensuring a single contiguous grouping area
 - PWA: changed manifest orientation from `portrait` to `any` so the Android system rotation setting is respected instead of being overridden by the PWA
 - CI: relaxed flaky `docChanged:structured` performance threshold from 2.0ms to 5.0ms for slower CI runners

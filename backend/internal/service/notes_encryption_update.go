@@ -90,6 +90,16 @@ func (s *NoteService) UpdateEncryptedNote(
 	if err := s.db.DeleteNoteKeywords(noteID); err != nil {
 		s.logger.Warn("failed to clear keywords for encrypted note", "error", err)
 	}
+	// Privacy hardening: encrypted notes must not persist plaintext link metadata.
+	// Always clear resolved + unresolved links for this note.
+	if err := s.db.SetLinks(noteID, nil, nil); err != nil {
+		s.logger.Warn("failed to clear links for encrypted note", "error", err)
+	}
+	// Privacy hardening: encrypted notes must not persist plaintext due-date metadata.
+	// Always clear due dates for this note.
+	if err := s.db.SetNoteDueDates(noteID, userID, nil); err != nil {
+		s.logger.Warn("failed to clear due dates for encrypted note", "error", err)
+	}
 
 	// Business rule: encrypting a note removes all shares
 	if err := s.db.DeleteAllSharesForNote(noteID); err != nil {

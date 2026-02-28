@@ -71,6 +71,12 @@ This addendum reflects the **current remediation status** of the previously repo
 - Server clamps `keywords_enabled` to `false` on updates: `backend/internal/service/user_preferences.go`, `backend/internal/db/preferences_encryption.go`
 - Migration clears legacy enabled preference flags: `backend/internal/db/migrations/061_disable_keywords_encryption_preference.sql`
 
+12. **Legacy link and due-date metadata for encrypted notes is purged and service-enforced.**
+
+- Encrypted updates now clear links + unresolved links + due dates in service layer: `backend/internal/service/notes_encryption_update.go`
+- API encrypted update path now only ignores client metadata (no duplicated clearing logic): `backend/internal/api/notes_crud_update.go`
+- Migration removes existing encrypted-note metadata rows: `backend/internal/db/migrations/062_delete_links_due_dates_for_encrypted_notes.sql`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

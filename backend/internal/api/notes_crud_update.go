@@ -121,14 +121,8 @@ func respondNoteUpdateError(s *Server, w http.ResponseWriter, err error, logMsg 
 // Returns false if link validation failed (response already written).
 func (s *Server) applyNoteUpdateSideEffects(w http.ResponseWriter, userID int, id string, req NoteRequest) bool {
 	// Privacy hardening: encrypted notes must not leak links/due-dates metadata server-side.
-	// Always clear previously persisted metadata and ignore client-provided values.
+	// Service layer enforces metadata clearing; API layer only ignores client-provided values.
 	if req.EncryptedContent != "" && req.WrappedDEK != "" {
-		if err := s.noteService.UpdateLinksFromClient(userID, id, []string{}); err != nil {
-			s.logger().Error("failed to clear links for encrypted note", "err", err, "note_id", id)
-		}
-		if err := s.noteService.SetNoteDueDates(id, userID, nil); err != nil {
-			s.logger().Error("failed to clear due dates for encrypted note", "err", err, "note_id", id)
-		}
 		if s.graphService != nil {
 			s.graphService.InvalidateGraphCache(userID)
 		}

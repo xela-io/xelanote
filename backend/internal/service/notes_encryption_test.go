@@ -90,6 +90,101 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 	})
 }
 
+func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
+	database := setupTestDB(t)
+	service := NewNoteService(database)
+	user := createTestUser(t, database, "encmetauser")
+
+	target, err := service.CreateNote(user.ID, "Target", "target content", "/")
+	if err != nil {
+		t.Fatalf("failed to create target note: %v", err)
+	}
+
+	sourceContent := "[[Target]]\n- [ ] hidden @due(2026-03-10)"
+	source, err := service.CreateNote(user.ID, "Source", sourceContent, "/")
+	if err != nil {
+		t.Fatalf("failed to create source note: %v", err)
+	}
+
+	_, err = database.Exec(`INSERT INTO note_keywords (note_id, keyword) VALUES (?, ?)`, source.ID, "legacy")
+	if err != nil {
+		t.Fatalf("failed to seed legacy keyword: %v", err)
+	}
+
+	var linksBefore, unresolvedBefore, dueDatesBefore, keywordsBefore int
+	if err := database.QueryRow(`SELECT COUNT(*) FROM links WHERE source_id = ?`, source.ID).Scan(&linksBefore); err != nil {
+		t.Fatalf("count links before: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM unresolved_links WHERE source_id = ?`, source.ID).Scan(&unresolvedBefore); err != nil {
+		t.Fatalf("count unresolved before: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_due_dates WHERE note_id = ?`, source.ID).Scan(&dueDatesBefore); err != nil {
+		t.Fatalf("count due dates before: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_keywords WHERE note_id = ?`, source.ID).Scan(&keywordsBefore); err != nil {
+		t.Fatalf("count keywords before: %v", err)
+	}
+
+	if linksBefore == 0 {
+		t.Fatal("expected resolved links before encryption")
+	}
+	if dueDatesBefore == 0 {
+		t.Fatal("expected due dates before encryption")
+	}
+	if keywordsBefore == 0 {
+		t.Fatal("expected keywords before encryption")
+	}
+
+	_, err = service.UpdateEncryptedNote(
+		user.ID,
+		source.ID,
+		"Encrypted Source",
+		nil,
+		false,
+		[]byte("encrypted-content"),
+		"wrapped-dek",
+		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
+		"/",
+		nil,
+		source.Version,
+	)
+	if err != nil {
+		t.Fatalf("update encrypted note failed: %v", err)
+	}
+
+	var linksAfter, unresolvedAfter, dueDatesAfter, keywordsAfter int
+	if err := database.QueryRow(`SELECT COUNT(*) FROM links WHERE source_id = ?`, source.ID).Scan(&linksAfter); err != nil {
+		t.Fatalf("count links after: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM unresolved_links WHERE source_id = ?`, source.ID).Scan(&unresolvedAfter); err != nil {
+		t.Fatalf("count unresolved after: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_due_dates WHERE note_id = ?`, source.ID).Scan(&dueDatesAfter); err != nil {
+		t.Fatalf("count due dates after: %v", err)
+	}
+	if err := database.QueryRow(`SELECT COUNT(*) FROM note_keywords WHERE note_id = ?`, source.ID).Scan(&keywordsAfter); err != nil {
+		t.Fatalf("count keywords after: %v", err)
+	}
+
+	if linksAfter != 0 {
+		t.Fatalf("expected links cleared, got %d", linksAfter)
+	}
+	if unresolvedAfter != 0 {
+		t.Fatalf("expected unresolved links cleared, got %d", unresolvedAfter)
+	}
+	if dueDatesAfter != 0 {
+		t.Fatalf("expected due dates cleared, got %d", dueDatesAfter)
+	}
+	if keywordsAfter != 0 {
+		t.Fatalf("expected keywords cleared, got %d", keywordsAfter)
+	}
+
+	// Keep target used to avoid accidental linter optimization assumptions.
+	if target.ID == "" {
+		t.Fatal("target note id must not be empty")
+	}
+}
+
 func TestNoteService_DecryptNote(t *testing.T) {
 	database := setupTestDB(t)
 	service := NewNoteService(database)

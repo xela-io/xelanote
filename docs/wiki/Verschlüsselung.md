@@ -97,11 +97,11 @@ Im "Balanced"- und "Paranoid"-Modus gibt es einen Auto-Lock-Timer:
 **Problem:** Server kennt den Inhalt nicht → kann `[[Links]]` nicht parsen.
 
 **Lösung:**
-1. Client entschlüsselt Notiz
-2. Client extrahiert `[[...]]` Titel
-3. Client sendet Titel-Liste an Server
-4. Server löst Titel → Note-IDs auf
-5. Server speichert in `links`-Tabelle
+1. Client entschlüsselt Notiz lokal
+2. Client verarbeitet Wikilinks nur lokal fuer UI/Navigation
+3. Server speichert fuer verschluesselte Notizen keine Link-Metadaten (`links`/`unresolved_links`)
+
+**Hinweis:** Damit sind serverseitige Backlink-Funktionen fuer verschluesselte Notizen eingeschraenkt; die Suche/Navigation erfolgt clientseitig.
 
 ### Suche bei verschlüsselten Notizen
 

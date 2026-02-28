@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed UNION ALL column mismatch in shared-note folder query (missing `wrapped_dek_recovery`)
 - Fixed e2e-feature test to match updated `encryptNote` signature (now includes noteId)
+- Fixed migration 065 failing on UNIQUE constraint when moving encrypted notes to root folder
 
 ### Added
 

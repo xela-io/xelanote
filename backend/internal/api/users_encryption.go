@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/xela-io/xelanote/internal/service"
 )
 
@@ -48,8 +50,12 @@ func (s *Server) setRecoveryKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate inputs
-	if req.RecoveryKeyHash == "" {
-		respondError(w, http.StatusBadRequest, "recovery_key_hash is required")
+	if req.RecoveryKeyHash == "" && req.RecoveryKey == "" {
+		respondError(w, http.StatusBadRequest, "recovery_key_hash or recovery_key is required")
+		return
+	}
+	if req.RecoveryKeyHash != "" && req.RecoveryKey != "" {
+		respondError(w, http.StatusBadRequest, "provide either recovery_key_hash or recovery_key, not both")
 		return
 	}
 	if req.Salt == "" {
@@ -64,10 +70,21 @@ func (s *Server) setRecoveryKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	recoveryKeyHash := req.RecoveryKeyHash
+	if recoveryKeyHash == "" {
+		hash, hashErr := bcrypt.GenerateFromPassword([]byte(req.RecoveryKey), 12)
+		if hashErr != nil {
+			s.logger().Error("failed to hash recovery key", "error", hashErr)
+			respondError(w, http.StatusInternalServerError, "failed to set recovery key")
+			return
+		}
+		recoveryKeyHash = string(hash)
+	}
+
 	// Set recovery key
 	err = s.userService.SetRecoveryKeyWithRecoveryWrappedDEKs(
 		userID,
-		req.RecoveryKeyHash,
+		recoveryKeyHash,
 		salt,
 		req.RecoveryWrappedNoteDEKs,
 		req.RecoveryWrappedVersionDEKs,

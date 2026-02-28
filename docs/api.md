@@ -4290,7 +4290,7 @@ Content-Type: application/json
 
 ```json
 {
-  "recovery_key_hash": "argon2id-hash-des-recovery-keys",
+  "recovery_key": "plain-recovery-key",
   "salt": "base64-encoded-salt",
   "recovery_wrapped_note_deks": {
     "note-1": "base64-wrapped-dek-recovery"
@@ -4300,6 +4300,10 @@ Content-Type: application/json
   }
 }
 ```
+
+Hinweis:
+- Sende **entweder** `recovery_key_hash` **oder** `recovery_key` (nicht beides).
+- Wenn `recovery_key` gesendet wird, hasht der Server diesen mit bcrypt vor der Speicherung.
 
 #### Response
 
@@ -4316,7 +4320,8 @@ Content-Type: application/json
 #### Errors
 
 ```http
-400 Bad Request - "recovery_key_hash is required", "salt is required", "invalid base64 salt"
+400 Bad Request - "salt is required", "invalid base64 salt"
+400 Bad Request - "recovery_key_hash or recovery_key is required", "provide either recovery_key_hash or recovery_key, not both"
 400 Bad Request - "missing ...", "invalid ...", "unexpected ..." (inkonsistente Recovery-Rewrap-Payload)
 409 Conflict - "recovery key setup for encrypted accounts requires full recovery DEK re-wrapping"
 401 Unauthorized - Keine gültige Authentifizierung

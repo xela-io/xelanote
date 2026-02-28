@@ -936,7 +936,18 @@
         "migration_no_notes": "No notes available.",
         "migration_error": "Could not load statistics.",
         "security_keys_title": "Security Keys",
-        "security_keys_description": "Use hardware security keys (YubiKey etc.) as a second factor when logging in."
+        "security_keys_description": "Use hardware security keys (YubiKey etc.) as a second factor when logging in.",
+        "recovery_setup_title": "Recovery Key",
+        "recovery_setup_description": "Generate and store a recovery key while encryption is unlocked. For encrypted accounts this also provisions recovery wrappers for all encrypted notes and versions.",
+        "recovery_setup_button": "Set recovery key",
+        "recovery_setup_in_progress": "Setting recovery key...",
+        "recovery_requires_unlock": "Unlock encryption before setting up a recovery key.",
+        "recovery_setup_confirm": "A new recovery key will be generated and must be stored securely. Continue?",
+        "recovery_setup_success_title": "Recovery key ready",
+        "recovery_setup_success_copied": "Recovery key copied to clipboard. Store it in a password manager now:",
+        "recovery_setup_success_manual": "Copy and store this recovery key in a password manager now:",
+        "recovery_setup_error_title": "Recovery key setup failed",
+        "recovery_setup_error_generic": "Failed to set recovery key."
       },
       "account": {
         "logged_in_as": "Logged in as",

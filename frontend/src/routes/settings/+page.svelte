@@ -111,6 +111,7 @@
   let isSavingSecurityLevel = $state(false);
   let isSavingAutoLockTimeout = $state(false);
   let webAuthnCredentials = $state<WebAuthnCredential[]>([]);
+  let isSettingRecoveryKey = $state(false);
 
   // Migration statistics state
   let migrationStats = $state<MigrationStats | null>(null);
@@ -598,6 +599,87 @@
     });
   }
 
+  function generateRecoveryKey(): string {
+    const random = crypto.getRandomValues(new Uint8Array(24));
+    const raw = Array.from(random, (b) => b.toString(16).padStart(2, '0')).join('');
+    return `${raw.slice(0, 12)}-${raw.slice(12, 24)}-${raw.slice(24, 36)}-${raw.slice(36, 48)}`;
+  }
+
+  async function handleSetupRecoveryKey() {
+    if (isSettingRecoveryKey) return;
+    if (!encryption.isEncryptionUnlocked()) {
+      await dialog.alert({
+        title: $_('page.settings.security.recovery_setup_title'),
+        message: $_('page.settings.security.recovery_requires_unlock'),
+      });
+      return;
+    }
+
+    const confirmed = await dialog.confirm({
+      title: $_('page.settings.security.recovery_setup_title'),
+      message: $_('page.settings.security.recovery_setup_confirm'),
+      confirmText: $_('page.settings.security.recovery_setup_button'),
+      cancelText: $_('common.cancel'),
+      variant: 'default',
+    });
+    if (!confirmed) return;
+
+    isSettingRecoveryKey = true;
+    try {
+      const recoveryKey = generateRecoveryKey();
+      const recoverySaltBytes = crypto.getRandomValues(new Uint8Array(16));
+      const recoverySalt = btoa(String.fromCharCode(...recoverySaltBytes));
+
+      const encryptedNotes = await api.getAllEncryptedNotes();
+      const encryptedVersions = await api.getAllEncryptedVersions();
+
+      let recoveryWrappedNoteDEKs: Record<string, string> | undefined;
+      let recoveryWrappedVersionDEKs: Record<string, string> | undefined;
+
+      if (encryptedNotes.length > 0 || encryptedVersions.length > 0) {
+        const wrapped = await e2eEncryption.createRecoveryWrappedDEKs(
+          encryptedNotes,
+          encryptedVersions,
+          recoveryKey,
+          recoverySaltBytes
+        );
+        recoveryWrappedNoteDEKs = Object.fromEntries(wrapped.notes);
+        recoveryWrappedVersionDEKs = Object.fromEntries(wrapped.versions);
+      }
+
+      await api.setRecoveryKey({
+        recovery_key: recoveryKey,
+        salt: recoverySalt,
+        recovery_wrapped_note_deks: recoveryWrappedNoteDEKs,
+        recovery_wrapped_version_deks: recoveryWrappedVersionDEKs,
+      });
+
+      try {
+        await navigator.clipboard.writeText(recoveryKey);
+        await dialog.alert({
+          title: $_('page.settings.security.recovery_setup_success_title'),
+          message: `${$_('page.settings.security.recovery_setup_success_copied')}\n\n${recoveryKey}`,
+        });
+      } catch {
+        await dialog.alert({
+          title: $_('page.settings.security.recovery_setup_success_title'),
+          message: `${$_('page.settings.security.recovery_setup_success_manual')}\n\n${recoveryKey}`,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to set recovery key:', err);
+      await dialog.alert({
+        title: $_('page.settings.security.recovery_setup_error_title'),
+        message:
+          err instanceof Error
+            ? err.message
+            : $_('page.settings.security.recovery_setup_error_generic'),
+      });
+    } finally {
+      isSettingRecoveryKey = false;
+    }
+  }
+
   async function handleSettingsLogout() {
     const confirmed = await dialog.confirm({
       title: $_('dialog.confirm_title'),
@@ -735,10 +817,12 @@
             {encryption}
             {securityLevel}
             {isSavingSecurityLevel}
+            {isSettingRecoveryKey}
             bind:autoLockTimeout
             {isSavingAutoLockTimeout}
             {handleSecurityLevelChange}
             {handleAutoLockTimeoutChange}
+            {handleSetupRecoveryKey}
             {webAuthnCredentials}
             {load2FAStatus}
             {loadSecurityPreferences}

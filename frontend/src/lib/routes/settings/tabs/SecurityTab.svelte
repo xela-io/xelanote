@@ -21,10 +21,12 @@
   export let encryption: typeof import('$lib/stores/encryption.svelte');
   export let securityLevel: 'paranoid' | 'balanced' | 'convenient';
   export let isSavingSecurityLevel: boolean;
+  export let isSettingRecoveryKey: boolean;
   export let autoLockTimeout: number;
   export let isSavingAutoLockTimeout: boolean;
   export let handleSecurityLevelChange: (level: 'paranoid' | 'balanced' | 'convenient') => void;
   export let handleAutoLockTimeoutChange: () => void;
+  export let handleSetupRecoveryKey: () => void;
   export let webAuthnCredentials: Array<import('$lib/crypto/webauthn').WebAuthnCredential>;
   export let load2FAStatus: () => void;
   export let loadSecurityPreferences: () => void;
@@ -208,6 +210,31 @@
     </p>
     <SecurityKeyManager onUpdate={load2FAStatus} />
   </div>
+
+  <!-- Recovery Key Setup -->
+  <section class="ui-form-section">
+    <h3 class="ui-form-section-title">
+      {$_('page.settings.security.recovery_setup_title')}
+    </h3>
+    <div class="ui-panel p-4 sm:p-5">
+      <p class="text-sm text-muted-foreground mb-4">
+        {$_('page.settings.security.recovery_setup_description')}
+      </p>
+      <button
+        onclick={handleSetupRecoveryKey}
+        disabled={!encryption.isEncryptionUnlocked() || isSettingRecoveryKey}
+        class="ui-button ui-button-primary"
+      >
+        {#if isSettingRecoveryKey}
+          <Loader2 size={16} class="animate-spin" />
+          {$_('page.settings.security.recovery_setup_in_progress')}
+        {:else}
+          <RefreshCw size={16} />
+          {$_('page.settings.security.recovery_setup_button')}
+        {/if}
+      </button>
+    </div>
+  </section>
 
   <!-- Biometric Devices -->
   <div class="ui-panel p-5 sm:p-6">

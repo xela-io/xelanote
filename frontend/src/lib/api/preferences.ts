@@ -21,6 +21,14 @@ import type {
 } from './types';
 import { listVersions } from './versions';
 
+export interface SetRecoveryKeyRequest {
+  recovery_key_hash?: string;
+  recovery_key?: string;
+  salt: string;
+  recovery_wrapped_note_deks?: Record<string, string>;
+  recovery_wrapped_version_deks?: Record<string, string>;
+}
+
 export async function getPreferences(): Promise<UserPreferences> {
   return request('/users/preferences');
 }
@@ -203,6 +211,17 @@ export async function changeEmail(newEmail: string, currentPassword: string): Pr
     method: 'PUT',
     body: JSON.stringify({ new_email: newEmail, current_password: currentPassword }),
   });
+}
+
+export async function setRecoveryKey(data: SetRecoveryKeyRequest): Promise<{ message: string }> {
+  return request('/users/recovery-key', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getRecoveryKeySalt(): Promise<{ salt: string }> {
+  return request('/users/recovery-key/salt');
 }
 
 export async function changePassword(

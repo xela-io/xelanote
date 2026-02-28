@@ -686,6 +686,80 @@ export class E2EEncryption {
   }
 
   /**
+   * Create recovery-wrapped DEKs from the currently unlocked password KEK.
+   * Used when setting up a recovery key for accounts with encrypted content.
+   */
+  async createRecoveryWrappedDEKs(
+    notes: Array<{ id: string; wrapped_dek?: string | null }>,
+    versions: Array<{ id: number | string; wrapped_dek?: string | null }>,
+    recoveryKey: string,
+    recoverySalt: Uint8Array
+  ): Promise<{
+    notes: Map<string, string>;
+    versions: Map<string, string>;
+  }> {
+    if (!isInitialized()) throw new Error('libsodium not initialized');
+    if (!this.kek) throw new Error('KEK not initialized');
+    if (!recoveryKey) throw new Error('recovery key is required');
+
+    const recoveryKEK = await this.deriveKEK(recoveryKey, recoverySalt);
+    const recoveryWrappedNotes = new Map<string, string>();
+    const recoveryWrappedVersions = new Map<string, string>();
+
+    try {
+      for (const note of notes) {
+        if (!note.id || !note.wrapped_dek) continue;
+        const wrappedDEK = fromBase64Standard(note.wrapped_dek);
+
+        const noteAAD = this.buildAAD(note.id, 'note', 'dek');
+        // Compatibility fallback for legacy wrappers without AAD.
+        let dek = this.unwrapDEK(wrappedDEK, this.kek, noteAAD);
+        if (dek === null) {
+          dek = this.unwrapDEK(wrappedDEK, this.kek);
+        }
+        if (dek === null) {
+          throw new Error(`failed to unwrap note DEK for ${note.id}`);
+        }
+
+        const wrappedRecoveryDEK = this.wrapDEK(
+          dek,
+          recoveryKEK,
+          this.buildAAD(note.id, 'note', 'dek_recovery')
+        );
+        recoveryWrappedNotes.set(note.id, toBase64Standard(wrappedRecoveryDEK));
+        dek.fill(0);
+      }
+
+      for (const version of versions) {
+        if (!version.id || !version.wrapped_dek) continue;
+        const versionID = String(version.id);
+        const wrappedDEK = fromBase64Standard(version.wrapped_dek);
+
+        // Version wrapped_dek values are historically unauthenticated.
+        const dek = this.unwrapDEK(wrappedDEK, this.kek);
+        if (dek === null) {
+          throw new Error(`failed to unwrap version DEK for ${versionID}`);
+        }
+
+        const wrappedRecoveryDEK = this.wrapDEK(
+          dek,
+          recoveryKEK,
+          this.buildVersionRecoveryAAD(versionID)
+        );
+        recoveryWrappedVersions.set(versionID, toBase64Standard(wrappedRecoveryDEK));
+        dek.fill(0);
+      }
+    } finally {
+      recoveryKEK.fill(0);
+    }
+
+    return {
+      notes: recoveryWrappedNotes,
+      versions: recoveryWrappedVersions,
+    };
+  }
+
+  /**
    * Re-wrap DEKs from recovery wrappers to password wrappers.
    * Used during password recovery reset for encrypted accounts.
    */

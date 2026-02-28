@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: encrypted create/update flows now auto-invalidate stored recovery key material; migration clears legacy recovery keys for users with encrypted notes/versions
 - Security: removed residual encrypted-create keyword persistence hooks across note/journal/recipe/canvas service+DB paths
 - Security: `GET /api/users/recovery-key/salt` for encrypted accounts now returns salt only when all encrypted notes/versions have `wrapped_dek_recovery`; incomplete/legacy states return `404`
+- Security: Settings UI now supports recovery-key setup for encrypted accounts by generating recovery wrappers client-side and posting full `recovery_wrapped_*` coverage; `/api/users/recovery-key` also accepts plaintext `recovery_key` (server-side bcrypt hashing)
 - Security: encrypted notes no longer support server-side tags (`PUT /api/notes/:id/tags` returns `409`, `GET` returns `[]`), and migration removes legacy encrypted-note tag rows
 - Security: encrypted note `folder_path` is now normalized to `/` on create/update across note/journal/recipe/canvas flows, with migration cleanup for existing encrypted rows
 - Security: encrypted note create/update now rejects outdated `encryption_metadata.version` (< 3) to harden against protocol downgrade writes

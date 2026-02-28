@@ -97,7 +97,8 @@ type addWebAuthnCredentialRequest struct {
 }
 
 type setRecoveryKeyRequest struct {
-	RecoveryKeyHash            string            `json:"recovery_key_hash"`                       // bcrypt hash
+	RecoveryKeyHash            string            `json:"recovery_key_hash"`                       // bcrypt hash (optional if recovery_key is provided)
+	RecoveryKey                string            `json:"recovery_key"`                            // plaintext recovery key (server hashes with bcrypt)
 	Salt                       string            `json:"salt"`                                    // Base64-encoded
 	RecoveryWrappedNoteDEKs    map[string]string `json:"recovery_wrapped_note_deks,omitempty"`    // noteID -> wrapped_dek_recovery
 	RecoveryWrappedVersionDEKs map[string]string `json:"recovery_wrapped_version_deks,omitempty"` // versionID -> wrapped_dek_recovery

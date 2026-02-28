@@ -269,6 +269,23 @@ func TestRecoveryKey_UserIsolation(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
+func TestRecoveryKey_SetWithPlaintextKey(t *testing.T) {
+	ts := newTestServer(t)
+	r := usersRouter(ts)
+	user := ts.createUser(t, "recplain", "recplain@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	salt := base64.StdEncoding.EncodeToString([]byte("random-salt-bytes123"))
+	rec := doJSON(t, r, http.MethodPost, "/api/users/recovery-key", setRecoveryKeyRequest{
+		RecoveryKey: "my-plain-recovery-key-123",
+		Salt:        salt,
+	}, token)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = doJSON(t, r, http.MethodGet, "/api/users/recovery-key/salt", nil, token)
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
 func TestRecoveryKey_SetRequiresWrappedDEKsForEncryptedUsers(t *testing.T) {
 	ts := newTestServer(t)
 	r := usersRouter(ts)

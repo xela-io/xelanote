@@ -936,7 +936,18 @@
         "migration_no_notes": "Keine Notizen vorhanden.",
         "migration_error": "Statistiken konnten nicht geladen werden.",
         "security_keys_title": "Security Keys",
-        "security_keys_description": "Hardware Security Keys (YubiKey etc.) als zweiten Faktor beim Login verwenden."
+        "security_keys_description": "Hardware Security Keys (YubiKey etc.) als zweiten Faktor beim Login verwenden.",
+        "recovery_setup_title": "Recovery-Key",
+        "recovery_setup_description": "Erzeuge und sichere einen Recovery-Key bei entsperrter Verschluesselung. Fuer verschluesselte Accounts werden dabei auch Recovery-Wrapper fuer alle verschluesselten Notizen und Versionen eingerichtet.",
+        "recovery_setup_button": "Recovery-Key setzen",
+        "recovery_setup_in_progress": "Recovery-Key wird eingerichtet...",
+        "recovery_requires_unlock": "Entsperre die Verschluesselung, bevor du den Recovery-Key einrichtest.",
+        "recovery_setup_confirm": "Ein neuer Recovery-Key wird erzeugt und muss sicher gespeichert werden. Fortfahren?",
+        "recovery_setup_success_title": "Recovery-Key eingerichtet",
+        "recovery_setup_success_copied": "Recovery-Key wurde in die Zwischenablage kopiert. Jetzt im Passwortmanager speichern:",
+        "recovery_setup_success_manual": "Kopiere und speichere diesen Recovery-Key jetzt im Passwortmanager:",
+        "recovery_setup_error_title": "Recovery-Key konnte nicht eingerichtet werden",
+        "recovery_setup_error_generic": "Recovery-Key konnte nicht gesetzt werden."
       },
       "account": {
         "logged_in_as": "Eingeloggt als",

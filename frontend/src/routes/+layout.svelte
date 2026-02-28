@@ -543,9 +543,14 @@
     if (!pathname.startsWith('/note/')) return;
     const noteId = pathname.split('/note/')[1];
     if (!noteId) return;
-    // Read title outside reactive tracking to avoid dependency on notes store
-    const title = untrack(() => notes.getNoteById(noteId)?.title ?? '');
-    tabs.syncTabWithRoute(noteId, title);
+    // Read title AND sync call outside reactive tracking to avoid dependency
+    // on notes store and tab state. Without untrack, syncTabWithRoute → findTabByNoteId
+    // reads group.tabs, making this effect re-trigger on every tab change — which
+    // reopens just-closed tabs because the URL still points to the old note.
+    untrack(() => {
+      const title = notes.getNoteById(noteId)?.title ?? '';
+      tabs.syncTabWithRoute(noteId, title);
+    });
   });
 
   // Tab sync: dirty state -> tab

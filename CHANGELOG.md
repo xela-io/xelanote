@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Tabs: closing a tab no longer fails to remove it due to a hidden reactive dependency in the URL→Tab sync effect
 - Sidebar: increased minimum resize width so header toolbar buttons are never clipped
 - Quality: fixed prettier formatting and svelte-check type error in PWA test
 - Quality: removed unused variables in task-sortable.ts and task-toggle.ts (eslint no-unused-vars)

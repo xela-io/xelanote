@@ -802,25 +802,26 @@ Nach Creation werden automatisch Links verarbeitet:
 
 **E2E-verschluesselte Notizen:**
 Bei verschluesselten Notizen kann der Server den Content nicht lesen. Daher:
-1. Frontend extrahiert `[[Wikilinks]]` **vor** der Verschluesselung
-2. Links werden im Request-Body als `links`-Array mitgesendet
-3. Server validiert (max 500 Links, max 200 Zeichen pro Link) und speichert sie
-4. Backlinks und Graph-Visualisierung funktionieren wie bei Standard-Notizen
+1. Der Client sendet `id` und `encryption_metadata.version >= 3` (Downgrade-Schutz).
+2. Serverseitige Link-/DueDate-/Keyword-/Tag-Metadaten werden fuer encrypted Notes nicht persistiert.
+3. `folder_path` wird serverseitig auf `/` normalisiert.
+4. Backlinks/Graph fuer encrypted Notes basieren auf clientseitiger Verarbeitung.
 
-**Request mit Client-seitigen Links:**
+**Request fuer E2E-verschluesselte Notiz (v3+):**
 ```json
 {
+  "id": "550e8400-e29b-41d4-a716-446655440000",
   "title": "Encrypted Note",
   "content": "",
   "encrypted_content": "base64...",
-  "links": ["Project A", "Meeting Notes"]
+  "wrapped_dek": "base64...",
+  "encryption_metadata": "{\"algorithm\":\"XChaCha20-Poly1305\",\"version\":3}"
 }
 ```
 
 **Validierung:**
-- Max 500 Links pro Notiz
-- Max 200 Zeichen pro Link-Titel
-- Links werden case-insensitive dedupliziert
+- `encryption_metadata.version` muss mindestens `3` sein
+- Bei `version >= 3` ist ein client-generiertes `id` Pflicht
 
 #### Duplicate Title
 

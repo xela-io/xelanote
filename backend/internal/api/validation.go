@@ -7,6 +7,8 @@ import (
 	"fmt"
 )
 
+const minEncryptionMetadataVersion = 3
+
 // validationError is a general-purpose validation error returned to clients.
 // Used by snippets and templates validation.
 type validationError struct {
@@ -118,6 +120,22 @@ func ValidateEncryptionMetadata(jsonMetadata string) error {
 	var metadata map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonMetadata), &metadata); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidJSON, err)
+	}
+
+	rawVersion, hasVersion := metadata["version"]
+	if !hasVersion {
+		return errors.New("encryption metadata missing 'version'")
+	}
+	versionFloat, ok := rawVersion.(float64)
+	if !ok {
+		return errors.New("encryption metadata has invalid 'version'")
+	}
+	version := int(versionFloat)
+	if version < minEncryptionMetadataVersion {
+		return fmt.Errorf(
+			"encryption metadata has unsupported 'version' (minimum %d)",
+			minEncryptionMetadataVersion,
+		)
 	}
 
 	return nil

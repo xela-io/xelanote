@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -54,13 +55,17 @@ func makeEncryptedPayload(t *testing.T) (encryptedContent, wrappedDEK, metadata 
 
 	// Encryption metadata (valid JSON)
 	meta := map[string]interface{}{
-		"algorithm": "AES-256-GCM",
-		"version":   1,
+		"algorithm": "XChaCha20-Poly1305",
+		"version":   3,
 	}
 	metaBytes, _ := json.Marshal(meta)
 	metadata = string(metaBytes)
 
 	return
+}
+
+func testNoteID(n int) string {
+	return fmt.Sprintf("550e8400-e29b-41d4-a716-%012d", n)
 }
 
 // makeEncryptedTitlePayload creates a valid encrypted_title JSON payload that matches frontend format.
@@ -111,6 +116,7 @@ func TestCreateEncryptedNote_Success(t *testing.T) {
 	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
 
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(1),
 		Title:              "Encrypted Note",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,
@@ -135,6 +141,7 @@ func TestCreateEncryptedNote_WithEncryptedTitle_Success(t *testing.T) {
 	encryptedTitle := makeEncryptedTitlePayload(t, 2)
 
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(2),
 		Title:              "",
 		EncryptedTitle:     &encryptedTitle,
 		TitleEncrypted:     true,
@@ -159,6 +166,7 @@ func TestCreateEncryptedNote_IgnoresClientLinksAndDueDates(t *testing.T) {
 	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
 
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(3),
 		Title:              "Encrypted Note",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,
@@ -204,6 +212,7 @@ func TestCreateEncryptedNote_NormalizesFolderPathToRoot(t *testing.T) {
 	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
 
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(4),
 		Title:              "Encrypted Note",
 		FolderPath:         "/Sensitive/Finance",
 		EncryptedContent:   encContent,
@@ -226,6 +235,7 @@ func TestCreateEncryptedNote_InvalidDEK(t *testing.T) {
 	encContent, _, meta := makeEncryptedPayload(t)
 
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(5),
 		Title:              "Bad DEK Note",
 		EncryptedContent:   encContent,
 		WrappedDEK:         "not-valid-base64!!!",
@@ -288,6 +298,7 @@ func TestUpdateEncryptedNote_WithEncryptedTitle_Success(t *testing.T) {
 
 	// Create encrypted note first
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(7),
 		Title:              "Encrypted Note",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,
@@ -447,6 +458,7 @@ func TestDecryptNote_Success(t *testing.T) {
 
 	// Create encrypted note
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(8),
 		Title:              "Decrypt Me",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,
@@ -480,6 +492,7 @@ func TestDecryptNote_MissingIfMatch(t *testing.T) {
 	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
 
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(9),
 		Title:              "Decrypt Me",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,
@@ -524,6 +537,7 @@ func TestBatchReencryptDEKs_Success(t *testing.T) {
 	titles := []string{"Batch Note Alpha", "Batch Note Beta"}
 	for i := 0; i < 2; i++ {
 		rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+			ID:                 testNoteID(10 + i),
 			Title:              titles[i],
 			EncryptedContent:   encContent,
 			WrappedDEK:         wrappedDEK,
@@ -556,6 +570,60 @@ func TestBatchReencryptDEKs_Success(t *testing.T) {
 	var resp map[string]interface{}
 	decodeResponse(t, rec, &resp)
 	assert.Equal(t, float64(2), resp["updated_count"])
+}
+
+func TestCreateEncryptedNote_V2MetadataRejected(t *testing.T) {
+	ts := newTestServer(t)
+	r := encryptionRouter(ts)
+	user := ts.createUser(t, "encuser-v2", "enc-v2@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	encContent, wrappedDEK, _ := makeEncryptedPayload(t)
+
+	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(20),
+		Title:              "Encrypted Note",
+		EncryptedContent:   encContent,
+		WrappedDEK:         wrappedDEK,
+		EncryptionMetadata: `{"algorithm":"XChaCha20-Poly1305","version":2}`,
+	}, token)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "unsupported 'version'")
+}
+
+func TestUpdateEncryptedNote_V2MetadataRejected(t *testing.T) {
+	ts := newTestServer(t)
+	r := encryptionRouter(ts)
+	user := ts.createUser(t, "encuser-v2-update", "enc-v2-update@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	encContent, wrappedDEK, meta := makeEncryptedPayload(t)
+	createRec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(21),
+		Title:              "Encrypted Note",
+		EncryptedContent:   encContent,
+		WrappedDEK:         wrappedDEK,
+		EncryptionMetadata: meta,
+	}, token)
+	require.Equal(t, http.StatusCreated, createRec.Code)
+
+	var created map[string]interface{}
+	decodeResponse(t, createRec, &created)
+	noteID := created["id"].(string)
+	etag := createRec.Header().Get("ETag")
+	require.NotEmpty(t, etag)
+
+	updateContent, updateWrappedDEK, _ := makeEncryptedPayload(t)
+	updateRec := doJSONWithHeaders(t, r, http.MethodPut, "/api/notes/"+noteID, NoteRequest{
+		Title:              "Encrypted Updated",
+		EncryptedContent:   updateContent,
+		WrappedDEK:         updateWrappedDEK,
+		EncryptionMetadata: `{"algorithm":"XChaCha20-Poly1305","version":2}`,
+	}, token, map[string]string{"If-Match": etag})
+
+	assert.Equal(t, http.StatusBadRequest, updateRec.Code)
+	assert.Contains(t, updateRec.Body.String(), "unsupported 'version'")
 }
 
 func TestBatchReencryptDEKs_EmptyUpdates(t *testing.T) {

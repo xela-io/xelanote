@@ -28,6 +28,7 @@ func createEncryptedNoteForAIPrivacyTest(t *testing.T, r chi.Router, token strin
 
 	encContent, wrappedDEK, metadata := makeEncryptedPayload(t)
 	rec := doJSON(t, r, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(30),
 		Title:              "Encrypted AI Note",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,

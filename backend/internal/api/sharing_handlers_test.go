@@ -366,6 +366,7 @@ func TestShareEncryptedNote_Blocked(t *testing.T) {
 	// Create encrypted note
 	encRouter := encryptionRouter(ts)
 	rec := doJSON(t, encRouter, http.MethodPost, "/api/notes", NoteRequest{
+		ID:                 testNoteID(31),
 		Title:              "Secret Note",
 		EncryptedContent:   encContent,
 		WrappedDEK:         wrappedDEK,

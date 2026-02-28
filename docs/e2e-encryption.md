@@ -11,6 +11,7 @@ Diese Dokumentation beschreibt den aktuell implementierten Stand in diesem Repos
 - Pro Notiz wird ein eigener DEK erzeugt; der DEK wird mit dem KEK gewrappt.
 - Das System verwendet Argon2id + XChaCha20-Poly1305.
 - Aktuelle Verschluesselungsversion ist v3 (AAD-Binding an `note_id`); v2 bleibt fuer Alt-Daten lesbar.
+- Neue verschluesselte Schreiboperationen (Create/Update) akzeptieren nur `encryption_metadata.version >= 3`.
 
 ## Kryptografie und Formate
 

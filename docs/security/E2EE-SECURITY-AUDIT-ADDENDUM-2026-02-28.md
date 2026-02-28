@@ -116,6 +116,12 @@ This addendum reflects the **current remediation status** of the previously repo
 - Migration rewrites existing encrypted-note folder paths to `/`: `backend/internal/db/migrations/065_set_encrypted_notes_folder_root.sql`
 - Coverage: `backend/internal/api/encryption_handlers_test.go`, `backend/internal/service/notes_encryption_test.go`
 
+19. **Encrypted write downgrade guard enforces modern metadata version (v3+).**
+
+- Encryption request validation now rejects encrypted writes with `encryption_metadata.version < 3`: `backend/internal/api/validation.go`
+- API create/update regression coverage includes explicit rejection for v2 metadata: `backend/internal/api/encryption_handlers_test.go`
+- Existing legacy v2 data remains readable (no decrypt-path regression in this change).
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

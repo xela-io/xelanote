@@ -240,7 +240,6 @@
   <lazyDialogs.dictationPanel
     noteId={note?.id ?? ''}
     {aiEnabled}
-    hasOpenAIKey={false}
     onInsert={onDictationInsert}
     onClose={onCloseDictationPanel}
     triggerRect={dictationTriggerRect}

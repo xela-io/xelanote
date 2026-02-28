@@ -22,6 +22,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		       COALESCE(openai_model, ''),
 		       COALESCE(dietary_preference, 'none'),
 		       home_dashboard_layout,
+		       open_tabs,
 		       recovery_key_hash, recovery_key_salt,
 		       created_at, updated_at
 		FROM user_preferences
@@ -32,6 +33,7 @@ func (db *DB) GetUserPreferences(userID int) (*UserPreferences, error) {
 		&prefs.SecurityLevel, &prefs.AutoLockTimeout, &prefs.ActiveAIProvider,
 		&prefs.ClaudeModel, &prefs.GeminiModel, &prefs.OpenAIModel,
 		&prefs.DietaryPreference, &prefs.HomeDashboardLayout,
+		&prefs.OpenTabs,
 		&prefs.RecoveryKeyHash, &prefs.RecoveryKeySalt,
 		&prefs.CreatedAt, &prefs.UpdatedAt,
 	)

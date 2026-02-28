@@ -1,9 +1,13 @@
 /**
- * Tab Store for Desktop App
+ * Tab Store for Multi-Note Editing
  *
  * Manages tabs and tab groups for multi-note editing.
  * Uses Svelte 5 runes for reactive state.
+ * Server-persisted via open_tabs in user_preferences.
  */
+
+import { updateOpenTabsPreference } from '$lib/api/preferences';
+import type { OpenTabsPreference } from '$lib/api/types';
 
 export interface Tab {
   id: string;
@@ -41,6 +45,12 @@ const state = $state<TabState>({
   groups: [initialGroup],
   activeGroupId: 'main',
 });
+
+// Server-sync state
+let initialized = $state(false);
+let isHydrating = false;
+let lastPersistedJSON = '';
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Getters
 export function getState(): TabState {
@@ -85,6 +95,10 @@ export function findTabByNoteId(noteId: string): { tab: Tab; group: TabGroup } |
   return undefined;
 }
 
+export function isInitialized(): boolean {
+  return initialized;
+}
+
 // Actions
 export function openTab(noteId: string, title: string, groupId?: string): string {
   const targetGroupId = groupId ?? state.activeGroupId;
@@ -112,7 +126,7 @@ export function openTab(noteId: string, title: string, groupId?: string): string
     isDirty: false,
   };
 
-  group.tabs.push(newTab);
+  group.tabs = [...group.tabs, newTab];
   group.activeTabId = newTab.id;
   state.activeGroupId = targetGroupId;
 
@@ -128,11 +142,13 @@ export function closeTab(tabId: string, groupId?: string): void {
   const tabIndex = group.tabs.findIndex((t) => t.id === tabId);
   if (tabIndex === -1) return;
 
-  // Remove tab
-  group.tabs.splice(tabIndex, 1);
+  const wasActive = group.activeTabId === tabId;
+
+  // Remove tab — assign new array to ensure $derived reactivity
+  group.tabs = group.tabs.filter((t) => t.id !== tabId);
 
   // Update active tab
-  if (group.activeTabId === tabId) {
+  if (wasActive) {
     if (group.tabs.length > 0) {
       // Activate adjacent tab (prefer right, then left)
       const newIndex = Math.min(tabIndex, group.tabs.length - 1);
@@ -144,8 +160,7 @@ export function closeTab(tabId: string, groupId?: string): void {
 
   // Remove empty groups (except the main one)
   if (group.tabs.length === 0 && group.id !== 'main' && state.groups.length > 1) {
-    const groupIndex = state.groups.findIndex((g) => g.id === group.id);
-    state.groups.splice(groupIndex, 1);
+    state.groups = state.groups.filter((g) => g.id !== group.id);
 
     // Switch to another group
     if (state.activeGroupId === targetGroupId) {
@@ -201,14 +216,18 @@ export function moveTab(
   const tabIndex = fromGroup.tabs.findIndex((t) => t.id === tabId);
   if (tabIndex === -1) return;
 
-  // Remove from source
-  const [tab] = fromGroup.tabs.splice(tabIndex, 1);
+  const tab = fromGroup.tabs[tabIndex];
 
-  // Add to target
+  // Remove from source — assign new array
+  fromGroup.tabs = fromGroup.tabs.filter((t) => t.id !== tabId);
+
+  // Add to target — assign new array
   if (toIndex !== undefined && toIndex >= 0 && toIndex <= toGroup.tabs.length) {
-    toGroup.tabs.splice(toIndex, 0, tab);
+    const newTabs = [...toGroup.tabs];
+    newTabs.splice(toIndex, 0, tab);
+    toGroup.tabs = newTabs;
   } else {
-    toGroup.tabs.push(tab);
+    toGroup.tabs = [...toGroup.tabs, tab];
   }
 
   // Update active tab in target group
@@ -216,8 +235,7 @@ export function moveTab(
 
   // Clean up source group if empty
   if (fromGroup.tabs.length === 0 && fromGroup.id !== 'main' && state.groups.length > 1) {
-    const groupIndex = state.groups.findIndex((g) => g.id === fromGroup.id);
-    state.groups.splice(groupIndex, 1);
+    state.groups = state.groups.filter((g) => g.id !== fromGroup.id);
   } else if (fromGroup.activeTabId === tabId) {
     // Select another tab in source group
     fromGroup.activeTabId = fromGroup.tabs.length > 0 ? fromGroup.tabs[0].id : null;
@@ -233,8 +251,10 @@ export function reorderTabs(groupId: string, fromIndex: number, toIndex: number)
   if (fromIndex < 0 || fromIndex >= group.tabs.length) return;
   if (toIndex < 0 || toIndex >= group.tabs.length) return;
 
-  const [tab] = group.tabs.splice(fromIndex, 1);
-  group.tabs.splice(toIndex, 0, tab);
+  const newTabs = [...group.tabs];
+  const [tab] = newTabs.splice(fromIndex, 1);
+  newTabs.splice(toIndex, 0, tab);
+  group.tabs = newTabs;
 }
 
 // Split pane operations
@@ -245,7 +265,7 @@ export function createSplitGroup(): string {
     activeTabId: null,
   };
 
-  state.groups.push(newGroup);
+  state.groups = [...state.groups, newGroup];
   return newGroup.id;
 }
 
@@ -276,4 +296,273 @@ export function hasUnsavedChanges(): boolean {
 // Get all dirty tabs
 export function getDirtyTabs(): Tab[] {
   return state.groups.flatMap((g) => g.tabs.filter((t) => t.isDirty));
+}
+
+// ── Server Sync ──────────────────────────────────────────────────────
+
+/**
+ * Initialize tabs from server-persisted open_tabs preference.
+ * Creates Tab objects with empty titles (resolved later by resolveTabTitles).
+ */
+export function initTabs(pref: OpenTabsPreference | null | undefined): void {
+  isHydrating = true;
+
+  const mainGroup = state.groups.find((g) => g.id === 'main');
+  if (!mainGroup) return;
+
+  if (!pref || !pref.tabs || pref.tabs.length === 0) {
+    mainGroup.tabs = [];
+    mainGroup.activeTabId = null;
+    isHydrating = false;
+    return;
+  }
+
+  mainGroup.tabs = pref.tabs.map((entry) => ({
+    id: generateId(),
+    noteId: entry.note_id,
+    title: '',
+    isDirty: false,
+  }));
+
+  // Set active tab
+  if (pref.active_note_id) {
+    const activeTab = mainGroup.tabs.find((t) => t.noteId === pref.active_note_id);
+    mainGroup.activeTabId = activeTab?.id ?? mainGroup.tabs[0]?.id ?? null;
+  } else {
+    mainGroup.activeTabId = mainGroup.tabs[0]?.id ?? null;
+  }
+
+  // Cache initial state to avoid writing it back
+  lastPersistedJSON = buildPersistedJSON();
+}
+
+/**
+ * Resolve tab titles from the notes list. Removes tabs for deleted notes.
+ * Called after notes.loadNotes() completes.
+ */
+export function resolveTabTitles(getNoteById: (id: string) => { title: string } | undefined): void {
+  const mainGroup = state.groups.find((g) => g.id === 'main');
+  if (!mainGroup) return;
+
+  // Filter out tabs whose notes no longer exist and resolve titles
+  const validTabs: Tab[] = [];
+  for (const tab of mainGroup.tabs) {
+    const note = getNoteById(tab.noteId);
+    if (note) {
+      tab.title = note.title || '';
+      validTabs.push(tab);
+    }
+  }
+
+  const removedCount = mainGroup.tabs.length - validTabs.length;
+  if (removedCount > 0) {
+    mainGroup.tabs = validTabs;
+  }
+
+  // Fix active tab if it was removed
+  if (mainGroup.activeTabId) {
+    const stillExists = mainGroup.tabs.some((t) => t.id === mainGroup.activeTabId);
+    if (!stillExists) {
+      mainGroup.activeTabId = mainGroup.tabs[0]?.id ?? null;
+    }
+  }
+
+  // Update persisted JSON baseline
+  lastPersistedJSON = buildPersistedJSON();
+
+  isHydrating = false;
+  initialized = true;
+}
+
+/**
+ * Sync tab state with the current route.
+ * Opens or activates the tab for the given noteId.
+ */
+export function syncTabWithRoute(noteId: string, title: string): void {
+  if (!initialized) return;
+
+  const existing = findTabByNoteId(noteId);
+  if (existing) {
+    existing.tab.title = title || existing.tab.title;
+    activateTab(existing.tab.id, existing.group.id);
+  } else {
+    openTab(noteId, title);
+  }
+
+  persistTabs();
+}
+
+/**
+ * Sync dirty state from the note store to the tab.
+ */
+export function syncDirtyState(noteId: string, isDirty: boolean): void {
+  const existing = findTabByNoteId(noteId);
+  if (existing) {
+    existing.tab.isDirty = isDirty;
+  }
+}
+
+/**
+ * Close a tab with optional save and return the next note ID to navigate to.
+ */
+export async function closeTabAndNavigate(
+  tabId: string,
+  saveFn?: () => Promise<void>
+): Promise<{ nextNoteId: string | null }> {
+  const mainGroup = state.groups.find((g) => g.id === 'main');
+  if (!mainGroup) return { nextNoteId: null };
+
+  const tab = mainGroup.tabs.find((t) => t.id === tabId);
+  if (!tab) return { nextNoteId: null };
+
+  // If dirty and saveFn provided, try to save first
+  if (tab.isDirty && saveFn) {
+    try {
+      await Promise.race([
+        saveFn(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('save timeout')), 5000)),
+      ]);
+    } catch {
+      // Save failed or timed out — close anyway (auto-save retry will handle it)
+    }
+  }
+
+  // Find what the next active tab will be before closing
+  const tabIndex = mainGroup.tabs.findIndex((t) => t.id === tabId);
+  let nextNoteId: string | null = null;
+
+  if (mainGroup.tabs.length > 1) {
+    const nextIndex = tabIndex < mainGroup.tabs.length - 1 ? tabIndex + 1 : tabIndex - 1;
+    nextNoteId = mainGroup.tabs[nextIndex].noteId;
+  }
+
+  closeTab(tabId);
+  persistTabs();
+
+  return { nextNoteId };
+}
+
+/**
+ * Navigate to the next tab (cyclic).
+ * Returns the noteId to navigate to.
+ */
+export function nextTab(): string | null {
+  const tabs = getTabs();
+  if (tabs.length <= 1) return null;
+
+  const activeTab = getActiveTab();
+  if (!activeTab) return tabs[0]?.noteId ?? null;
+
+  const currentIndex = tabs.findIndex((t) => t.id === activeTab.id);
+  const nextIndex = (currentIndex + 1) % tabs.length;
+  activateTab(tabs[nextIndex].id);
+  persistTabs();
+  return tabs[nextIndex].noteId;
+}
+
+/**
+ * Navigate to the previous tab (cyclic).
+ * Returns the noteId to navigate to.
+ */
+export function prevTab(): string | null {
+  const tabs = getTabs();
+  if (tabs.length <= 1) return null;
+
+  const activeTab = getActiveTab();
+  if (!activeTab) return tabs[0]?.noteId ?? null;
+
+  const currentIndex = tabs.findIndex((t) => t.id === activeTab.id);
+  const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  activateTab(tabs[prevIndex].id);
+  persistTabs();
+  return tabs[prevIndex].noteId;
+}
+
+/**
+ * Replace a temporary note ID with a real one (offline create -> sync).
+ */
+export function replaceTempId(tempId: string, realId: string): void {
+  const existing = findTabByNoteId(tempId);
+  if (existing) {
+    existing.tab.noteId = realId;
+    persistTabs();
+  }
+}
+
+/**
+ * Remove a tab by noteId (e.g., when a note is deleted).
+ * Returns the next noteId to navigate to, or null.
+ */
+export function removeTabByNoteId(noteId: string): string | null {
+  const existing = findTabByNoteId(noteId);
+  if (!existing) return null;
+
+  const mainGroup = state.groups.find((g) => g.id === 'main');
+  if (!mainGroup) return null;
+
+  const tabIndex = mainGroup.tabs.findIndex((t) => t.id === existing.tab.id);
+  let nextNoteId: string | null = null;
+
+  if (mainGroup.tabs.length > 1) {
+    const nextIndex = tabIndex < mainGroup.tabs.length - 1 ? tabIndex + 1 : tabIndex - 1;
+    nextNoteId = mainGroup.tabs[nextIndex].noteId;
+  }
+
+  closeTab(existing.tab.id, existing.group.id);
+  persistTabs();
+
+  return nextNoteId;
+}
+
+// ── Persistence ──────────────────────────────────────────────────────
+
+function buildPersistedJSON(): string {
+  const mainGroup = state.groups.find((g) => g.id === 'main');
+  if (!mainGroup || mainGroup.tabs.length === 0) return '';
+
+  const activeTab = mainGroup.activeTabId
+    ? mainGroup.tabs.find((t) => t.id === mainGroup.activeTabId)
+    : null;
+
+  const payload: OpenTabsPreference = {
+    version: 1,
+    tabs: mainGroup.tabs.map((t) => ({ note_id: t.noteId })),
+    active_note_id: activeTab?.noteId ?? null,
+  };
+
+  return JSON.stringify(payload);
+}
+
+/**
+ * Persist tabs to server (debounced 2s).
+ * No-op during hydration. Skips if state hasn't changed.
+ */
+export function persistTabs(): void {
+  if (isHydrating) return;
+
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+  }
+
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+
+    const json = buildPersistedJSON();
+    if (json === lastPersistedJSON) return;
+
+    lastPersistedJSON = json;
+
+    const payload: OpenTabsPreference | null = json ? JSON.parse(json) : null;
+    updateOpenTabsPreference(payload).catch((err) => {
+      console.warn('[tabs] Failed to persist tabs:', err);
+    });
+  }, 2000);
+}
+
+/**
+ * Reorder tabs and trigger persist.
+ */
+export function reorderTabsAndPersist(groupId: string, fromIndex: number, toIndex: number): void {
+  reorderTabs(groupId, fromIndex, toIndex);
+  persistTabs();
 }

@@ -21,6 +21,18 @@ type HomeDashboardLayoutPreferences struct {
 	RightSectionOrder []string                       `json:"right_section_order"`
 }
 
+// OpenTabsPayload is the server-side schema for open_tabs.
+type OpenTabsPayload struct {
+	Version      int            `json:"version"`
+	Tabs         []OpenTabEntry `json:"tabs"`
+	ActiveNoteID *string        `json:"active_note_id"`
+}
+
+// OpenTabEntry represents a single tab (only note_id, no title for E2E encryption compat).
+type OpenTabEntry struct {
+	NoteID string `json:"note_id"`
+}
+
 type HomeDashboardCollapsedSections struct {
 	Hero     bool `json:"hero"`
 	Recent   bool `json:"recent"`
@@ -41,6 +53,7 @@ var (
 	ErrPasswordTooShort           = errors.New("password must be at least 8 characters")
 	ErrInvalidEmail               = errors.New("invalid email format")
 	ErrInvalidHomeDashboardLayout = errors.New("invalid home dashboard layout")
+	ErrInvalidOpenTabs            = errors.New("invalid open tabs")
 )
 
 // Valid theme IDs (must match frontend themes/index.ts)

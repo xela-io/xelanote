@@ -455,6 +455,51 @@
         "invalid_input": "Ungültige Eingabe"
       }
     },
+    "shopping": {
+      "title": "Einkaufslisten",
+      "new_list": "Neue Liste",
+      "add_item": "Artikel hinzufügen",
+      "quick_input_placeholder": "3 Äpfel, 500g Hack, Milch...",
+      "checked_items": "{count} erledigt",
+      "clear_checked": "Erledigte löschen",
+      "no_items": "Noch keine Artikel",
+      "no_lists": "Noch keine Einkaufslisten",
+      "create_first": "Erstelle deine erste Einkaufsliste",
+      "sort_by_category": "KI-Sortierung",
+      "sorting": "Sortiere...",
+      "import_recipe": "Rezept importieren",
+      "favorites": "Häufig gekauft",
+      "add_to_favorites": "Zu Favoriten hinzufügen",
+      "share_list": "Liste teilen",
+      "shared_by": "Geteilt von {name}",
+      "list_name": "Listenname",
+      "list_color": "Farbe",
+      "delete_list": "Liste löschen",
+      "archive_list": "Liste archivieren",
+      "edit_item": "Artikel bearbeiten",
+      "delete_item": "Artikel löschen",
+      "select_recipe": "Rezept auswählen",
+      "import": "Importieren",
+      "share_with": "Teilen mit",
+      "role_editor": "Bearbeiter",
+      "role_viewer": "Betrachter",
+      "categories": {
+        "fruits_vegetables": "Obst & Gemüse",
+        "bakery": "Brot & Backwaren",
+        "dairy": "Molkereiprodukte",
+        "cheese": "Käse",
+        "meat": "Fleisch & Wurst",
+        "fish": "Fisch",
+        "frozen": "Tiefkühl",
+        "canned": "Konserven & Gläser",
+        "pasta_rice": "Nudeln, Reis & Co.",
+        "spices_sauces": "Gewürze & Soßen",
+        "beverages": "Getränke",
+        "sweets_snacks": "Süßwaren & Snacks",
+        "household": "Haushalt & Drogerie",
+        "other": "Sonstiges"
+      }
+    },
     "sidebar": {
       "close_drawer": "Drawer schließen",
       "collapse_sidebar": "Sidebar einklappen",
@@ -1257,6 +1302,12 @@
       "presets": "Farben",
       "remove": "Farbe entfernen",
       "set": "Farbe setzen"
+    },
+    "tabs": {
+      "label": "Offene Notizen",
+      "close": "Tab schliessen",
+      "unsaved": "Ungespeichert",
+      "untitled": "Unbenannt"
     }
   },
   "editor": {

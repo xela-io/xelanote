@@ -11,6 +11,7 @@ import type {
   Note,
   NoteVersion,
   OpenAIAPIKeyStatus,
+  OpenTabsPreference,
   UpdateEncryptionPreferencesRequest,
   UpdatePreferencesRequest,
   UpdateSecurityPreferencesRequest,
@@ -41,6 +42,15 @@ export async function updateHomeDashboardLayoutPreference(
   return request('/users/preferences', {
     method: 'PATCH',
     body: JSON.stringify({ home_dashboard_layout: layout }),
+  });
+}
+
+export async function updateOpenTabsPreference(
+  tabs: OpenTabsPreference | null
+): Promise<UserPreferences> {
+  return request('/users/preferences', {
+    method: 'PATCH',
+    body: JSON.stringify({ open_tabs: tabs }),
   });
 }
 

@@ -687,3 +687,55 @@ Raw transcript:
 
 Cleaned text:`, content)
 }
+
+// BuildShoppingListSortPrompt creates a prompt for AI-based shopping list categorization.
+// Items are sorted into German supermarket layout categories.
+func BuildShoppingListSortPrompt(items []string) string {
+	sanitized := make([]string, 0, len(items))
+	for _, item := range items {
+		// Sanitize to prevent prompt injection via item names
+		clean := strings.Map(func(r rune) rune {
+			if r == '<' || r == '>' || r == '{' || r == '}' {
+				return -1
+			}
+			return r
+		}, item)
+		clean = strings.TrimSpace(clean)
+		if clean != "" {
+			sanitized = append(sanitized, clean)
+		}
+	}
+
+	itemList := strings.Join(sanitized, "\n- ")
+
+	return fmt.Sprintf(`Du bist ein Supermarkt-Sortier-Assistent. Sortiere die folgenden Einkaufslisten-Artikel in Kategorien, die dem typischen deutschen Supermarkt-Layout entsprechen.
+
+Kategorien (in Reihenfolge des Supermarkt-Gangs):
+1. Obst & Gemüse
+2. Brot & Backwaren
+3. Molkereiprodukte
+4. Käse
+5. Fleisch & Wurst
+6. Fisch
+7. Tiefkühl
+8. Konserven & Gläser
+9. Nudeln, Reis & Co.
+10. Gewürze & Soßen
+11. Getränke
+12. Süßwaren & Snacks
+13. Haushalt & Drogerie
+14. Sonstiges
+
+Artikel:
+- %s
+
+Antworte NUR mit einem JSON-Array. Kein zusätzlicher Text. Format:
+[{"name":"Originalname","category":"Kategoriename","order":1}]
+
+Regeln:
+- "name" muss exakt dem Originalnamen entsprechen
+- "category" muss eine der 14 Kategorien oben sein
+- "order" ist die Position innerhalb der Kategorie (1, 2, 3, ...)
+- Jeder Artikel muss genau einmal vorkommen
+- Bei Unsicherheit: "Sonstiges" verwenden`, itemList)
+}

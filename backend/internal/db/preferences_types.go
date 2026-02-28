@@ -16,6 +16,7 @@ type UserPreferences struct {
 	OpenAIModel         string  `json:"openai_model"` // empty = provider default
 	DietaryPreference   string  `json:"dietary_preference"`
 	HomeDashboardLayout *string `json:"home_dashboard_layout,omitempty"` // JSON blob (nullable)
+	OpenTabs            *string `json:"open_tabs,omitempty"`             // JSON blob (nullable)
 	RecoveryKeyHash     *string `json:"-"`                               // Not exposed in JSON for security
 	RecoveryKeySalt     []byte  `json:"-"`                               // Not exposed in JSON for security
 	CreatedAt           string  `json:"created_at"`

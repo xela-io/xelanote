@@ -67,6 +67,8 @@ type Server struct {
 	recipeSuggestionService *service.RecipeSuggestionService
 	// Canvas service
 	canvasService *service.CanvasService
+	// Shopping service
+	shoppingService *service.ShoppingService
 	// Telemetry service
 	telemetryService   *service.TelemetryService
 	perfMetricsLimiter *RateLimiter
@@ -97,6 +99,7 @@ type ServerConfig struct {
 	RecipeService    *service.RecipeService
 	RecipeSuggestSvc *service.RecipeSuggestionService
 	CanvasService    *service.CanvasService
+	ShoppingSvc      *service.ShoppingService
 	TelemetrySvc     *service.TelemetryService
 	LockoutDB        LockoutStore // F2-06: DB for persistent lockout state (optional)
 	DBPing           func() error

@@ -26,6 +26,7 @@ type preferencesResponse struct {
 	DietaryPreference   string                   `json:"dietary_preference"`
 	Credentials         []webAuthnCredentialInfo `json:"webauthn_credentials"`
 	HomeDashboardLayout json.RawMessage          `json:"home_dashboard_layout"`
+	OpenTabs            json.RawMessage          `json:"open_tabs"`
 	Created             bool                     `json:"created"`
 }
 

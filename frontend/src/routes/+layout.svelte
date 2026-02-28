@@ -17,6 +17,7 @@
   import Logo from '$lib/components/Logo.svelte';
   import MobileBottomNav from '$lib/components/MobileBottomNav.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import { isDesktop } from '$lib/config';
   import { clearPersistedKEK, initKEKDatabase } from '$lib/crypto/kek-persistence';
   import { initSodium } from '$lib/crypto/sodium';
   import type { DialogLoaderState } from '$lib/editor/dialog-loaders';
@@ -49,6 +50,7 @@
   import * as pwa from '$lib/stores/pwa.svelte';
   import * as sessionRestore from '$lib/stores/session-restore.svelte';
   import * as settings from '$lib/stores/settings.svelte';
+  import * as tabs from '$lib/stores/tabs.svelte';
   import * as tokenRefresh from '$lib/stores/token-refresh.svelte';
   import * as ui from '$lib/stores/ui.svelte';
   import * as websocket from '$lib/stores/websocket.svelte';
@@ -100,6 +102,7 @@
 
   const { children } = $props();
   let QuickSwitcherComponent = $state<ComponentType | null>(null);
+  let TabBarComponent = $state<ComponentType | null>(null);
   let showInstallPrompt = $state(true);
   let showUnlockModal = $state(false);
   let isAttemptingSilentRestore = $state(false);
@@ -229,6 +232,9 @@
         clearPersistedKEK,
         notes: {
           loadNotes: notes.loadNotes,
+        },
+        tabs: {
+          initTabs: tabs.initTabs,
         },
         settings: {
           loadPreferences: settings.loadPreferences,
@@ -398,6 +404,27 @@
         autoLock.recordActivity();
         tokenRefresh.recordActivity();
       },
+      closeCurrentTab: () => {
+        const activeTab = tabs.getActiveTab();
+        if (activeTab) {
+          const saveFn = autosave.getAutoSaveEnabled()
+            ? async () => {
+                await notes.saveNote();
+              }
+            : undefined;
+          tabs.closeTabAndNavigate(activeTab.id, saveFn).then(({ nextNoteId }) => {
+            if (nextNoteId) {
+              goto(`/note/${nextNoteId}`);
+            } else {
+              goto('/');
+            }
+          });
+        }
+      },
+      nextTab: () => tabs.nextTab(),
+      prevTab: () => tabs.prevTab(),
+      isDesktop,
+      getPathname: () => window.location.pathname,
     });
 
     const activityListeners = createActivityListeners({ handleActivity });
@@ -486,6 +513,64 @@
     if (ui.getQuickSwitcherOpen()) {
       loadQuickSwitcher();
     }
+  });
+
+  // Tab bar: lazy-load when tabs are visible
+  const showTabBar = $derived(
+    page.url.pathname.startsWith('/note/') && tabs.getTabs().length > 0 && tabs.isInitialized()
+  );
+
+  async function loadTabBar() {
+    if (TabBarComponent) return;
+    const module = await import('$lib/components/TabBar.svelte');
+    TabBarComponent = loadSvelteComponentFromModule(module, 'TabBar');
+  }
+
+  $effect(() => {
+    if (showTabBar) {
+      loadTabBar();
+    }
+  });
+
+  // Tab sync: URL -> Tab (activate/open tab when navigating to /note/X)
+  // IMPORTANT: Only depend on page.url.pathname and tabs.isInitialized().
+  // Do NOT read notes store reactively here — any notes change (dirty, title,
+  // save status) would re-trigger this effect and re-open just-closed tabs.
+  // Title resolution happens in the separate title-sync effect below.
+  $effect(() => {
+    if (!tabs.isInitialized()) return;
+    const pathname = page.url.pathname;
+    if (!pathname.startsWith('/note/')) return;
+    const noteId = pathname.split('/note/')[1];
+    if (!noteId) return;
+    // Read title outside reactive tracking to avoid dependency on notes store
+    const title = untrack(() => notes.getNoteById(noteId)?.title ?? '');
+    tabs.syncTabWithRoute(noteId, title);
+  });
+
+  // Tab sync: dirty state -> tab
+  $effect(() => {
+    const cn = notes.getCurrentNote();
+    if (cn) tabs.syncDirtyState(cn.id, notes.getIsDirty());
+  });
+
+  // Tab sync: title changes -> tab
+  $effect(() => {
+    const cn = notes.getCurrentNote();
+    if (cn) {
+      const existing = tabs.findTabByNoteId(cn.id);
+      if (existing && existing.tab.title !== cn.title) {
+        tabs.updateTabTitle(existing.tab.id, cn.title);
+      }
+    }
+  });
+
+  // Tab resolve: once notes are loaded, resolve titles and remove invalid tabs
+  $effect(() => {
+    if (tabs.isInitialized()) return; // only once
+    if (notes.getNotesLoading()) return; // wait until loaded
+    if (notes.getNotes().length === 0 && !notes.getError()) return; // not started yet
+    tabs.resolveTabTitles((id: string) => notes.getNoteById(id));
   });
 
   $effect(() => {
@@ -674,6 +759,9 @@
           ? 'transition-opacity duration-200'
           : ''}"
       >
+        {#if showTabBar && TabBarComponent}
+          <TabBarComponent />
+        {/if}
         <main
           id="main-content"
           tabindex="-1"

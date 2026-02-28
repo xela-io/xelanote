@@ -26,6 +26,7 @@ func (s *Server) registerProtectedResourceRoutes(r chi.Router) {
 		s.registerJournalRoutes(r)
 		s.registerRecipeRoutes(r)
 		s.registerCanvasRoutes(r)
+		s.registerShoppingRoutes(r)
 		s.registerUserRoutes(r)
 	})
 }

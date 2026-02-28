@@ -274,6 +274,8 @@ func (db *DB) runMigrations() error {
 		"054_account_lockouts.sql",
 		"055_home_dashboard_layout.sql",
 		"056_note_user_state.sql",
+		"057_open_tabs.sql",
+		"058_shopping.sql",
 	}
 
 	for _, migrationFile := range migrations {

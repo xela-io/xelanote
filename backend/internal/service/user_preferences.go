@@ -2,10 +2,13 @@ package service
 
 import (
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/xela-io/xelanote/internal/db"
 )
+
+var noteIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 // GetOrCreatePreferences retrieves user preferences, creating defaults if needed
 // Returns preferences and a boolean indicating if the row was newly created
@@ -54,6 +57,69 @@ func (s *UserService) UpdateHomeDashboardLayoutPreference(userID int, raw json.R
 	}
 	jsonStr := string(normalized)
 	if err := s.db.UpdateHomeDashboardLayout(userID, &jsonStr); err != nil {
+		return nil, err
+	}
+	return s.db.GetUserPreferences(userID)
+}
+
+// ValidateOpenTabs validates the open tabs JSON payload.
+func ValidateOpenTabs(raw json.RawMessage) error {
+	var payload OpenTabsPayload
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return ErrInvalidOpenTabs
+	}
+
+	if payload.Version != 1 {
+		return ErrInvalidOpenTabs
+	}
+
+	if len(payload.Tabs) > 50 {
+		return ErrInvalidOpenTabs
+	}
+
+	seen := map[string]bool{}
+	for _, tab := range payload.Tabs {
+		if !noteIDPattern.MatchString(tab.NoteID) {
+			return ErrInvalidOpenTabs
+		}
+		if seen[tab.NoteID] {
+			return ErrInvalidOpenTabs
+		}
+		seen[tab.NoteID] = true
+	}
+
+	if payload.ActiveNoteID != nil {
+		if !seen[*payload.ActiveNoteID] {
+			return ErrInvalidOpenTabs
+		}
+	}
+
+	return nil
+}
+
+// UpdateOpenTabsPreference validates and stores the open tabs JSON.
+// raw == nil or "null" clears the stored tabs.
+func (s *UserService) UpdateOpenTabsPreference(userID int, raw json.RawMessage) (*db.UserPreferences, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		if err := s.db.UpdateOpenTabs(userID, nil); err != nil {
+			return nil, err
+		}
+		return s.db.GetUserPreferences(userID)
+	}
+
+	if err := ValidateOpenTabs(raw); err != nil {
+		return nil, err
+	}
+
+	// Re-marshal to normalize
+	var payload OpenTabsPayload
+	_ = json.Unmarshal(raw, &payload)
+	normalized, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	jsonStr := string(normalized)
+	if err := s.db.UpdateOpenTabs(userID, &jsonStr); err != nil {
 		return nil, err
 	}
 	return s.db.GetUserPreferences(userID)

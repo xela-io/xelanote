@@ -11,6 +11,7 @@ import * as encryption from './encryption.svelte';
 import * as notes from './notes.svelte';
 import * as recipes from './recipes.svelte';
 import * as searchIndex from './search-index.svelte';
+import * as shopping from './shopping.svelte';
 import * as tree from './tree.svelte';
 
 type WebSocketMessage = { type: string; payload: unknown };
@@ -271,6 +272,42 @@ function handleMessage(message: WebSocketMessage) {
         }
         recipes.handleRemoteIngredientsUpdate(payload);
       }
+      break;
+    case 'shopping.item.added':
+      shopping.handleRemoteItemAdded(
+        message.payload as { list_id: number; item: import('$lib/api/types').ShoppingItem }
+      );
+      break;
+    case 'shopping.item.updated':
+      shopping.handleRemoteItemUpdated(
+        message.payload as { list_id: number; item: import('$lib/api/types').ShoppingItem }
+      );
+      break;
+    case 'shopping.item.checked':
+      shopping.handleRemoteItemChecked(
+        message.payload as {
+          list_id: number;
+          item_id: number;
+          is_checked: boolean;
+          checked_at: string | null;
+        }
+      );
+      break;
+    case 'shopping.item.removed':
+      shopping.handleRemoteItemRemoved(message.payload as { list_id: number; item_id: number });
+      break;
+    case 'shopping.items.cleared':
+      shopping.handleRemoteItemsCleared(
+        message.payload as { list_id: number; cleared_count: number }
+      );
+      break;
+    case 'shopping.items.sorted':
+      shopping.handleRemoteItemsSorted(message.payload as { list_id: number });
+      break;
+    case 'shopping.list.updated':
+      shopping.handleRemoteListUpdated(
+        message.payload as { list_id: number; list: import('$lib/api/types').ShoppingListSummary }
+      );
       break;
     default:
       console.log('WebSocket: Unknown message type', message.type);

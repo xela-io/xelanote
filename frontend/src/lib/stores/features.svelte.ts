@@ -233,3 +233,56 @@ export function resetCanvasFeature() {
   canvasFeatureLoaded = false;
   canvasFeatureLoading = false;
 }
+
+// === Shopping Feature (User-Specific Toggle) ===
+let shoppingFeatureEnabled = $state(false);
+let shoppingFeatureLoading = $state(false);
+let shoppingFeatureLoaded = $state(false);
+
+export function getShoppingFeatureEnabled() {
+  return shoppingFeatureEnabled;
+}
+
+export function getShoppingFeatureLoading() {
+  return shoppingFeatureLoading;
+}
+
+export function getShoppingFeatureLoaded() {
+  return shoppingFeatureLoaded;
+}
+
+export async function loadShoppingFeature() {
+  if (shoppingFeatureLoading) return;
+
+  shoppingFeatureLoading = true;
+  try {
+    const feature = await getFeature('shopping');
+    shoppingFeatureEnabled = feature.enabled;
+    shoppingFeatureLoaded = true;
+  } catch (error) {
+    console.error('Failed to load shopping feature:', error);
+    shoppingFeatureEnabled = false;
+    shoppingFeatureLoaded = true;
+  } finally {
+    shoppingFeatureLoading = false;
+  }
+}
+
+export async function toggleShoppingFeature(enabled: boolean) {
+  shoppingFeatureLoading = true;
+  try {
+    await setFeature('shopping', enabled);
+    shoppingFeatureEnabled = enabled;
+  } catch (error) {
+    console.error('Failed to toggle shopping feature:', error);
+    throw error;
+  } finally {
+    shoppingFeatureLoading = false;
+  }
+}
+
+export function resetShoppingFeature() {
+  shoppingFeatureEnabled = false;
+  shoppingFeatureLoaded = false;
+  shoppingFeatureLoading = false;
+}

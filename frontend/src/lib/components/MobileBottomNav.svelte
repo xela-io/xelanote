@@ -34,6 +34,9 @@
   const recipeEnabled = $derived(
     features.getRecipeFeatureEnabled() && features.getRecipeFeatureLoaded()
   );
+  const shoppingEnabled = $derived(
+    features.getShoppingFeatureEnabled() && features.getShoppingFeatureLoaded()
+  );
   const graphEnabled = $derived(features.getGraphFeatureEnabled());
   const isDark = $derived(ui.getCurrentTheme().variant === 'dark');
 
@@ -217,6 +220,35 @@
             <path d="M5.71 17.11a17.04 17.04 0 0 1 11.4-11.4"></path>
           </svg>
           {$_('page.recipes.title')}
+        </button>
+      {/if}
+
+      <!-- Shopping (conditional) -->
+      {#if shoppingEnabled}
+        <button
+          type="button"
+          onclick={() => {
+            goto('/shopping');
+            closeSheet();
+          }}
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+          role="menuitem"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path
+              d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+            ></path></svg
+          >
+          {$_('page.shopping.title')}
         </button>
       {/if}
 

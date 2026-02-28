@@ -455,6 +455,51 @@
         "invalid_input": "Invalid input"
       }
     },
+    "shopping": {
+      "title": "Shopping Lists",
+      "new_list": "New List",
+      "add_item": "Add item",
+      "quick_input_placeholder": "3 apples, 500g mince, milk...",
+      "checked_items": "{count} done",
+      "clear_checked": "Clear completed",
+      "no_items": "No items yet",
+      "no_lists": "No shopping lists yet",
+      "create_first": "Create your first shopping list",
+      "sort_by_category": "AI Sort",
+      "sorting": "Sorting...",
+      "import_recipe": "Import recipe",
+      "favorites": "Frequently bought",
+      "add_to_favorites": "Add to favorites",
+      "share_list": "Share list",
+      "shared_by": "Shared by {name}",
+      "list_name": "List name",
+      "list_color": "Color",
+      "delete_list": "Delete list",
+      "archive_list": "Archive list",
+      "edit_item": "Edit item",
+      "delete_item": "Delete item",
+      "select_recipe": "Select recipe",
+      "import": "Import",
+      "share_with": "Share with",
+      "role_editor": "Editor",
+      "role_viewer": "Viewer",
+      "categories": {
+        "fruits_vegetables": "Fruits & Vegetables",
+        "bakery": "Bread & Bakery",
+        "dairy": "Dairy",
+        "cheese": "Cheese",
+        "meat": "Meat & Deli",
+        "fish": "Fish",
+        "frozen": "Frozen",
+        "canned": "Canned & Jarred",
+        "pasta_rice": "Pasta, Rice & Co.",
+        "spices_sauces": "Spices & Sauces",
+        "beverages": "Beverages",
+        "sweets_snacks": "Sweets & Snacks",
+        "household": "Household & Drugstore",
+        "other": "Other"
+      }
+    },
     "sidebar": {
       "close_drawer": "Close drawer",
       "collapse_sidebar": "Collapse sidebar",
@@ -1257,6 +1302,12 @@
       "presets": "Colors",
       "remove": "Remove color",
       "set": "Set color"
+    },
+    "tabs": {
+      "label": "Open notes",
+      "close": "Close tab",
+      "unsaved": "Unsaved changes",
+      "untitled": "Untitled"
     }
   },
   "editor": {

@@ -1,4 +1,4 @@
-import type { User } from '$lib/api';
+import type { OpenTabsPreference, User } from '$lib/api';
 
 export interface InitializeAppDeps {
   initKEKDatabase: () => Promise<void>;
@@ -33,13 +33,20 @@ export interface InitializeAppDeps {
     initAutoLock: (minutes: number) => void;
   };
   api: {
-    getPreferences: () => Promise<{ security_level?: string; auto_lock_timeout?: number }>;
+    getPreferences: () => Promise<{
+      security_level?: string;
+      auto_lock_timeout?: number;
+      open_tabs?: OpenTabsPreference | null;
+    }>;
     getCurrentUser: () => Promise<{ encryption_salt?: string }>;
     getConfig: () => Promise<{ error_reporting_enabled?: boolean }>;
   };
   clearPersistedKEK: (userId: number) => Promise<void>;
   notes: {
     loadNotes: () => void;
+  };
+  tabs: {
+    initTabs: (pref: OpenTabsPreference | null | undefined) => void;
   };
   settings: {
     loadPreferences: () => void;
@@ -237,6 +244,17 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
       deps.notes.loadNotes();
       deps.settings.loadPreferences();
       deps.websocket.connect();
+
+      // Tab restoration from server preferences
+      deps.api
+        .getPreferences()
+        .then((prefs) => {
+          deps.tabs.initTabs(prefs.open_tabs);
+        })
+        .catch(() => {
+          // Tabs will start empty if preferences can't be loaded
+          deps.tabs.initTabs(null);
+        });
     }
 
     // Web Vitals: must be in after-first-paint to capture early metrics (FCP, LCP)

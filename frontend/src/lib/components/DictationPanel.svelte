@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import { getOpenAIAPIKeyStatus } from '$lib/api/preferences';
   import {
     type BrowserDictation,
     createBrowserDictation,
@@ -19,7 +20,6 @@
     editorView?: EditorView;
     noteId: string;
     aiEnabled: boolean;
-    hasOpenAIKey: boolean;
     onInsert: (text: string, withAICleanup: boolean) => void;
     onClose: () => void;
     triggerRect?: {
@@ -36,7 +36,6 @@
     editorView: _editorView,
     noteId: _noteId,
     aiEnabled,
-    hasOpenAIKey,
     onInsert,
     onClose,
     triggerRect = null,
@@ -47,16 +46,11 @@
   const browserSupported = isBrowserSpeechSupported();
   const serverSupported = isMediaRecorderSupported() && getBestAudioMime() !== null;
 
+  let hasOpenAIKey = $state(false);
+
   // Dictation mode: browser (Web Speech API) or server (Whisper)
-  let mode = $state<'browser' | 'server'>(
-    (() => {
-      const stored = localStorage.getItem('xelanote_dictation_mode');
-      if (stored === 'server' && hasOpenAIKey && serverSupported) return 'server';
-      if (browserSupported) return 'browser';
-      if (hasOpenAIKey && serverSupported) return 'server';
-      return 'browser';
-    })()
-  );
+  // Initial mode is always browser; updated in onMount after OpenAI key check
+  let mode = $state<'browser' | 'server'>('browser');
 
   let aiCleanup = $state(
     (() => {
@@ -80,7 +74,7 @@
   const displayText = $derived(finalText + (interimText ? interimText : ''));
   const canInsert = $derived(finalText.trim().length > 0);
   const isActive = $derived(dictationState === 'listening' || dictationState === 'recording');
-  const showAICleanupToggle = $derived(aiEnabled && hasOpenAIKey);
+  const showAICleanupToggle = $derived(aiEnabled);
   const canSwitchToServer = $derived(hasOpenAIKey && serverSupported);
 
   // Desktop position from trigger rect
@@ -228,6 +222,22 @@
   // ── Cleanup ────────────────────────────────────────────────────────
 
   onMount(() => {
+    // Fetch OpenAI key status to enable server mode and set initial mode
+    getOpenAIAPIKeyStatus()
+      .then((status) => {
+        hasOpenAIKey = status.has_key;
+        // Re-evaluate mode based on actual key status
+        const stored = localStorage.getItem('xelanote_dictation_mode');
+        if (stored === 'server' && hasOpenAIKey && serverSupported) {
+          mode = 'server';
+        } else if (!browserSupported && hasOpenAIKey && serverSupported) {
+          mode = 'server';
+        }
+      })
+      .catch(() => {
+        hasOpenAIKey = false;
+      });
+
     return () => {
       browserDictation?.destroy();
       serverDictation?.destroy();

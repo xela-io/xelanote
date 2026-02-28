@@ -42,6 +42,7 @@
   import FeedbackDialog from './FeedbackDialog.svelte';
   import JournalButton from './JournalButton.svelte';
   import RecipeButton from './RecipeButton.svelte';
+  import ShoppingButton from './ShoppingButton.svelte';
   import SidebarFooter from './sidebar/SidebarFooter.svelte';
   import SidebarHeader from './sidebar/SidebarHeader.svelte';
   import ThemeSelector from './ThemeSelector.svelte';
@@ -163,6 +164,7 @@
   // Feature flags (reactive)
   const journalEnabled = $derived(features.getJournalFeatureEnabled());
   const recipeEnabled = $derived(features.getRecipeFeatureEnabled());
+  const shoppingEnabled = $derived(features.getShoppingFeatureEnabled());
   const graphEnabled = $derived(features.getGraphFeatureEnabled());
 
   // Restore expanded state on mount
@@ -174,6 +176,7 @@
       loadJournalFeature: features.loadJournalFeature,
       loadRecipeFeature: features.loadRecipeFeature,
       loadCanvasFeature: features.loadCanvasFeature,
+      loadShoppingFeature: features.loadShoppingFeature,
       startInterval: (handler, ms) => window.setInterval(handler, ms),
       clearInterval: (id) => window.clearInterval(id),
     })
@@ -436,6 +439,13 @@
           </div>
         {/if}
 
+        <!-- Shopping (if enabled) -->
+        {#if shoppingEnabled}
+          <div class="icon-strip-item">
+            <ShoppingButton iconOnly />
+          </div>
+        {/if}
+
         <!-- Spacer -->
         <div class="flex-1"></div>
 
@@ -638,6 +648,13 @@
       {#if recipeEnabled}
         <div class="icon-strip-item">
           <RecipeButton iconOnly />
+        </div>
+      {/if}
+
+      <!-- Shopping (if enabled) -->
+      {#if shoppingEnabled}
+        <div class="icon-strip-item">
+          <ShoppingButton iconOnly />
         </div>
       {/if}
 

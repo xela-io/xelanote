@@ -8,7 +8,7 @@ import (
 	"github.com/xela-io/xelanote/internal/service"
 )
 
-func parseHomeDashboardLayoutRaw(raw *string) json.RawMessage {
+func parseJSONFieldRaw(raw *string) json.RawMessage {
 	if raw == nil || *raw == "" {
 		return json.RawMessage("null")
 	}
@@ -40,7 +40,8 @@ func (s *Server) buildPreferencesResponse(userID int, prefs *service.UserPrefere
 		ActiveAIProvider:    prefs.ActiveAIProvider,
 		DietaryPreference:   prefs.DietaryPreference,
 		Credentials:         convertWebAuthnCredentials(credentials),
-		HomeDashboardLayout: parseHomeDashboardLayoutRaw(prefs.HomeDashboardLayout),
+		HomeDashboardLayout: parseJSONFieldRaw(prefs.HomeDashboardLayout),
+		OpenTabs:            parseJSONFieldRaw(prefs.OpenTabs),
 		Created:             created,
 	}
 }
@@ -94,7 +95,9 @@ func (s *Server) updatePreferences(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, s.buildPreferencesResponse(userID, prefs, false))
 }
 
-// patchPreferences updates partial user preferences (currently home dashboard layout only).
+// patchPreferences updates partial user preferences.
+// Supports home_dashboard_layout and open_tabs fields independently.
+// Uses map-based decode to distinguish "field absent" from "field is null".
 func (s *Server) patchPreferences(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserID(r)
 	if !ok {
@@ -102,26 +105,69 @@ func (s *Server) patchPreferences(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req patchPreferencesRequest
-	if err := decodeJSON(w, r, &req); err != nil {
+	var fields map[string]json.RawMessage
+	if err := decodeJSON(w, r, &fields); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if req.HomeDashboardLayout == nil {
-		respondError(w, http.StatusBadRequest, "home_dashboard_layout is required")
+
+	hasDashboard := false
+	hasOpenTabs := false
+	var dashboardRaw json.RawMessage
+	var openTabsRaw json.RawMessage
+
+	if raw, exists := fields["home_dashboard_layout"]; exists {
+		hasDashboard = true
+		dashboardRaw = raw
+	}
+	if raw, exists := fields["open_tabs"]; exists {
+		hasOpenTabs = true
+		openTabsRaw = raw
+	}
+
+	if !hasDashboard && !hasOpenTabs {
+		respondError(w, http.StatusBadRequest, "at least one field required: home_dashboard_layout, open_tabs")
 		return
 	}
 
-	prefs, err := s.userService.UpdateHomeDashboardLayoutPreference(userID, req.HomeDashboardLayout)
-	if err != nil {
-		switch err {
-		case service.ErrInvalidHomeDashboardLayout:
-			respondError(w, http.StatusBadRequest, "invalid home dashboard layout")
-		default:
-			s.logger().Error("failed to patch preferences", "error", err)
-			respondError(w, http.StatusInternalServerError, "failed to update preferences")
+	// Update fields independently — each goes through service validation
+	var prefs *service.UserPreferences
+	var err error
+
+	if hasDashboard {
+		prefs, err = s.userService.UpdateHomeDashboardLayoutPreference(userID, dashboardRaw)
+		if err != nil {
+			if err == service.ErrInvalidHomeDashboardLayout {
+				respondError(w, http.StatusBadRequest, "invalid home dashboard layout")
+			} else {
+				s.logger().Error("failed to patch preferences (dashboard)", "error", err)
+				respondError(w, http.StatusInternalServerError, "failed to update preferences")
+			}
+			return
 		}
-		return
+	}
+
+	if hasOpenTabs {
+		prefs, err = s.userService.UpdateOpenTabsPreference(userID, openTabsRaw)
+		if err != nil {
+			if err == service.ErrInvalidOpenTabs {
+				respondError(w, http.StatusBadRequest, "invalid open tabs")
+			} else {
+				s.logger().Error("failed to patch preferences (open_tabs)", "error", err)
+				respondError(w, http.StatusInternalServerError, "failed to update preferences")
+			}
+			return
+		}
+	}
+
+	if prefs == nil {
+		// Should not happen, but just in case
+		prefs, _, err = s.userService.GetOrCreatePreferences(userID)
+		if err != nil {
+			s.logger().Error("failed to get preferences", "error", err)
+			respondError(w, http.StatusInternalServerError, "failed to get preferences")
+			return
+		}
 	}
 
 	respondJSON(w, http.StatusOK, s.buildPreferencesResponse(userID, prefs, false))

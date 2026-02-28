@@ -120,6 +120,7 @@ func main() {
 	recipeService := service.NewRecipeService(database, core.note)
 	recipeSuggestionService := service.NewRecipeSuggestionService(database, providerRouter, recipeService)
 	canvasService := service.NewCanvasService(database, core.note)
+	shoppingService := service.NewShoppingService(database, providerRouter)
 	telemetryService := service.NewTelemetryService(database, logger)
 
 	// Create API server
@@ -146,6 +147,7 @@ func main() {
 		RecipeService:    recipeService,
 		RecipeSuggestSvc: recipeSuggestionService,
 		CanvasService:    canvasService,
+		ShoppingSvc:      shoppingService,
 		TelemetrySvc:     telemetryService,
 		LockoutDB:        database,
 		DBPing:           database.Ping,

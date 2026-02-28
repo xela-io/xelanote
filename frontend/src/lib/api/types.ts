@@ -349,6 +349,7 @@ export interface UserPreferences {
   dietary_preference: DietaryPreference;
   webauthn_credentials: WebAuthnCredentialInfo[];
   home_dashboard_layout?: HomeDashboardLayoutPreference | null;
+  open_tabs?: OpenTabsPreference | null;
   created: boolean;
 }
 
@@ -396,6 +397,16 @@ export interface HomeDashboardLayoutPreference {
     all: boolean;
   };
   right_section_order: Array<'recent' | 'activity' | 'created' | 'all'>;
+}
+
+export interface OpenTabEntry {
+  note_id: string;
+}
+
+export interface OpenTabsPreference {
+  version: 1;
+  tabs: OpenTabEntry[];
+  active_note_id: string | null;
 }
 
 export interface UpdateSecurityPreferencesRequest {
@@ -882,4 +893,73 @@ export interface CanvasEdge {
 export interface CanvasData {
   nodes: CanvasNode[];
   edges: CanvasEdge[];
+}
+
+// --- Shopping List Types ---
+
+export interface ShoppingList {
+  id: number;
+  user_id: number;
+  name: string;
+  color?: string | null;
+  is_archived: boolean;
+  display_order: number;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShoppingItem {
+  id: number;
+  list_id: number;
+  name: string;
+  quantity?: number | null;
+  unit?: string | null;
+  category?: string | null;
+  category_order: number;
+  parent_id?: number | null;
+  is_checked: boolean;
+  checked_at?: string | null;
+  display_order: number;
+  version: number;
+  added_by_user_id?: number | null;
+  source_recipe_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShoppingFavorite {
+  id: number;
+  user_id: number;
+  name: string;
+  default_quantity?: number | null;
+  default_unit?: string | null;
+  category?: string | null;
+  usage_count: number;
+  created_at: string;
+}
+
+export interface ShoppingListShare {
+  id: number;
+  list_id: number;
+  owner_user_id: number;
+  shared_with_user_id: number;
+  shared_with_name?: string;
+  role: 'viewer' | 'editor';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShoppingListSummary extends ShoppingList {
+  item_count: number;
+  checked_count: number;
+  role: 'owner' | 'editor' | 'viewer';
+  shared_by?: string;
+}
+
+export interface ShoppingListDetail extends ShoppingList {
+  items: ShoppingItem[];
+  item_count: number;
+  shared_with?: ShoppingListShare[];
+  role: 'owner' | 'editor' | 'viewer';
 }

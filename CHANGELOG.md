@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Shopping Lists: dedicated shopping list feature with multiple lists per user, color-coded tabs, and full CRUD
+- Shopping Lists: quick-input parser supporting German quantities/units (e.g., "3 Äpfel, 500g Hack, 2,5l Milch")
+- Shopping Lists: AI-powered sorting into 14 German supermarket categories via LLM
+- Shopping Lists: recipe ingredient import from existing recipe notes
+- Shopping Lists: favorites system with usage-count-based ordering
+- Shopping Lists: live sharing with role-based access control (owner/editor/viewer)
+- Shopping Lists: real-time sync via WebSocket with echo-detection for multi-tab support
+- Shopping Lists: collapsible checked-items section with bulk clear
+- Shopping Lists: optimistic locking with version fields and HTTP 409 conflict detection
+- Shopping Lists: integrated into sidebar, mobile bottom nav, and feature toggle system
+- Multi-Tab Editor: browser-style tabs above the editor for opening multiple notes simultaneously
+- Multi-Tab Editor: server-persisted tab state via `open_tabs` in user preferences (cross-device sync)
+- Multi-Tab Editor: drag-to-reorder tabs with debounced server persistence
+- Multi-Tab Editor: dirty indicator (dot) on tabs with unsaved changes
+- Multi-Tab Editor: keyboard shortcuts — Ctrl+PageDown/PageUp for tab switching, Ctrl+W (desktop only) for close
+- Multi-Tab Editor: automatic tab cleanup when notes are deleted (local or remote via WebSocket)
+- Multi-Tab Editor: offline-safe temp-ID replacement when offline-created notes sync
+- Multi-Tab Editor: E2E encryption compatible — only note IDs persisted server-side, no titles
 - Dictation: voice input via browser-native Web Speech API (real-time transcript)
 - Dictation: server-side transcription via OpenAI Whisper (`POST /llm/transcribe`)
 - Dictation: AI cleanup action (`dictation_cleanup`) for post-processing raw speech-to-text

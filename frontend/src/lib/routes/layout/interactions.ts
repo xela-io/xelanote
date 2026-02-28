@@ -10,6 +10,11 @@ export interface LayoutInteractionDeps {
   goto: (path: string) => void;
   graphEnabled: () => boolean;
   recordActivity: () => void;
+  closeCurrentTab: () => void;
+  nextTab: () => string | null;
+  prevTab: () => string | null;
+  isDesktop: () => boolean;
+  getPathname: () => string;
 }
 
 export function createLayoutInteractions(deps: LayoutInteractionDeps) {
@@ -50,6 +55,31 @@ export function createLayoutInteractions(deps: LayoutInteractionDeps) {
       if (deps.canRedo()) {
         e.preventDefault();
         deps.redo();
+      }
+    }
+
+    // Tab navigation: Ctrl+W to close (desktop only)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'w' && deps.isDesktop()) {
+      if (deps.getPathname().startsWith('/note/')) {
+        e.preventDefault();
+        deps.closeCurrentTab();
+      }
+    }
+
+    // Tab navigation: Ctrl+PageDown = next tab, Ctrl+PageUp = prev tab
+    if ((e.ctrlKey || e.metaKey) && e.key === 'PageDown') {
+      if (deps.getPathname().startsWith('/note/')) {
+        e.preventDefault();
+        const noteId = deps.nextTab();
+        if (noteId) deps.goto(`/note/${noteId}`);
+      }
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'PageUp') {
+      if (deps.getPathname().startsWith('/note/')) {
+        e.preventDefault();
+        const noteId = deps.prevTab();
+        if (noteId) deps.goto(`/note/${noteId}`);
       }
     }
   };

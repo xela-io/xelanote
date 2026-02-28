@@ -46,6 +46,7 @@ import {
 } from '$lib/stores/notes/state-updates';
 import { createTaskEventQueue } from '$lib/stores/notes/task-events';
 import * as searchIndex from '$lib/stores/search-index.svelte';
+import { removeTabByNoteId, replaceTempId as replaceTabTempId } from '$lib/stores/tabs.svelte';
 import * as toast from '$lib/stores/toast.svelte';
 
 const taskEventQueue = createTaskEventQueue();
@@ -373,6 +374,7 @@ export async function toggleEncryption(): Promise<void> {
 }
 
 export async function deleteCurrentNote() {
+  const noteId = currentNote?.id;
   await deleteCurrentNoteHelper({
     getCurrentNote: () => currentNote,
     assertOnline: () => assertOnlineForParanoidMode(true),
@@ -399,6 +401,7 @@ export async function deleteCurrentNote() {
       currentNoteBacklinks = backlinks;
     },
   });
+  if (noteId) removeTabByNoteId(noteId);
 }
 
 export async function renameCurrentNote(newTitle: string) {
@@ -773,6 +776,7 @@ export function handleRemoteDelete(id: string) {
     },
     info: (message) => toast.info(message),
   });
+  removeTabByNoteId(id);
 }
 
 /**
@@ -833,4 +837,5 @@ export function replaceTempId(tempId: string, realNote: Note) {
       lastSaveTimestamp = null;
     },
   });
+  replaceTabTempId(tempId, realNote.id);
 }

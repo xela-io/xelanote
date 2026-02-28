@@ -1,0 +1,80 @@
+# E2EE Security Audit Addendum (2026-02-28)
+
+## Scope
+
+This addendum reflects the **current remediation status** of the previously reported E2EE findings in this repository (code-backed snapshot as of 2026-02-28).
+
+## Remediation Status (Code-Verified)
+
+### Closed Findings
+
+1. **AAD binding for note payloads and wrapped DEKs is implemented (v3).**
+   - `frontend/src/lib/crypto/e2e.ts:77-83` (AAD construction)
+   - `frontend/src/lib/crypto/e2e.ts:226-231` (encrypt with AAD)
+   - `frontend/src/lib/crypto/e2e.ts:269-281` (decrypt with AAD)
+   - `frontend/src/lib/crypto/sodium.ts:226-231` and `frontend/src/lib/crypto/sodium.ts:280-285` (AAD passed into libsodium AEAD API)
+
+2. **Server-side AI summarization is blocked for encrypted notes.**
+   - `backend/internal/service/summarize_service.go:70-73`
+   - `backend/internal/api/notes_ai_summary.go:93-95`
+   - `backend/internal/api/notes_ai_summary.go:142-144`
+   - Test coverage: `backend/internal/service/summarize_test.go:62-85`
+
+3. **Server-side export no longer silently emits empty encrypted-note files.**
+   - `backend/internal/api/export.go:14-17` (explicit placeholder)
+   - `backend/internal/api/export.go:80-87` (encrypted marker + placeholder content)
+   - Test coverage: `backend/internal/api/export_test.go:78-135`
+
+4. **`encrypted_title` wire format mismatch is resolved (`ciphertext` + `metadata`).**
+   - Validator expects and validates `ciphertext` + `metadata`: `backend/internal/api/validation.go:139-195`
+   - Create/update paths enforce validation: `backend/internal/api/notes_crud_create_helpers.go:89-92`, `backend/internal/api/notes_crud_update.go:72-75`
+   - API tests for encrypted title create/update: `backend/internal/api/encryption_handlers_test.go:128-151`, `backend/internal/api/encryption_handlers_test.go:256-296`
+
+5. **DEK re-wrap hardening is implemented (full validation + strict server checks).**
+   - Full deterministic client-side validation (no sampling): `frontend/src/lib/crypto/e2e.ts:592-665`
+   - Server rejects missing/extra IDs and malformed wrapped DEKs: `backend/internal/service/user_account.go:137-171`, `backend/internal/service/user_account.go:228-245`
+
+6. **Recovery reset is blocked for encrypted users until secure DEK recovery re-wrap exists.**
+   - `backend/internal/service/user_recovery.go:61-68`
+   - `backend/internal/service/user_recovery.go:138-145`
+   - `backend/internal/service/user_types.go:55`
+   - Tests: `backend/internal/service/user_account_recovery_test.go:182-211`, `backend/internal/service/user_account_recovery_test.go:287-317`
+
+7. **Encrypted-note attachments are uploaded as encrypted blobs (`.xenc`).**
+   - Client encrypts attachment bytes before upload: `frontend/src/lib/components/Editor.svelte:906-918`
+   - Dedicated encrypted upload endpoint: `backend/internal/api/uploads.go:191-222`
+   - Endpoint behavior tests: `backend/internal/api/uploads_test.go:498-559`
+
+8. **API-key crypto hardening is implemented (HKDF + key separation).**
+   - HKDF key derivation: `backend/internal/crypto/apikey.go:68-75`
+   - Dedicated secret required and separated from JWT secret: `backend/internal/crypto/apikey.go:51-66`
+   - Startup enforcement for env policy: `backend/cmd/server/server_config.go:30-41`
+
+9. **Client KEK setup now prefers worker-based KDF (non-blocking path) with tested fallback.**
+   - `frontend/src/lib/crypto/e2e.ts:65-74`
+   - `frontend/src/lib/crypto/e2e.ts:170-172`
+   - Unit tests: `frontend/src/lib/crypto/e2e.test.ts:34-64`
+
+## Remaining Limitations / Open Product Decisions
+
+1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).
+   - Doc claim aligned: `docs/e2e-encryption.md:66-77`, `docs/e2e-encryption.md:107-108`
+   - README claim aligned: `README.md:95`
+
+2. **E2EE does not cover all metadata** (explicitly documented scope limit).
+   - `docs/e2e-encryption.md:51-58`
+
+3. **AI trust boundary remains feature-dependent.**
+   - Summary for encrypted notes is blocked, but docs still state that other AI features may send plaintext when used:
+   - `docs/e2e-encryption.md:62-64`
+
+## Verification Run (2026-02-28)
+
+Targeted verification command executed:
+
+```bash
+cd backend && CGO_ENABLED=1 go test -tags "fts5 sqlite_crypt" ./internal/api ./internal/service \
+  -run 'TestCreateEncryptedNote_WithEncryptedTitle_Success|TestUpdateEncryptedNote_WithEncryptedTitle_Success|TestUserService_RecoverPasswordWithRecoveryKey|TestUserService_RecoverPasswordWithRecoveryKeyByEmail|TestExportMarkdown_EncryptedNotesAreMarkedInExport|TestSummarizeNote_EncryptedServerProcessingDisabled'
+```
+
+Result: `ok` for both `internal/api` and `internal/service`.

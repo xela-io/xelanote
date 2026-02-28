@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ImagePlus, ListTodo, Plus, Table2 } from 'lucide-svelte';
+  import { ImagePlus, Indent, ListTodo, Outdent, Plus, Table2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { bottomsheet } from '$lib/actions/bottomsheet';
@@ -8,6 +8,8 @@
     onInsertTask: () => void;
     onInsertTable: () => void;
     onUpload: () => void;
+    onIndent: () => void;
+    onOutdent: () => void;
     onClose: () => void;
     isMobile?: boolean;
     triggerRect?: {
@@ -24,6 +26,8 @@
     onInsertTask,
     onInsertTable,
     onUpload,
+    onIndent,
+    onOutdent,
     onClose,
     isMobile: _isMobile = false,
     triggerRect = null,
@@ -117,6 +121,38 @@
     >
       <ImagePlus size={18} />
       {$_('component.editor.toolbar.upload')}
+    </button>
+
+    <hr class="my-2 border-border" />
+
+    <div class="px-2.5 pt-0.5 pb-1.5 text-xs font-medium text-muted-foreground">
+      {$_('component.editor.toolbar.section_formatting')}
+    </div>
+
+    <button
+      type="button"
+      onclick={() => {
+        onIndent();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-2.5 py-2 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Indent size={18} />
+      {$_('component.editor.toolbar.indent')}
+    </button>
+
+    <button
+      type="button"
+      onclick={() => {
+        onOutdent();
+        onClose();
+      }}
+      class="w-full flex items-center gap-3 px-2.5 py-2 text-left hover:bg-accent rounded-md transition-colors"
+      role="menuitem"
+    >
+      <Outdent size={18} />
+      {$_('component.editor.toolbar.outdent')}
     </button>
   </div>
 </div>

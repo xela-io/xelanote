@@ -835,8 +835,8 @@
 
   .code-input {
     text-align: center;
-    font-size: 1.5rem;
-    font-family: monospace;
+    font-size: var(--text-2xl);
+    font-family: var(--font-mono);
     letter-spacing: 0.25em;
   }
 
@@ -848,7 +848,7 @@
     width: 100%;
     margin-top: 1rem;
     padding: 0.75rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--color-muted-foreground);
     background: transparent;
     border: 1px solid var(--color-border);

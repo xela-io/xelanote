@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Tests: cross-user data isolation tests for user settings, API keys, recovery keys, WebAuthn, due dates, export, task events, and canvas endpoints
+- Mobile: graph view link in bottom navigation "More" sheet
+- Editor: indent/outdent buttons in mobile toolbar and insert menu
+
+### Changed
+
+- UI: introduced CSS custom properties for typography scale, replacing hardcoded font sizes
+- Editor: moved indent/outdent from "More" menu to toolbar and insert menu for quicker access
 
 ### Fixed
 

@@ -280,7 +280,7 @@
     background: none;
     border: 1px solid transparent;
     cursor: pointer;
-    font-size: 15px;
+    font-size: var(--text-md);
     line-height: 1.2;
     color: var(--color-sidebar-foreground);
     border-radius: var(--radius-sm);
@@ -325,7 +325,7 @@
   }
 
   .note-count {
-    font-size: 11px;
+    font-size: var(--text-2xs);
     color: color-mix(
       in oklch,
       var(--color-sidebar-foreground),
@@ -528,7 +528,7 @@
   /* Touch-optimized sizes */
   @media (pointer: coarse) {
     .tree-button {
-      font-size: 17px;
+      font-size: var(--text-lg);
       padding: 6px 10px;
       gap: 8px;
     }
@@ -538,7 +538,7 @@
     }
 
     .note-count {
-      font-size: 12px;
+      font-size: var(--text-xs);
       padding: 3px 8px;
     }
 

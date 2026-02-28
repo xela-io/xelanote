@@ -4,11 +4,13 @@
     AlertCircle,
     Check,
     History,
+    Indent,
     Loader2,
     Lock,
     Maximize2,
     Minimize2,
     MoreVertical,
+    Outdent,
     Plus,
     Redo2,
     RefreshCw,
@@ -57,6 +59,8 @@
     onAIActions: (rect: DOMRect) => void;
     onOpenInsertMenu: (rect: DOMRect) => void;
     onOpenMoreMenu: (rect: DOMRect) => void;
+    onIndent: () => void;
+    onOutdent: () => void;
   }
 
   const {
@@ -88,6 +92,8 @@
     onAIActions,
     onOpenInsertMenu,
     onOpenMoreMenu,
+    onIndent,
+    onOutdent,
   }: Props = $props();
 
   const showSaveButton = $derived.by(() => !isMobile || isDirty || isSaving);
@@ -293,6 +299,26 @@
                 <span class="hidden sm:inline text-xs">
                   {$_('component.editor.table_insert.insert')}
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onclick={onIndent}
+                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
+                aria-label={$_('component.editor.toolbar.indent')}
+                title={$_('component.editor.toolbar.indent')}
+              >
+                <Indent size={16} />
+              </button>
+
+              <button
+                type="button"
+                onclick={onOutdent}
+                class="p-2 hover:bg-accent rounded-md flex-shrink-0 toolbar-btn inline-flex items-center gap-1"
+                aria-label={$_('component.editor.toolbar.outdent')}
+                title={$_('component.editor.toolbar.outdent')}
+              >
+                <Outdent size={16} />
               </button>
             </div>
 

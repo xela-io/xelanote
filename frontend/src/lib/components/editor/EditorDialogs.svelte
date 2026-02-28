@@ -40,6 +40,8 @@
     onInsertTask: () => void;
     onInsertTable: () => void;
     onUpload: () => void;
+    onIndent: () => void;
+    onOutdent: () => void;
     onCloseInsertMenu: () => void;
     // More menu
     showMoreMenu: boolean;
@@ -53,8 +55,6 @@
     onExport: () => void;
     onColorPicker: () => void;
     onHelp: () => void;
-    onIndent: () => void;
-    onOutdent: () => void;
     onAIToggle: () => void;
     onShare: () => void;
     onEncryptionToggle: () => void;
@@ -187,6 +187,8 @@
     {onInsertTask}
     {onInsertTable}
     {onUpload}
+    {onIndent}
+    {onOutdent}
     {isMobile}
     onClose={onCloseInsertMenu}
     triggerRect={insertMenuTriggerRect}
@@ -201,8 +203,6 @@
     {onExport}
     {onColorPicker}
     {onHelp}
-    {onIndent}
-    {onOutdent}
     {onAIToggle}
     {onShare}
     {onEncryptionToggle}

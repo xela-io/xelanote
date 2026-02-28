@@ -4,6 +4,7 @@
     FileText,
     Moon,
     MoreHorizontal,
+    Network,
     PanelLeft,
     Search,
     Settings,
@@ -33,6 +34,7 @@
   const recipeEnabled = $derived(
     features.getRecipeFeatureEnabled() && features.getRecipeFeatureLoaded()
   );
+  const graphEnabled = $derived(features.getGraphFeatureEnabled());
   const isDark = $derived(ui.getCurrentTheme().variant === 'dark');
 
   function handleNotesClick() {
@@ -222,6 +224,22 @@
 
       <div class="mobile-more-sheet-section">{$_('nav.more_options')}</div>
 
+      <!-- Graph View -->
+      {#if graphEnabled}
+        <button
+          type="button"
+          onclick={() => {
+            goto('/graph');
+            closeSheet();
+          }}
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+          role="menuitem"
+        >
+          <Network size={18} />
+          {$_('page.graph.title')}
+        </button>
+      {/if}
+
       <!-- Shared Notes -->
       <button
         type="button"
@@ -334,7 +352,7 @@
 
   .mobile-more-sheet-section {
     padding: 0.25rem 0.75rem 0.2rem;
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     line-height: 1;
     font-weight: 700;
     letter-spacing: 0.06em;

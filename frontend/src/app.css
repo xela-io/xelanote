@@ -344,6 +344,17 @@ body,
   --font-sans: 'DM Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Literata Variable', 'Georgia', serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  /* Typography scale */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-md: 0.9375rem; /* 15px */
+  --text-lg: 1.0625rem; /* 17px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 2rem; /* 32px */
+  --text-editor-desktop: 0.9rem; /* 14.4px */
 }
 
 /* Gruvbox Light - explicit class (same as default) */
@@ -1374,7 +1385,7 @@ html {
 .cm-editor {
   height: 100%;
   font-family: var(--font-sans);
-  font-size: 1rem; /* 16px on mobile to prevent iOS auto-zoom */
+  font-size: var(--text-base); /* 16px on mobile to prevent iOS auto-zoom */
   letter-spacing: -0.01em;
   --live-preview-line-height: 1.7;
   --live-preview-marker-column-width: 1.6rem;
@@ -1387,7 +1398,7 @@ html {
 /* Desktop: smaller font for more compact view */
 @media (min-width: 768px) {
   .cm-editor {
-    font-size: 0.9rem; /* 14.4px on tablet and above */
+    font-size: var(--text-editor-desktop); /* 14.4px on tablet and above */
   }
 }
 

@@ -370,7 +370,7 @@
 
   h1 {
     margin: 0;
-    font-size: 2rem;
+    font-size: var(--text-3xl);
     font-weight: 700;
     text-align: center;
     color: var(--color-foreground);
@@ -389,7 +389,7 @@
   label {
     display: block;
     margin-bottom: 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--color-foreground);
   }
@@ -397,7 +397,7 @@
   input {
     width: 100%;
     padding: 0.75rem;
-    font-size: 1rem;
+    font-size: var(--text-base);
     background: var(--color-background);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
@@ -418,14 +418,14 @@
 
   .hint {
     margin: 0.25rem 0 0 0;
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--color-muted-foreground);
   }
 
   .register-button {
     width: 100%;
     padding: 0.75rem;
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 600;
     color: var(--color-primary-foreground);
     background: var(--color-primary);
@@ -447,7 +447,7 @@
   .error-message {
     margin-bottom: 1rem;
     padding: 0.75rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--color-destructive);
     background: color-mix(in oklch, var(--color-destructive), transparent 85%);
     border: 1px solid var(--color-destructive);
@@ -460,7 +460,7 @@
   }
 
   .captcha-hint {
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--color-muted-foreground);
     margin-bottom: 1rem;
     text-align: center;
@@ -487,7 +487,7 @@
   }
 
   .strength-label {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     font-weight: 500;
     white-space: nowrap;
   }
@@ -498,7 +498,7 @@
     align-items: center;
     gap: 0.5rem;
     margin-top: 1.5rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--color-muted-foreground);
   }
 
@@ -524,7 +524,7 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--color-border);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--color-muted-foreground);
   }
 </style>

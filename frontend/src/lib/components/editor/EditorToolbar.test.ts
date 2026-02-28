@@ -66,6 +66,8 @@ function mockCallbacks() {
     onAIActions: vi.fn(),
     onOpenInsertMenu: vi.fn(),
     onOpenMoreMenu: vi.fn(),
+    onIndent: vi.fn(),
+    onOutdent: vi.fn(),
   };
 }
 
@@ -212,6 +214,19 @@ describe('EditorToolbar', () => {
 
     await fireEvent.click(getByLabelText('component.editor.toolbar.redo'));
     expect(cbs.onRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows indent/outdent buttons on mobile and calls handlers', async () => {
+    const cbs = mockCallbacks();
+    const { getByLabelText } = render(EditorToolbar, {
+      props: { note: baseNote, isMobile: true, ...cbs },
+    });
+
+    await fireEvent.click(getByLabelText('component.editor.toolbar.indent'));
+    await fireEvent.click(getByLabelText('component.editor.toolbar.outdent'));
+
+    expect(cbs.onIndent).toHaveBeenCalledTimes(1);
+    expect(cbs.onOutdent).toHaveBeenCalledTimes(1);
   });
 
   it('disables redo button on mobile when no redo is available', () => {

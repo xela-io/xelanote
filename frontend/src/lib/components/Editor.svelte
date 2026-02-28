@@ -1053,6 +1053,8 @@
       onAIActions={handleAIActionsClick}
       onOpenInsertMenu={openInsertMenu}
       onOpenMoreMenu={openMoreMenu}
+      onIndent={handleIndent}
+      onOutdent={handleOutdent}
     />
   {/if}
 

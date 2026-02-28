@@ -6,10 +6,8 @@
     Eye,
     FolderInput,
     HelpCircle,
-    Indent,
     Lock,
     LockOpen,
-    Outdent,
     Palette,
     Save,
     ScanEye,
@@ -29,8 +27,6 @@
     onExport: () => void;
     onColorPicker: () => void;
     onHelp: () => void;
-    onIndent: () => void;
-    onOutdent: () => void;
     onAIToggle: () => void;
     onShare?: () => void;
     onEncryptionToggle?: () => void;
@@ -56,8 +52,6 @@
     onExport,
     onColorPicker,
     onHelp,
-    onIndent,
-    onOutdent,
     onAIToggle,
     onShare,
     onEncryptionToggle,
@@ -189,37 +183,6 @@
       {/if}
       <hr class="my-2 border-border" />
     {/if}
-
-    <div class="px-3 pt-1 pb-1 ui-form-section-title">
-      {$_('component.editor.toolbar.section_formatting')}
-    </div>
-    <button
-      type="button"
-      onclick={() => {
-        onIndent();
-        onClose();
-      }}
-      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
-      role="menuitem"
-    >
-      <Indent size={18} />
-      {$_('component.editor.toolbar.indent')}
-    </button>
-
-    <button
-      type="button"
-      onclick={() => {
-        onOutdent();
-        onClose();
-      }}
-      class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
-      role="menuitem"
-    >
-      <Outdent size={18} />
-      {$_('component.editor.toolbar.outdent')}
-    </button>
-
-    <hr class="my-2 border-border" />
 
     <div class="px-3 pt-1 pb-1 ui-form-section-title">
       {$_('component.editor.toolbar.section_note')}

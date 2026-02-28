@@ -3,6 +3,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -14,6 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xela-io/xelanote/internal/service"
 )
+
+func validWrappedDEK(seed byte) string {
+	return base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{seed}, 48))
+}
 
 func init() {
 	// EncryptAPIKey uses sync.Once — set env before any test runs.
@@ -264,7 +269,7 @@ func TestRecoveryKey_UserIsolation(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
-func TestRecoveryKey_SetBlockedForEncryptedUsers(t *testing.T) {
+func TestRecoveryKey_SetRequiresWrappedDEKsForEncryptedUsers(t *testing.T) {
 	ts := newTestServer(t)
 	r := usersRouter(ts)
 	user := ts.createUser(t, "recoveryenc", "recoveryenc@example.com", "password123")
@@ -283,6 +288,39 @@ func TestRecoveryKey_SetBlockedForEncryptedUsers(t *testing.T) {
 		Salt:            salt,
 	}, token)
 	require.Equal(t, http.StatusConflict, rec.Code)
+}
+
+func TestRecoveryKey_SetWithWrappedDEKsForEncryptedUsers(t *testing.T) {
+	ts := newTestServer(t)
+	r := usersRouter(ts)
+	user := ts.createUser(t, "recoveryencok", "recoveryencok@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	_, err := ts.db.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, encryption_version)
+		VALUES ('user-enc-note-ok', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, ?, 2)
+	`, user.ID, validWrappedDEK(1))
+	require.NoError(t, err)
+
+	_, err = ts.db.Exec(`
+		INSERT INTO note_versions (id, note_id, user_id, version, title, content, snapshot_at,
+		                           content_encrypted, wrapped_dek, encryption_version)
+		VALUES (3001, 'user-enc-note-ok', ?, 1, 'V1', '', datetime('now'), 1, ?, 2)
+	`, user.ID, validWrappedDEK(2))
+	require.NoError(t, err)
+
+	salt := base64.StdEncoding.EncodeToString([]byte("random-salt-bytes123"))
+	rec := doJSON(t, r, http.MethodPost, "/api/users/recovery-key", setRecoveryKeyRequest{
+		RecoveryKeyHash:            "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012",
+		Salt:                       salt,
+		RecoveryWrappedNoteDEKs:    map[string]string{"user-enc-note-ok": validWrappedDEK(3)},
+		RecoveryWrappedVersionDEKs: map[string]string{"3001": validWrappedDEK(4)},
+	}, token)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = doJSON(t, r, http.MethodGet, "/api/users/recovery-key/salt", nil, token)
+	require.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestRecoveryKey_GetSaltBlockedForEncryptedUsers(t *testing.T) {

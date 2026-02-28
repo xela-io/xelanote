@@ -97,8 +97,10 @@ type addWebAuthnCredentialRequest struct {
 }
 
 type setRecoveryKeyRequest struct {
-	RecoveryKeyHash string `json:"recovery_key_hash"` // bcrypt hash
-	Salt            string `json:"salt"`              // Base64-encoded
+	RecoveryKeyHash            string            `json:"recovery_key_hash"`                       // bcrypt hash
+	Salt                       string            `json:"salt"`                                    // Base64-encoded
+	RecoveryWrappedNoteDEKs    map[string]string `json:"recovery_wrapped_note_deks,omitempty"`    // noteID -> wrapped_dek_recovery
+	RecoveryWrappedVersionDEKs map[string]string `json:"recovery_wrapped_version_deks,omitempty"` // versionID -> wrapped_dek_recovery
 }
 
 type changeEmailRequest struct {

@@ -73,10 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: deprecated `keywords_enabled` encryption preference end-to-end (settings toggle removed, backend clamps to `false`, migration resets legacy enabled flags)
 - Security: encrypted-note updates now clear legacy `links`/`unresolved_links`/`note_due_dates` metadata in service layer, plus migration cleanup for existing encrypted rows
 - Security: added defense-in-depth guards so `UpdateLinksFromClient`/`SetNoteDueDates` always ignore and clear metadata for encrypted notes
-- Security: `POST /api/users/recovery-key` now returns `409` for accounts with encrypted notes (setup blocked until recovery DEK re-wrap exists)
+- Security: `POST /api/users/recovery-key` for encrypted accounts now requires complete `recovery_wrapped_note_deks` / `recovery_wrapped_version_deks` coverage and stores recovery key + wrappers atomically
 - Security: encrypted create/update flows now auto-invalidate stored recovery key material; migration clears legacy recovery keys for users with encrypted notes/versions
 - Security: removed residual encrypted-create keyword persistence hooks across note/journal/recipe/canvas service+DB paths
-- Security: `GET /api/users/recovery-key/salt` now also blocks encrypted accounts (returns `404`), including legacy rows with stored recovery salts
+- Security: `GET /api/users/recovery-key/salt` for encrypted accounts now returns salt only when all encrypted notes/versions have `wrapped_dek_recovery`; incomplete/legacy states return `404`
 - Security: encrypted notes no longer support server-side tags (`PUT /api/notes/:id/tags` returns `409`, `GET` returns `[]`), and migration removes legacy encrypted-note tag rows
 - Security: encrypted note `folder_path` is now normalized to `/` on create/update across note/journal/recipe/canvas flows, with migration cleanup for existing encrypted rows
 - Security: encrypted note create/update now rejects outdated `encryption_metadata.version` (< 3) to harden against protocol downgrade writes

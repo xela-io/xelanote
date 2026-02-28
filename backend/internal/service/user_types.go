@@ -54,6 +54,7 @@ var (
 	ErrInvalidEmail                = errors.New("invalid email format")
 	ErrRecoveryResetNeedsDEKRewrap = errors.New("password recovery blocked: encrypted notes require DEK re-wrapping")
 	ErrRecoveryKeyBlockedEncrypted = errors.New("recovery key setup blocked: encrypted notes require recovery DEK re-wrapping support")
+	ErrRecoveryWrappedDEKsRequired = errors.New("recovery key setup for encrypted accounts requires full recovery DEK re-wrapping")
 	ErrInvalidRecoveryResetToken   = errors.New("invalid recovery reset token")
 	ErrRecoveryRewrapNotConfigured = errors.New("recovery reset unavailable: encrypted DEK recovery wrappers are missing")
 	ErrInvalidHomeDashboardLayout  = errors.New("invalid home dashboard layout")

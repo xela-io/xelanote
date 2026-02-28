@@ -25,32 +25,111 @@ const (
 // The recoveryKeyHash should be a bcrypt hash of the user-provided recovery key
 // The salt is used for client-side Argon2id key derivation
 func (s *UserService) SetRecoveryKey(userID int, recoveryKeyHash string, salt []byte) error {
+	return s.SetRecoveryKeyWithRecoveryWrappedDEKs(userID, recoveryKeyHash, salt, nil, nil)
+}
+
+// SetRecoveryKeyWithRecoveryWrappedDEKs stores recovery credentials.
+// For encrypted accounts this requires complete recovery wrappers for notes and versions.
+func (s *UserService) SetRecoveryKeyWithRecoveryWrappedDEKs(
+	userID int,
+	recoveryKeyHash string,
+	salt []byte,
+	recoveryWrappedNotes map[string]string,
+	recoveryWrappedVersions map[string]string,
+) error {
 	if recoveryKeyHash == "" {
 		return errors.New("recovery key hash is required")
 	}
 	if len(salt) == 0 {
 		return errors.New("recovery key salt is required")
 	}
-	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(userID)
+	encryptedNotes, err := s.db.GetAllEncryptedNotesForUser(userID)
 	if err != nil {
-		return fmt.Errorf("failed to check encrypted content: %w", err)
+		return fmt.Errorf("failed to check encrypted notes: %w", err)
 	}
-	if hasEncryptedContent {
-		return ErrRecoveryKeyBlockedEncrypted
+	encryptedVersions, err := s.db.GetAllEncryptedVersionsForUser(userID)
+	if err != nil {
+		return fmt.Errorf("failed to check encrypted versions: %w", err)
 	}
 
-	return s.db.SetRecoveryKey(userID, recoveryKeyHash, salt)
+	hasEncryptedContent := len(encryptedNotes) > 0 || len(encryptedVersions) > 0
+	if !hasEncryptedContent {
+		if len(recoveryWrappedNotes) > 0 || len(recoveryWrappedVersions) > 0 {
+			return errors.New("no encrypted content to re-wrap")
+		}
+		return s.db.SetRecoveryKey(userID, recoveryKeyHash, salt)
+	}
+
+	if len(recoveryWrappedNotes) == 0 && len(recoveryWrappedVersions) == 0 {
+		return ErrRecoveryWrappedDEKsRequired
+	}
+
+	allowedNoteIDs := make(map[string]struct{}, len(encryptedNotes))
+	allowedVersionIDs := make(map[string]struct{}, len(encryptedVersions))
+
+	for _, note := range encryptedNotes {
+		allowedNoteIDs[note.ID] = struct{}{}
+		wrappedDEK, ok := recoveryWrappedNotes[note.ID]
+		if !ok {
+			return fmt.Errorf("missing recovery-wrapped DEK for note %s", note.ID)
+		}
+		if err := validateReWrappedDEKValue(wrappedDEK); err != nil {
+			return fmt.Errorf("invalid recovery-wrapped DEK for note %s: %w", note.ID, err)
+		}
+	}
+
+	for _, version := range encryptedVersions {
+		versionIDStr := fmt.Sprintf("%d", version.ID)
+		allowedVersionIDs[versionIDStr] = struct{}{}
+		wrappedDEK, ok := recoveryWrappedVersions[versionIDStr]
+		if !ok {
+			return fmt.Errorf("missing recovery-wrapped DEK for version %d", version.ID)
+		}
+		if err := validateReWrappedDEKValue(wrappedDEK); err != nil {
+			return fmt.Errorf("invalid recovery-wrapped DEK for version %d: %w", version.ID, err)
+		}
+	}
+
+	for noteID := range recoveryWrappedNotes {
+		if _, ok := allowedNoteIDs[noteID]; !ok {
+			return fmt.Errorf("unexpected recovery-wrapped DEK for note %s", noteID)
+		}
+	}
+	for versionID := range recoveryWrappedVersions {
+		if _, ok := allowedVersionIDs[versionID]; !ok {
+			return fmt.Errorf("unexpected recovery-wrapped DEK for version %s", versionID)
+		}
+	}
+
+	tx, err := s.db.BeginTx(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := tx.SetRecoveryKeyTx(userID, recoveryKeyHash, salt); err != nil {
+		return fmt.Errorf("failed to set recovery key: %w", err)
+	}
+	if err := tx.BulkUpdateRecoveryWrappedDEKsTx(userID, recoveryWrappedNotes, recoveryWrappedVersions); err != nil {
+		return fmt.Errorf("failed to store recovery wrapped DEKs: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit recovery key setup: %w", err)
+	}
+
+	return nil
 }
 
 // GetRecoveryKeySalt retrieves the recovery key salt for a user
 // Returns ErrNotFound if no recovery key is set
 func (s *UserService) GetRecoveryKeySalt(userID int) ([]byte, error) {
-	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(userID)
+	ok, err := s.isRecoveryReady(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check encrypted content: %w", err)
+		return nil, err
 	}
-	if hasEncryptedContent {
-		return nil, ErrRecoveryKeyBlockedEncrypted
+	if !ok {
+		return nil, db.ErrNotFound
 	}
 
 	return s.db.GetRecoveryKeySalt(userID)
@@ -214,8 +293,13 @@ func (s *UserService) GetRecoveryKeySaltByEmail(email string) ([]byte, error) {
 		return nil, err
 	}
 	if hasEncryptedContent {
-		// Keep public flow error generic to avoid account capability disclosure.
-		return nil, errors.New("recovery key not available")
+		ready, readyErr := s.isRecoveryReady(user.ID)
+		if readyErr != nil {
+			return nil, readyErr
+		}
+		if !ready {
+			return nil, errors.New("recovery key not available")
+		}
 	}
 
 	salt, err := s.db.GetRecoveryKeySalt(user.ID)
@@ -409,6 +493,34 @@ func (s *UserService) hasEncryptedNotesOrVersions(userID int) (bool, error) {
 	}
 
 	return len(encryptedNotes) > 0 || len(encryptedVersions) > 0, nil
+}
+
+func (s *UserService) isRecoveryReady(userID int) (bool, error) {
+	encryptedNotes, err := s.db.GetAllEncryptedNotesForUser(userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check encrypted notes: %w", err)
+	}
+	encryptedVersions, err := s.db.GetAllEncryptedVersionsForUser(userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check encrypted versions: %w", err)
+	}
+
+	if len(encryptedNotes) == 0 && len(encryptedVersions) == 0 {
+		return true, nil
+	}
+
+	for _, note := range encryptedNotes {
+		if note.WrappedDEKRecovery == "" {
+			return false, nil
+		}
+	}
+	for _, version := range encryptedVersions {
+		if version.WrappedDEKRecovery == "" {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func generateRecoveryResetToken() (string, string, error) {

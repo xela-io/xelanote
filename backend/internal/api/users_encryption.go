@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/xela-io/xelanote/internal/service"
 )
@@ -64,10 +65,29 @@ func (s *Server) setRecoveryKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set recovery key
-	err = s.userService.SetRecoveryKey(userID, req.RecoveryKeyHash, salt)
+	err = s.userService.SetRecoveryKeyWithRecoveryWrappedDEKs(
+		userID,
+		req.RecoveryKeyHash,
+		salt,
+		req.RecoveryWrappedNoteDEKs,
+		req.RecoveryWrappedVersionDEKs,
+	)
 	if err != nil {
-		if errors.Is(err, service.ErrRecoveryKeyBlockedEncrypted) {
-			respondError(w, http.StatusConflict, "recovery key setup is unavailable for accounts with encrypted notes")
+		if errors.Is(err, service.ErrRecoveryKeyBlockedEncrypted) ||
+			errors.Is(err, service.ErrRecoveryWrappedDEKsRequired) {
+			respondError(
+				w,
+				http.StatusConflict,
+				"recovery key setup for encrypted accounts requires full recovery DEK re-wrapping",
+			)
+			return
+		}
+		errMsg := err.Error()
+		if errMsg == "no encrypted content to re-wrap" ||
+			strings.HasPrefix(errMsg, "missing ") ||
+			strings.HasPrefix(errMsg, "invalid ") ||
+			strings.HasPrefix(errMsg, "unexpected ") {
+			respondError(w, http.StatusBadRequest, errMsg)
 			return
 		}
 		s.logger().Error("failed to set recovery key", "error", err)

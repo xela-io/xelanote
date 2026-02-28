@@ -69,6 +69,34 @@ func (db *DB) SetRecoveryKey(userID int, recoveryKeyHash string, recoveryKeySalt
 	return nil
 }
 
+// SetRecoveryKeyTx stores recovery key data within an existing transaction.
+func (tx *Tx) SetRecoveryKeyTx(userID int, recoveryKeyHash string, recoveryKeySalt []byte) error {
+	now := time.Now().Format(time.RFC3339)
+
+	result, err := tx.Exec(`
+		UPDATE user_preferences
+		SET recovery_key_hash = ?, recovery_key_salt = ?, updated_at = ?
+		WHERE user_id = ?
+	`, recoveryKeyHash, recoveryKeySalt, now, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := rowsAffectedCount(result, "")
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		_, err = tx.Exec(`
+			INSERT INTO user_preferences (user_id, theme, editor_mode, recovery_key_hash, recovery_key_salt, created_at, updated_at)
+			VALUES (?, 'default-dark', 'split', ?, ?, ?, ?)
+		`, userID, recoveryKeyHash, recoveryKeySalt, now, now)
+		return err
+	}
+
+	return nil
+}
+
 // GetRecoveryKeySalt retrieves the recovery key salt for a user
 func (db *DB) GetRecoveryKeySalt(userID int) ([]byte, error) {
 	var salt []byte

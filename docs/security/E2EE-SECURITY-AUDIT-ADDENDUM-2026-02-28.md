@@ -95,6 +95,12 @@ This addendum reflects the **current remediation status** of the previously repo
 - Encrypted note/journal/recipe/canvas create services now ignore keyword inputs entirely: `backend/internal/service/notes_encryption_create.go`, `backend/internal/service/recipes_notes.go`, `backend/internal/service/canvas.go`
 - Canvas DB encrypted create path no longer accepts/stores keywords: `backend/internal/db/canvas.go`
 
+16. **Recovery-key salt retrieval is blocked for encrypted accounts (including legacy seeded keys).**
+
+- Service blocks direct and email-based salt lookup when encrypted notes/versions exist: `backend/internal/service/user_recovery.go`
+- API maps the block to `404` on `GET /api/users/recovery-key/salt`: `backend/internal/api/users_encryption.go`
+- Coverage includes service + API isolation tests for legacy-seeded recovery rows: `backend/internal/service/user_account_recovery_test.go`, `backend/internal/api/users_isolation_test.go`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

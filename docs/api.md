@@ -4313,6 +4313,8 @@ Content-Type: application/json
 
 Ruft das Recovery Key Salt für den authentifizierten Benutzer ab.
 
+**Wichtig:** Fuer Accounts mit bestehenden verschluesselten Notizen ist der Endpoint nicht verfuegbar und liefert ebenfalls `404 Not Found`.
+
 #### Request
 
 ```http

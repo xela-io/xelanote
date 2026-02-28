@@ -373,6 +373,28 @@ func TestUserService_GetRecoveryKeySaltByEmail(t *testing.T) {
 			t.Fatal("expected error for empty email")
 		}
 	})
+
+	t.Run("returns generic unavailable when encrypted notes exist", func(t *testing.T) {
+		encUserID := createTestUserForPasswordTests(t, testDB, "saltenc", "saltenc@example.com", "password123")
+		if err := testDB.SetRecoveryKey(encUserID, "hash", []byte("enc-salt")); err != nil {
+			t.Fatalf("failed to set recovery key: %v", err)
+		}
+		if _, err := testDB.Exec(`
+			INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+			                   content_encrypted, wrapped_dek, encryption_version)
+			VALUES ('salt-enc-note', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+		`, encUserID); err != nil {
+			t.Fatalf("failed to create encrypted note: %v", err)
+		}
+
+		_, err := userService.GetRecoveryKeySaltByEmail("saltenc@example.com")
+		if err == nil {
+			t.Fatal("expected error when encrypted notes exist")
+		}
+		if !strings.Contains(err.Error(), "recovery key not available") {
+			t.Fatalf("expected generic unavailable error, got: %v", err)
+		}
+	})
 }
 
 // Ensure GetRecoveryKeySalt and GetRecoveryKeySaltByEmail use UserService
@@ -402,6 +424,25 @@ func TestUserService_GetRecoveryKeySalt(t *testing.T) {
 		}
 		if string(salt) != "recovery-salt" {
 			t.Errorf("expected 'recovery-salt', got %q", string(salt))
+		}
+	})
+
+	t.Run("blocks salt access when encrypted notes exist", func(t *testing.T) {
+		encUserID := createTestUserForPasswordTests(t, testDB, "getsaltenc", "getsaltenc@example.com", "password123")
+		if err := testDB.SetRecoveryKey(encUserID, "hash-value", []byte("recovery-salt")); err != nil {
+			t.Fatalf("failed to set recovery key: %v", err)
+		}
+		if _, err := testDB.Exec(`
+			INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+			                   content_encrypted, wrapped_dek, encryption_version)
+			VALUES ('get-salt-enc-note', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+		`, encUserID); err != nil {
+			t.Fatalf("failed to create encrypted note: %v", err)
+		}
+
+		_, err := userService.GetRecoveryKeySalt(encUserID)
+		if err != ErrRecoveryKeyBlockedEncrypted {
+			t.Fatalf("expected ErrRecoveryKeyBlockedEncrypted, got: %v", err)
 		}
 	})
 }

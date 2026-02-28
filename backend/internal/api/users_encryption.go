@@ -88,7 +88,7 @@ func (s *Server) getRecoveryKeySalt(w http.ResponseWriter, r *http.Request) {
 
 	salt, err := s.userService.GetRecoveryKeySalt(userID)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) || errors.Is(err, service.ErrRecoveryKeyBlockedEncrypted) {
 			respondError(w, http.StatusNotFound, "no recovery key set")
 			return
 		}

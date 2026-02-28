@@ -285,6 +285,30 @@ func TestRecoveryKey_SetBlockedForEncryptedUsers(t *testing.T) {
 	require.Equal(t, http.StatusConflict, rec.Code)
 }
 
+func TestRecoveryKey_GetSaltBlockedForEncryptedUsers(t *testing.T) {
+	ts := newTestServer(t)
+	r := usersRouter(ts)
+	user := ts.createUser(t, "recoverysaltenc", "recoverysaltenc@example.com", "password123")
+	token := ts.getAuthToken(t, user.User)
+
+	_, err := ts.db.Exec(`
+		INSERT INTO notes (id, title, title_norm, content, folder_path, user_id, created_at, updated_at,
+		                   content_encrypted, wrapped_dek, encryption_version)
+		VALUES ('user-enc-salt-note', 'Encrypted', 'encrypted', '', '/', ?, datetime('now'), datetime('now'), 1, 'wrapped', 2)
+	`, user.ID)
+	require.NoError(t, err)
+
+	// Seed legacy recovery key directly to simulate pre-hardening data.
+	_, err = ts.db.Exec(`
+		INSERT OR REPLACE INTO user_preferences (user_id, theme, editor_mode, recovery_key_hash, recovery_key_salt, created_at, updated_at)
+		VALUES (?, 'default-dark', 'split', 'legacy-hash', ?, datetime('now'), datetime('now'))
+	`, user.ID, []byte("legacy-salt"))
+	require.NoError(t, err)
+
+	rec := doJSON(t, r, http.MethodGet, "/api/users/recovery-key/salt", nil, token)
+	require.Equal(t, http.StatusNotFound, rec.Code)
+}
+
 func TestWebAuthnCredentials_UserIsolation(t *testing.T) {
 	ts := newTestServer(t)
 	r := usersRouter(ts)

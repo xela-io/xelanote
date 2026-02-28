@@ -34,6 +34,14 @@ func (s *UserService) SetRecoveryKey(userID int, recoveryKeyHash string, salt []
 // GetRecoveryKeySalt retrieves the recovery key salt for a user
 // Returns ErrNotFound if no recovery key is set
 func (s *UserService) GetRecoveryKeySalt(userID int) ([]byte, error) {
+	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check encrypted content: %w", err)
+	}
+	if hasEncryptedContent {
+		return nil, ErrRecoveryKeyBlockedEncrypted
+	}
+
 	return s.db.GetRecoveryKeySalt(userID)
 }
 
@@ -188,6 +196,15 @@ func (s *UserService) GetRecoveryKeySaltByEmail(email string) ([]byte, error) {
 			return nil, errors.New("recovery key not available")
 		}
 		return nil, err
+	}
+
+	hasEncryptedContent, err := s.hasEncryptedNotesOrVersions(user.ID)
+	if err != nil {
+		return nil, err
+	}
+	if hasEncryptedContent {
+		// Keep public flow error generic to avoid account capability disclosure.
+		return nil, errors.New("recovery key not available")
 	}
 
 	salt, err := s.db.GetRecoveryKeySalt(user.ID)

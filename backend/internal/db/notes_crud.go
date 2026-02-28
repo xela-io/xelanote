@@ -51,7 +51,7 @@ func (db *DB) CreateNote(userID int, title, content, folderPath string) (*Note, 
 func (db *DB) GetNote(userID int, id string) (*Note, error) {
 	var note Note
 	var createdAt, updatedAt string
-	var content, encryptedTitle, wrappedDEK, encryptionMetadata sql.NullString
+	var content, encryptedTitle, wrappedDEK, wrappedDEKRecovery, encryptionMetadata sql.NullString
 	var encryptedContent []byte
 	// Summary fields
 	var summary, encryptedSummary, contentHash, summaryGeneratedAt sql.NullString
@@ -61,7 +61,7 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 	err := db.QueryRow(`
 		SELECT id, title, content, folder_path, version, color, created_at, updated_at,
 		       encrypted_content, content_encrypted, encrypted_title, title_encrypted,
-		       wrapped_dek, encryption_version, encryption_metadata,
+		       wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata,
 		       summary, encrypted_summary, summary_encrypted, content_hash, summary_generated_at,
 		       note_type, journal_date, ai_enabled
 		FROM notes
@@ -70,7 +70,7 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 		&note.ID, &note.Title, &content, &note.FolderPath, &note.Version, &note.Color,
 		&createdAt, &updatedAt,
 		&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
-		&wrappedDEK, &note.EncryptionVersion, &encryptionMetadata,
+		&wrappedDEK, &wrappedDEKRecovery, &note.EncryptionVersion, &encryptionMetadata,
 		&summary, &encryptedSummary, &note.SummaryEncrypted, &contentHash, &summaryGeneratedAt,
 		&noteType, &journalDate, &note.AIEnabled,
 	)
@@ -106,6 +106,9 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 	}
 	if wrappedDEK.Valid {
 		note.WrappedDEK = wrappedDEK.String
+	}
+	if wrappedDEKRecovery.Valid {
+		note.WrappedDEKRecovery = wrappedDEKRecovery.String
 	}
 	if encryptionMetadata.Valid {
 		note.EncryptionMetadata = encryptionMetadata.String

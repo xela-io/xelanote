@@ -283,6 +283,7 @@ func (db *DB) runMigrations() error {
 		"063_invalidate_recovery_keys_for_encrypted_users.sql",
 		"064_delete_tags_for_encrypted_notes.sql",
 		"065_set_encrypted_notes_folder_root.sql",
+		"066_add_recovery_wrapped_dek.sql",
 	}
 
 	for _, migrationFile := range migrations {

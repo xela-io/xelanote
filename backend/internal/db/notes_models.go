@@ -20,6 +20,7 @@ type Note struct {
 	EncryptedTitle     *string `json:"encrypted_title,omitempty"`
 	TitleEncrypted     bool    `json:"title_encrypted"`
 	WrappedDEK         string  `json:"wrapped_dek,omitempty"`
+	WrappedDEKRecovery string  `json:"wrapped_dek_recovery,omitempty"`
 	EncryptionVersion  int     `json:"encryption_version"`
 	EncryptionMetadata string  `json:"encryption_metadata,omitempty"`
 	// Summary fields (LLM-generated)

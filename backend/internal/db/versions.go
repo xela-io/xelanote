@@ -9,19 +9,20 @@ import (
 
 // NoteVersion represents a snapshot of a note at a specific point in time.
 type NoteVersion struct {
-	ID                int       `json:"id"`
-	NoteID            string    `json:"note_id"`
-	UserID            int       `json:"user_id"`
-	Version           int       `json:"version"`
-	Title             string    `json:"title"`
-	Content           string    `json:"content"`
-	SnapshotAt        time.Time `json:"snapshot_at"`
-	EncryptedContent  []byte    `json:"encrypted_content,omitempty"`
-	WrappedDEK        string    `json:"wrapped_dek,omitempty"`
-	ContentEncrypted  bool      `json:"content_encrypted"`
-	TitleEncrypted    bool      `json:"title_encrypted"`
-	EncryptedTitle    *string   `json:"encrypted_title,omitempty"`
-	EncryptionVersion int       `json:"encryption_version"`
+	ID                 int       `json:"id"`
+	NoteID             string    `json:"note_id"`
+	UserID             int       `json:"user_id"`
+	Version            int       `json:"version"`
+	Title              string    `json:"title"`
+	Content            string    `json:"content"`
+	SnapshotAt         time.Time `json:"snapshot_at"`
+	EncryptedContent   []byte    `json:"encrypted_content,omitempty"`
+	WrappedDEK         string    `json:"wrapped_dek,omitempty"`
+	WrappedDEKRecovery string    `json:"wrapped_dek_recovery,omitempty"`
+	ContentEncrypted   bool      `json:"content_encrypted"`
+	TitleEncrypted     bool      `json:"title_encrypted"`
+	EncryptedTitle     *string   `json:"encrypted_title,omitempty"`
+	EncryptionVersion  int       `json:"encryption_version"`
 }
 
 // CreateNoteVersion creates a new version snapshot for a note.
@@ -97,7 +98,7 @@ func (db *DB) GetNoteVersions(userID int, noteID string, limit int, cursor strin
 	if cursor == "" {
 		rows, err = db.Query(`
 			SELECT id, note_id, user_id, version, title, content, snapshot_at,
-			       encrypted_content, wrapped_dek, content_encrypted,
+			       encrypted_content, wrapped_dek, wrapped_dek_recovery, content_encrypted,
 			       title_encrypted, encrypted_title, encryption_version
 			FROM note_versions
 			WHERE note_id = ? AND user_id = ?
@@ -113,7 +114,7 @@ func (db *DB) GetNoteVersions(userID int, noteID string, limit int, cursor strin
 		cursorTime, cursorID := parts[0], parts[1]
 		rows, err = db.Query(`
 			SELECT id, note_id, user_id, version, title, content, snapshot_at,
-			       encrypted_content, wrapped_dek, content_encrypted,
+			       encrypted_content, wrapped_dek, wrapped_dek_recovery, content_encrypted,
 			       title_encrypted, encrypted_title, encryption_version
 			FROM note_versions
 			WHERE note_id = ? AND user_id = ?
@@ -132,13 +133,14 @@ func (db *DB) GetNoteVersions(userID int, noteID string, limit int, cursor strin
 	for rows.Next() {
 		var v NoteVersion
 		var snapshotAt string
-		var wrappedDEK sql.NullString
+		var wrappedDEK, wrappedDEKRecovery sql.NullString
 		if err := rows.Scan(&v.ID, &v.NoteID, &v.UserID, &v.Version, &v.Title, &v.Content, &snapshotAt,
-			&v.EncryptedContent, &wrappedDEK, &v.ContentEncrypted,
+			&v.EncryptedContent, &wrappedDEK, &wrappedDEKRecovery, &v.ContentEncrypted,
 			&v.TitleEncrypted, &v.EncryptedTitle, &v.EncryptionVersion); err != nil {
 			return nil, "", 0, fmt.Errorf("failed to scan version: %w", err)
 		}
 		v.WrappedDEK = wrappedDEK.String
+		v.WrappedDEKRecovery = wrappedDEKRecovery.String
 		v.SnapshotAt, _ = time.Parse(time.RFC3339, snapshotAt)
 		versions = append(versions, v)
 	}
@@ -162,16 +164,16 @@ func (db *DB) GetNoteVersions(userID int, noteID string, limit int, cursor strin
 func (db *DB) GetNoteVersion(userID int, noteID string, version int) (*NoteVersion, error) {
 	var v NoteVersion
 	var snapshotAt string
-	var wrappedDEK sql.NullString
+	var wrappedDEK, wrappedDEKRecovery sql.NullString
 
 	err := db.QueryRow(`
 		SELECT id, note_id, user_id, version, title, content, snapshot_at,
-		       encrypted_content, wrapped_dek, content_encrypted,
+		       encrypted_content, wrapped_dek, wrapped_dek_recovery, content_encrypted,
 		       title_encrypted, encrypted_title, encryption_version
 		FROM note_versions
 		WHERE note_id = ? AND user_id = ? AND version = ?
 	`, noteID, userID, version).Scan(&v.ID, &v.NoteID, &v.UserID, &v.Version, &v.Title, &v.Content, &snapshotAt,
-		&v.EncryptedContent, &wrappedDEK, &v.ContentEncrypted,
+		&v.EncryptedContent, &wrappedDEK, &wrappedDEKRecovery, &v.ContentEncrypted,
 		&v.TitleEncrypted, &v.EncryptedTitle, &v.EncryptionVersion)
 
 	if err == sql.ErrNoRows {
@@ -182,6 +184,7 @@ func (db *DB) GetNoteVersion(userID int, noteID string, version int) (*NoteVersi
 	}
 
 	v.WrappedDEK = wrappedDEK.String
+	v.WrappedDEKRecovery = wrappedDEKRecovery.String
 	v.SnapshotAt, _ = time.Parse(time.RFC3339, snapshotAt)
 	return &v, nil
 }
@@ -191,18 +194,18 @@ func (db *DB) GetNoteVersion(userID int, noteID string, version int) (*NoteVersi
 func (db *DB) GetLatestVersionSnapshot(userID int, noteID string) (*NoteVersion, error) {
 	var v NoteVersion
 	var snapshotAt string
-	var wrappedDEK sql.NullString
+	var wrappedDEK, wrappedDEKRecovery sql.NullString
 
 	err := db.QueryRow(`
 		SELECT id, note_id, user_id, version, title, content, snapshot_at,
-		       encrypted_content, wrapped_dek, content_encrypted,
+		       encrypted_content, wrapped_dek, wrapped_dek_recovery, content_encrypted,
 		       title_encrypted, encrypted_title, encryption_version
 		FROM note_versions
 		WHERE note_id = ? AND user_id = ?
 		ORDER BY snapshot_at DESC
 		LIMIT 1
 	`, noteID, userID).Scan(&v.ID, &v.NoteID, &v.UserID, &v.Version, &v.Title, &v.Content, &snapshotAt,
-		&v.EncryptedContent, &wrappedDEK, &v.ContentEncrypted,
+		&v.EncryptedContent, &wrappedDEK, &wrappedDEKRecovery, &v.ContentEncrypted,
 		&v.TitleEncrypted, &v.EncryptedTitle, &v.EncryptionVersion)
 
 	if err == sql.ErrNoRows {
@@ -213,6 +216,7 @@ func (db *DB) GetLatestVersionSnapshot(userID int, noteID string) (*NoteVersion,
 	}
 
 	v.WrappedDEK = wrappedDEK.String
+	v.WrappedDEKRecovery = wrappedDEKRecovery.String
 	v.SnapshotAt, _ = time.Parse(time.RFC3339, snapshotAt)
 	return &v, nil
 }
@@ -337,7 +341,7 @@ func (db *DB) GetUsersWithVersions() ([]int, error) {
 func (db *DB) GetAllEncryptedVersionsForUser(userID int) ([]NoteVersion, error) {
 	rows, err := db.Query(`
 		SELECT id, note_id, user_id, version, title, content, snapshot_at,
-		       encrypted_content, wrapped_dek, content_encrypted,
+		       encrypted_content, wrapped_dek, wrapped_dek_recovery, content_encrypted,
 		       title_encrypted, encrypted_title, encryption_version
 		FROM note_versions
 		WHERE user_id = ? AND content_encrypted = 1
@@ -351,13 +355,14 @@ func (db *DB) GetAllEncryptedVersionsForUser(userID int) ([]NoteVersion, error) 
 	for rows.Next() {
 		var v NoteVersion
 		var snapshotAt string
-		var wrappedDEK sql.NullString
+		var wrappedDEK, wrappedDEKRecovery sql.NullString
 		if err := rows.Scan(&v.ID, &v.NoteID, &v.UserID, &v.Version, &v.Title, &v.Content, &snapshotAt,
-			&v.EncryptedContent, &wrappedDEK, &v.ContentEncrypted,
+			&v.EncryptedContent, &wrappedDEK, &wrappedDEKRecovery, &v.ContentEncrypted,
 			&v.TitleEncrypted, &v.EncryptedTitle, &v.EncryptionVersion); err != nil {
 			return nil, fmt.Errorf("failed to scan encrypted version: %w", err)
 		}
 		v.WrappedDEK = wrappedDEK.String
+		v.WrappedDEKRecovery = wrappedDEKRecovery.String
 		v.SnapshotAt, _ = time.Parse(time.RFC3339, snapshotAt)
 		versions = append(versions, v)
 	}

@@ -346,7 +346,7 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 	rows, err := db.Query(`
 		SELECT id, title, content, folder_path, version, color, created_at, updated_at,
 		       encrypted_content, content_encrypted, encrypted_title, title_encrypted,
-		       wrapped_dek, encryption_version, encryption_metadata
+		       wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata
 		FROM notes
 		WHERE user_id = ? AND is_deleted = 0 AND (content_encrypted = 1 OR title_encrypted = 1)
 	`, userID)
@@ -359,14 +359,14 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 	for rows.Next() {
 		var note Note
 		var createdAt, updatedAt string
-		var content, encryptedTitle, wrappedDEK, encryptionMetadata sql.NullString
+		var content, encryptedTitle, wrappedDEK, wrappedDEKRecovery, encryptionMetadata sql.NullString
 		var encryptedContent []byte
 
 		err := rows.Scan(
 			&note.ID, &note.Title, &content, &note.FolderPath, &note.Version, &note.Color,
 			&createdAt, &updatedAt,
 			&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
-			&wrappedDEK, &note.EncryptionVersion, &encryptionMetadata,
+			&wrappedDEK, &wrappedDEKRecovery, &note.EncryptionVersion, &encryptionMetadata,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan encrypted note: %w", err)
@@ -396,6 +396,9 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 		}
 		if wrappedDEK.Valid {
 			note.WrappedDEK = wrappedDEK.String
+		}
+		if wrappedDEKRecovery.Valid {
+			note.WrappedDEKRecovery = wrappedDEKRecovery.String
 		}
 		if encryptionMetadata.Valid {
 			note.EncryptionMetadata = encryptionMetadata.String

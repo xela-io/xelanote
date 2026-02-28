@@ -2,6 +2,8 @@ package api
 
 import "github.com/xela-io/xelanote/internal/service"
 
+const errEncryptedNoteAIProcessingDisabled = "server-side AI processing is disabled for encrypted notes"
+
 // --- Summary Endpoints ---
 
 // SummarizeNoteRequest represents the request body for summarizing a note.

@@ -535,6 +535,10 @@
   function handleAIActionsClick(rect: DOMRect) {
     const currentNote = notes.getCurrentNote();
     if (!currentNote) return;
+    if (currentNote.content_encrypted === true) {
+      toast.error($_('ai.encrypted_processing_disabled'));
+      return;
+    }
     openAIActionsMenuAction({
       rect,
       aiEnabled: Boolean(currentNote.ai_enabled),
@@ -554,6 +558,11 @@
   async function handleAIActionSelect(action: AIAction, customPrompt?: string) {
     const currentNote = notes.getCurrentNote();
     if (!currentNote || !editorView) return;
+    if (currentNote.content_encrypted === true) {
+      showAIActionsDropdown = false;
+      toast.error($_('ai.encrypted_processing_disabled'));
+      return;
+    }
 
     await handleAIActionSelectAction({
       action,
@@ -608,7 +617,9 @@
 
     let insertText = text;
 
-    if (withAICleanup && text.length >= 10) {
+    if (withAICleanup && currentNote.content_encrypted === true) {
+      toast.error($_('ai.encrypted_processing_disabled'));
+    } else if (withAICleanup && text.length >= 10) {
       try {
         const { aiTransform: aiTransformApi } = await import('$lib/api/ai');
         insertText = await aiTransformApi(currentNote.id, 'dictation_cleanup', text);

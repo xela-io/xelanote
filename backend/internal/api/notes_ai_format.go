@@ -45,17 +45,19 @@ func (s *Server) formatMarkdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// P0 privacy hardening: never process encrypted-note plaintext server-side.
+	if note.ContentEncrypted {
+		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
+		return
+	}
+
 	// Determine content to format
 	var content string
 	if req.SelectionOnly != "" {
 		// Formatting a selection
 		content = req.SelectionOnly
 	} else if req.PlaintextContent != "" {
-		// Encrypted note: use provided plaintext
 		content = req.PlaintextContent
-	} else if note.ContentEncrypted {
-		respondError(w, http.StatusBadRequest, "plaintext_content or selection_only is required for encrypted notes")
-		return
 	} else {
 		// Plaintext note: use content from database
 		content = note.Content

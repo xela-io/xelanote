@@ -125,7 +125,11 @@
             error = $_('error.ai_transform.no_provider');
             break;
           case 403: // Forbidden - AI disabled
-            error = $_('error.ai_transform.ai_disabled');
+            if (e.message.includes('encrypted notes')) {
+              error = $_('ai.encrypted_processing_disabled');
+            } else {
+              error = $_('error.ai_transform.ai_disabled');
+            }
             break;
           case 413: // Too large
             error = $_('error.ai_transform.too_large');

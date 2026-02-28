@@ -1403,7 +1403,8 @@
   },
   "ai": {
     "provider_required": "Please add a Claude, Gemini, or ChatGPT API key in Settings → AI",
-    "not_enabled_for_note": "AI features are disabled for this note"
+    "not_enabled_for_note": "AI features are disabled for this note",
+    "encrypted_processing_disabled": "AI processing is unavailable for encrypted notes."
   },
   "ai_action": {
     "format": "Format",

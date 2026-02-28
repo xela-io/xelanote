@@ -1403,7 +1403,8 @@
   },
   "ai": {
     "provider_required": "Bitte füge einen Claude, Gemini oder ChatGPT API Key in Einstellungen → KI hinzu",
-    "not_enabled_for_note": "KI-Funktionen sind für diese Notiz deaktiviert"
+    "not_enabled_for_note": "KI-Funktionen sind für diese Notiz deaktiviert",
+    "encrypted_processing_disabled": "KI-Verarbeitung ist für verschlüsselte Notizen nicht verfügbar."
   },
   "ai_action": {
     "format": "Formatieren",

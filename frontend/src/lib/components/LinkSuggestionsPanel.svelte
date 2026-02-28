@@ -45,9 +45,10 @@
   async function generateSuggestions() {
     if (loading || !content) return;
 
-    // For encrypted notes, check if we have plaintext content
-    if (isEncrypted && !plaintextContent) {
-      error = $_('linkSuggestions.privacyNote');
+    // P0 privacy hardening: never send encrypted-note plaintext to the server.
+    if (isEncrypted) {
+      aiDisabled = true;
+      error = $_('ai.encrypted_processing_disabled');
       return;
     }
 
@@ -73,7 +74,10 @@
     } catch (e: unknown) {
       console.error('Failed to generate link suggestions:', e);
       const err = e as { status?: number; message?: string };
-      if (err.status === 403 || err.message?.includes('AI features not enabled')) {
+      if (err.status === 403 && err.message?.includes('encrypted notes')) {
+        aiDisabled = true;
+        error = $_('ai.encrypted_processing_disabled');
+      } else if (err.status === 403 || err.message?.includes('AI features not enabled')) {
         aiDisabled = true;
       } else {
         error = err.message || $_('linkSuggestions.error');
@@ -129,10 +133,10 @@
   {#if expanded}
     <div class="pl-6 space-y-2">
       <!-- Privacy note for encrypted notes -->
-      {#if isEncrypted && !plaintextContent}
+      {#if isEncrypted}
         <div class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
           <AlertCircle size={12} />
-          <span>{$_('linkSuggestions.privacyNote')}</span>
+          <span>{$_('ai.encrypted_processing_disabled')}</span>
         </div>
       {/if}
 

@@ -44,17 +44,13 @@ func (s *Server) suggestTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine content source
-	var content string
+	// P0 privacy hardening: never process encrypted-note plaintext server-side.
 	if note.ContentEncrypted {
-		if req.PlaintextContent == "" {
-			respondError(w, http.StatusBadRequest, "plaintext_content is required for encrypted notes")
-			return
-		}
-		content = req.PlaintextContent
-	} else {
-		content = note.Content
+		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
+		return
 	}
+
+	content := note.Content
 
 	// Validate content size
 	if len(content) > service.MaxPlaintextContent {
@@ -128,17 +124,13 @@ func (s *Server) suggestLinks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine content source
-	var content string
+	// P0 privacy hardening: never process encrypted-note plaintext server-side.
 	if note.ContentEncrypted {
-		if req.PlaintextContent == "" {
-			respondError(w, http.StatusBadRequest, "plaintext_content is required for encrypted notes")
-			return
-		}
-		content = req.PlaintextContent
-	} else {
-		content = note.Content
+		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
+		return
 	}
+
+	content := note.Content
 
 	// Validate content size
 	if len(content) > service.MaxPlaintextContent {

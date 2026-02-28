@@ -29,6 +29,21 @@ func (s *Server) aiTransform(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Load note early to enforce encrypted-note privacy boundary before any AI processing.
+	note, err := s.noteService.GetNote(userID, noteID)
+	if err != nil {
+		s.respondInternalErr(w, "failed to get note for AI transform", err)
+		return
+	}
+	if note == nil {
+		respondError(w, http.StatusNotFound, "note not found")
+		return
+	}
+	if note.ContentEncrypted {
+		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
+		return
+	}
+
 	var req AITransformRequest
 	if err := decodeJSON(w, r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")

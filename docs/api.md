@@ -4184,10 +4184,12 @@ Content-Type: application/json
 
 ```json
 {
-  "keywords_enabled": true,
+  "keywords_enabled": false,
   "encrypt_titles": false
 }
 ```
+
+`keywords_enabled` ist deprecated und wird serverseitig auf `false` erzwungen.
 
 #### Response
 
@@ -4244,7 +4246,7 @@ Content-Type: application/json
 {
   "theme": "dark",
   "editor_mode": "vim",
-  "keywords_enabled": true,
+  "keywords_enabled": false,
   "encrypt_titles": false,
   "security_level": "balanced",
   "auto_lock_timeout": 15,

@@ -64,6 +64,13 @@ This addendum reflects the **current remediation status** of the previously repo
 - Encrypted updates clear legacy keywords: `backend/internal/service/notes_encryption_update.go`
 - Migration removes existing keyword rows for encrypted notes: `backend/internal/db/migrations/060_delete_keywords_for_encrypted_notes.sql`
 
+11. **`keywords_enabled` preference is now fully deprecated/enforced-off.**
+
+- Encryption settings UI no longer exposes keyword extraction toggle: `frontend/src/routes/settings/encryption/+page.svelte`
+- Client no longer sets runtime keyword opt-in state from preferences: `frontend/src/lib/stores/encryption.svelte.ts`
+- Server clamps `keywords_enabled` to `false` on updates: `backend/internal/service/user_preferences.go`, `backend/internal/db/preferences_encryption.go`
+- Migration clears legacy enabled preference flags: `backend/internal/db/migrations/061_disable_keywords_encryption_preference.sql`
+
 ## Remaining Limitations / Open Product Decisions
 
 1. **Recovery still cannot decrypt existing encrypted notes after password loss** (intentional block, not an implementation bug in current state).

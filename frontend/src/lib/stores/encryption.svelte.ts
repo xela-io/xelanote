@@ -33,12 +33,10 @@ let securityLevel = $state<SecurityLevel>('balanced');
 // Settings
 export interface EncryptionSettings {
   encryptTitles: boolean; // Optional title encryption
-  extractKeywords: boolean; // Opt-in for keyword search
 }
 
 let settings = $state<EncryptionSettings>({
   encryptTitles: false,
-  extractKeywords: false,
 });
 
 function buildSearchIndexSafely(): void {
@@ -286,7 +284,8 @@ export async function updateSettings(newSettings: Partial<EncryptionSettings>): 
 
   try {
     await api.updateEncryptionPreferences({
-      keywords_enabled: settings.extractKeywords,
+      // Deprecated for encrypted notes: keep backend value forced to false.
+      keywords_enabled: false,
       encrypt_titles: settings.encryptTitles,
     });
   } catch (err) {
@@ -299,20 +298,8 @@ export async function updateSettings(newSettings: Partial<EncryptionSettings>): 
  * Initialize encryption settings from server preferences (no API call).
  * Called by settings store after loading preferences.
  */
-export function initSettingsFromPreferences(
-  keywordsEnabled: boolean,
-  encryptTitles: boolean
-): void {
-  settings = { ...settings, extractKeywords: keywordsEnabled, encryptTitles };
-}
-
-/**
- * Check if keyword warning should be shown.
- *
- * @returns true if keywords are enabled (data leakage risk)
- */
-export function showKeywordWarning(): boolean {
-  return settings.extractKeywords;
+export function initSettingsFromPreferences(encryptTitles: boolean): void {
+  settings = { ...settings, encryptTitles };
 }
 
 /**

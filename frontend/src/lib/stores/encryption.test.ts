@@ -4,7 +4,6 @@ const encryptNote = vi.fn((content: string) => ({ ciphertext: content, metadata:
 const decryptNote = vi.fn((payload: { ciphertext: string }) => payload.ciphertext);
 const encryptTitle = vi.fn((title: string) => `enc:${title}`);
 const decryptTitle = vi.fn((title: string) => title.replace('enc:', ''));
-const extractKeywords = vi.fn(() => ['kw']);
 const setupKEK = vi.fn();
 const exportKEK = vi.fn(() => new Uint8Array([1, 2, 3]));
 const importKEK = vi.fn();
@@ -17,7 +16,6 @@ vi.mock('$lib/crypto/e2e', () => ({
     decryptNote,
     encryptTitle,
     decryptTitle,
-    extractKeywords,
     setupKEK,
     exportKEK,
     importKEK,
@@ -80,11 +78,14 @@ describe('encryption store', () => {
     const encryption = await import('$lib/stores/encryption.svelte');
 
     await encryption.setupEncryption('pw', 1, new Uint8Array([1, 2, 3]));
-    await encryption.updateSettings({ encryptTitles: true, extractKeywords: true });
+    await encryption.updateSettings({ encryptTitles: true });
+    expect(updateEncryptionPreferences).toHaveBeenCalledWith({
+      keywords_enabled: false,
+      encrypt_titles: true,
+    });
 
     const encrypted = encryption.encryptNote('title', 'content', 'note-1');
     expect(encryptTitle).toHaveBeenCalledWith('title', 'note-1');
-    expect(extractKeywords).not.toHaveBeenCalled();
     expect(encrypted.encryptedTitle).toBe('enc:title');
     expect(encrypted.keywords).toEqual([]);
   });

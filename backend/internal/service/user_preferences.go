@@ -141,8 +141,10 @@ func (s *UserService) UpdatePreferences(userID int, theme, editorMode string) (*
 }
 
 // UpdateEncryptionPreferences updates encryption-related user preferences
-func (s *UserService) UpdateEncryptionPreferences(userID int, keywordsEnabled, encryptTitles bool) error {
-	return s.db.UpdateEncryptionPreferences(userID, keywordsEnabled, encryptTitles)
+func (s *UserService) UpdateEncryptionPreferences(userID int, _ bool, encryptTitles bool) error {
+	// Privacy hardening: plaintext keyword indexing for encrypted notes is deprecated.
+	// Keep the stored preference forced to false for all users.
+	return s.db.UpdateEncryptionPreferences(userID, false, encryptTitles)
 }
 
 // UpdateSecurityPreferences updates security-related user preferences

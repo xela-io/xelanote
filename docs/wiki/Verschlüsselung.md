@@ -107,19 +107,15 @@ Im "Balanced"- und "Paranoid"-Modus gibt es einen Auto-Lock-Timer:
 
 **Serverseitig:** FTS5 kann verschlüsselte Inhalte nicht durchsuchen.
 
-**Opt-in Keyword-Index:** User kann Keywords definieren, die in `note_keywords_fts` gespeichert werden (separates FTS5) — das ermöglicht serverseitige Suche über verschlüsselte Notizen mit eingeschränkten Begriffen.
+**Serverseitige Keyword-Indexierung fuer verschluesselte Notizen:** ist deaktiviert/deprecated.
 
-**Client-seitig:** Fuse.js durchsucht entschlüsselte Notizen lokal im Browser (für Offline und verschlüsselte Suche).
+**Client-seitig:** Fuse.js durchsucht entschluesselte Notizen lokal im Browser (fuer Offline und verschluesselte Suche).
 
 ### KI bei verschlüsselten Notizen
 
-KI-Features (Zusammenfassung, Tags, etc.) funktionieren auch mit verschlüsselten Notizen:
-1. Client entschlüsselt Notiz
-2. Client sendet Klartext an den KI-Endpoint
-3. Server leitet an LLM-Provider weiter
-4. Ergebnis wird an Client zurückgegeben
+Serverseitige KI-Features (Zusammenfassung, Tags, Links, Format, Transform) sind fuer verschluesselte Notizen blockiert.
 
-**Hinweis:** Der Notiz-Inhalt wird dabei kurzzeitig über den Server geleitet. Das ist ein bewusster Trade-off zwischen Privatsphäre und Funktionalität. Users können KI pro Notiz deaktivieren (`ai_enabled: false`).
+**Hinweis:** Bei unverschluesselten Notizen kann Klartext an Backend/LLM-Provider gehen.
 
 ## Passwort-Änderung
 

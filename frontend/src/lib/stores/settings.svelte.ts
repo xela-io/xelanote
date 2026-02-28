@@ -155,8 +155,8 @@ export async function loadPreferences(): Promise<void> {
     // CRITICAL FIX: Apply security preferences (same API call, no duplication)
     encryption.setSecurityLevel(prefs.security_level);
 
-    // Apply encryption settings (keywords + title encryption)
-    encryption.initSettingsFromPreferences(prefs.keywords_enabled, prefs.encrypt_titles);
+    // Apply encryption settings (title encryption)
+    encryption.initSettingsFromPreferences(prefs.encrypt_titles);
 
     // Initialize auto-lock timer if encryption is unlocked and timeout > 0
     if (encryption.isEncryptionUnlocked() && prefs.auto_lock_timeout > 0) {

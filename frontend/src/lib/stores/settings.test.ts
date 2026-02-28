@@ -82,7 +82,7 @@ describe('settings store', () => {
     expect(setTheme).toHaveBeenCalledWith('gruvbox-dark');
     expect(setEditorMode).toHaveBeenCalledWith('live');
     expect(setSecurityLevel).toHaveBeenCalledWith('balanced');
-    expect(initSettingsFromPreferences).toHaveBeenCalledWith(true, true);
+    expect(initSettingsFromPreferences).toHaveBeenCalledWith(true);
     expect(initAutoLock).not.toHaveBeenCalled();
   });
 

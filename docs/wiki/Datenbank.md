@@ -314,7 +314,7 @@ ORDER BY rank
 LIMIT 200;
 ```
 
-Für verschlüsselte Notizen gibt es eine separate `note_keywords_fts`-Tabelle mit opt-in Keywords.
+`note_keywords_fts` existiert weiterhin aus Kompatibilitaetsgruenden, wird fuer verschluesselte Notizen aber nicht mehr befuellt.
 
 ## Weitere Tabellen
 

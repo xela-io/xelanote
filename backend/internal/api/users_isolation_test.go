@@ -219,11 +219,17 @@ func TestEncryptionPreferences_UserIsolation(t *testing.T) {
 	token1 := ts.getAuthToken(t, user1.User)
 	token2 := ts.getAuthToken(t, user2.User)
 
-	// User1 enables keywords indexing
+	// User1 tries to enable keywords indexing (must remain disabled)
 	rec := doJSON(t, r, http.MethodPut, "/api/users/preferences/encryption", updateEncryptionPreferencesRequest{
 		KeywordsEnabled: true,
 	}, token1)
 	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = doJSON(t, r, http.MethodGet, "/api/users/preferences", nil, token1)
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp1 map[string]interface{}
+	decodeResponse(t, rec, &resp1)
+	assert.Equal(t, false, resp1["keywords_enabled"], "keywords_enabled must stay disabled")
 
 	// User2 reads preferences — keywords_enabled should be false (default)
 	rec = doJSON(t, r, http.MethodGet, "/api/users/preferences", nil, token2)

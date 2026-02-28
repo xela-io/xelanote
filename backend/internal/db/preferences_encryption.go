@@ -6,13 +6,9 @@ import (
 )
 
 // UpdateEncryptionPreferences updates encryption-related preferences
-func (db *DB) UpdateEncryptionPreferences(userID int, keywordsEnabled, encryptTitles bool) error {
+func (db *DB) UpdateEncryptionPreferences(userID int, _ bool, encryptTitles bool) error {
 	now := time.Now().Format(time.RFC3339)
-
-	keywordsInt := 0
-	if keywordsEnabled {
-		keywordsInt = 1
-	}
+	keywordsInt := 0 // forced off: encrypted-note plaintext keyword indexing is deprecated
 
 	encryptTitlesInt := 0
 	if encryptTitles {

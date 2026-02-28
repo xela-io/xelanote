@@ -1,6 +1,6 @@
 <script lang="ts">
   import DOMPurify from 'isomorphic-dompurify';
-  import { AlertTriangle, Eye, Key, Lock, Shield } from 'lucide-svelte';
+  import { AlertTriangle, Eye, Lock, Shield } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import MobileSidebarInlineToggle from '$lib/components/MobileSidebarInlineToggle.svelte';
@@ -8,24 +8,8 @@
   import * as encryption from '$lib/stores/encryption.svelte';
 
   const settings = $derived(encryption.getSettings());
-  let showKeywordWarning = $state(false);
   let showTitleWarning = $state(false);
   const sanitize = (value: string) => DOMPurify.sanitize(value);
-
-  function toggleKeywords() {
-    if (!settings.extractKeywords) {
-      // User wants to enable - show warning first
-      showKeywordWarning = true;
-    } else {
-      // User wants to disable - do it immediately
-      encryption.updateSettings({ extractKeywords: false });
-    }
-  }
-
-  function confirmKeywords() {
-    encryption.updateSettings({ extractKeywords: true });
-    showKeywordWarning = false;
-  }
 
   function toggleTitles() {
     if (!settings.encryptTitles) {
@@ -129,52 +113,6 @@
         </div>
       </div>
 
-      <!-- Keyword Extraction -->
-      <div class="ui-panel p-5 sm:p-6">
-        <div class="flex items-start justify-between mb-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-2">
-              <Key class="w-5 h-5 text-muted-foreground" />
-              <h3 class="text-lg font-semibold">
-                {$_('page.settings.encryption.keyword_heading')}
-              </h3>
-            </div>
-            <p class="text-sm text-muted-foreground mb-3">
-              {$_('page.settings.encryption.keyword_description')}
-            </p>
-            <div class="ui-panel-soft flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20">
-              <AlertTriangle class="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-              <div class="text-xs text-red-800 dark:text-red-300">
-                <p class="font-semibold mb-1">
-                  {$_('page.settings.encryption.keyword_warning_title')}
-                </p>
-                <p class="mb-2">
-                  {@html sanitize($_('page.settings.encryption.keyword_warning_text'))}
-                </p>
-                <p class="mb-1">
-                  {@html sanitize($_('page.settings.encryption.keyword_warning_example'))}
-                </p>
-                <p class="text-red-900 dark:text-red-200 font-semibold">
-                  {$_('page.settings.encryption.keyword_warning_final')}
-                </p>
-              </div>
-            </div>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              class="sr-only peer"
-              checked={settings.extractKeywords}
-              disabled={!isUnlocked}
-              onchange={toggleKeywords}
-            />
-            <div
-              class="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-destructive/30 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-destructive peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
-            ></div>
-          </label>
-        </div>
-      </div>
-
       <!-- What is Encrypted -->
       <div class="ui-panel p-5 sm:p-6">
         <h3 class="text-lg font-semibold mb-4">
@@ -206,7 +144,6 @@
               <li>
                 {@html sanitize($_('page.settings.encryption.visible_metadata'))}
               </li>
-              <li>{@html sanitize($_('page.settings.encryption.visible_keywords'))}</li>
               <li>{@html sanitize($_('page.settings.encryption.visible_tags'))}</li>
               <li>{@html sanitize($_('page.settings.encryption.visible_uploads'))}</li>
               <li>{@html sanitize($_('page.settings.encryption.visible_ai'))}</li>
@@ -225,10 +162,6 @@
           <li class="flex items-start gap-2">
             <span class="text-success font-bold mt-0.5">&#10003;</span>
             <span>{$_('page.settings.encryption.recommendation_titles')}</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-success font-bold mt-0.5">&#10003;</span>
-            <span>{$_('page.settings.encryption.recommendation_keywords')}</span>
           </li>
           <li class="flex items-start gap-2">
             <span class="text-success font-bold mt-0.5">&#10003;</span>
@@ -291,42 +224,6 @@
         </button>
         <button class="ui-button ui-button-primary flex-1" onclick={confirmTitles}>
           {$_('page.settings.encryption.modal_title_encryption_confirm')}
-        </button>
-      </div>
-    </div>
-  </div>
-{/if}
-
-<!-- Keyword Extraction Warning Modal -->
-{#if showKeywordWarning}
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-    <div class="ui-panel max-w-md w-full p-6">
-      <h3 class="text-xl font-semibold mb-3 flex items-center gap-2 text-red-700 dark:text-red-400">
-        <AlertTriangle class="w-6 h-6" />
-        {$_('page.settings.encryption.modal_keyword_title')}
-      </h3>
-      <div class="space-y-3 mb-6">
-        <p class="text-sm text-muted-foreground">
-          {@html sanitize($_('page.settings.encryption.modal_keyword_warning'))}
-        </p>
-        <div class="ui-panel-soft p-3 bg-yellow-50 dark:bg-yellow-900/20">
-          <p class="text-xs text-yellow-900 dark:text-yellow-200">
-            {@html sanitize($_('page.settings.encryption.modal_keyword_example'))}
-          </p>
-        </div>
-        <p class="text-sm font-semibold text-red-700 dark:text-red-400">
-          {$_('page.settings.encryption.modal_keyword_final_warning')}
-        </p>
-      </div>
-      <div class="flex gap-3">
-        <button
-          class="ui-button ui-button-secondary flex-1"
-          onclick={() => (showKeywordWarning = false)}
-        >
-          {$_('common.cancel')}
-        </button>
-        <button class="ui-button ui-button-danger flex-1" onclick={confirmKeywords}>
-          {$_('page.settings.encryption.modal_keyword_confirm')}
         </button>
       </div>
     </div>

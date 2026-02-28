@@ -278,6 +278,7 @@ func (db *DB) runMigrations() error {
 		"058_shopping.sql",
 		"059_user_storage_limit.sql",
 		"060_delete_keywords_for_encrypted_notes.sql",
+		"061_disable_keywords_encryption_preference.sql",
 	}
 
 	for _, migrationFile := range migrations {

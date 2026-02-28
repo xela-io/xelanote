@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+const testAPIKeySecret = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
 func resetKeyForTest() {
 	encryptionKey = nil
 	keyErr = nil
@@ -16,9 +18,10 @@ func resetKeyForTest() {
 func TestEncryptDecryptAPIKey_RoundTrip(t *testing.T) {
 	resetKeyForTest()
 
-	if err := os.Setenv("XELANOTE_API_KEY_SECRET", "test-secret"); err != nil {
+	if err := os.Setenv("XELANOTE_API_KEY_SECRET", testAPIKeySecret); err != nil {
 		t.Fatalf("set env: %v", err)
 	}
+	_ = os.Unsetenv("JWT_SECRET")
 
 	enc, err := EncryptAPIKey("my-api-key")
 	if err != nil {
@@ -40,16 +43,37 @@ func TestEncryptDecryptAPIKey_RoundTrip(t *testing.T) {
 func TestEncryptAPIKey_NoSecret(t *testing.T) {
 	resetKeyForTest()
 	_ = os.Unsetenv("XELANOTE_API_KEY_SECRET")
-	_ = os.Unsetenv("JWT_SECRET")
+	_ = os.Setenv("JWT_SECRET", testAPIKeySecret)
 
 	if _, err := EncryptAPIKey("key"); err != ErrNoEncryptionKey {
 		t.Fatalf("expected ErrNoEncryptionKey, got %v", err)
 	}
 }
 
+func TestEncryptAPIKey_WeakSecret(t *testing.T) {
+	resetKeyForTest()
+	_ = os.Setenv("XELANOTE_API_KEY_SECRET", "short-secret")
+	_ = os.Unsetenv("JWT_SECRET")
+
+	if _, err := EncryptAPIKey("key"); err != ErrWeakEncryptionKey {
+		t.Fatalf("expected ErrWeakEncryptionKey, got %v", err)
+	}
+}
+
+func TestEncryptAPIKey_RejectsJWTSecretReuse(t *testing.T) {
+	resetKeyForTest()
+	_ = os.Setenv("XELANOTE_API_KEY_SECRET", testAPIKeySecret)
+	_ = os.Setenv("JWT_SECRET", testAPIKeySecret)
+
+	if _, err := EncryptAPIKey("key"); err != ErrKeySeparation {
+		t.Fatalf("expected ErrKeySeparation, got %v", err)
+	}
+}
+
 func TestDecryptAPIKey_InvalidCiphertext(t *testing.T) {
 	resetKeyForTest()
-	_ = os.Setenv("XELANOTE_API_KEY_SECRET", "test-secret")
+	_ = os.Setenv("XELANOTE_API_KEY_SECRET", testAPIKeySecret)
+	_ = os.Unsetenv("JWT_SECRET")
 
 	if _, err := DecryptAPIKey("not-base64"); err == nil {
 		t.Fatalf("expected error")

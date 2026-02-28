@@ -121,8 +121,8 @@ export default defineConfig({
   webServer: [
     {
       command: CI
-        ? 'JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef XELANOTE_DB=:memory: XELANOTE_ENV=test /tmp/xelanote-test'
-        : 'cd ../backend && JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef XELANOTE_DB=:memory: XELANOTE_ENV=test go run -tags "fts5" ./cmd/server',
+        ? 'JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef XELANOTE_API_KEY_SECRET=fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210 XELANOTE_DB=:memory: XELANOTE_ENV=test /tmp/xelanote-test'
+        : 'cd ../backend && JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef XELANOTE_API_KEY_SECRET=fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210 XELANOTE_DB=:memory: XELANOTE_ENV=test go run -tags "fts5" ./cmd/server',
       port: 8080,
       reuseExistingServer: !CI,
       timeout: 120000,

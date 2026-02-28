@@ -24,6 +24,7 @@ func main() {
 	flag.Parse()
 
 	jwtSecret := loadJWTSecret()
+	_ = loadAPIKeyEncryptionSecret(jwtSecret)
 	databasePath := resolveDatabasePath(*dbPath)
 	dbKey, err := loadDatabaseKey()
 	if err != nil {

@@ -61,7 +61,7 @@ jobs:
           fi
 
           echo "--- Validating required variables ---"
-          REQUIRED_VARS="JWT_SECRET CORS_ALLOWED_ORIGINS XELANOTE_DB XELANOTE_ENV TRUSTED_PROXIES"
+          REQUIRED_VARS="JWT_SECRET XELANOTE_API_KEY_SECRET CORS_ALLOWED_ORIGINS XELANOTE_DB XELANOTE_ENV TRUSTED_PROXIES"
           for var in $REQUIRED_VARS; do
             val=$(grep "^${var}=" "$ENV_FILE" | head -1 | cut -d'=' -f2-)
             if [ -z "$val" ]; then
@@ -74,6 +74,21 @@ jobs:
           JWT_LEN=$(grep "^JWT_SECRET=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '[:space:]' | wc -c)
           if [ "$JWT_LEN" -lt 64 ]; then
             echo "::error::JWT_SECRET must be at least 64 characters (found: $JWT_LEN)"
+            exit 1
+          fi
+
+          echo "--- Checking XELANOTE_API_KEY_SECRET length ---"
+          API_KEY_SECRET_LEN=$(grep "^XELANOTE_API_KEY_SECRET=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '[:space:]' | wc -c)
+          if [ "$API_KEY_SECRET_LEN" -lt 64 ]; then
+            echo "::error::XELANOTE_API_KEY_SECRET must be at least 64 characters (found: $API_KEY_SECRET_LEN)"
+            exit 1
+          fi
+
+          echo "--- Checking key separation ---"
+          JWT_SECRET_VAL=$(grep "^JWT_SECRET=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '[:space:]')
+          API_KEY_SECRET_VAL=$(grep "^XELANOTE_API_KEY_SECRET=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '[:space:]')
+          if [ "$JWT_SECRET_VAL" = "$API_KEY_SECRET_VAL" ]; then
+            echo "::error::XELANOTE_API_KEY_SECRET must differ from JWT_SECRET"
             exit 1
           fi
 

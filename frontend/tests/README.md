@@ -60,6 +60,7 @@ npx playwright install --with-deps
 # Backend wird automatisch von Playwright gestartet, alternativ manuell:
 cd backend
 JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+  XELANOTE_API_KEY_SECRET=fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210 \
   XELANOTE_DB=:memory: XELANOTE_ENV=test go run -tags "fts5" ./cmd/server
 ```
 

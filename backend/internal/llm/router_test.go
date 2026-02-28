@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	_ = os.Setenv("XELANOTE_API_KEY_SECRET", "test-secret-llm-router")
+	_ = os.Setenv("XELANOTE_API_KEY_SECRET", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
 }
 
 func setupRouterTestDB(t *testing.T) (*db.DB, int) {

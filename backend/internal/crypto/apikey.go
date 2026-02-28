@@ -11,7 +11,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
+
+	"golang.org/x/crypto/hkdf"
 )
 
 var (
@@ -19,6 +22,10 @@ var (
 	ErrInvalidCiphertext = errors.New("invalid ciphertext")
 	// ErrNoEncryptionKey is returned when the encryption key is not configured
 	ErrNoEncryptionKey = errors.New("encryption key not configured")
+	// ErrWeakEncryptionKey is returned when the configured secret is too short
+	ErrWeakEncryptionKey = errors.New("encryption key is too short (minimum 64 characters required)")
+	// ErrKeySeparation is returned when API key encryption reuses JWT signing secret
+	ErrKeySeparation = errors.New("XELANOTE_API_KEY_SECRET must differ from JWT_SECRET")
 )
 
 const (
@@ -26,6 +33,8 @@ const (
 	NonceSize = 12
 	// KeySize is the size of the AES-256 key (32 bytes)
 	KeySize = 32
+	// MinSecretLen enforces minimum entropy budget for API key encryption secret.
+	MinSecretLen = 64
 )
 
 var (
@@ -36,22 +45,34 @@ var (
 )
 
 // initKey derives the encryption key from the environment variable.
-// Uses SHA-256 to derive a 32-byte key from any length secret.
+// Uses HKDF-SHA256 to derive a 32-byte key from a dedicated API key secret.
 func initKey() {
 	keyOnce.Do(func() {
-		secret := os.Getenv("XELANOTE_API_KEY_SECRET")
+		secret := strings.TrimSpace(os.Getenv("XELANOTE_API_KEY_SECRET"))
 		if secret == "" {
-			// Fallback: derive from JWT_SECRET if API_KEY_SECRET not set
-			secret = os.Getenv("JWT_SECRET")
-			if secret == "" {
-				keyErr = ErrNoEncryptionKey
-				return
-			}
+			keyErr = ErrNoEncryptionKey
+			return
 		}
 
-		// Derive 32-byte key using SHA-256
-		hash := sha256.Sum256([]byte(secret + ":api-key-encryption"))
-		encryptionKey = hash[:]
+		if len(secret) < MinSecretLen {
+			keyErr = ErrWeakEncryptionKey
+			return
+		}
+
+		jwtSecret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
+		if jwtSecret != "" && secret == jwtSecret {
+			keyErr = ErrKeySeparation
+			return
+		}
+
+		// Derive 32-byte key using HKDF-SHA256 with explicit context binding.
+		reader := hkdf.New(sha256.New, []byte(secret), nil, []byte("xelanote/api-key-encryption/v1"))
+		encryptionKey = make([]byte, KeySize)
+		if _, err := io.ReadFull(reader, encryptionKey); err != nil {
+			keyErr = fmt.Errorf("failed to derive encryption key: %w", err)
+			encryptionKey = nil
+			return
+		}
 	})
 }
 

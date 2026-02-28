@@ -27,6 +27,20 @@ func loadJWTSecret() string {
 	return jwtSecret
 }
 
+func loadAPIKeyEncryptionSecret(jwtSecret string) string {
+	apiKeySecret := strings.TrimSpace(os.Getenv("XELANOTE_API_KEY_SECRET"))
+	if apiKeySecret == "" {
+		log.Fatal("XELANOTE_API_KEY_SECRET environment variable is required")
+	}
+	if len(apiKeySecret) < 64 {
+		log.Fatalf("XELANOTE_API_KEY_SECRET must be at least 64 characters long (current length: %d). Generate a strong secret with: openssl rand -hex 32", len(apiKeySecret))
+	}
+	if apiKeySecret == jwtSecret {
+		log.Fatal("XELANOTE_API_KEY_SECRET must differ from JWT_SECRET (key separation required)")
+	}
+	return apiKeySecret
+}
+
 func resolveDatabasePath(flagValue string) string {
 	if flagValue != "" {
 		return flagValue

@@ -17,7 +17,7 @@ import (
 
 func init() {
 	// EncryptAPIKey uses sync.Once — set env before any test runs.
-	os.Setenv("XELANOTE_API_KEY_SECRET", "test-secret-isolation-key-1234567890")
+	os.Setenv("XELANOTE_API_KEY_SECRET", "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")
 }
 
 // usersRouter registers all /api/users/* routes without rate-limiting.

@@ -48,6 +48,7 @@ Zentraler Einstiegspunkt zu allen Dokumenten des Projekts.
 -   **[Security Audit](./security_audit_findings.md)** — Penetration-Test-Ergebnisse und Fixes
 -   **[E2EE Audit Addendum (2026-02-28)](./security/E2EE-SECURITY-AUDIT-ADDENDUM-2026-02-28.md)** — Konsolidierte E2EE-Befunde inkl. Delta-Review
 -   **[E2EE Remediation Plan (2026-02-28)](./security/E2EE-REMEDIATION-PLAN-2026-02-28.md)** — PR-basierter Umsetzungsplan für die Findings
+-   **[E2EE Follow-up Roadmap (2026-02-28)](./security/E2EE-FOLLOW-UP-ROADMAP-2026-02-28.md)** — Offene P1/P2-Sicherheitsarbeiten nach den umgesetzten Fixes
 
 ## Deployment & Betrieb
 

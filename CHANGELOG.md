@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation/UI: aligned E2EE recovery claims with wrapper-gated encrypted recovery flow (README, API/e2e docs, audit addendum, encryption settings i18n copy)
 - Documentation/UI: updated remaining recovery references (migration page, API reference/wiki, auth recovery endpoint docs, localized recovery conflict text) to match tokenized wrapper-based encrypted recovery
 - Documentation: refreshed handbook/wiki security sections to reflect current encrypted-upload behavior and wrapper-gated recovery flow for encrypted notes
+- Security Planning: added dedicated E2EE follow-up roadmap for remaining P1/P2 topics (XSS defense-in-depth, recovery readiness UX, FS/PCS and multi-device trust model) and linked it from docs index
 
 ### Fixed
 

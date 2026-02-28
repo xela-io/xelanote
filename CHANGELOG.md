@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canvas: disabled by default for new users (can be enabled in Settings > Editor)
 - UI: introduced CSS custom properties for typography scale, replacing hardcoded font sizes
 - Editor: moved indent/outdent from "More" menu to toolbar and insert menu for quicker access
+- E2EE: KEK derivation for login and password-change rewrap now uses Worker-based Argon2id by default and falls back to synchronous derivation only if Worker setup fails
 
 ### Fixed
 

@@ -2,6 +2,7 @@ import {
   bytesToString,
   decrypt,
   deriveKey,
+  deriveKeyAsync,
   encrypt,
   fromBase64Standard,
   generateDEK,
@@ -10,8 +11,19 @@ import {
   toBase64Standard,
 } from './sodium';
 
+export type EncryptionVersion = 2 | 3;
+
+type PayloadPurpose = 'note' | 'title';
+
+export interface AttachmentKeyContext {
+  noteID: string;
+  wrappedDEK: string;
+  metadataVersion?: EncryptionVersion;
+  filename?: string;
+}
+
 export interface EncryptionMetadata {
-  version: 2;
+  version: EncryptionVersion;
   algorithm: 'XChaCha20-Poly1305';
   kdf: 'Argon2id';
   kdf_strength: 'interactive';
@@ -50,6 +62,48 @@ export class DecryptionError extends Error {
 export class E2EEncryption {
   private kek: Uint8Array | null = null; // Key Encryption Key (raw bytes)
 
+  private async deriveKEK(password: string, salt: Uint8Array): Promise<Uint8Array> {
+    try {
+      return await deriveKeyAsync(password, salt);
+    } catch (err) {
+      // Fallback keeps encryption functional in environments without Worker support.
+      if (import.meta.env.DEV) {
+        console.warn('[E2EE] Worker KDF unavailable, falling back to synchronous deriveKey:', err);
+      }
+      return deriveKey(password, salt);
+    }
+  }
+
+  private buildAAD(
+    noteID: string,
+    purpose: PayloadPurpose,
+    material: 'content' | 'dek'
+  ): Uint8Array {
+    return stringToBytes(`xelanote:e2ee:v3:${purpose}:${material}:${noteID}`);
+  }
+
+  private buildAttachmentAAD(noteID: string, filename: string): Uint8Array {
+    return stringToBytes(`xelanote:e2ee:attachment:v1:${noteID}:${filename.normalize('NFC')}`);
+  }
+
+  private unwrapNoteDEK(context: AttachmentKeyContext): Uint8Array {
+    if (!this.kek) throw new DecryptionError('NOT_INITIALIZED');
+    if (!isInitialized()) throw new DecryptionError('NOT_INITIALIZED');
+    if (!context.noteID || !context.wrappedDEK) {
+      throw new DecryptionError('CORRUPTED_METADATA');
+    }
+
+    const metadataVersion: EncryptionVersion = context.metadataVersion ?? 3;
+    const wrappedDEKBytes = fromBase64Standard(context.wrappedDEK);
+    const wrapAAD =
+      metadataVersion === 3 ? this.buildAAD(context.noteID, 'note', 'dek') : undefined;
+    const dek = this.unwrapDEK(wrappedDEKBytes, this.kek, wrapAAD);
+    if (dek === null) {
+      throw new DecryptionError('INVALID_KEY_OR_DATA');
+    }
+    return dek;
+  }
+
   private parseEncryptedPayload(raw: string): EncryptedPayload {
     let parsed: unknown;
     try {
@@ -80,7 +134,7 @@ export class E2EEncryption {
       wrapped_dek?: unknown;
     };
     if (
-      metadata.version !== 2 ||
+      (metadata.version !== 2 && metadata.version !== 3) ||
       metadata.algorithm !== 'XChaCha20-Poly1305' ||
       metadata.kdf !== 'Argon2id' ||
       metadata.kdf_strength !== 'interactive' ||
@@ -93,7 +147,7 @@ export class E2EEncryption {
     return {
       ciphertext: payload.ciphertext,
       metadata: {
-        version: 2,
+        version: metadata.version as EncryptionVersion,
         algorithm: 'XChaCha20-Poly1305',
         kdf: 'Argon2id',
         kdf_strength: 'interactive',
@@ -104,18 +158,17 @@ export class E2EEncryption {
   }
 
   /**
-   * Setup KEK from user password (synchronous for Phase 1).
+   * Setup KEK from user password.
    * Call this on login after receiving the user's encryption salt from the server.
    *
-   * TEMPORARY: Using synchronous derivation until worker bundling is fixed.
-   * This will block UI briefly (~100-500ms) during login.
+   * Uses worker-based Argon2id derivation when available to avoid blocking the UI.
+   * Falls back to synchronous derivation if the worker cannot be used.
    *
    * @param password - User's password
    * @param salt - User-specific salt (16 bytes, stored server-side)
    */
   async setupKEK(password: string, salt: Uint8Array): Promise<void> {
-    // Synchronous key derivation (blocks UI briefly)
-    this.kek = deriveKey(password, salt);
+    this.kek = await this.deriveKEK(password, salt);
   }
 
   /**
@@ -136,10 +189,11 @@ export class E2EEncryption {
    *
    * @param dek - Data Encryption Key (32 bytes)
    * @param kek - Key Encryption Key (32 bytes)
+   * @param aad - Optional additional authenticated data
    * @returns Wrapped key as Uint8Array (24-byte nonce + ciphertext + 16-byte tag)
    */
-  private wrapDEK(dek: Uint8Array, kek: Uint8Array): Uint8Array {
-    return encrypt(dek, kek);
+  private wrapDEK(dek: Uint8Array, kek: Uint8Array, aad?: Uint8Array): Uint8Array {
+    return encrypt(dek, kek, aad);
   }
 
   /**
@@ -147,44 +201,42 @@ export class E2EEncryption {
    *
    * @param wrappedDEK - Wrapped DEK bytes (nonce + ciphertext + tag)
    * @param kek - Key Encryption Key
+   * @param aad - Optional additional authenticated data
    * @returns Unwrapped Data Encryption Key or null if decryption fails
    */
-  private unwrapDEK(wrappedDEK: Uint8Array, kek: Uint8Array): Uint8Array | null {
-    return decrypt(wrappedDEK, kek);
+  private unwrapDEK(wrappedDEK: Uint8Array, kek: Uint8Array, aad?: Uint8Array): Uint8Array | null {
+    return decrypt(wrappedDEK, kek, aad);
   }
 
-  /**
-   * Encrypt note content with per-note DEK.
-   *
-   * This generates a new random DEK for each note, encrypts the content with
-   * XChaCha20-Poly1305, then wraps the DEK with the user's KEK.
-   *
-   * @param content - Plaintext note content
-   * @returns Encrypted payload with metadata
-   * @throws Error if KEK is not initialized
-   */
-  encryptNote(content: string): EncryptedPayload {
+  private encryptPayload(
+    content: string,
+    noteID: string | null,
+    purpose: PayloadPurpose
+  ): EncryptedPayload {
     if (!this.kek) throw new Error('KEK not initialized');
     if (!isInitialized()) throw new Error('libsodium not initialized');
 
-    // 1. Generate random DEK for this note
+    const metadataVersion: EncryptionVersion = noteID ? 3 : 2;
+
+    // 1. Generate random DEK for this payload
     const dek = generateDEK();
 
     // 2. Encrypt content with DEK
     const plaintext = stringToBytes(content);
-    const ciphertext = encrypt(plaintext, dek);
+    const contentAAD = noteID ? this.buildAAD(noteID, purpose, 'content') : undefined;
+    const ciphertext = encrypt(plaintext, dek, contentAAD);
 
     // 3. Wrap DEK with KEK
-    const wrappedDEK = this.wrapDEK(dek, this.kek);
+    const wrapAAD = noteID ? this.buildAAD(noteID, purpose, 'dek') : undefined;
+    const wrappedDEK = this.wrapDEK(dek, this.kek, wrapAAD);
 
     // 4. Clear DEK from memory
     dek.fill(0);
 
-    // 5. Return payload
     return {
       ciphertext: toBase64Standard(ciphertext),
       metadata: {
-        version: 2,
+        version: metadataVersion,
         algorithm: 'XChaCha20-Poly1305',
         kdf: 'Argon2id',
         kdf_strength: 'interactive',
@@ -194,16 +246,11 @@ export class E2EEncryption {
     };
   }
 
-  /**
-   * Decrypt note content.
-   *
-   * This unwraps the DEK using the user's KEK, then decrypts the content.
-   *
-   * @param payload - Encrypted payload with metadata
-   * @returns Decrypted plaintext content
-   * @throws DecryptionError if decryption fails
-   */
-  decryptNote(payload: EncryptedPayload): string {
+  private decryptPayload(
+    payload: EncryptedPayload,
+    noteID: string | null,
+    purpose: PayloadPurpose
+  ): string {
     if (!this.kek) throw new DecryptionError('NOT_INITIALIZED');
     if (!isInitialized()) throw new DecryptionError('NOT_INITIALIZED');
 
@@ -213,10 +260,15 @@ export class E2EEncryption {
     if (!metadata.wrapped_dek) {
       throw new DecryptionError('CORRUPTED_METADATA');
     }
+    if (metadata.version === 3 && !noteID) {
+      throw new DecryptionError('CORRUPTED_METADATA');
+    }
 
     // 1. Unwrap DEK with KEK
     const wrappedDEKBytes = fromBase64Standard(metadata.wrapped_dek);
-    const dek = this.unwrapDEK(wrappedDEKBytes, this.kek);
+    const wrapAAD =
+      metadata.version === 3 && noteID ? this.buildAAD(noteID, purpose, 'dek') : undefined;
+    const dek = this.unwrapDEK(wrappedDEKBytes, this.kek, wrapAAD);
 
     if (dek === null) {
       throw new DecryptionError('INVALID_KEY_OR_DATA');
@@ -224,7 +276,9 @@ export class E2EEncryption {
 
     // 2. Decrypt content with DEK
     const ciphertextBytes = fromBase64Standard(ciphertext);
-    const plaintext = decrypt(ciphertextBytes, dek);
+    const contentAAD =
+      metadata.version === 3 && noteID ? this.buildAAD(noteID, purpose, 'content') : undefined;
+    const plaintext = decrypt(ciphertextBytes, dek, contentAAD);
 
     // 3. Clear DEK from memory
     dek.fill(0);
@@ -237,14 +291,41 @@ export class E2EEncryption {
   }
 
   /**
+   * Encrypt note content with per-note DEK.
+   *
+   * This generates a new random DEK for each note, encrypts the content with
+   * XChaCha20-Poly1305, then wraps the DEK with the user's KEK.
+   *
+   * @param content - Plaintext note content
+   * @returns Encrypted payload with metadata
+   * @throws Error if KEK is not initialized
+   */
+  encryptNote(content: string, noteID?: string): EncryptedPayload {
+    return this.encryptPayload(content, noteID ?? null, 'note');
+  }
+
+  /**
+   * Decrypt note content.
+   *
+   * This unwraps the DEK using the user's KEK, then decrypts the content.
+   *
+   * @param payload - Encrypted payload with metadata
+   * @returns Decrypted plaintext content
+   * @throws DecryptionError if decryption fails
+   */
+  decryptNote(payload: EncryptedPayload, noteID?: string): string {
+    return this.decryptPayload(payload, noteID ?? null, 'note');
+  }
+
+  /**
    * Encrypt title (optional).
    * Returns a JSON string containing the encrypted payload.
    *
    * @param title - Plaintext title
    * @returns JSON string of encrypted payload
    */
-  encryptTitle(title: string): string {
-    const payload = this.encryptNote(title);
+  encryptTitle(title: string, noteID?: string): string {
+    const payload = this.encryptPayload(title, noteID ?? null, 'title');
     return JSON.stringify(payload);
   }
 
@@ -254,9 +335,58 @@ export class E2EEncryption {
    * @param encryptedTitle - JSON string of encrypted payload
    * @returns Decrypted plaintext title
    */
-  decryptTitle(encryptedTitle: string): string {
+  decryptTitle(encryptedTitle: string, noteID?: string): string {
     const payload = this.parseEncryptedPayload(encryptedTitle);
-    return this.decryptNote(payload);
+    return this.decryptPayload(payload, noteID ?? null, 'title');
+  }
+
+  /**
+   * Encrypt binary attachment data with the note DEK.
+   *
+   * The note DEK is unwrapped with the current KEK and then used to encrypt
+   * attachment bytes via XChaCha20-Poly1305. The ciphertext includes nonce+tag.
+   *
+   * @param data - Binary attachment bytes
+   * @param context - Note key context (note ID + wrapped DEK)
+   * @returns Encrypted bytes (nonce + ciphertext + tag)
+   */
+  encryptAttachment(data: Uint8Array, context: AttachmentKeyContext): Uint8Array {
+    const dek = this.unwrapNoteDEK(context);
+
+    try {
+      const attachmentAAD = this.buildAttachmentAAD(
+        context.noteID,
+        context.filename || 'attachment'
+      );
+      return encrypt(data, dek, attachmentAAD);
+    } finally {
+      dek.fill(0);
+    }
+  }
+
+  /**
+   * Decrypt binary attachment data with the note DEK.
+   *
+   * @param encrypted - Encrypted bytes (nonce + ciphertext + tag)
+   * @param context - Note key context (note ID + wrapped DEK)
+   * @returns Decrypted plaintext bytes
+   */
+  decryptAttachment(encrypted: Uint8Array, context: AttachmentKeyContext): Uint8Array {
+    const dek = this.unwrapNoteDEK(context);
+
+    try {
+      const attachmentAAD = this.buildAttachmentAAD(
+        context.noteID,
+        context.filename || 'attachment'
+      );
+      const plaintext = decrypt(encrypted, dek, attachmentAAD);
+      if (plaintext === null) {
+        throw new DecryptionError('INVALID_KEY_OR_DATA');
+      }
+      return plaintext;
+    } finally {
+      dek.fill(0);
+    }
   }
 
   /**
@@ -363,7 +493,7 @@ export class E2EEncryption {
    * 1. Derive old KEK from old password
    * 2. Derive new KEK from new password
    * 3. For each note/version: unwrap DEK with old KEK, re-wrap with new KEK
-   * 4. Perform test decryption on random samples to validate
+   * 4. Perform deterministic full validation for all re-wrapped entries
    * 5. Return maps of noteID/versionID -> new wrapped_dek
    *
    * @param notes - Array of notes with wrapped_dek field
@@ -387,10 +517,10 @@ export class E2EEncryption {
     if (!isInitialized()) throw new Error('libsodium not initialized');
 
     // Step 1: Derive old KEK from old password
-    const oldKEK = deriveKey(oldPassword, salt);
+    const oldKEK = await this.deriveKEK(oldPassword, salt);
 
     // Step 2: Derive new KEK from new password
-    const newKEK = deriveKey(newPassword, salt);
+    const newKEK = await this.deriveKEK(newPassword, salt);
 
     const reWrappedNotes = new Map<string, string>();
     const reWrappedVersions = new Map<string, string>();
@@ -459,38 +589,31 @@ export class E2EEncryption {
       }
     }
 
-    // Step 5: Validate re-wrapping with test decryption
-    // Sample 3 random notes (or all if < 3)
-    const notesToTest = notes.filter((n) => n.wrapped_dek && n.encrypted_content);
-    const sampleSize = Math.min(3, notesToTest.length);
-    const testSamples = [];
-
-    // Randomly select samples
-    const shuffled = [...notesToTest].sort(() => Math.random() - 0.5);
-    for (let i = 0; i < sampleSize; i++) {
-      testSamples.push(shuffled[i]);
-    }
-
-    // Test decryption with new KEK
-    for (const note of testSamples) {
+    // Step 5: Deterministic full validation of ALL re-wrapped entries
+    // Validate each note DEK (and decrypt content where available)
+    for (const note of notes) {
+      if (!note.wrapped_dek) continue;
       try {
         const newWrappedDEK = reWrappedNotes.get(note.id);
-        if (!newWrappedDEK || !note.encrypted_content) continue;
+        if (!newWrappedDEK) {
+          throw new Error(`Missing re-wrapped DEK for note ${note.id}`);
+        }
 
         // Unwrap DEK with NEW KEK
         const newWrappedDEKBytes = fromBase64Standard(newWrappedDEK);
         const dek = this.unwrapDEK(newWrappedDEKBytes, newKEK);
 
         if (dek === null) {
-          throw new Error(`Test decryption failed for note ${note.id} - re-wrapping corrupted`);
+          throw new Error(`Validation failed for note ${note.id} - unwrap with new KEK failed`);
         }
 
-        // Try to decrypt content with unwrapped DEK
-        const ciphertext = fromBase64Standard(note.encrypted_content);
-        const plaintext = decrypt(ciphertext, dek);
-
-        if (plaintext === null) {
-          throw new Error(`Test decryption failed for note ${note.id} - content decryption failed`);
+        // If encrypted content is available, validate full decrypt path too.
+        if (note.encrypted_content) {
+          const ciphertext = fromBase64Standard(note.encrypted_content);
+          const plaintext = decrypt(ciphertext, dek);
+          if (plaintext === null) {
+            throw new Error(`Validation failed for note ${note.id} - content decryption failed`);
+          }
         }
 
         // Clear DEK from memory
@@ -499,7 +622,47 @@ export class E2EEncryption {
         // Clean up KEKs before throwing
         oldKEK.fill(0);
         newKEK.fill(0);
-        throw new Error(`Re-wrapping validation failed: ${err}`);
+        throw new Error(`Re-wrapping validation failed for note ${note.id}: ${err}`);
+      }
+    }
+
+    // Validate each version DEK (and decrypt content where available)
+    for (const version of versions) {
+      if (!version.wrapped_dek) continue;
+      const versionID = version.id.toString();
+      try {
+        const newWrappedDEK = reWrappedVersions.get(versionID);
+        if (!newWrappedDEK) {
+          throw new Error(`Missing re-wrapped DEK for version ${versionID}`);
+        }
+
+        // Unwrap DEK with NEW KEK
+        const newWrappedDEKBytes = fromBase64Standard(newWrappedDEK);
+        const dek = this.unwrapDEK(newWrappedDEKBytes, newKEK);
+        if (dek === null) {
+          throw new Error(
+            `Validation failed for version ${versionID} - unwrap with new KEK failed`
+          );
+        }
+
+        // If encrypted content is available, validate full decrypt path too.
+        if (version.encrypted_content) {
+          const ciphertext = fromBase64Standard(version.encrypted_content);
+          const plaintext = decrypt(ciphertext, dek);
+          if (plaintext === null) {
+            throw new Error(
+              `Validation failed for version ${versionID} - content decryption failed`
+            );
+          }
+        }
+
+        // Clear DEK from memory
+        dek.fill(0);
+      } catch (err) {
+        // Clean up KEKs before throwing
+        oldKEK.fill(0);
+        newKEK.fill(0);
+        throw new Error(`Re-wrapping validation failed for version ${versionID}: ${err}`);
       }
     }
 

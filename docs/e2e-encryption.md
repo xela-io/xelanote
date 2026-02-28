@@ -59,9 +59,9 @@ Die verschluesselte Payload enthaelt:
 
 ## AI-Grenzen
 
-- AI-Zusammenfassung ist fuer verschluesselte Notizen serverseitig deaktiviert.
-- Andere AI-Funktionen koennen (je nach Feature) Klartext aus verschluesselten Notizen an Backend/Provider senden, wenn sie benutzt werden.
-- E2EE gilt daher nicht fuer Inhalte, die bewusst ueber AI-Features ausgelagert werden.
+- Serverseitige AI-Verarbeitung fuer verschluesselte Notizen ist deaktiviert (Summary, Tag/Link-Vorschlaege, Formatieren, Transform).
+- Bei unverschluesselten Notizen koennen AI-Features Klartext an Backend/Provider uebertragen.
+- E2EE gilt daher weiterhin nur fuer verschluesselte Payload-Bereiche.
 
 ## Recovery-Key und Passwortverlust
 
@@ -94,7 +94,7 @@ Konsequenz:
 3. Keywords deaktiviert lassen, wenn Metadaten-Leakage minimiert werden soll.
 4. Sensible Infos nicht in Ordnernamen/Tags ablegen.
 5. Bei Uploads beachten: Nur Uploads aus verschluesselten Notizen sind E2EE (`.xenc`).
-6. AI nur nutzen, wenn Klartextuebertragung fuer den konkreten Inhalt akzeptabel ist.
+6. AI bei unverschluesselten Notizen nur nutzen, wenn Klartextuebertragung fuer den konkreten Inhalt akzeptabel ist.
 
 ## FAQ
 

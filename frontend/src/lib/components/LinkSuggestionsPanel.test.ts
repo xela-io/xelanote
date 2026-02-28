@@ -37,7 +37,7 @@ describe('LinkSuggestionsPanel', () => {
       props: {
         noteId: 'note-1',
         isEncrypted: true,
-        plaintextContent: 'decrypted-content-should-not-be-sent',
+        noteContent: '',
         onInsertLink: () => {},
       },
     });

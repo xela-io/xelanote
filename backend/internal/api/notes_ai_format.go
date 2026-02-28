@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/llm"
@@ -50,14 +51,16 @@ func (s *Server) formatMarkdown(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
 		return
 	}
+	if strings.TrimSpace(req.PlaintextContent) != "" {
+		respondError(w, http.StatusBadRequest, errAIPlaintextContentDeprecated)
+		return
+	}
 
 	// Determine content to format
 	var content string
 	if req.SelectionOnly != "" {
 		// Formatting a selection
 		content = req.SelectionOnly
-	} else if req.PlaintextContent != "" {
-		content = req.PlaintextContent
 	} else {
 		// Plaintext note: use content from database
 		content = note.Content

@@ -49,6 +49,10 @@ func (s *Server) aiTransform(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	if strings.TrimSpace(req.PlaintextContent) != "" {
+		respondError(w, http.StatusBadRequest, errAIPlaintextContentDeprecated)
+		return
+	}
 
 	// Validate action
 	action := service.AITransformAction(req.Action)
@@ -75,11 +79,7 @@ func (s *Server) aiTransform(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine content source: PlaintextContent takes precedence
-	content := req.PlaintextContent
-	if content == "" {
-		content = req.Content
-	}
+	content := req.Content
 
 	if strings.TrimSpace(content) == "" {
 		respondError(w, http.StatusBadRequest, "content is required")

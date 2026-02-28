@@ -17,7 +17,7 @@ import (
 
 // summarizeNote generates or retrieves a summary for a note.
 // For plaintext notes: generates summary server-side
-// For encrypted notes: requires frontend to send decrypted content, generates summary, returns for frontend encryption
+// For encrypted notes: server-side processing is blocked.
 func (s *Server) summarizeNote(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserID(r)
 	if !ok {
@@ -95,9 +95,6 @@ func (s *Server) summarizeNote(w http.ResponseWriter, r *http.Request) {
 			return
 		case strings.Contains(err.Error(), "not found"):
 			respondError(w, http.StatusNotFound, "note not found")
-			return
-		case strings.Contains(err.Error(), "plaintext content required"):
-			respondError(w, http.StatusBadRequest, "plaintext_content is required for encrypted notes")
 			return
 		}
 
@@ -259,8 +256,6 @@ func (s *Server) summarizeNoteStream(w http.ResponseWriter, r *http.Request) {
 			clientError = "server-side AI summarization is disabled for encrypted notes"
 		case strings.Contains(err.Error(), "not found"):
 			clientError = "note not found"
-		case strings.Contains(err.Error(), "plaintext content required"):
-			clientError = "plaintext_content is required for encrypted notes"
 		}
 		errPayload, marshalErr := json.Marshal(map[string]string{"error": clientError})
 		if marshalErr != nil {

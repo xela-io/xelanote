@@ -240,20 +240,11 @@ export async function computeContentHash(content: string): Promise<string> {
 
 /**
  * Get LLM-based tag suggestions for a note.
- * For encrypted notes, provide the decrypted content.
  */
-export async function suggestTags(
-  noteId: string,
-  plaintextContent?: string
-): Promise<TagSuggestion[]> {
-  const body: { plaintext_content?: string } = {};
-  if (plaintextContent) {
-    body.plaintext_content = plaintextContent;
-  }
-
+export async function suggestTags(noteId: string): Promise<TagSuggestion[]> {
   const response = await request<SuggestTagsResponse>(`/notes/${noteId}/suggest-tags`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify({}),
     _timeout: AI_REQUEST_TIMEOUT_MS,
   });
   return response.suggestions || [];
@@ -266,22 +257,13 @@ export async function suggestTags(
  */
 export async function suggestLinks(
   noteId: string,
-  plaintextContent: string | undefined,
   noteTitles: string[],
   existingLinks: string[]
 ): Promise<LinkSuggestion[]> {
-  const body: {
-    plaintext_content?: string;
-    note_titles: string[];
-    existing_links: string[];
-  } = {
+  const body: { note_titles: string[]; existing_links: string[] } = {
     note_titles: noteTitles,
     existing_links: existingLinks,
   };
-
-  if (plaintextContent) {
-    body.plaintext_content = plaintextContent;
-  }
 
   const response = await request<SuggestLinksResponse>(`/notes/${noteId}/suggest-links`, {
     method: 'POST',
@@ -373,19 +355,12 @@ export async function getNoteTitlesAIEnabled(): Promise<string[]> {
  * Format markdown content using an LLM provider.
  * @param noteId - The note ID (required for ai_enabled check)
  * @param content - The content or selection to format
- * @param plaintextContent - For encrypted notes: the decrypted content
  * @returns The formatted markdown content
  */
-export async function formatMarkdown(
-  noteId: string,
-  content?: string,
-  plaintextContent?: string
-): Promise<string> {
-  const body: { selection_only?: string; plaintext_content?: string } = {};
+export async function formatMarkdown(noteId: string, content?: string): Promise<string> {
+  const body: { selection_only?: string } = {};
 
-  if (plaintextContent) {
-    body.plaintext_content = plaintextContent;
-  } else if (content) {
+  if (content) {
     body.selection_only = content;
   }
 
@@ -404,28 +379,23 @@ export async function formatMarkdown(
  * @param action - The transformation action to perform
  * @param content - The content or selection to transform
  * @param customPrompt - Custom instruction (only for action='custom')
- * @param plaintextContent - For encrypted notes: the decrypted content
  * @returns The transformed content
  */
 export async function aiTransform(
   noteId: string,
   action: AIAction,
   content: string,
-  customPrompt?: string,
-  plaintextContent?: string
+  customPrompt?: string
 ): Promise<string> {
   const body: {
     action: string;
     content?: string;
-    plaintext_content?: string;
     custom_prompt?: string;
   } = {
     action,
   };
 
-  if (plaintextContent) {
-    body.plaintext_content = plaintextContent;
-  } else if (content) {
+  if (content) {
     body.content = content;
   }
 

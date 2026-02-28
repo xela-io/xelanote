@@ -69,7 +69,6 @@
     <TagSuggestionsPanel
       noteId={note.id}
       isEncrypted={note.content_encrypted || false}
-      plaintextContent={note.content_encrypted ? undefined : note.content}
       existingTagNames={currentTags.map((t) => t.name)}
       onAddTag={async (tagName) => {
         if (tagEditorRef) {
@@ -87,7 +86,7 @@
     <LinkSuggestionsPanel
       noteId={note.id}
       isEncrypted={note.content_encrypted || false}
-      plaintextContent={note.content_encrypted ? undefined : note.content}
+      noteContent={note.content_encrypted ? undefined : note.content}
       onInsertLink={(term, targetTitle) => {
         onInsertLink(term, targetTitle);
       }}

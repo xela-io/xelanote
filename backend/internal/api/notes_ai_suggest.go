@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xela-io/xelanote/internal/llm"
@@ -47,6 +48,10 @@ func (s *Server) suggestTags(w http.ResponseWriter, r *http.Request) {
 	// P0 privacy hardening: never process encrypted-note plaintext server-side.
 	if note.ContentEncrypted {
 		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
+		return
+	}
+	if strings.TrimSpace(req.PlaintextContent) != "" {
+		respondError(w, http.StatusBadRequest, errAIPlaintextContentDeprecated)
 		return
 	}
 
@@ -127,6 +132,10 @@ func (s *Server) suggestLinks(w http.ResponseWriter, r *http.Request) {
 	// P0 privacy hardening: never process encrypted-note plaintext server-side.
 	if note.ContentEncrypted {
 		respondError(w, http.StatusForbidden, errEncryptedNoteAIProcessingDisabled)
+		return
+	}
+	if strings.TrimSpace(req.PlaintextContent) != "" {
+		respondError(w, http.StatusBadRequest, errAIPlaintextContentDeprecated)
 		return
 	}
 

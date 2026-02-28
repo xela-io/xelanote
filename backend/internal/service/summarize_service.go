@@ -49,9 +49,9 @@ func (s *SummarizeService) acquireLock(noteID string) func() {
 
 // SummarizeNote generates a summary for a note.
 // For unencrypted notes, content is read from the database.
-// For encrypted notes, plaintext content must be provided.
+// For encrypted notes, server-side processing is blocked.
 // Uses idempotency check: skips if content hash is unchanged and summary exists.
-func (s *SummarizeService) SummarizeNote(ctx context.Context, userID int, noteID string, plaintextContent string) (string, error) {
+func (s *SummarizeService) SummarizeNote(ctx context.Context, userID int, noteID string, _ string) (string, error) {
 	// Acquire per-note lock to prevent race conditions
 	unlock := s.acquireLock(noteID)
 	defer unlock()

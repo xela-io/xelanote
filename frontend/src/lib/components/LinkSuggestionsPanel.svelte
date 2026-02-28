@@ -10,11 +10,11 @@
   interface Props {
     noteId: string;
     isEncrypted: boolean;
-    plaintextContent?: string;
+    noteContent?: string;
     onInsertLink: (term: string, targetTitle: string) => void;
   }
 
-  const { noteId, isEncrypted, plaintextContent, onInsertLink }: Props = $props();
+  const { noteId, isEncrypted, noteContent, onInsertLink }: Props = $props();
 
   let expanded = $state(false);
   let loading = $state(false);
@@ -25,8 +25,8 @@
   let aiDisabled = $state(false);
   let hasGenerated = $state(false);
 
-  // Get the content to analyze
-  const content = $derived(isEncrypted ? plaintextContent : plaintextContent);
+  // Content to analyze for plaintext notes.
+  const content = $derived(noteContent || '');
 
   async function loadNoteTitles() {
     if (noteTitles.length > 0) return; // Already loaded
@@ -43,14 +43,13 @@
   }
 
   async function generateSuggestions() {
-    if (loading || !content) return;
-
     // P0 privacy hardening: never send encrypted-note plaintext to the server.
     if (isEncrypted) {
       aiDisabled = true;
       error = $_('ai.encrypted_processing_disabled');
       return;
     }
+    if (loading || !content) return;
 
     loading = true;
     error = null;
@@ -68,8 +67,7 @@
       const titleStrings = noteTitles.map((t) => t.title);
 
       // Call API
-      const contentToSend = isEncrypted ? plaintextContent : undefined;
-      suggestions = await api.suggestLinks(noteId, contentToSend, titleStrings, existingTitles);
+      suggestions = await api.suggestLinks(noteId, titleStrings, existingTitles);
       hasGenerated = true;
     } catch (e: unknown) {
       console.error('Failed to generate link suggestions:', e);

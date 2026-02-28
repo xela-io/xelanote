@@ -3,12 +3,13 @@ package api
 import "github.com/xela-io/xelanote/internal/service"
 
 const errEncryptedNoteAIProcessingDisabled = "server-side AI processing is disabled for encrypted notes"
+const errAIPlaintextContentDeprecated = "plaintext_content is no longer accepted for this endpoint"
 
 // --- Summary Endpoints ---
 
 // SummarizeNoteRequest represents the request body for summarizing a note.
 type SummarizeNoteRequest struct {
-	// PlaintextContent is required for encrypted notes (decrypted content from frontend)
+	// PlaintextContent is optional for legacy clients. Encrypted-note processing remains blocked.
 	PlaintextContent string `json:"plaintext_content,omitempty"`
 	// PlaintextContentHash is the SHA256 hash of plaintext (for E2E notes, computed by frontend)
 	PlaintextContentHash string `json:"plaintext_content_hash,omitempty"`
@@ -27,6 +28,7 @@ type SummarizeNoteResponse struct {
 
 // SuggestTagsRequest represents the request body for tag suggestions.
 type SuggestTagsRequest struct {
+	// Deprecated: plaintext_content is intentionally rejected.
 	PlaintextContent string `json:"plaintext_content,omitempty"`
 }
 
@@ -41,6 +43,7 @@ type SuggestTagsResponse struct {
 
 // SuggestLinksRequest represents the request body for link suggestions.
 type SuggestLinksRequest struct {
+	// Deprecated: plaintext_content is intentionally rejected.
 	PlaintextContent string   `json:"plaintext_content,omitempty"`
 	NoteTitles       []string `json:"note_titles"`
 	ExistingLinks    []string `json:"existing_links"`
@@ -66,8 +69,9 @@ type UpdateAIEnabledRequest struct {
 
 // FormatMarkdownRequest represents the request body for formatting markdown.
 type FormatMarkdownRequest struct {
-	PlaintextContent string `json:"plaintext_content,omitempty"` // For E2E-encrypted notes
-	SelectionOnly    string `json:"selection_only,omitempty"`    // When only part is formatted
+	// Deprecated: plaintext_content is intentionally rejected.
+	PlaintextContent string `json:"plaintext_content,omitempty"`
+	SelectionOnly    string `json:"selection_only,omitempty"` // When only part is formatted
 }
 
 // FormatMarkdownResponse represents the response from formatting markdown.
@@ -81,10 +85,11 @@ type FormatMarkdownResponse struct {
 
 // AITransformRequest represents the request body for AI text transformation.
 type AITransformRequest struct {
-	Action           string `json:"action"`                      // format, summarize, expand, translate_de, translate_en, formal, informal, custom
-	Content          string `json:"content,omitempty"`           // Plain text content
-	PlaintextContent string `json:"plaintext_content,omitempty"` // E2E decrypted content (takes precedence)
-	CustomPrompt     string `json:"custom_prompt,omitempty"`     // Only for action="custom"
+	Action  string `json:"action"`            // format, summarize, expand, translate_de, translate_en, formal, informal, custom
+	Content string `json:"content,omitempty"` // Plain text content
+	// Deprecated: plaintext_content is intentionally rejected.
+	PlaintextContent string `json:"plaintext_content,omitempty"`
+	CustomPrompt     string `json:"custom_prompt,omitempty"` // Only for action="custom"
 }
 
 // AITransformResponse represents the response from AI text transformation.

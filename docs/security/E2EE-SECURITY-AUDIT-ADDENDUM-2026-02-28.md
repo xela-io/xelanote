@@ -14,11 +14,14 @@ This addendum reflects the **current remediation status** of the previously repo
    - `frontend/src/lib/crypto/e2e.ts:269-281` (decrypt with AAD)
    - `frontend/src/lib/crypto/sodium.ts:226-231` and `frontend/src/lib/crypto/sodium.ts:280-285` (AAD passed into libsodium AEAD API)
 
-2. **Server-side AI summarization is blocked for encrypted notes.**
+2. **Server-side AI processing is blocked for encrypted notes (summary, tags, links, format, transform).**
    - `backend/internal/service/summarize_service.go:70-73`
    - `backend/internal/api/notes_ai_summary.go:93-95`
    - `backend/internal/api/notes_ai_summary.go:142-144`
-   - Test coverage: `backend/internal/service/summarize_test.go:62-85`
+   - `backend/internal/api/notes_ai_suggest.go`
+   - `backend/internal/api/notes_ai_format.go`
+   - `backend/internal/api/notes_ai_transform.go`
+   - Test coverage: `backend/internal/service/summarize_test.go:62-85`, `backend/internal/api/notes_ai_privacy_test.go`
 
 3. **Server-side export no longer silently emits empty encrypted-note files.**
    - `backend/internal/api/export.go:14-17` (explicit placeholder)
@@ -63,10 +66,6 @@ This addendum reflects the **current remediation status** of the previously repo
 
 2. **E2EE does not cover all metadata** (explicitly documented scope limit).
    - `docs/e2e-encryption.md:51-58`
-
-3. **AI trust boundary remains feature-dependent.**
-   - Summary for encrypted notes is blocked, but docs still state that other AI features may send plaintext when used:
-   - `docs/e2e-encryption.md:62-64`
 
 ## Verification Run (2026-02-28)
 

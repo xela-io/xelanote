@@ -9,12 +9,11 @@
   interface Props {
     noteId: string;
     isEncrypted: boolean;
-    plaintextContent?: string;
     existingTagNames: string[];
     onAddTag: (tagName: string) => Promise<void>;
   }
 
-  const { noteId, isEncrypted, plaintextContent, existingTagNames, onAddTag }: Props = $props();
+  const { noteId, isEncrypted, existingTagNames, onAddTag }: Props = $props();
 
   let expanded = $state(false);
   let loading = $state(false);
@@ -44,8 +43,7 @@
     aiDisabled = false;
 
     try {
-      const content = isEncrypted ? plaintextContent : undefined;
-      suggestions = await api.suggestTags(noteId, content);
+      suggestions = await api.suggestTags(noteId);
       hasGenerated = true;
     } catch (e: unknown) {
       console.error('Failed to generate tag suggestions:', e);
@@ -158,7 +156,7 @@
       {/if}
 
       <!-- Regenerate button -->
-      {#if !aiDisabled && (hasGenerated || !isEncrypted || plaintextContent)}
+      {#if !aiDisabled && (hasGenerated || !isEncrypted)}
         <button
           type="button"
           onclick={generateSuggestions}

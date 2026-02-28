@@ -12,7 +12,7 @@
     items: ShoppingItem[];
     canEdit?: boolean;
     onadditem?: (items: ParsedItem[]) => void;
-    children: Snippet;
+    children?: Snippet;
   }
 
   const { category, items, canEdit = false, onadditem, children }: Props = $props();
@@ -57,7 +57,7 @@
 
   {#if !collapsed}
     <div class="shopping-category-items">
-      {@render children()}
+      {#if children}{@render children()}{/if}
       {#if canEdit && onadditem}
         {#if items.length === 0 || showInput}
           <div class="category-inline-input">

@@ -217,9 +217,9 @@ func (s *AdminService) GetUserStorageMB(userID int) float64 {
 // StorageQuotaInfo holds storage quota details for a user.
 type StorageQuotaInfo struct {
 	UsedMB     float64 `json:"used_mb"`
-	LimitMB    int     `json:"limit_mb"`    // 0 = unlimited
-	IsCustom   bool    `json:"is_custom"`   // true = per-user override
-	Percentage float64 `json:"percentage"`  // 0-100, 0 when unlimited
+	LimitMB    int     `json:"limit_mb"`   // 0 = unlimited
+	IsCustom   bool    `json:"is_custom"`  // true = per-user override
+	Percentage float64 `json:"percentage"` // 0-100, 0 when unlimited
 }
 
 // GetEffectiveStorageLimitMB returns the effective storage limit for a user.

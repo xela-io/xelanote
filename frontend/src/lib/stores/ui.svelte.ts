@@ -10,7 +10,7 @@ import {
 // Sidebar state
 let sidebarOpen = $state(true);
 let sidebarWidth = $state(240); // compact desktop default
-const SIDEBAR_MIN_WIDTH = 200;
+const SIDEBAR_MIN_WIDTH = 320;
 const SIDEBAR_MAX_WIDTH = 500;
 const SIDEBAR_WIDTH_STORAGE_KEY = 'xelanote-sidebar-width';
 const SIDEBAR_WIDTH_MIGRATION_V1_KEY = 'xelanote-sidebar-width-migrated-v1';

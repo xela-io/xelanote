@@ -13,8 +13,15 @@ export function extractHeadings(content: string): TocEntry[] {
   const headings: TocEntry[] = [];
   const lines = content.split('\n');
   const slugCounts = new Map<string, number>();
+  let inCodeBlock = false;
 
   for (const line of lines) {
+    if (line.trimStart().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
     const match = line.match(/^(#{1,6})\s+(.+)$/);
     if (match) {
       const level = match[1].length;

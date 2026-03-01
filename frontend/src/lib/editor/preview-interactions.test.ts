@@ -120,10 +120,11 @@ describe('handleLiveTocClick', () => {
     );
 
     expect(handled).toBe(true);
-    expect(dispatch).toHaveBeenCalledWith({
-      selection: { anchor: 10 },
-      scrollIntoView: true,
-    });
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const dispatchArg = dispatch.mock.calls[0][0];
+    expect(dispatchArg.selection).toEqual({ anchor: 10 });
+    // Uses EditorView.scrollIntoView effect to position heading at the top
+    expect(dispatchArg.effects).toBeDefined();
     expect(focus).toHaveBeenCalledTimes(1);
   });
 

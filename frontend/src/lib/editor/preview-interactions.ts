@@ -1,4 +1,4 @@
-import type { EditorView } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
 
 interface PreviewInteractionOptions {
   featureTaskLists: boolean;
@@ -114,7 +114,13 @@ function slugifyHeading(text: string, slugCounts: Map<string, number>): string {
 function findHeadingLineBySlug(content: string, slug: string): number | null {
   const lines = content.split('\n');
   const slugCounts = new Map<string, number>();
+  let inCodeBlock = false;
   for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trimStart().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
     const match = lines[i].match(/^(#{1,6})\s+(.+)$/);
     if (!match) continue;
     const currentSlug = slugifyHeading(match[2].trim(), slugCounts);
@@ -138,7 +144,7 @@ export function handleLiveTocClick(
   const line = liveEditorView.state.doc.line(lineNumber);
   liveEditorView.dispatch({
     selection: { anchor: line.from },
-    scrollIntoView: true,
+    effects: EditorView.scrollIntoView(line.from, { y: 'start', yMargin: 16 }),
   });
   liveEditorView.focus();
   return true;
@@ -149,12 +155,46 @@ interface TocClickOptions {
   liveEditorView?: EditorView;
 }
 
+/**
+ * Find the nearest scrollable ancestor of an element.
+ */
+function findScrollContainer(el: HTMLElement): HTMLElement | null {
+  let current = el.parentElement;
+  while (current) {
+    const style = getComputedStyle(current);
+    const overflow = style.overflowY;
+    if (overflow === 'auto' || overflow === 'scroll') {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
+/** Small top margin so the heading isn't flush against the container edge. */
+const SCROLL_MARGIN_TOP = 8;
+
 export function handleTocClick(slug: string, options: TocClickOptions = {}) {
   const previewContainer = document.querySelector('.markdown-preview');
   if (previewContainer) {
-    const heading = previewContainer.querySelector(`#${CSS.escape(slug)}`);
+    const heading = previewContainer.querySelector<HTMLElement>(`#${CSS.escape(slug)}`);
     if (heading) {
-      heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Use targeted scrollTo on the specific scroll container instead of
+      // scrollIntoView, which scrolls ALL scrollable ancestors and can cause
+      // the page to jump on mobile or in split-mode layouts.
+      const scrollContainer = findScrollContainer(heading);
+      if (scrollContainer) {
+        const headingRect = heading.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const targetScroll =
+          scrollContainer.scrollTop + (headingRect.top - containerRect.top) - SCROLL_MARGIN_TOP;
+        scrollContainer.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: 'smooth',
+        });
+      } else {
+        heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       return;
     }
   }

@@ -274,6 +274,31 @@ export function decryptTitle(encryptedTitle: string, noteId?: string): string | 
 }
 
 /**
+ * Encrypt folder path using the note's existing DEK.
+ */
+export function encryptFolderPath(folderPath: string, noteID: string, wrappedDEK: string): string {
+  if (!isUnlocked) throw new Error('Encryption locked - please re-login');
+  return e2eEncryption.encryptFolderPath(folderPath, noteID, wrappedDEK);
+}
+
+/**
+ * Decrypt folder path using the note's existing DEK.
+ * Returns null if encryption is locked or decryption fails.
+ */
+export function decryptFolderPath(
+  encryptedFolderPath: string,
+  noteID: string,
+  wrappedDEK: string
+): string | null {
+  if (!isUnlocked) return null;
+  try {
+    return e2eEncryption.decryptFolderPath(encryptedFolderPath, noteID, wrappedDEK);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Update encryption settings.
  * Changes are applied immediately to new encryptions and persisted to backend.
  *

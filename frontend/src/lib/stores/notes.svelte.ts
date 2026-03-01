@@ -199,6 +199,8 @@ export async function loadNote(id: string) {
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     decryptNote: (encryptedTitle, payload, noteId) =>
       encryption.decryptNote(encryptedTitle, payload, noteId),
+    decryptFolderPath: (encryptedFolderPath, noteId, wrappedDEK) =>
+      encryption.decryptFolderPath(encryptedFolderPath, noteId, wrappedDEK),
     encryptNote: (title, content, noteId) => encryption.encryptNote(title, content, noteId),
     updateNote: (noteId, payload, version) => api.updateNote(noteId, payload, version),
     isConflictError: (err) => err instanceof ApiError && err.status === 409,
@@ -248,6 +250,8 @@ export async function createNote(
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (noteTitle, noteContent, noteId) =>
       encryption.encryptNote(noteTitle, noteContent, noteId),
+    encryptFolderPath: (fp, noteId, wrappedDek) =>
+      encryption.encryptFolderPath(fp, noteId, wrappedDek),
     decryptNote: (encryptedTitle, payload, noteId) =>
       encryption.decryptNote(encryptedTitle, payload, noteId),
     extractUniqueLinks: (noteContent) => extractUniqueWikilinks(noteContent),
@@ -320,6 +324,8 @@ export async function saveNote() {
     assertOnline: () => assertOnlineForParanoidMode(),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (title, content, noteId) => encryption.encryptNote(title, content, noteId),
+    encryptFolderPath: (fp, noteId, wrappedDek) =>
+      encryption.encryptFolderPath(fp, noteId, wrappedDek),
     decryptNote: (encryptedTitle, payload, noteId) =>
       encryption.decryptNote(encryptedTitle, payload, noteId),
     encryptTaskText: (text) => encryption.encryptTaskText(text),
@@ -369,6 +375,8 @@ export async function toggleEncryption(): Promise<void> {
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (noteTitle, noteContent, noteId) =>
       encryption.encryptNote(noteTitle, noteContent, noteId),
+    encryptFolderPath: (folderPath, noteID, wrappedDEK) =>
+      encryption.encryptFolderPath(folderPath, noteID, wrappedDEK),
     decryptNote: (encryptedTitle, payload, noteId) =>
       encryption.decryptNote(encryptedTitle, payload, noteId),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
@@ -623,6 +631,8 @@ export async function moveNote(id: string, folderPath: string) {
       encryption.decryptNote(encryptedTitle, payload, noteId),
     isEncryptionUnlocked: () => encryption.isEncryptionUnlocked(),
     encryptNote: (title, content, noteId) => encryption.encryptNote(title, content, noteId),
+    encryptFolderPath: (fp, noteId, wrappedDek) =>
+      encryption.encryptFolderPath(fp, noteId, wrappedDek),
     extractUniqueLinks: (content) => extractUniqueWikilinks(content),
     extractDueDates: (content) => extractDueDatesDetailed(content),
     updateNote: (noteId, payload, version, offlineContext) =>

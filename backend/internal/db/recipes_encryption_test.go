@@ -33,7 +33,7 @@ func TestEncryptRecipe_DeletesMetadataAndIngredients(t *testing.T) {
 	// Encrypt the note
 	_, err = db.UpdateEncryptedNote(
 		userID, note.ID, "Encrypted Recipe", nil, false,
-		[]byte("encrypted-content"), "wrapped-dek", "{}", "", note.Version,
+		[]byte("encrypted-content"), "wrapped-dek", "{}", "", nil, note.Version,
 	)
 	if err != nil {
 		t.Fatalf("UpdateEncryptedNote failed: %v", err)
@@ -108,7 +108,7 @@ func TestDecryptRecipe_RestoresMetadataAndIngredients(t *testing.T) {
 	// Encrypt + delete recipe data
 	encNote, err := db.UpdateEncryptedNote(
 		userID, note.ID, "Encrypted", nil, false,
-		[]byte("enc"), "dek", "{}", "", note.Version,
+		[]byte("enc"), "dek", "{}", "", nil, note.Version,
 	)
 	if err != nil {
 		t.Fatalf("UpdateEncryptedNote failed: %v", err)
@@ -180,7 +180,7 @@ func TestDecryptRecipe_WithoutRecipeData(t *testing.T) {
 	// Encrypt + delete recipe data
 	encNote, err := db.UpdateEncryptedNote(
 		userID, note.ID, "Encrypted", nil, false,
-		[]byte("enc"), "dek", "{}", "", note.Version,
+		[]byte("enc"), "dek", "{}", "", nil, note.Version,
 	)
 	if err != nil {
 		t.Fatalf("UpdateEncryptedNote failed: %v", err)
@@ -227,7 +227,7 @@ func TestEncryptedRecipeGet_EncryptedNote(t *testing.T) {
 	// Encrypt
 	_, err = db.UpdateEncryptedNote(
 		userID, note.ID, "Encrypted", nil, false,
-		[]byte("enc"), "dek", "{}", "", note.Version,
+		[]byte("enc"), "dek", "{}", "", nil, note.Version,
 	)
 	if err != nil {
 		t.Fatalf("UpdateEncryptedNote failed: %v", err)

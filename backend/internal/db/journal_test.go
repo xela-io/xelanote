@@ -465,6 +465,7 @@ func TestListJournalEntries_TitleAlwaysPlaintext(t *testing.T) {
 		"wrapped_dek_data",
 		`{"alg":"AES-256-GCM"}`,
 		"/Journal",
+		nil, // encryptedFolderPath
 		"2026-02-02",
 	)
 	if err != nil {

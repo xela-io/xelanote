@@ -127,6 +127,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.EncryptionMetadata,
 			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
+			req.EncryptedFolderPath,
 			*req.JournalDate,
 		)
 	case "recipe":
@@ -141,6 +142,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.EncryptionMetadata,
 			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
+			req.EncryptedFolderPath,
 		)
 	case "canvas":
 		return s.canvasService.CreateEncryptedCanvasNoteWithID(
@@ -154,6 +156,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.EncryptionMetadata,
 			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
+			req.EncryptedFolderPath,
 		)
 	default:
 		return s.noteService.CreateEncryptedNoteWithID(
@@ -167,6 +170,7 @@ func (s *Server) createEncryptedNoteFromRequest(userID int, req *NoteRequest) (*
 			req.EncryptionMetadata,
 			nil, // Privacy hardening: do not persist plaintext keywords for encrypted notes.
 			req.FolderPath,
+			req.EncryptedFolderPath,
 		)
 	}
 }

@@ -432,6 +432,7 @@ func TestUpdateLinksFromClient_EncryptedNoteClearsAndIgnoresInput(t *testing.T) 
 		"v3",
 		nil,
 		"/",
+		nil, // encryptedFolderPath
 	)
 	if err != nil {
 		t.Fatalf("failed to create encrypted source: %v", err)
@@ -479,6 +480,7 @@ func TestSetNoteDueDates_EncryptedNoteIgnoresInput(t *testing.T) {
 		"v3",
 		nil,
 		"/",
+		nil, // encryptedFolderPath
 	)
 	if err != nil {
 		t.Fatalf("failed to create encrypted note: %v", err)

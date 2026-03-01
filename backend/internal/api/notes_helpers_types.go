@@ -43,7 +43,8 @@ type NoteRequest struct {
 	TitleEncrypted     bool     `json:"title_encrypted"`
 	EncryptedContent   string   `json:"encrypted_content,omitempty"`   // Base64
 	WrappedDEK         string   `json:"wrapped_dek,omitempty"`         // Base64
-	EncryptionMetadata string   `json:"encryption_metadata,omitempty"` // JSON
+	EncryptionMetadata  string   `json:"encryption_metadata,omitempty"` // JSON
+	EncryptedFolderPath *string  `json:"encrypted_folder_path,omitempty"`
 	Keywords           []string `json:"keywords,omitempty"`
 	// Client-side extracted links (for E2E encrypted notes where server can't parse content)
 	Links []ClientLink `json:"links,omitempty"`

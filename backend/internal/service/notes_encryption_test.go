@@ -23,6 +23,7 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 			"v2",
 			nil, // no keywords
 			"/Sensitive",
+			nil, // encryptedFolderPath
 		)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -51,6 +52,7 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 			"v2",
 			nil,
 			"/",
+			nil, // encryptedFolderPath
 		)
 		if err == nil {
 			t.Fatal("expected error for empty encrypted content")
@@ -67,6 +69,7 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 			"v2",
 			nil,
 			"/",
+			nil, // encryptedFolderPath
 		)
 		if err == nil {
 			t.Fatal("expected error for empty wrapped DEK")
@@ -85,6 +88,7 @@ func TestNoteService_CreateEncryptedNote(t *testing.T) {
 			"v2",
 			nil,
 			"/",
+			nil, // encryptedFolderPath
 		)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -110,6 +114,7 @@ func TestNoteService_SetNoteTags_BlockedForEncryptedNotes(t *testing.T) {
 		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
 		nil,
 		"/",
+		nil, // encryptedFolderPath
 	)
 	if err != nil {
 		t.Fatalf("failed to create encrypted note: %v", err)
@@ -145,6 +150,7 @@ func TestNoteService_EncryptedFlowsInvalidateRecoveryKey(t *testing.T) {
 			"v3",
 			nil,
 			"/",
+			nil, // encryptedFolderPath
 		)
 		if err != nil {
 			t.Fatalf("unexpected error creating encrypted note: %v", err)
@@ -183,6 +189,7 @@ func TestNoteService_EncryptedFlowsInvalidateRecoveryKey(t *testing.T) {
 			"wrapped-dek",
 			`{"algorithm":"XChaCha20-Poly1305","version":3}`,
 			"/",
+			nil,
 			nil,
 			plain.Version,
 		)
@@ -264,6 +271,7 @@ func TestNoteService_UpdateEncryptedNote_ClearsPlaintextMetadata(t *testing.T) {
 		"wrapped-dek",
 		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
 		"/StillPrivate",
+		nil,
 		nil,
 		source.Version,
 	)
@@ -347,6 +355,7 @@ func TestNoteService_DecryptNote(t *testing.T) {
 			"v2",
 			nil,
 			"/",
+			nil, // encryptedFolderPath
 		)
 		if err != nil {
 			t.Fatalf("failed to create encrypted note: %v", err)
@@ -397,14 +406,14 @@ func TestNoteService_BatchUpdateWrappedDEKs(t *testing.T) {
 	t.Run("updates wrapped DEKs for encrypted notes", func(t *testing.T) {
 		note1, err := service.CreateEncryptedNote(
 			user.ID, "BatchNote1", nil, false,
-			[]byte("content1"), "old-dek-1", "v2", nil, "/",
+			[]byte("content1"), "old-dek-1", "v2", nil, "/", nil,
 		)
 		if err != nil {
 			t.Fatalf("failed to create note1: %v", err)
 		}
 		note2, err := service.CreateEncryptedNote(
 			user.ID, "BatchNote2", nil, false,
-			[]byte("content2"), "old-dek-2", "v2", nil, "/",
+			[]byte("content2"), "old-dek-2", "v2", nil, "/", nil,
 		)
 		if err != nil {
 			t.Fatalf("failed to create note2: %v", err)
@@ -506,7 +515,7 @@ func TestNoteService_UserHasEncryptedNotes(t *testing.T) {
 	t.Run("returns true for user with encrypted notes", func(t *testing.T) {
 		_, err := service.CreateEncryptedNote(
 			user.ID, "Enc", nil, false,
-			[]byte("encrypted"), "dek", "v2", nil, "/",
+			[]byte("encrypted"), "dek", "v2", nil, "/", nil,
 		)
 		if err != nil {
 			t.Fatalf("failed to create encrypted note: %v", err)

@@ -66,6 +66,7 @@ export interface MoveNoteDeps {
     encryptedContent: EncryptedPayload;
     keywords: string[];
   };
+  encryptFolderPath: (folderPath: string, noteID: string, wrappedDEK: string) => string;
   extractUniqueLinks: (content: string) => { title: string }[];
   extractDueDates: (content: string) => NotePayload['due_dates'];
   updateNote: (
@@ -125,6 +126,12 @@ export async function moveNote(deps: MoveNoteDeps) {
       note.id
     );
 
+    const encryptedFolderPath = deps.encryptFolderPath(
+      deps.folderPath,
+      note.id,
+      encryptedContent.metadata.wrapped_dek
+    );
+
     const payload = {
       title: encryptedTitle ? '' : note.title,
       encrypted_title: encryptedTitle,
@@ -132,6 +139,7 @@ export async function moveNote(deps: MoveNoteDeps) {
       encrypted_content: encryptedContent.ciphertext,
       wrapped_dek: encryptedContent.metadata.wrapped_dek,
       encryption_metadata: JSON.stringify(encryptedContent.metadata),
+      encrypted_folder_path: encryptedFolderPath,
       keywords,
       folder_path: deps.folderPath,
     };

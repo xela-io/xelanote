@@ -836,6 +836,61 @@ export class E2EEncryption {
   }
 
   /**
+   * Encrypt folder path using the note's existing DEK.
+   * Returns base64 ciphertext (nonce + ciphertext + tag).
+   */
+  encryptFolderPath(folderPath: string, noteID: string, wrappedDEK: string): string {
+    if (!this.kek) throw new Error('KEK not initialized');
+    if (!isInitialized()) throw new Error('libsodium not initialized');
+
+    // Unwrap the note's DEK
+    const wrappedDEKBytes = fromBase64Standard(wrappedDEK);
+    const wrapAAD = this.buildAAD(noteID, 'note', 'dek');
+    let dek = this.unwrapDEK(wrappedDEKBytes, this.kek, wrapAAD);
+    if (dek === null) {
+      // Fallback for legacy (v2) wrapped DEKs without AAD
+      dek = this.unwrapDEK(wrappedDEKBytes, this.kek);
+    }
+    if (dek === null) throw new DecryptionError('INVALID_KEY_OR_DATA');
+
+    // Encrypt folder path with DEK using folder_path-specific AAD
+    const plaintext = stringToBytes(folderPath);
+    const folderAAD = stringToBytes(`xelanote:e2ee:v3:note:folder_path:${noteID}`);
+    const ciphertext = encrypt(plaintext, dek, folderAAD);
+
+    dek.fill(0);
+    return toBase64Standard(ciphertext);
+  }
+
+  /**
+   * Decrypt folder path using the note's existing DEK.
+   * Returns plaintext folder path.
+   */
+  decryptFolderPath(encryptedFolderPath: string, noteID: string, wrappedDEK: string): string {
+    if (!this.kek) throw new DecryptionError('NOT_INITIALIZED');
+    if (!isInitialized()) throw new DecryptionError('NOT_INITIALIZED');
+
+    // Unwrap the note's DEK
+    const wrappedDEKBytes = fromBase64Standard(wrappedDEK);
+    const wrapAAD = this.buildAAD(noteID, 'note', 'dek');
+    let dek = this.unwrapDEK(wrappedDEKBytes, this.kek, wrapAAD);
+    if (dek === null) {
+      dek = this.unwrapDEK(wrappedDEKBytes, this.kek);
+    }
+    if (dek === null) throw new DecryptionError('INVALID_KEY_OR_DATA');
+
+    // Decrypt folder path with DEK
+    const ciphertextBytes = fromBase64Standard(encryptedFolderPath);
+    const folderAAD = stringToBytes(`xelanote:e2ee:v3:note:folder_path:${noteID}`);
+    const plaintext = decrypt(ciphertextBytes, dek, folderAAD);
+
+    dek.fill(0);
+
+    if (plaintext === null) throw new DecryptionError('INVALID_KEY_OR_DATA');
+    return bytesToString(plaintext);
+  }
+
+  /**
    * Export KEK for persistence (internal use only).
    * Returns a COPY to prevent external mutation.
    *

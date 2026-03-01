@@ -12,6 +12,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 import type { Folder, Note } from '$lib/api';
 import * as api from '$lib/api';
+import { decryptFolderPath, isEncryptionUnlocked } from '$lib/stores/encryption.svelte';
 
 // Re-export types from tree-index
 export type {
@@ -202,6 +203,26 @@ export async function loadTree() {
     const seenIds = new SvelteSet(regularNotes.map((n) => n.id));
     const uniqueJournalNotes = journalNotes.filter((n) => !seenIds.has(n.id));
     const notes = [...regularNotes, ...uniqueJournalNotes];
+
+    // Decrypt folder paths for encrypted notes
+    if (isEncryptionUnlocked()) {
+      for (const note of notes) {
+        if (note.encrypted_folder_path && note.wrapped_dek) {
+          try {
+            const decryptedPath = decryptFolderPath(
+              note.encrypted_folder_path,
+              note.id,
+              note.wrapped_dek
+            );
+            if (decryptedPath) {
+              note.folder_path = decryptedPath;
+            }
+          } catch {
+            // Fallback: keep server-side folder_path ("/")
+          }
+        }
+      }
+    }
 
     // Cache for sort-mode rebuild
     lastFolders = folders;

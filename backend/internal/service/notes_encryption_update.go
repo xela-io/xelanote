@@ -19,6 +19,7 @@ func (s *NoteService) UpdateEncryptedNote(
 	encryptionMetadata string,
 	_ string,
 	_ []string,
+	encryptedFolderPath *string,
 	expectedVersion int,
 ) (*db.Note, error) {
 	// Validate
@@ -68,7 +69,7 @@ func (s *NoteService) UpdateEncryptedNote(
 		}
 	}
 
-	encryptedFolderPath := normalizedEncryptedFolderPath()
+	serverFolderPath := normalizedEncryptedFolderPath()
 
 	// Update note in DB
 	note, err := s.db.UpdateEncryptedNote(
@@ -80,6 +81,7 @@ func (s *NoteService) UpdateEncryptedNote(
 		encryptedContent,
 		wrappedDEK,
 		encryptionMetadata,
+		serverFolderPath,
 		encryptedFolderPath,
 		expectedVersion,
 	)

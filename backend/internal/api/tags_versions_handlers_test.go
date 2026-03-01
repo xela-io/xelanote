@@ -133,6 +133,7 @@ func TestSetNoteTags_EncryptedNoteBlocked(t *testing.T) {
 		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
 		nil,
 		"/",
+		nil, // encryptedFolderPath
 	)
 	require.NoError(t, err)
 
@@ -162,6 +163,7 @@ func TestGetNoteTags_EncryptedNoteReturnsEmptyAndClearsLegacy(t *testing.T) {
 		`{"algorithm":"XChaCha20-Poly1305","version":3}`,
 		nil,
 		"/",
+		nil, // encryptedFolderPath
 	)
 	require.NoError(t, err)
 

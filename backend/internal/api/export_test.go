@@ -89,6 +89,7 @@ func TestExportMarkdown_EncryptedNotesAreMarkedInExport(t *testing.T) {
 		`{"version":2}`,
 		nil,
 		"/",
+		nil, // encryptedFolderPath
 	); err != nil {
 		t.Fatalf("create encrypted note: %v", err)
 	}

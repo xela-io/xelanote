@@ -85,6 +85,7 @@ export interface Note {
   wrapped_dek?: string; // Base64
   encryption_version?: number;
   encryption_metadata?: string; // JSON
+  encrypted_folder_path?: string | null; // Base64 ciphertext
   // Summary fields (LLM-generated)
   summary?: string | null;
   encrypted_summary?: string | null;
@@ -260,6 +261,7 @@ export interface NotePayload {
   encrypted_content?: string; // Base64
   wrapped_dek?: string; // Base64
   encryption_metadata?: string; // JSON
+  encrypted_folder_path?: string | null; // Base64 ciphertext
   keywords?: string[];
   // Client-side extracted links (for E2E encrypted notes where server can't parse content)
   links?: Array<{ target_title: string }>;

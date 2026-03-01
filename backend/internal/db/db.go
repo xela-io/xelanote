@@ -285,6 +285,7 @@ func (db *DB) runMigrations() error {
 		"065_set_encrypted_notes_folder_root.sql",
 		"066_add_recovery_wrapped_dek.sql",
 		"067_add_recovery_reset_tokens.sql",
+		"068_add_encrypted_folder_path.sql",
 	}
 
 	for _, migrationFile := range migrations {

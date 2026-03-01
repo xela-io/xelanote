@@ -25,6 +25,7 @@ vi.mock('$lib/stores/encryption.svelte', async () => {
     isEncryptionUnlocked: vi.fn(),
     lockEncryption: vi.fn(),
     encryptNote: vi.fn(),
+    encryptFolderPath: vi.fn().mockReturnValue('encrypted-folder-path'),
     decryptNote: vi.fn(),
   };
 });

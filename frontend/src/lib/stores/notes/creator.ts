@@ -20,6 +20,7 @@ export interface CreateNoteDeps {
     encryptedContent: EncryptedPayload;
     keywords: string[];
   };
+  encryptFolderPath: (folderPath: string, noteID: string, wrappedDEK: string) => string;
   decryptNote: (
     encryptedTitle: string | null,
     payload: EncryptedPayload,
@@ -93,6 +94,12 @@ export async function createNote(deps: CreateNoteDeps) {
         noteID
       );
 
+      const encryptedFolderPath = deps.encryptFolderPath(
+        deps.folderPath,
+        noteID,
+        encryptedContent.metadata.wrapped_dek
+      );
+
       const payload: NotePayload = {
         id: noteID,
         title: encryptedTitle ? '' : deps.title,
@@ -101,6 +108,7 @@ export async function createNote(deps: CreateNoteDeps) {
         encrypted_content: encryptedContent.ciphertext,
         wrapped_dek: encryptedContent.metadata.wrapped_dek,
         encryption_metadata: JSON.stringify(encryptedContent.metadata),
+        encrypted_folder_path: encryptedFolderPath,
         keywords,
         folder_path: deps.folderPath,
         ...(deps.journalOptions && {

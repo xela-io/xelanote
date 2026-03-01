@@ -35,6 +35,7 @@ function buildEncryptedUpdatePayload(
     encrypted_content: encryptedContent.ciphertext,
     wrapped_dek: encryptedContent.metadata.wrapped_dek,
     encryption_metadata: JSON.stringify(encryptedContent.metadata),
+    encrypted_folder_path: note.encrypted_folder_path,
     keywords,
     folder_path: note.folder_path,
   };
@@ -223,6 +224,11 @@ export interface LoadNoteDeps {
     payload: EncryptedPayload,
     noteId?: string
   ) => { title: string | null; content: string };
+  decryptFolderPath: (
+    encryptedFolderPath: string,
+    noteId: string,
+    wrappedDEK: string
+  ) => string | null;
   encryptNote: (
     title: string,
     content: string,
@@ -306,6 +312,22 @@ export async function loadNote(deps: LoadNoteDeps) {
         console.log('[NOTES] Note decrypted after load, content length:', content.length);
         note.title = title || note.title;
         note.content = migrated.content;
+
+        // Decrypt folder path if present
+        if (note.encrypted_folder_path && note.wrapped_dek) {
+          try {
+            const decryptedPath = deps.decryptFolderPath(
+              note.encrypted_folder_path,
+              note.id,
+              note.wrapped_dek
+            );
+            if (decryptedPath) {
+              note.folder_path = decryptedPath;
+            }
+          } catch {
+            // Fallback: keep "/" as folder_path
+          }
+        }
 
         if (migratedCount > 0) {
           recordEncryptedAttachmentMigrationDetected(migratedCount);

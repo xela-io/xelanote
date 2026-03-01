@@ -20,6 +20,7 @@ func (db *DB) CreateEncryptedNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 ) (*Note, error) {
 	return db.CreateEncryptedNoteWithID(
 		userID,
@@ -31,6 +32,7 @@ func (db *DB) CreateEncryptedNote(
 		wrappedDEK,
 		encryptionMetadata,
 		folderPath,
+		encryptedFolderPath,
 	)
 }
 
@@ -45,6 +47,7 @@ func (db *DB) CreateEncryptedNoteWithID(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 ) (*Note, error) {
 	id := noteID
 	if id == "" {
@@ -58,11 +61,11 @@ func (db *DB) CreateEncryptedNoteWithID(
 			id, title, title_norm, encrypted_title, title_encrypted,
 			content, encrypted_content, content_encrypted,
 			wrapped_dek, encryption_version, encryption_metadata,
-			folder_path, user_id, version, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, '', ?, 1, ?, 1, ?, ?, ?, 1, ?, ?)
+			folder_path, encrypted_folder_path, user_id, version, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, '', ?, 1, ?, 1, ?, ?, ?, ?, 1, ?, ?)
 	`, id, title, titleNorm, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
-		folderPath, userID, now.Format(time.RFC3339), now.Format(time.RFC3339))
+		folderPath, encryptedFolderPath, userID, now.Format(time.RFC3339), now.Format(time.RFC3339))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encrypted note: %w", err)
@@ -122,6 +125,7 @@ func (db *DB) CreateEncryptedJournalNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 	journalDate string,
 ) (*Note, error) {
 	return db.CreateEncryptedJournalNoteWithID(
@@ -134,6 +138,7 @@ func (db *DB) CreateEncryptedJournalNote(
 		wrappedDEK,
 		encryptionMetadata,
 		folderPath,
+		encryptedFolderPath,
 		journalDate,
 	)
 }
@@ -150,6 +155,7 @@ func (db *DB) CreateEncryptedJournalNoteWithID(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 	journalDate string,
 ) (*Note, error) {
 	// Ensure Journal folder exists (idempotent)
@@ -172,13 +178,13 @@ func (db *DB) CreateEncryptedJournalNoteWithID(
 			id, title, title_norm, encrypted_title, title_encrypted,
 			content, encrypted_content, content_encrypted,
 			wrapped_dek, encryption_version, encryption_metadata,
-			folder_path, user_id, version,
+			folder_path, encrypted_folder_path, user_id, version,
 			note_type, journal_date,
 			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, '', ?, 1, ?, 1, ?, ?, ?, 1, 'journal', ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, '', ?, 1, ?, 1, ?, ?, ?, ?, 1, 'journal', ?, ?, ?)
 	`, id, title, titleNorm, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
-		folderPath, userID, journalDate,
+		folderPath, encryptedFolderPath, userID, journalDate,
 		now.Format(time.RFC3339), now.Format(time.RFC3339))
 
 	if err != nil {
@@ -199,6 +205,7 @@ func (db *DB) UpdateEncryptedNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 	expectedVersion int,
 ) (*Note, error) {
 	titleNorm := utils.NormalizeTitle(title)
@@ -215,11 +222,11 @@ func (db *DB) UpdateEncryptedNote(
 			SET title = ?, title_norm = ?, encrypted_title = ?, title_encrypted = ?,
 			    content = '', encrypted_content = ?, content_encrypted = 1,
 			    wrapped_dek = ?, encryption_version = 1, encryption_metadata = ?,
-			    folder_path = ?, version = version + 1, updated_at = ?
+			    folder_path = ?, encrypted_folder_path = ?, version = version + 1, updated_at = ?
 			WHERE id = ? AND user_id = ? AND version = ? AND is_deleted = 0
 		`, title, titleNorm, encryptedTitle, titleEncrypted,
 			encryptedContent, wrappedDEK, encryptionMetadata,
-			folderPath, now.Format(time.RFC3339), id, userID, expectedVersion)
+			folderPath, encryptedFolderPath, now.Format(time.RFC3339), id, userID, expectedVersion)
 	} else {
 		// Update without changing folder_path
 		result, err = db.Exec(`
@@ -227,11 +234,11 @@ func (db *DB) UpdateEncryptedNote(
 			SET title = ?, title_norm = ?, encrypted_title = ?, title_encrypted = ?,
 			    content = '', encrypted_content = ?, content_encrypted = 1,
 			    wrapped_dek = ?, encryption_version = 1, encryption_metadata = ?,
-			    version = version + 1, updated_at = ?
+			    encrypted_folder_path = ?, version = version + 1, updated_at = ?
 			WHERE id = ? AND user_id = ? AND version = ? AND is_deleted = 0
 		`, title, titleNorm, encryptedTitle, titleEncrypted,
 			encryptedContent, wrappedDEK, encryptionMetadata,
-			now.Format(time.RFC3339), id, userID, expectedVersion)
+			encryptedFolderPath, now.Format(time.RFC3339), id, userID, expectedVersion)
 	}
 
 	if err != nil {
@@ -270,6 +277,7 @@ func (db *DB) DecryptNote(userID int, id, title, content string, expectedVersion
 		    content_encrypted = 0, encrypted_content = NULL,
 		    encrypted_title = NULL, title_encrypted = 0,
 		    wrapped_dek = NULL, encryption_version = 0, encryption_metadata = NULL,
+		    encrypted_folder_path = NULL,
 		    encrypted_summary = NULL, summary_encrypted = 0,
 		    version = version + 1, updated_at = ?
 		WHERE id = ? AND user_id = ? AND version = ? AND is_deleted = 0 AND content_encrypted = 1
@@ -346,7 +354,8 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 	rows, err := db.Query(`
 		SELECT id, title, content, folder_path, version, color, created_at, updated_at,
 		       encrypted_content, content_encrypted, encrypted_title, title_encrypted,
-		       wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata
+		       wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata,
+		       encrypted_folder_path
 		FROM notes
 		WHERE user_id = ? AND is_deleted = 0 AND (content_encrypted = 1 OR title_encrypted = 1)
 	`, userID)
@@ -361,12 +370,14 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 		var createdAt, updatedAt string
 		var content, encryptedTitle, wrappedDEK, wrappedDEKRecovery, encryptionMetadata sql.NullString
 		var encryptedContent []byte
+		var encryptedFolderPath sql.NullString
 
 		err := rows.Scan(
 			&note.ID, &note.Title, &content, &note.FolderPath, &note.Version, &note.Color,
 			&createdAt, &updatedAt,
 			&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
 			&wrappedDEK, &wrappedDEKRecovery, &note.EncryptionVersion, &encryptionMetadata,
+			&encryptedFolderPath,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan encrypted note: %w", err)
@@ -402,6 +413,9 @@ func (db *DB) GetAllEncryptedNotesForUser(userID int) ([]Note, error) {
 		}
 		if encryptionMetadata.Valid {
 			note.EncryptionMetadata = encryptionMetadata.String
+		}
+		if encryptedFolderPath.Valid {
+			note.EncryptedFolderPath = &encryptedFolderPath.String
 		}
 
 		notes = append(notes, note)

@@ -53,6 +53,7 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 	var createdAt, updatedAt string
 	var content, encryptedTitle, wrappedDEK, wrappedDEKRecovery, encryptionMetadata sql.NullString
 	var encryptedContent []byte
+	var encryptedFolderPath sql.NullString
 	// Summary fields
 	var summary, encryptedSummary, contentHash, summaryGeneratedAt sql.NullString
 	// Journal fields
@@ -62,6 +63,7 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 		SELECT id, title, content, folder_path, version, color, created_at, updated_at,
 		       encrypted_content, content_encrypted, encrypted_title, title_encrypted,
 		       wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata,
+		       encrypted_folder_path,
 		       summary, encrypted_summary, summary_encrypted, content_hash, summary_generated_at,
 		       note_type, journal_date, ai_enabled
 		FROM notes
@@ -71,6 +73,7 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 		&createdAt, &updatedAt,
 		&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
 		&wrappedDEK, &wrappedDEKRecovery, &note.EncryptionVersion, &encryptionMetadata,
+		&encryptedFolderPath,
 		&summary, &encryptedSummary, &note.SummaryEncrypted, &contentHash, &summaryGeneratedAt,
 		&noteType, &journalDate, &note.AIEnabled,
 	)
@@ -112,6 +115,9 @@ func (db *DB) GetNote(userID int, id string) (*Note, error) {
 	}
 	if encryptionMetadata.Valid {
 		note.EncryptionMetadata = encryptionMetadata.String
+	}
+	if encryptedFolderPath.Valid {
+		note.EncryptedFolderPath = &encryptedFolderPath.String
 	}
 	// Summary fields
 	if summary.Valid {

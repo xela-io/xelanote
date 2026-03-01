@@ -81,6 +81,7 @@ func (db *DB) CreateEncryptedRecipeNote(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 ) (*Note, error) {
 	return db.CreateEncryptedRecipeNoteWithID(
 		userID,
@@ -92,6 +93,7 @@ func (db *DB) CreateEncryptedRecipeNote(
 		wrappedDEK,
 		encryptionMetadata,
 		folderPath,
+		encryptedFolderPath,
 	)
 }
 
@@ -107,6 +109,7 @@ func (db *DB) CreateEncryptedRecipeNoteWithID(
 	wrappedDEK string,
 	encryptionMetadata string,
 	folderPath string,
+	encryptedFolderPath *string,
 ) (*Note, error) {
 	if folderPath == "/Rezepte" {
 		folder, err := db.CreateFolder(userID, "/Rezepte", nil)
@@ -136,12 +139,12 @@ func (db *DB) CreateEncryptedRecipeNoteWithID(
 			id, title, title_norm, encrypted_title, title_encrypted,
 			content, encrypted_content, content_encrypted,
 			wrapped_dek, encryption_version, encryption_metadata,
-			folder_path, user_id, version, note_type,
+			folder_path, encrypted_folder_path, user_id, version, note_type,
 			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, '', ?, 1, ?, 1, ?, ?, ?, 1, 'recipe', ?, ?)
+		) VALUES (?, ?, ?, ?, ?, '', ?, 1, ?, 1, ?, ?, ?, ?, 1, 'recipe', ?, ?)
 	`, id, title, titleNorm, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
-		folderPath, userID,
+		folderPath, encryptedFolderPath, userID,
 		now.Format(time.RFC3339), now.Format(time.RFC3339))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encrypted recipe note: %w", err)

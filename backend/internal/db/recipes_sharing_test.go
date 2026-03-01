@@ -63,7 +63,7 @@ func TestExistingShareThenEncrypt_SharesRemoved(t *testing.T) {
 	// Encrypt the note
 	_, err = db.UpdateEncryptedNote(
 		owner, note.ID, "Encrypted", nil, false,
-		[]byte("enc"), "dek", "{}", "", note.Version,
+		[]byte("enc"), "dek", "{}", "", nil, note.Version,
 	)
 	if err != nil {
 		t.Fatalf("UpdateEncryptedNote failed: %v", err)
@@ -348,7 +348,7 @@ func TestCollectionHasEncryptedRecipes(t *testing.T) {
 	// Encrypt the recipe
 	_, err = db.UpdateEncryptedNote(
 		owner, recipe.ID, "Encrypted", nil, false,
-		[]byte("enc"), "dek", "{}", "", recipe.Version,
+		[]byte("enc"), "dek", "{}", "", nil, recipe.Version,
 	)
 	if err != nil {
 		t.Fatalf("UpdateEncryptedNote failed: %v", err)

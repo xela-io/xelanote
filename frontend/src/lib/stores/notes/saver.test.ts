@@ -139,6 +139,8 @@ describe('saveNote security behavior', () => {
       assertOnline: () => {},
       isEncryptionUnlocked: () => true,
       encryptNote,
+      encryptFolderPath: (_folderPath: string, _noteID: string, _wrappedDEK: string) =>
+        'encrypted-folder-path',
       decryptNote,
       encryptTaskText: (text) => ({ ciphertext: text, metadata: {} }),
       extractUniqueLinks,

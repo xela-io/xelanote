@@ -80,6 +80,7 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 	encryptionMetadata string,
 	_ []string,
 	_ string,
+	encryptedFolderPath *string,
 ) (*db.Note, error) {
 	return s.CreateEncryptedCanvasNoteWithID(
 		userID,
@@ -92,6 +93,7 @@ func (s *CanvasService) CreateEncryptedCanvasNote(
 		encryptionMetadata,
 		nil,
 		"",
+		encryptedFolderPath,
 	)
 }
 
@@ -108,6 +110,7 @@ func (s *CanvasService) CreateEncryptedCanvasNoteWithID(
 	encryptionMetadata string,
 	_ []string,
 	_ string,
+	encryptedFolderPath *string,
 ) (*db.Note, error) {
 	if err := s.notes.checkNoteLimit(userID); err != nil {
 		return nil, err
@@ -117,12 +120,12 @@ func (s *CanvasService) CreateEncryptedCanvasNoteWithID(
 		return nil, err
 	}
 
-	encryptedFolderPath := normalizedEncryptedFolderPath()
+	serverFolderPath := normalizedEncryptedFolderPath()
 
 	note, err := s.db.CreateEncryptedCanvasNoteWithID(
 		userID, noteID, title, encryptedTitle, titleEncrypted,
 		encryptedContent, wrappedDEK, encryptionMetadata,
-		nil, encryptedFolderPath,
+		nil, serverFolderPath, encryptedFolderPath,
 	)
 	if err != nil {
 		return nil, err
@@ -131,7 +134,7 @@ func (s *CanvasService) CreateEncryptedCanvasNoteWithID(
 	s.notes.invalidateRecoveryKeyBestEffort(userID)
 	s.notes.invalidateFolderCache(userID)
 	s.notes.invalidateQuickSearchCache(userID)
-	s.notes.invalidateNotesByFolderCache(userID, encryptedFolderPath)
+	s.notes.invalidateNotesByFolderCache(userID, serverFolderPath)
 	if s.notes.graphService != nil {
 		s.notes.graphService.InvalidateGraphCache(userID)
 	}

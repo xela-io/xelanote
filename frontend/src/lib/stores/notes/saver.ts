@@ -33,6 +33,7 @@ export interface SaveNoteDeps {
     encryptedContent: EncryptedPayload;
     keywords: string[];
   };
+  encryptFolderPath: (folderPath: string, noteID: string, wrappedDEK: string) => string;
   decryptNote: (
     encryptedTitle: string | null,
     payload: EncryptedPayload,
@@ -115,6 +116,12 @@ export async function saveNote(deps: SaveNoteDeps) {
         currentNote.id
       );
 
+      const encryptedFolderPath = deps.encryptFolderPath(
+        currentNote.folder_path,
+        currentNote.id,
+        encryptedContent.metadata.wrapped_dek
+      );
+
       const payload = {
         title: encryptedTitle ? '' : currentNote.title,
         encrypted_title: encryptedTitle,
@@ -122,6 +129,7 @@ export async function saveNote(deps: SaveNoteDeps) {
         encrypted_content: encryptedContent.ciphertext,
         wrapped_dek: encryptedContent.metadata.wrapped_dek,
         encryption_metadata: JSON.stringify(encryptedContent.metadata),
+        encrypted_folder_path: encryptedFolderPath,
         keywords,
         folder_path: currentNote.folder_path,
       };

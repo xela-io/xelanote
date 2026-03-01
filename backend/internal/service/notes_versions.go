@@ -96,6 +96,7 @@ func (s *NoteService) RestoreVersion(userID int, noteID string, targetVersion, c
 			encryptionMetadata,
 			current.FolderPath,
 			nil, // keywords - not stored in versions
+			current.EncryptedFolderPath,
 			currentVersion,
 		)
 	}

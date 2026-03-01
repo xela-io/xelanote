@@ -34,6 +34,7 @@ func (db *DB) CreateEncryptedCanvasNote(
 	encryptionMetadata string,
 	_ []string,
 	folderPath string,
+	encryptedFolderPath *string,
 ) (*Note, error) {
 	return db.CreateEncryptedCanvasNoteWithID(
 		userID,
@@ -46,6 +47,7 @@ func (db *DB) CreateEncryptedCanvasNote(
 		encryptionMetadata,
 		nil,
 		folderPath,
+		encryptedFolderPath,
 	)
 }
 
@@ -61,6 +63,7 @@ func (db *DB) CreateEncryptedCanvasNoteWithID(
 	encryptionMetadata string,
 	_ []string,
 	folderPath string,
+	encryptedFolderPath *string,
 ) (*Note, error) {
 	id := noteID
 	if id == "" {
@@ -76,10 +79,10 @@ func (db *DB) CreateEncryptedCanvasNoteWithID(
 	_, err := db.Exec(`
 		INSERT INTO notes (id, user_id, title, title_norm, content, encrypted_content, content_encrypted,
 			encrypted_title, title_encrypted, wrapped_dek, encryption_version, encryption_metadata,
-			folder_path, note_type, version, created_at, updated_at)
-		VALUES (?, ?, ?, LOWER(?), '', ?, 1, ?, ?, ?, 1, ?, ?, 'canvas', 1, ?, ?)
+			folder_path, encrypted_folder_path, note_type, version, created_at, updated_at)
+		VALUES (?, ?, ?, LOWER(?), '', ?, 1, ?, ?, ?, 1, ?, ?, ?, 'canvas', 1, ?, ?)
 	`, id, userID, title, title, encryptedContent, encryptedTitle, titleEnc,
-		wrappedDEK, encryptionMetadata, folderPath, now, now)
+		wrappedDEK, encryptionMetadata, folderPath, encryptedFolderPath, now, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encrypted canvas note: %w", err)
 	}

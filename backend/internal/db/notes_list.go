@@ -11,7 +11,7 @@ import (
 const fullSelectColumns = `id, title, content, folder_path, version, display_order, color, created_at, updated_at,
 	encrypted_content, content_encrypted, encrypted_title, title_encrypted,
 	wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata,
-	note_type, journal_date, ai_enabled, is_deleted`
+	encrypted_folder_path, note_type, journal_date, ai_enabled, is_deleted`
 
 // Slim SELECT columns — excludes content, encrypted_content, summary fields, content_hash, summary_generated_at.
 // Keeps all encryption metadata (wrapped_dek, encryption_version, encryption_metadata, encrypted_title, title_encrypted)
@@ -19,7 +19,7 @@ const fullSelectColumns = `id, title, content, folder_path, version, display_ord
 const slimSelectColumns = `id, title, '' as content, folder_path, version, display_order, color, created_at, updated_at,
 	NULL as encrypted_content, content_encrypted, encrypted_title, title_encrypted,
 	wrapped_dek, wrapped_dek_recovery, encryption_version, encryption_metadata,
-	note_type, journal_date, ai_enabled, is_deleted`
+	encrypted_folder_path, note_type, journal_date, ai_enabled, is_deleted`
 
 // selectColumns returns the appropriate SELECT columns based on the slim flag.
 func selectColumns(slim bool) string {
@@ -36,6 +36,7 @@ func scanNoteBase(rows *sql.Rows, slim bool, userID int, extraDests ...any) (Not
 	var createdAt, updatedAt string
 	var content, encryptedTitle, wrappedDEK, wrappedDEKRecovery, encryptionMetadata sql.NullString
 	var encryptedContent []byte
+	var encryptedFolderPath sql.NullString
 	var noteType, journalDate sql.NullString
 	var isDeleted int
 
@@ -43,7 +44,7 @@ func scanNoteBase(rows *sql.Rows, slim bool, userID int, extraDests ...any) (Not
 		&note.ID, &note.Title, &content, &note.FolderPath, &note.Version, &note.DisplayOrder, &note.Color, &createdAt, &updatedAt,
 		&encryptedContent, &note.ContentEncrypted, &encryptedTitle, &note.TitleEncrypted,
 		&wrappedDEK, &wrappedDEKRecovery, &note.EncryptionVersion, &encryptionMetadata,
-		&noteType, &journalDate, &note.AIEnabled, &isDeleted,
+		&encryptedFolderPath, &noteType, &journalDate, &note.AIEnabled, &isDeleted,
 	}
 	dests = append(dests, extraDests...)
 
@@ -70,6 +71,9 @@ func scanNoteBase(rows *sql.Rows, slim bool, userID int, extraDests ...any) (Not
 	note.WrappedDEK = wrappedDEK.String
 	note.WrappedDEKRecovery = wrappedDEKRecovery.String
 	note.EncryptionMetadata = encryptionMetadata.String
+	if encryptedFolderPath.Valid {
+		note.EncryptedFolderPath = &encryptedFolderPath.String
+	}
 	if noteType.Valid {
 		note.NoteType = noteType.String
 	} else {
@@ -332,11 +336,11 @@ func sharedSelectColumns(slim bool) string {
 	n.color, n.created_at, n.updated_at,
 	NULL as encrypted_content, n.content_encrypted, n.encrypted_title, n.title_encrypted,
 	n.wrapped_dek, n.wrapped_dek_recovery, n.encryption_version, n.encryption_metadata,
-	n.note_type, n.journal_date, n.ai_enabled, n.is_deleted`
+	n.encrypted_folder_path, n.note_type, n.journal_date, n.ai_enabled, n.is_deleted`
 	}
 	return `n.id, n.title, n.content, n.folder_path, n.version, 99999 as display_order,
 	n.color, n.created_at, n.updated_at,
 	n.encrypted_content, n.content_encrypted, n.encrypted_title, n.title_encrypted,
 	n.wrapped_dek, n.wrapped_dek_recovery, n.encryption_version, n.encryption_metadata,
-	n.note_type, n.journal_date, n.ai_enabled, n.is_deleted`
+	n.encrypted_folder_path, n.note_type, n.journal_date, n.ai_enabled, n.is_deleted`
 }

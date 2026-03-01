@@ -22,7 +22,8 @@ type Note struct {
 	WrappedDEK         string  `json:"wrapped_dek,omitempty"`
 	WrappedDEKRecovery string  `json:"wrapped_dek_recovery,omitempty"`
 	EncryptionVersion  int     `json:"encryption_version"`
-	EncryptionMetadata string  `json:"encryption_metadata,omitempty"`
+	EncryptionMetadata  string  `json:"encryption_metadata,omitempty"`
+	EncryptedFolderPath *string `json:"encrypted_folder_path,omitempty"`
 	// Summary fields (LLM-generated)
 	Summary            *string    `json:"summary,omitempty"`
 	EncryptedSummary   *string    `json:"encrypted_summary,omitempty"`

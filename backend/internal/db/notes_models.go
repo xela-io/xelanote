@@ -15,13 +15,13 @@ type Note struct {
 	UpdatedAt    time.Time  `json:"updated_at"`
 	DeletedAt    *time.Time `json:"deleted_at,omitempty"`
 	// Encryption fields
-	EncryptedContent   []byte  `json:"encrypted_content,omitempty"`
-	ContentEncrypted   bool    `json:"content_encrypted"`
-	EncryptedTitle     *string `json:"encrypted_title,omitempty"`
-	TitleEncrypted     bool    `json:"title_encrypted"`
-	WrappedDEK         string  `json:"wrapped_dek,omitempty"`
-	WrappedDEKRecovery string  `json:"wrapped_dek_recovery,omitempty"`
-	EncryptionVersion  int     `json:"encryption_version"`
+	EncryptedContent    []byte  `json:"encrypted_content,omitempty"`
+	ContentEncrypted    bool    `json:"content_encrypted"`
+	EncryptedTitle      *string `json:"encrypted_title,omitempty"`
+	TitleEncrypted      bool    `json:"title_encrypted"`
+	WrappedDEK          string  `json:"wrapped_dek,omitempty"`
+	WrappedDEKRecovery  string  `json:"wrapped_dek_recovery,omitempty"`
+	EncryptionVersion   int     `json:"encryption_version"`
 	EncryptionMetadata  string  `json:"encryption_metadata,omitempty"`
 	EncryptedFolderPath *string `json:"encrypted_folder_path,omitempty"`
 	// Summary fields (LLM-generated)

@@ -152,6 +152,11 @@ export async function createNote(deps: CreateNoteDeps) {
           throw new Error('Failed to decrypt created note');
         }
       }
+
+      // Server always returns folder_path="/" for encrypted notes.
+      // Preserve the client-side folder path so subsequent saves don't
+      // overwrite encrypted_folder_path with an encrypted "/".
+      processedNote.folder_path = deps.folderPath;
     }
 
     deps.setNotes([processedNote, ...deps.getNotes()]);

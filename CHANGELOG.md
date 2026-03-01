@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed encrypted notes losing folder assignment: folder paths are now encrypted client-side (`encrypted_folder_path`) and decrypted for tree display, preserving folder organization while keeping metadata private from the server
+- Fixed encrypted notes reverting to root folder after save: API responses no longer overwrite client-side folder path with server's "/"
 - Fixed UNION ALL column mismatch in shared-note folder query (missing `wrapped_dek_recovery`)
 - Fixed e2e-feature test to match updated `encryptNote` signature (now includes noteId)
 - Fixed migration 065 failing on UNIQUE constraint when moving encrypted notes to root folder

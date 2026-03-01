@@ -191,6 +191,11 @@ export async function saveNote(deps: SaveNoteDeps) {
           throw new Error('Failed to decrypt updated note');
         }
       }
+
+      // Server always returns folder_path="/" for encrypted notes.
+      // Preserve the client-side folder path so subsequent saves don't
+      // overwrite encrypted_folder_path with an encrypted "/".
+      processedUpdate.folder_path = currentNote.folder_path;
     }
 
     deps.setCurrentNote(processedUpdate);

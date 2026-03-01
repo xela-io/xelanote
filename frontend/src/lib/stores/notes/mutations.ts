@@ -174,6 +174,11 @@ export async function moveNote(deps: MoveNoteDeps) {
       };
     }
 
+    // Server always returns folder_path="/" for encrypted notes.
+    // Preserve the client-side folder path so subsequent saves don't
+    // overwrite encrypted_folder_path with an encrypted "/".
+    processedUpdate.folder_path = deps.folderPath;
+
     deps.setNotes(deps.getNotes().map((n) => (n.id === processedUpdate.id ? processedUpdate : n)));
     if (deps.getCurrentNote()?.id === deps.id) {
       deps.setCurrentNote(processedUpdate);

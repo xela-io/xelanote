@@ -226,6 +226,10 @@ export async function toggleEncryption(deps: ToggleEncryptionDeps) {
       };
     }
 
+    // Server always returns folder_path="/" for encrypted notes.
+    // Preserve the client-side folder path.
+    processedUpdate.folder_path = currentNote.folder_path;
+
     deps.setCurrentNote(processedUpdate);
     deps.setLastSavedVersion(processedUpdate.version);
     deps.setLastSaveTimestamp(Date.now());

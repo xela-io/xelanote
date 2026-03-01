@@ -1,4 +1,4 @@
-import * as api from '$lib/api';
+import { moveNote } from '$lib/stores/notes.svelte';
 
 import type { Command, CommandData, MoveFolderCommandData } from './types';
 
@@ -17,9 +17,7 @@ export class MoveFolderCommand implements Command {
 
   async execute(): Promise<boolean> {
     try {
-      // Fetch fresh version to avoid conflicts
-      const note = await api.getNote(this.data.noteId);
-      await api.moveNote(this.data.noteId, this.data.newFolder, note.version);
+      await moveNote(this.data.noteId, this.data.newFolder);
       return true;
     } catch (error) {
       console.error('MoveFolderCommand execute failed:', error);
@@ -29,9 +27,7 @@ export class MoveFolderCommand implements Command {
 
   async undo(): Promise<boolean> {
     try {
-      // Fetch fresh version to avoid conflicts
-      const note = await api.getNote(this.data.noteId);
-      await api.moveNote(this.data.noteId, this.data.oldFolder, note.version);
+      await moveNote(this.data.noteId, this.data.oldFolder);
       return true;
     } catch (error) {
       console.error('MoveFolderCommand undo failed:', error);

@@ -6,7 +6,7 @@
  * Server-persisted via open_tabs in user_preferences.
  */
 
-import { updateOpenTabsPreference } from '$lib/api/preferences';
+import { updateOpenTabsKeepalive, updateOpenTabsPreference } from '$lib/api/preferences';
 import type { OpenTabsPreference } from '$lib/api/types';
 
 export interface Tab {
@@ -48,9 +48,11 @@ const state = $state<TabState>({
 
 // Server-sync state
 let initialized = $state(false);
+let preferencesLoaded = $state(false);
 let isHydrating = false;
 let lastPersistedJSON = '';
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let hydratingTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Getters
 export function getState(): TabState {
@@ -97,6 +99,10 @@ export function findTabByNoteId(noteId: string): { tab: Tab; group: TabGroup } |
 
 export function isInitialized(): boolean {
   return initialized;
+}
+
+export function isPreferencesLoaded(): boolean {
+  return preferencesLoaded;
 }
 
 // Actions
@@ -282,10 +288,11 @@ export function setGroupWidth(groupId: string, width: number): void {
   }
 }
 
-// Close all tabs (e.g., on logout)
+// Close all tabs (e.g., on logout or user action)
 export function closeAllTabs(): void {
   state.groups = [{ ...initialGroup, tabs: [], activeTabId: null }];
   state.activeGroupId = 'main';
+  persistTabs();
 }
 
 // Check if any tabs have unsaved changes
@@ -305,12 +312,36 @@ export function getDirtyTabs(): Tab[] {
  * Creates Tab objects with empty titles (resolved later by resolveTabTitles).
  */
 export function initTabs(pref: OpenTabsPreference | null | undefined): void {
+  console.log(
+    '[tabs] initTabs called with:',
+    pref ? `${pref.tabs?.length ?? 0} tabs, active=${pref.active_note_id}` : 'null/undefined'
+  );
   isHydrating = true;
+  preferencesLoaded = true;
+
+  // Safety timeout: if resolveTabTitles never runs (e.g., tab feature disabled,
+  // notes never load), force isHydrating to false so tabs aren't permanently broken.
+  if (hydratingTimeout) clearTimeout(hydratingTimeout);
+  hydratingTimeout = setTimeout(() => {
+    if (isHydrating) {
+      console.warn('[tabs] Hydration safety timeout: forcing isHydrating to false');
+      isHydrating = false;
+      if (!initialized) {
+        initialized = true;
+      }
+    }
+    hydratingTimeout = null;
+  }, 15000);
 
   const mainGroup = state.groups.find((g) => g.id === 'main');
-  if (!mainGroup) return;
+  if (!mainGroup) {
+    console.warn('[tabs] initTabs: main group not found, clearing isHydrating');
+    isHydrating = false;
+    return;
+  }
 
   if (!pref || !pref.tabs || pref.tabs.length === 0) {
+    console.log('[tabs] initTabs: no tabs to restore, setting empty state');
     mainGroup.tabs = [];
     mainGroup.activeTabId = null;
     isHydrating = false;
@@ -334,6 +365,7 @@ export function initTabs(pref: OpenTabsPreference | null | undefined): void {
 
   // Cache initial state to avoid writing it back
   lastPersistedJSON = buildPersistedJSON();
+  console.log('[tabs] initTabs complete: created', mainGroup.tabs.length, 'tabs, isHydrating=true');
 }
 
 /**
@@ -344,6 +376,8 @@ export function resolveTabTitles(getNoteById: (id: string) => { title: string } 
   const mainGroup = state.groups.find((g) => g.id === 'main');
   if (!mainGroup) return;
 
+  console.log('[tabs] resolveTabTitles: starting with', mainGroup.tabs.length, 'tabs');
+
   // Filter out tabs whose notes no longer exist and resolve titles
   const validTabs: Tab[] = [];
   for (const tab of mainGroup.tabs) {
@@ -351,6 +385,8 @@ export function resolveTabTitles(getNoteById: (id: string) => { title: string } 
     if (note) {
       tab.title = note.title || '';
       validTabs.push(tab);
+    } else {
+      console.log('[tabs] resolveTabTitles: removing tab for missing note', tab.noteId);
     }
   }
 
@@ -370,8 +406,19 @@ export function resolveTabTitles(getNoteById: (id: string) => { title: string } 
   // Update persisted JSON baseline
   lastPersistedJSON = buildPersistedJSON();
 
+  // Clear hydration safety timeout
+  if (hydratingTimeout) {
+    clearTimeout(hydratingTimeout);
+    hydratingTimeout = null;
+  }
+
   isHydrating = false;
   initialized = true;
+  console.log(
+    '[tabs] resolveTabTitles: done. Final tabs:',
+    mainGroup.tabs.length,
+    'initialized=true isHydrating=false'
+  );
 }
 
 /**
@@ -385,8 +432,20 @@ export function syncTabWithRoute(noteId: string, title: string): void {
   if (existing) {
     existing.tab.title = title || existing.tab.title;
     activateTab(existing.tab.id, existing.group.id);
+    console.log(
+      '[tabs] syncTabWithRoute: activated existing tab for',
+      noteId,
+      '— total tabs:',
+      getTabs().length
+    );
   } else {
     openTab(noteId, title);
+    console.log(
+      '[tabs] syncTabWithRoute: opened new tab for',
+      noteId,
+      '— total tabs:',
+      getTabs().length
+    );
   }
 
   persistTabs();
@@ -538,7 +597,10 @@ function buildPersistedJSON(): string {
  * No-op during hydration. Skips if state hasn't changed.
  */
 export function persistTabs(): void {
-  if (isHydrating) return;
+  if (isHydrating) {
+    console.log('[tabs] persistTabs: skipped (hydrating)');
+    return;
+  }
 
   if (persistTimer) {
     clearTimeout(persistTimer);
@@ -548,15 +610,42 @@ export function persistTabs(): void {
     persistTimer = null;
 
     const json = buildPersistedJSON();
-    if (json === lastPersistedJSON) return;
+    if (json === lastPersistedJSON) {
+      console.log('[tabs] persistTabs: skipped (no change)');
+      return;
+    }
 
     lastPersistedJSON = json;
 
     const payload: OpenTabsPreference | null = json ? JSON.parse(json) : null;
+    console.log('[tabs] persistTabs: saving', payload?.tabs?.length ?? 0, 'tabs to server');
     updateOpenTabsPreference(payload).catch((err) => {
       console.warn('[tabs] Failed to persist tabs:', err);
     });
   }, 2000);
+}
+
+/**
+ * Flush any pending debounced persist immediately.
+ * Uses keepalive fetch for reliable delivery during page unload (beforeunload/visibilitychange).
+ */
+export function flushPendingPersist(): void {
+  if (!persistTimer) return;
+
+  clearTimeout(persistTimer);
+  persistTimer = null;
+
+  const json = buildPersistedJSON();
+  if (json === lastPersistedJSON) return;
+
+  lastPersistedJSON = json;
+  const payload: OpenTabsPreference | null = json ? JSON.parse(json) : null;
+  console.log(
+    '[tabs] flushPendingPersist: saving',
+    payload?.tabs?.length ?? 0,
+    'tabs via keepalive'
+  );
+  updateOpenTabsKeepalive(payload);
 }
 
 /**
@@ -565,4 +654,26 @@ export function persistTabs(): void {
 export function reorderTabsAndPersist(groupId: string, fromIndex: number, toIndex: number): void {
   reorderTabs(groupId, fromIndex, toIndex);
   persistTabs();
+}
+
+// ── Test Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Fully reset all module-level state. Only for use in tests.
+ */
+export function _resetForTests(): void {
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  if (hydratingTimeout) {
+    clearTimeout(hydratingTimeout);
+    hydratingTimeout = null;
+  }
+  state.groups = [{ id: 'main', tabs: [], activeTabId: null }];
+  state.activeGroupId = 'main';
+  initialized = false;
+  preferencesLoaded = false;
+  isHydrating = false;
+  lastPersistedJSON = '';
 }

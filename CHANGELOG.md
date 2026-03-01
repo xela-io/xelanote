@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed tabs not persisting across page refresh: CORS config was missing PATCH method, silently blocking all tab persist API calls
+- Fixed tab restore race condition: notes loading and preferences loading could cause `isHydrating` to get stuck, preventing tab persistence
+- Fixed closing all tabs not persisting: `closeAllTabs()` now explicitly persists the empty state
+- Fixed tab state lost on page unload: added `flushPendingPersist()` with keepalive fetch on `beforeunload` and `visibilitychange` events
+- Fixed tab resolve effect blocking forever when user has 0 notes: removed unnecessary empty-notes guard
+- Fixed `isHydrating` getting permanently stuck if `resolveTabTitles` never fires: added 15s safety timeout
+- Fixed tab state not cleared on logout: added `tabs.closeAllTabs()` to logout cleanup
 - Fixed encrypted notes losing folder assignment: folder paths are now encrypted client-side (`encrypted_folder_path`) and decrypted for tree display, preserving folder organization while keeping metadata private from the server
 - Fixed encrypted notes reverting to root folder after save: API responses no longer overwrite client-side folder path with server's "/"
 - Fixed encrypted folder paths not decrypted on page refresh due to race condition: tree now reloads when encryption becomes available

@@ -124,7 +124,7 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		// Added Authorization header for JWT authentication, Cookie for cookie-based auth, and X-CSRF-Token for CSRF protection
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, If-Match, Authorization, Cookie, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")

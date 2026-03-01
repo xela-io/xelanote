@@ -9,6 +9,7 @@ import * as journal from './journal.svelte';
 import * as recipes from './recipes.svelte';
 import * as settings from './settings.svelte';
 import * as shopping from './shopping.svelte';
+import * as tabs from './tabs.svelte';
 import * as ui from './ui.svelte';
 
 /**
@@ -42,6 +43,7 @@ export function resetAllStores(): void {
     features.resetShoppingFeature();
     shopping.resetShoppingState();
     features.resetTabsFeature();
+    tabs.closeAllTabs();
   } catch (err) {
     console.error('[Logout] Failed to reset feature state:', err);
   }

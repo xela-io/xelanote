@@ -378,6 +378,9 @@
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         scheduleViewportResync();
+      } else if (document.visibilityState === 'hidden') {
+        // Flush pending tab persistence when app goes to background (mobile)
+        tabs.flushPendingPersist();
       }
     };
 
@@ -430,12 +433,16 @@
     const activityListeners = createActivityListeners({ handleActivity });
 
     // ✅ NEW: beforeunload handler for unsaved changes warning
-    const handleBeforeUnload = (e: BeforeUnloadEvent) =>
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Flush pending tab persistence before unload (uses keepalive fetch)
+      tabs.flushPendingPersist();
+
       handleBeforeUnloadHelper(e, {
         isDirty: () => notes.getIsDirty(),
         isSyncing: () => syncManager.getIsSyncing(),
         warningMessage: get(_)('editor.unsaved_warning'),
       });
+    };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -576,12 +583,16 @@
     }
   });
 
-  // Tab resolve: once notes are loaded, resolve titles and remove invalid tabs
+  // Tab resolve: once notes are loaded AND tab preferences are restored, resolve titles
   $effect(() => {
     if (!features.getTabsFeatureEnabled()) return;
     if (tabs.isInitialized()) return; // only once
+    if (!tabs.isPreferencesLoaded()) return; // wait for initTabs (prevents race condition)
     if (notes.getNotesLoading()) return; // wait until loaded
-    if (notes.getNotes().length === 0 && !notes.getError()) return; // not started yet
+    console.log(
+      '[layout] Tab resolve effect: calling resolveTabTitles. Notes count:',
+      notes.getNotes().length
+    );
     tabs.resolveTabTitles((id: string) => notes.getNoteById(id));
   });
 

@@ -1,4 +1,5 @@
-import { request } from './client';
+import { getApiBaseUrl } from '../config';
+import { getAccessTokenValue, getCSRFToken, request } from './client';
 import { listNotes } from './notes';
 import type {
   AIAvailableModelsResponse,
@@ -61,6 +62,32 @@ export async function updateOpenTabsPreference(
     method: 'PATCH',
     body: JSON.stringify({ open_tabs: tabs }),
   });
+}
+
+/**
+ * Fire-and-forget tab persistence using fetch with keepalive.
+ * Designed for beforeunload/visibilitychange where regular requests may be aborted.
+ */
+export function updateOpenTabsKeepalive(tabs: OpenTabsPreference | null): void {
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const csrfToken = getCSRFToken();
+    if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+    const accessToken = getAccessTokenValue();
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+
+    fetch(`${getApiBaseUrl()}/users/preferences`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ open_tabs: tabs }),
+      credentials: 'include',
+      keepalive: true,
+    }).catch(() => {
+      // Best effort — page is unloading
+    });
+  } catch {
+    // Best effort — page is unloading
+  }
 }
 
 export async function updateSecurityPreferences(

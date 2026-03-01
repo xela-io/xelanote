@@ -249,9 +249,11 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
       deps.api
         .getPreferences()
         .then((prefs) => {
+          console.log('[init] Tab preferences from server:', JSON.stringify(prefs.open_tabs));
           deps.tabs.initTabs(prefs.open_tabs);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.warn('[init] Failed to load tab preferences:', err);
           // Tabs will start empty if preferences can't be loaded
           deps.tabs.initTabs(null);
         });

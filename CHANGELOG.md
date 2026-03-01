@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed kebab menu (editor "more" menu) having transparent background on desktop — `mobile-glass-sheet` was unsetting `backdrop-filter`, now scoped to mobile only so `ui-panel` blur applies
 - Fixed tabs not persisting across page refresh: CORS config was missing PATCH method, silently blocking all tab persist API calls
 - Fixed tab restore race condition: notes loading and preferences loading could cause `isHydrating` to get stuck, preventing tab persistence
 - Fixed closing all tabs not persisting: `closeAllTabs()` now explicitly persists the empty state

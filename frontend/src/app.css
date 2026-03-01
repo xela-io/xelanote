@@ -661,23 +661,15 @@ body {
   }
 
   /* Frosted-glass bottom sheet for mobile menus */
-  .mobile-glass-sheet {
-    background: color-mix(in oklch, var(--color-card), transparent 32%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    backdrop-filter: blur(20px) saturate(180%);
-    border-top: 1px solid color-mix(in oklch, var(--color-border), transparent 38%);
-    box-shadow:
-      0 -12px 36px color-mix(in oklch, black, transparent 82%),
-      inset 0 1px 0 color-mix(in oklch, white, transparent 92%);
-  }
-
-  @media (min-width: 640px) {
+  @media (max-width: 639px) {
     .mobile-glass-sheet {
-      background: unset;
-      -webkit-backdrop-filter: unset;
-      backdrop-filter: unset;
-      border-top: unset;
-      box-shadow: unset;
+      background: color-mix(in oklch, var(--color-card), transparent 32%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-top: 1px solid color-mix(in oklch, var(--color-border), transparent 38%);
+      box-shadow:
+        0 -12px 36px color-mix(in oklch, black, transparent 82%),
+        inset 0 1px 0 color-mix(in oklch, white, transparent 92%);
     }
   }
 

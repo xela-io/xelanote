@@ -70,11 +70,46 @@ export async function initSyncManager() {
   } catch {
     pendingCount = 0;
   }
+
+  // Listen for Background Sync messages from the Service Worker.
+  // When the SW fires the sync event (Chromium), it posts REPLAY_OFFLINE_QUEUE
+  // to all open clients so they can replay the IndexedDB queue.
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'REPLAY_OFFLINE_QUEUE') {
+        void startSync();
+      }
+    });
+  }
 }
 
 // Called by api.ts when an operation is enqueued
 export function updatePendingCount(count: number) {
   pendingCount = count;
+  // Register Background Sync so the SW can replay the queue even if
+  // the app is closed before connectivity returns (Chromium only).
+  registerBackgroundSync();
+}
+
+/**
+ * Register a one-shot Background Sync tag. Chromium browsers will fire
+ * a `sync` event on the SW when connectivity returns — even if all tabs
+ * are closed. On Safari/Firefox this is a no-op (graceful degradation).
+ */
+function registerBackgroundSync(): void {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready
+    .then((reg) => {
+      // SyncManager is only available in Chromium-based browsers
+      if ('sync' in reg) {
+        return (
+          reg as ServiceWorkerRegistration & { sync: { register(tag: string): Promise<void> } }
+        ).sync.register('offline-queue');
+      }
+    })
+    .catch(() => {
+      // Background Sync not supported — silent fallback to online listener
+    });
 }
 
 // Refresh pending count from IndexedDB (for multi-tab consistency)

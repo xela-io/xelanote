@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- View Transitions API for smooth page crossfades (skips /note/ for CodeMirror stability, respects prefers-reduced-motion)
+- Consistent iOS-style touch active states (scale 0.97) for all interactive elements on touch devices
+- Note data prefetch on pointerdown in tree sidebar for faster perceived navigation
+- Background Sync API for offline queue replay when connectivity returns (Chromium; graceful fallback on Safari/Firefox)
+
 ### Changed
 
 - Tabs and Shopping Lists features are now opt-in (WIP) behind feature flags in Settings > Editor > Features

@@ -105,6 +105,41 @@ export function getNoteById(id: string): Note | undefined {
   return noteMap.get(id);
 }
 
+// --- Note Prefetch (touch/pointer-down optimization) ---
+
+/** Track in-flight prefetches to avoid duplicates (not reactive — internal bookkeeping only) */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const prefetchInFlight = new Set<string>();
+
+/**
+ * Prefetch a note's full data on pointerdown so it's cached by the time
+ * the user navigates to /note/:id. Only fetches if online, note is not
+ * already the current note, and no prefetch is already in progress.
+ */
+export function prefetchNote(id: string): void {
+  // Already loaded as current note
+  if (currentNote?.id === id) return;
+  // Already in flight
+  if (prefetchInFlight.has(id)) return;
+  // Offline — can't prefetch
+  if (!navigator.onLine) return;
+
+  prefetchInFlight.add(id);
+  api
+    .getNote(id)
+    .then((note) => {
+      // Store in the note map for O(1) lookup when loadNote runs
+      ensureNoteMap();
+      noteMap.set(note.id, note);
+    })
+    .catch(() => {
+      // Silently ignore — navigation will load the note normally
+    })
+    .finally(() => {
+      prefetchInFlight.delete(id);
+    });
+}
+
 export function queueTaskEvent(
   noteId: string,
   taskText: string,

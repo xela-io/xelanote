@@ -7,7 +7,7 @@
   import { _, locale } from 'svelte-i18n';
 
   import { browser } from '$app/environment';
-  import { beforeNavigate, goto } from '$app/navigation';
+  import { beforeNavigate, goto, onNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { swipe } from '$lib/actions/swipe';
   import { setOnOfflineEnqueue as setApiOfflineCallback } from '$lib/api';
@@ -694,6 +694,25 @@
     ) {
       cancel();
     }
+  });
+
+  // View Transitions API: smooth crossfade between pages (native app feel)
+  // Skip transitions TO /note/ paths — CodeMirror needs stable DOM measurements on init.
+  onNavigate((navigation) => {
+    if (
+      !document.startViewTransition ||
+      navigation.to?.url.pathname.startsWith('/note/') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+
+    return new Promise((resolve) => {
+      document.startViewTransition(async () => {
+        resolve();
+        await navigation.complete;
+      });
+    });
   });
 </script>
 

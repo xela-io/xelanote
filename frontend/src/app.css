@@ -59,6 +59,37 @@ html.is-standalone {
   padding-right: var(--safe-area-inset-right);
 }
 
+/* ===== View Transitions (native-feel page crossfade) ===== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+  animation-timing-function: var(--ease-entrance);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/* ===== Touch Active States (iOS-style press feedback) ===== */
+@media (pointer: coarse) {
+  button:active,
+  [role='button']:active,
+  [role='menuitem']:active,
+  a:active {
+    transform: scale(0.97);
+    transition: transform 100ms var(--ease-default);
+  }
+
+  /* Exclude drag handles and editor area from press feedback */
+  .cm-editor :active,
+  [data-no-drag]:active {
+    transform: none;
+  }
+}
+
 /* Prevent pull-to-refresh (scroll chaining) in standalone PWA.
    Use 'contain' instead of 'none' — 'none' can suppress wheel events
    in Chrome PWA standalone mode, breaking mouse-wheel scrolling. */

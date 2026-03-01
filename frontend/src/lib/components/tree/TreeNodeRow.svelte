@@ -34,6 +34,7 @@
     onKebabClick: (e: MouseEvent) => void;
     onRowKeydown: (e: KeyboardEvent) => void;
     // Drag handlers
+    onNotePointerDown?: (e: PointerEvent) => void;
     onFolderDragStart?: (e: DragEvent) => void;
     onNoteDragStart?: (e: DragEvent) => void;
     onDragEnd?: () => void;
@@ -60,6 +61,7 @@
     onContextMenu,
     onKebabClick,
     onRowKeydown,
+    onNotePointerDown,
     onFolderDragStart,
     onNoteDragStart,
     onDragEnd,
@@ -161,6 +163,7 @@
           ondragover={treeDragEnabled ? onDragOver : undefined}
           ondragleave={treeDragEnabled ? onDragLeave : undefined}
           ondrop={treeDragEnabled ? onDrop : undefined}
+          onpointerdown={onNotePointerDown}
           class="tree-button note-button"
           class:selected={isSelected}
           class:journal-note={node.folderPath === '/Journal'}

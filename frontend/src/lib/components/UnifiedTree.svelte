@@ -123,6 +123,13 @@
     }
   }
 
+  // Prefetch note data on pointerdown for faster perceived navigation
+  function handleNotePointerDown() {
+    if (node.type === 'note') {
+      notes.prefetchNote(node.id);
+    }
+  }
+
   // Expand/Collapse handler
   function handleExpandClick(e: MouseEvent) {
     e.stopPropagation();
@@ -586,6 +593,7 @@
   onContextMenu={handleContextMenu}
   onKebabClick={handleKebabClick}
   onRowKeydown={handleRowKeydown}
+  onNotePointerDown={handleNotePointerDown}
   onFolderDragStart={handleFolderDragStart}
   onNoteDragStart={handleNoteDragStart}
   onDragEnd={handleDragEnd}

@@ -106,6 +106,7 @@ plugins.push(
     },
 
     workbox: {
+      importScripts: ['/sw-background-sync.js'],
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
       globIgnores: ['**/splash/**'], // Splash screens are only fetched by iOS via <link> media queries
       navigateFallback: '/', // ← Enable SPA routing for offline deep links

@@ -101,7 +101,7 @@
       style="-webkit-tap-highlight-color: transparent"
     >
       <span
-        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 text-muted-foreground scale-100 active:scale-105"
+        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 text-muted-foreground scale-100"
       >
         <Search size={18} />
         <span class="text-[10px] font-medium">{$_('page.sidebar.search')}</span>
@@ -114,7 +114,7 @@
       style="-webkit-tap-highlight-color: transparent"
     >
       <span
-        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 text-muted-foreground scale-100 active:scale-105"
+        class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full transition-all duration-200 text-muted-foreground scale-100"
       >
         <MoreHorizontal size={18} />
         <span class="text-[10px] font-medium">{$_('nav.more')}</span>

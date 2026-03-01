@@ -28,6 +28,7 @@
   } from '$lib/components/sidebar/sidebar-resize';
   import * as auth from '$lib/stores/auth.svelte';
   import * as dialog from '$lib/stores/dialog.svelte';
+  import { isEncryptionUnlocked } from '$lib/stores/encryption.svelte';
   import * as features from '$lib/stores/features.svelte';
   import * as notes from '$lib/stores/notes.svelte';
   import * as settings from '$lib/stores/settings.svelte';
@@ -187,6 +188,17 @@
     if (auth.isAuthenticated()) {
       tree.loadTree();
     }
+  });
+
+  // Reload tree when encryption is unlocked (KEK restore may happen after initial tree load)
+  // This ensures encrypted folder paths are decrypted for the tree display.
+  let prevEncryptionUnlocked = false;
+  $effect(() => {
+    const unlocked = isEncryptionUnlocked();
+    if (unlocked && !prevEncryptionUnlocked && auth.isAuthenticated()) {
+      tree.loadTree();
+    }
+    prevEncryptionUnlocked = unlocked;
   });
 
   // Drop zone handlers for moving folders to top-level

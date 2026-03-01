@@ -42,8 +42,8 @@ RUN CGO_ENABLED=1 go build -tags "fts5" \
   -o /xelanote ./cmd/server
 
 # Stage 3: Runtime
-# Last updated: 2026-02-24
-FROM alpine:3.20@sha256:a4f4213abb84c497377b8544c81b3564f313746700372ec4fe84653e4fb03805
+# Last updated: 2026-03-01
+FROM alpine:3.21@sha256:c3f8e73fdb79deaebaa2037150150191b9dcbfba68b4a46d70103204c53f4709
 
 RUN apk add --no-cache ca-certificates tzdata sqlite
 

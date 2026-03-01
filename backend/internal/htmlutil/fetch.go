@@ -17,7 +17,7 @@ import (
 
 const (
 	maxResponseBytes = 2 << 20 // 2 MiB
-	maxTextChars     = 50000
+	MaxTextChars     = 50000
 	maxRedirects     = 3
 	requestTimeout   = 15 * time.Second
 	userAgent        = "Xelanote/1.0 RecipeImporter"
@@ -47,8 +47,8 @@ func FetchAndStripHTML(ctx context.Context, rawURL string) (string, error) {
 	}
 
 	text := StripHTML(htmlBody)
-	if len(text) > maxTextChars {
-		text = text[:maxTextChars]
+	if len(text) > MaxTextChars {
+		text = text[:MaxTextChars]
 	}
 	return text, nil
 }

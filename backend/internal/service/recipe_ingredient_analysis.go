@@ -71,15 +71,40 @@ func (s *RecipeSuggestionService) ExtractRecipeFromImage(
 	return recipe, nil
 }
 
-// ExtractRecipeFromURL fetches webpage text and extracts a full recipe with an LLM.
+// ExtractRecipeFromURL fetches a webpage and extracts a recipe.
+// It first tries to extract structured JSON-LD data (no LLM needed).
+// If no JSON-LD Recipe is found, it falls back to LLM-based extraction.
 func (s *RecipeSuggestionService) ExtractRecipeFromURL(
 	ctx context.Context, userID int, rawURL string, locale string,
 ) (*GeneratedRecipe, error) {
 	locale = normalizeLocale(locale)
 
-	pageText, err := htmlutil.FetchAndStripHTML(ctx, rawURL)
+	rawHTML, _, err := htmlutil.FetchHTML(ctx, rawURL)
 	if err != nil {
 		return nil, err
+	}
+
+	// Try JSON-LD extraction first (fast, no LLM needed).
+	if schemaRecipe, ok := htmlutil.ExtractRecipeJSONLD(rawHTML); ok {
+		s.logger.Info("recipe extracted from JSON-LD, skipping LLM",
+			slog.String("url", rawURL), slog.String("title", schemaRecipe.Title))
+
+		recipe := mapSchemaRecipeToGenerated(schemaRecipe)
+		convertRecipeToMetricUnits(recipe)
+		convertRecipeTemperatures(recipe)
+
+		normalizedURL := strings.TrimSpace(rawURL)
+		if normalizedURL != "" {
+			recipe.SourceURL = &normalizedURL
+		}
+		validateGeneratedRecipe(recipe)
+		return recipe, nil
+	}
+
+	// Fallback: strip HTML and use LLM.
+	pageText := htmlutil.StripHTML(rawHTML)
+	if len(pageText) > htmlutil.MaxTextChars {
+		pageText = pageText[:htmlutil.MaxTextChars]
 	}
 
 	provider, err := s.router.GetAnyProvider(ctx, userID)
@@ -107,6 +132,33 @@ func (s *RecipeSuggestionService) ExtractRecipeFromURL(
 	validateGeneratedRecipe(recipe)
 
 	return recipe, nil
+}
+
+// mapSchemaRecipeToGenerated converts structured JSON-LD recipe data into a GeneratedRecipe.
+func mapSchemaRecipeToGenerated(schema *htmlutil.SchemaRecipeData) *GeneratedRecipe {
+	ingredients := make([]GeneratedIngredient, 0, len(schema.Ingredients))
+	for _, raw := range schema.Ingredients {
+		name, amount, unit := htmlutil.ParseIngredientString(raw)
+		if strings.TrimSpace(name) == "" && amount == nil {
+			continue
+		}
+		ing := GeneratedIngredient{
+			Name:     name,
+			Amount:   amount,
+			Unit:     unit,
+			Scalable: amount != nil,
+		}
+		ingredients = append(ingredients, ing)
+	}
+
+	return &GeneratedRecipe{
+		Title:           schema.Title,
+		Servings:        schema.Servings,
+		PrepTimeMinutes: schema.PrepTimeMinutes,
+		CookTimeMinutes: schema.CookTimeMinutes,
+		Ingredients:     ingredients,
+		Instructions:    schema.Instructions,
+	}
 }
 
 // SelectMainRecipeImages uses an LLM to choose the best recipe images from URL candidates.

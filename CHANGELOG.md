@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- JSON-LD recipe extraction: recipe import now extracts structured data from `<script type="application/ld+json">` blocks before falling back to LLM, improving speed and reliability on ~90% of recipe websites
+- Ingredient string parser for JSON-LD data: parses raw strings like "500g Hackfleisch" into structured name/amount/unit, supporting metric, imperial, fractions, unicode fractions, and German units (EL, TL, Prise, Bund)
 - View Transitions API for smooth page crossfades (skips /note/ for CodeMirror stability, respects prefers-reduced-motion)
 - Consistent iOS-style touch active states (scale 0.97) for all interactive elements on touch devices
 - Note data prefetch on pointerdown in tree sidebar for faster perceived navigation

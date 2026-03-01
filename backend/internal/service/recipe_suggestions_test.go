@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/xela-io/xelanote/internal/db"
+	"github.com/xela-io/xelanote/internal/htmlutil"
 	"github.com/xela-io/xelanote/internal/llm"
 )
 
@@ -314,6 +315,83 @@ func TestConvertRecipeTemperatures(t *testing.T) {
 	want := "1. Preheat oven to 175°C.\n2. Bake for 30 min at 175°C."
 	if recipe.Instructions != want {
 		t.Errorf("convertRecipeTemperatures:\n got: %q\nwant: %q", recipe.Instructions, want)
+	}
+}
+
+func TestMapSchemaRecipeToGenerated(t *testing.T) {
+	prep := 20
+	cook := 45
+	schema := &htmlutil.SchemaRecipeData{
+		Title:           "Test Recipe",
+		Servings:        4,
+		PrepTimeMinutes: &prep,
+		CookTimeMinutes: &cook,
+		Ingredients: []string{
+			"500g Hackfleisch",
+			"2 EL Olivenöl",
+			"Salz und Pfeffer",
+			"1/2 cup sugar",
+		},
+		Instructions: "1. Mix ingredients.\n2. Cook.",
+	}
+
+	recipe := mapSchemaRecipeToGenerated(schema)
+
+	if recipe.Title != "Test Recipe" {
+		t.Fatalf("expected title 'Test Recipe', got %q", recipe.Title)
+	}
+	if recipe.Servings != 4 {
+		t.Fatalf("expected 4 servings, got %d", recipe.Servings)
+	}
+	if recipe.PrepTimeMinutes == nil || *recipe.PrepTimeMinutes != 20 {
+		t.Fatalf("expected 20 prep time, got %v", recipe.PrepTimeMinutes)
+	}
+	if recipe.CookTimeMinutes == nil || *recipe.CookTimeMinutes != 45 {
+		t.Fatalf("expected 45 cook time, got %v", recipe.CookTimeMinutes)
+	}
+	if len(recipe.Ingredients) != 4 {
+		t.Fatalf("expected 4 ingredients, got %d", len(recipe.Ingredients))
+	}
+
+	// "500g Hackfleisch" → amount=500, unit="g", scalable=true
+	ing0 := recipe.Ingredients[0]
+	if ing0.Name != "Hackfleisch" {
+		t.Errorf("ingredient[0] name = %q, want 'Hackfleisch'", ing0.Name)
+	}
+	if ing0.Amount == nil || *ing0.Amount != 500 {
+		t.Errorf("ingredient[0] amount = %v, want 500", ing0.Amount)
+	}
+	if !ing0.Scalable {
+		t.Error("ingredient[0] should be scalable")
+	}
+
+	// "Salz und Pfeffer" → no amount, not scalable
+	ing2 := recipe.Ingredients[2]
+	if ing2.Name != "Salz und Pfeffer" {
+		t.Errorf("ingredient[2] name = %q, want 'Salz und Pfeffer'", ing2.Name)
+	}
+	if ing2.Amount != nil {
+		t.Errorf("ingredient[2] amount = %v, want nil", *ing2.Amount)
+	}
+	if ing2.Scalable {
+		t.Error("ingredient[2] should not be scalable")
+	}
+
+	if recipe.Instructions != "1. Mix ingredients.\n2. Cook." {
+		t.Fatalf("unexpected instructions: %q", recipe.Instructions)
+	}
+}
+
+func TestMapSchemaRecipeToGenerated_SkipsEmptyIngredients(t *testing.T) {
+	schema := &htmlutil.SchemaRecipeData{
+		Title:        "Test",
+		Ingredients:  []string{"  ", "flour", ""},
+		Instructions: "Mix.",
+	}
+	recipe := mapSchemaRecipeToGenerated(schema)
+	// Empty-name ingredients with no amount should be skipped.
+	if len(recipe.Ingredients) != 1 {
+		t.Fatalf("expected 1 ingredient, got %d: %+v", len(recipe.Ingredients), recipe.Ingredients)
 	}
 }
 

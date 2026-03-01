@@ -13,6 +13,8 @@
     features.loadJournalFeature();
     features.loadRecipeFeature();
     features.loadCanvasFeature();
+    features.loadTabsFeature();
+    features.loadShoppingFeature();
   });
 
   const editorModes = $derived([
@@ -67,6 +69,22 @@
       await features.toggleCanvasFeature(enabled);
     } catch (error) {
       console.error('Failed to toggle canvas feature:', error);
+    }
+  }
+
+  async function handleTabsToggle(enabled: boolean) {
+    try {
+      await features.toggleTabsFeature(enabled);
+    } catch (error) {
+      console.error('Failed to toggle tabs feature:', error);
+    }
+  }
+
+  async function handleShoppingToggle(enabled: boolean) {
+    try {
+      await features.toggleShoppingFeature(enabled);
+    } catch (error) {
+      console.error('Failed to toggle shopping feature:', error);
     }
   }
 </script>
@@ -193,6 +211,48 @@
           </div>
         </div>
         {#if features.getCanvasFeatureLoading()}
+          <Loader2 size={16} class="animate-spin text-muted-foreground" />
+        {/if}
+      </label>
+
+      <label class="ui-panel-soft flex items-start gap-3 p-4 cursor-pointer transition-colors">
+        <input
+          type="checkbox"
+          checked={features.getTabsFeatureEnabled()}
+          disabled={features.getTabsFeatureLoading()}
+          onchange={(e) => handleTabsToggle(e.currentTarget.checked)}
+          class="mt-1"
+        />
+        <div class="flex-1">
+          <div class="font-medium text-foreground">
+            {$_('page.settings.editor.tabs_feature_title')}
+          </div>
+          <div class="text-sm text-muted-foreground mt-1">
+            {$_('page.settings.editor.tabs_feature_description')}
+          </div>
+        </div>
+        {#if features.getTabsFeatureLoading()}
+          <Loader2 size={16} class="animate-spin text-muted-foreground" />
+        {/if}
+      </label>
+
+      <label class="ui-panel-soft flex items-start gap-3 p-4 cursor-pointer transition-colors">
+        <input
+          type="checkbox"
+          checked={features.getShoppingFeatureEnabled()}
+          disabled={features.getShoppingFeatureLoading()}
+          onchange={(e) => handleShoppingToggle(e.currentTarget.checked)}
+          class="mt-1"
+        />
+        <div class="flex-1">
+          <div class="font-medium text-foreground">
+            {$_('page.settings.editor.shopping_feature_title')}
+          </div>
+          <div class="text-sm text-muted-foreground mt-1">
+            {$_('page.settings.editor.shopping_feature_description')}
+          </div>
+        </div>
+        {#if features.getShoppingFeatureLoading()}
           <Loader2 size={16} class="animate-spin text-muted-foreground" />
         {/if}
       </label>

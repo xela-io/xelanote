@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Tabs and Shopping Lists features are now opt-in (WIP) behind feature flags in Settings > Editor > Features
+
 ### Fixed
 
 - Fixed encrypted notes losing folder assignment: folder paths are now encrypted client-side (`encrypted_folder_path`) and decrypted for tree display, preserving folder organization while keeping metadata private from the server

@@ -41,6 +41,7 @@ export function resetAllStores(): void {
     features.resetCanvasFeature();
     features.resetShoppingFeature();
     shopping.resetShoppingState();
+    features.resetTabsFeature();
   } catch (err) {
     console.error('[Logout] Failed to reset feature state:', err);
   }

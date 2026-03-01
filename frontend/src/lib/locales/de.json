@@ -892,7 +892,11 @@
         "recipe_feature_title": "Rezepte (Kochbuch)",
         "recipe_feature_description": "Aktiviert die Rezeptverwaltung mit Zutaten, Portionsskalierung und Kochbüchern.",
         "canvas_feature_title": "Canvas (Endlose Tafel)",
-        "canvas_feature_description": "Aktiviert die unendliche Leinwand zum visuellen Organisieren von Notizen, Textkarten, Links und Gruppen auf einer freien Fläche."
+        "canvas_feature_description": "Aktiviert die unendliche Leinwand zum visuellen Organisieren von Notizen, Textkarten, Links und Gruppen auf einer freien Fläche.",
+        "tabs_feature_title": "Tabs (WIP)",
+        "tabs_feature_description": "Aktiviert die Tab-Leiste zum gleichzeitigen Öffnen mehrerer Notizen. Experimentelles Feature — noch in Entwicklung.",
+        "shopping_feature_title": "Einkaufslisten (WIP)",
+        "shopping_feature_description": "Aktiviert Einkaufslisten mit Kategorien, geteilten Listen und Rezept-Import. Experimentelles Feature — noch in Entwicklung."
       },
       "security": {
         "encryption_locked_title": "Verschlüsselung gesperrt",

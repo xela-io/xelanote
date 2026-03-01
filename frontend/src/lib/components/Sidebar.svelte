@@ -178,6 +178,7 @@
       loadRecipeFeature: features.loadRecipeFeature,
       loadCanvasFeature: features.loadCanvasFeature,
       loadShoppingFeature: features.loadShoppingFeature,
+      loadTabsFeature: features.loadTabsFeature,
       startInterval: (handler, ms) => window.setInterval(handler, ms),
       clearInterval: (id) => window.clearInterval(id),
     })

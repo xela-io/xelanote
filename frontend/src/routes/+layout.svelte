@@ -515,9 +515,12 @@
     }
   });
 
-  // Tab bar: lazy-load when tabs are visible
+  // Tab bar: lazy-load when tabs are visible and feature is enabled
   const showTabBar = $derived(
-    page.url.pathname.startsWith('/note/') && tabs.getTabs().length > 0 && tabs.isInitialized()
+    features.getTabsFeatureEnabled() &&
+      page.url.pathname.startsWith('/note/') &&
+      tabs.getTabs().length > 0 &&
+      tabs.isInitialized()
   );
 
   async function loadTabBar() {
@@ -538,6 +541,7 @@
   // save status) would re-trigger this effect and re-open just-closed tabs.
   // Title resolution happens in the separate title-sync effect below.
   $effect(() => {
+    if (!features.getTabsFeatureEnabled()) return;
     if (!tabs.isInitialized()) return;
     const pathname = page.url.pathname;
     if (!pathname.startsWith('/note/')) return;
@@ -555,12 +559,14 @@
 
   // Tab sync: dirty state -> tab
   $effect(() => {
+    if (!features.getTabsFeatureEnabled()) return;
     const cn = notes.getCurrentNote();
     if (cn) tabs.syncDirtyState(cn.id, notes.getIsDirty());
   });
 
   // Tab sync: title changes -> tab
   $effect(() => {
+    if (!features.getTabsFeatureEnabled()) return;
     const cn = notes.getCurrentNote();
     if (cn) {
       const existing = tabs.findTabByNoteId(cn.id);
@@ -572,6 +578,7 @@
 
   // Tab resolve: once notes are loaded, resolve titles and remove invalid tabs
   $effect(() => {
+    if (!features.getTabsFeatureEnabled()) return;
     if (tabs.isInitialized()) return; // only once
     if (notes.getNotesLoading()) return; // wait until loaded
     if (notes.getNotes().length === 0 && !notes.getError()) return; // not started yet

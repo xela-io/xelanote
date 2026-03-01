@@ -286,3 +286,66 @@ export function resetShoppingFeature() {
   shoppingFeatureLoaded = false;
   shoppingFeatureLoading = false;
 }
+
+// === Tabs Feature (User-Specific Toggle) ===
+let tabsFeatureEnabled = $state(false);
+let tabsFeatureLoading = $state(false);
+let tabsFeatureLoaded = $state(false);
+
+export function getTabsFeatureEnabled() {
+  return tabsFeatureEnabled;
+}
+
+export function getTabsFeatureLoading() {
+  return tabsFeatureLoading;
+}
+
+export function getTabsFeatureLoaded() {
+  return tabsFeatureLoaded;
+}
+
+/**
+ * Load the tabs feature setting for the current user.
+ * Should be called after authentication.
+ */
+export async function loadTabsFeature() {
+  if (tabsFeatureLoading) return;
+
+  tabsFeatureLoading = true;
+  try {
+    const feature = await getFeature('tabs');
+    tabsFeatureEnabled = feature.enabled;
+    tabsFeatureLoaded = true;
+  } catch (error) {
+    console.error('Failed to load tabs feature:', error);
+    tabsFeatureEnabled = false;
+    tabsFeatureLoaded = true;
+  } finally {
+    tabsFeatureLoading = false;
+  }
+}
+
+/**
+ * Toggle the tabs feature for the current user.
+ */
+export async function toggleTabsFeature(enabled: boolean) {
+  tabsFeatureLoading = true;
+  try {
+    await setFeature('tabs', enabled);
+    tabsFeatureEnabled = enabled;
+  } catch (error) {
+    console.error('Failed to toggle tabs feature:', error);
+    throw error;
+  } finally {
+    tabsFeatureLoading = false;
+  }
+}
+
+/**
+ * Reset tabs feature state (called on logout).
+ */
+export function resetTabsFeature() {
+  tabsFeatureEnabled = false;
+  tabsFeatureLoaded = false;
+  tabsFeatureLoading = false;
+}

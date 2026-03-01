@@ -892,7 +892,11 @@
         "recipe_feature_title": "Recipes (Cookbook)",
         "recipe_feature_description": "Enable recipe management with ingredients, portion scaling, and cookbooks.",
         "canvas_feature_title": "Canvas (Infinite Board)",
-        "canvas_feature_description": "Enable infinite canvas for visually organizing notes, text cards, links, and groups on a free-form spatial board."
+        "canvas_feature_description": "Enable infinite canvas for visually organizing notes, text cards, links, and groups on a free-form spatial board.",
+        "tabs_feature_title": "Tabs (WIP)",
+        "tabs_feature_description": "Enable the tab bar for opening multiple notes simultaneously. Experimental feature — still in development.",
+        "shopping_feature_title": "Shopping Lists (WIP)",
+        "shopping_feature_description": "Enable shopping lists with categories, shared lists, and recipe import. Experimental feature — still in development."
       },
       "security": {
         "encryption_locked_title": "Encryption Locked",

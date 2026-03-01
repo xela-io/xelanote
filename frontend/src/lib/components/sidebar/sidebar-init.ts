@@ -6,6 +6,7 @@ export interface SidebarInitDeps {
   loadRecipeFeature: () => void;
   loadCanvasFeature: () => void;
   loadShoppingFeature: () => void;
+  loadTabsFeature: () => void;
   startInterval: (handler: () => void, ms: number) => number;
   clearInterval: (id: number) => void;
 }
@@ -18,6 +19,7 @@ export function initSidebarOnMount(deps: SidebarInitDeps) {
   deps.loadRecipeFeature();
   deps.loadCanvasFeature();
   deps.loadShoppingFeature();
+  deps.loadTabsFeature();
 
   const interval = deps.startInterval(() => {
     deps.loadTrashCount();

@@ -28,7 +28,8 @@
     chevronIconSize: number;
     actionIconSize: number;
     // Event handlers
-    onClick: () => void;
+    onClick: (e?: MouseEvent) => void;
+    onAuxClick?: (e: MouseEvent) => void;
     onExpandClick: (e: MouseEvent) => void;
     onContextMenu: (e: MouseEvent) => void;
     onKebabClick: (e: MouseEvent) => void;
@@ -57,6 +58,7 @@
     chevronIconSize,
     actionIconSize,
     onClick,
+    onAuxClick,
     onExpandClick,
     onContextMenu,
     onKebabClick,
@@ -168,7 +170,8 @@
           class:selected={isSelected}
           class:journal-note={node.folderPath === '/Journal'}
           class:dragging={isDragging}
-          onclick={onClick}
+          onclick={(e) => onClick(e)}
+          onauxclick={onAuxClick}
         >
           {#if node.noteType === 'canvas'}
             <LayoutDashboard size={folderIconSize} />

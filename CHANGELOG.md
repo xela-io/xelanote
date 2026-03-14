@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Open notes in new tab via Ctrl/Cmd+click, middle-click, or context menu "Open in new tab" in the sidebar tree, wikilinks, and quick switcher
+- Default tab navigation now replaces the active tab instead of always opening new tabs
+- Landing page: dynamic animated landing page with scroll-reveal, parallax hero, terminal typing effect, and full DE/EN localization
 - JSON-LD recipe extraction: recipe import now extracts structured data from `<script type="application/ld+json">` blocks before falling back to LLM, improving speed and reliability on ~90% of recipe websites
 - Ingredient string parser for JSON-LD data: parses raw strings like "500g Hackfleisch" into structured name/amount/unit, supporting metric, imperial, fractions, unicode fractions, and German units (EL, TL, Prise, Bund)
 - View Transitions API for smooth page crossfades (skips /note/ for CodeMirror stability, respects prefers-reduced-motion)

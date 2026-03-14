@@ -7,6 +7,7 @@
   import * as api from '$lib/api';
   import * as dialog from '$lib/stores/dialog.svelte';
   import * as notes from '$lib/stores/notes.svelte';
+  import * as tabs from '$lib/stores/tabs.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as trash from '$lib/stores/trash.svelte';
   import type { FolderTreeNode, NoteTreeNode, TreeNode } from '$lib/stores/tree.svelte';
@@ -112,15 +113,23 @@
   });
 
   // Click handler
-  function handleClick() {
+  function handleClick(e?: MouseEvent) {
     if (node.type === 'folder') {
       tree.selectFolder(node.path);
     } else {
       tree.selectNote(node.id);
-      // Navigate to note and close sidebar on mobile
+      if (e && (e.ctrlKey || e.metaKey)) tabs.requestNewTab();
       goto(`/note/${node.id}`);
       ui.closeSidebarOnMobile();
     }
+  }
+
+  // Middle-click handler: open in new tab
+  function handleAuxClick(e: MouseEvent) {
+    if (e.button !== 1 || node.type !== 'note') return;
+    e.preventDefault();
+    tabs.requestNewTab();
+    goto(`/note/${node.id}`);
   }
 
   // Prefetch note data on pointerdown for faster perceived navigation
@@ -255,6 +264,13 @@
 
   function closeRenameNoteDialog() {
     showRenameNoteDialog = false;
+  }
+
+  // Open in new tab handler (context menu)
+  function handleOpenInNewTab() {
+    if (node.type !== 'note') return;
+    tabs.requestNewTab();
+    goto(`/note/${node.id}`);
   }
 
   // Drag Start Handlers
@@ -589,6 +605,7 @@
   {chevronIconSize}
   {actionIconSize}
   onClick={handleClick}
+  onAuxClick={handleAuxClick}
   onExpandClick={handleExpandClick}
   onContextMenu={handleContextMenu}
   onKebabClick={handleKebabClick}
@@ -643,6 +660,7 @@
     node.type === 'note'
       ? handleShare
       : undefined}
+    onOpenInNewTab={node.type === 'note' ? handleOpenInNewTab : undefined}
   />
 {/if}
 

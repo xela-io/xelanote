@@ -1,11 +1,29 @@
 package api
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
+
+// TEMPORARY: Landing page only mode — set to true to disable all API endpoints
+// except /health and /api/config. Set to false to re-enable the full API.
+const landingPageOnly = true
+
+// maintenanceMiddleware returns 503 for all requests when landing page only mode is active.
+func maintenanceMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if landingPageOnly {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"error":"Service temporarily unavailable"}`))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 func (s *Server) setupRoutes() {
 	r := s.router
@@ -21,8 +39,16 @@ func (s *Server) setupRoutes() {
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
-		s.registerPublicRoutes(r)
-		s.registerProtectedRoutes(r)
+		// These stay available even in landing page only mode
+		r.Get("/config", s.getConfig)
+		r.Get("/changelog", s.getChangelog)
+
+		// Everything else is blocked in landing page only mode
+		r.Group(func(r chi.Router) {
+			r.Use(maintenanceMiddleware)
+			s.registerPublicRoutes(r)
+			s.registerProtectedRoutes(r)
+		})
 	})
 
 	// Health check (public) — verifies DB connectivity and disk space
@@ -34,9 +60,8 @@ func (s *Server) setupRoutes() {
 }
 
 func (s *Server) registerPublicRoutes(r chi.Router) {
-	// Public config endpoint (for CAPTCHA settings)
-	r.Get("/config", s.getConfig)
-	r.Get("/changelog", s.getChangelog)
+	// NOTE: /config and /changelog are registered in setupRoutes() above the
+	// maintenance middleware so they remain available in landing page only mode.
 
 	// Rate-limited auth endpoints
 	r.With(rateLimitMiddleware(s.registerLimiter)).Post("/auth/register", s.register)

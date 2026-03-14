@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Edit3, Palette, Share2, Trash2 } from 'lucide-svelte';
+  import { Edit3, ExternalLink, Palette, Share2, Trash2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
 
   import { bottomsheet } from '$lib/actions/bottomsheet';
@@ -13,9 +13,19 @@
     onDelete: () => void;
     onColorPicker: () => void;
     onShare?: () => void;
+    onOpenInNewTab?: () => void;
   }
 
-  const { node, position, onClose, onRename, onDelete, onColorPicker, onShare }: Props = $props();
+  const {
+    node,
+    position,
+    onClose,
+    onRename,
+    onDelete,
+    onColorPicker,
+    onShare,
+    onOpenInNewTab,
+  }: Props = $props();
 
   let menuRef: HTMLDivElement | undefined = $state();
 
@@ -101,6 +111,22 @@
       <Palette size={18} />
       {$_('component.tree.context_menu.color')}
     </button>
+
+    {#if onOpenInNewTab}
+      <!-- Open in new tab - notes only -->
+      <button
+        type="button"
+        onclick={() => {
+          onOpenInNewTab();
+          onClose();
+        }}
+        class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent rounded-md transition-colors"
+        role="menuitem"
+      >
+        <ExternalLink size={18} />
+        {$_('component.tree.context_menu.open_in_new_tab')}
+      </button>
+    {/if}
 
     {#if !isRoot}
       <!-- Rename - folders and notes, not root -->

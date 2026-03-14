@@ -182,7 +182,7 @@ export async function initializeApp(deps: InitializeAppDeps): Promise<Initialize
   if (deps.auth.isAuthenticated() && isPublicRoute) {
     deps.goto('/', { replaceState: true });
   } else if (!deps.auth.isAuthenticated() && !isPublicRoute) {
-    deps.goto('/login', { replaceState: true });
+    deps.goto('/about', { replaceState: true });
   }
 
   // UI restore: synchronous localStorage reads, no network

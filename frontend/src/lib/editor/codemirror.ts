@@ -68,7 +68,7 @@ export interface EditorConfig {
   doc?: string;
   onChange?: (content: string) => void;
   onSave?: () => void;
-  onWikilinkClick?: (title: string) => void;
+  onWikilinkClick?: (title: string, newTab?: boolean) => void;
   onToggleTaskByLine?: (lineNumber: number, checked: boolean) => void;
   onColorPicker?: () => void;
   onInsertTable?: () => void;
@@ -82,7 +82,7 @@ export interface CanvasEditorConfig {
   readOnly?: boolean;
   onChange?: (content: string) => void;
   onSave?: () => void;
-  onWikilinkClick?: (title: string) => void;
+  onWikilinkClick?: (title: string, newTab?: boolean) => void;
   onToggleTaskByLine?: (lineNumber: number, checked: boolean) => void;
 }
 
@@ -134,7 +134,7 @@ function createMousedownHandler() {
 
 // Shared click handler for live preview widgets
 function createClickHandler(config: {
-  onWikilinkClick?: (title: string) => void;
+  onWikilinkClick?: (title: string, newTab?: boolean) => void;
   onToggleTaskByLine?: (lineNumber: number, checked: boolean) => void;
 }) {
   return (event: MouseEvent, view: EditorView) => {
@@ -203,7 +203,7 @@ function createClickHandler(config: {
 
     const liveWikilink = target.closest('.cm-live-preview-wikilink') as HTMLElement | null;
     if (liveWikilink?.dataset.title) {
-      config.onWikilinkClick?.(liveWikilink.dataset.title);
+      config.onWikilinkClick?.(liveWikilink.dataset.title, event.ctrlKey || event.metaKey);
       event.preventDefault();
       return true;
     }
@@ -231,7 +231,7 @@ function createClickHandler(config: {
         const start = line.from + (match.index ?? 0);
         const end = start + match[0].length;
         if (pos >= start && pos <= end) {
-          config.onWikilinkClick?.(match[1]);
+          config.onWikilinkClick?.(match[1], event.ctrlKey || event.metaKey);
           event.preventDefault();
           return true;
         }

@@ -27,6 +27,7 @@
   import * as notes from '$lib/stores/notes.svelte';
   import * as searchStore from '$lib/stores/search.svelte';
   import { searchEncrypted } from '$lib/stores/search-index.svelte';
+  import * as tabs from '$lib/stores/tabs.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as ui from '$lib/stores/ui.svelte';
 
@@ -299,7 +300,7 @@
         } else if (selectedIndex === results.length && query.trim()) {
           createNewNote();
         } else if (results[selectedIndex]) {
-          selectNote(results[selectedIndex].id);
+          selectNote(results[selectedIndex].id, e.ctrlKey || e.metaKey);
         }
         break;
       case 'Escape':
@@ -312,8 +313,9 @@
     }
   }
 
-  function selectNote(id: string) {
+  function selectNote(id: string, newTab = false) {
     ui.setQuickSwitcherOpen(false);
+    if (newTab) tabs.requestNewTab();
     const highlightParam = query.trim() ? `?highlight=${encodeURIComponent(query.trim())}` : '';
     goto(`/note/${id}${highlightParam}`);
   }

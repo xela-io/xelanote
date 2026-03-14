@@ -4,7 +4,7 @@ interface PreviewInteractionOptions {
   featureTaskLists: boolean;
   getLastTaskClickTime: () => number;
   setLastTaskClickTime: (value: number) => void;
-  onWikilink: (title: string) => void;
+  onWikilink: (title: string, ctrlKey?: boolean) => void;
   onToggleTask: (index: number, checked: boolean, lineNumber?: number) => void;
   log?: (...args: unknown[]) => void;
 }
@@ -17,7 +17,7 @@ export function handlePreviewClick(e: MouseEvent, options: PreviewInteractionOpt
     e.preventDefault();
     const title = target.dataset.title;
     if (title) {
-      options.onWikilink(title);
+      options.onWikilink(title, e.ctrlKey || e.metaKey);
     }
     return;
   }

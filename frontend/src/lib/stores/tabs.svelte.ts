@@ -46,6 +46,13 @@ const state = $state<TabState>({
   activeGroupId: 'main',
 });
 
+// Flag for explicit new-tab creation (set before navigation, consumed by syncTabWithRoute)
+let pendingNewTab = false;
+
+export function requestNewTab(): void {
+  pendingNewTab = true;
+}
+
 // Server-sync state
 let initialized = $state(false);
 let preferencesLoaded = $state(false);
@@ -422,12 +429,29 @@ export function resolveTabTitles(getNoteById: (id: string) => { title: string } 
 }
 
 /**
+ * Replace the content of the currently active tab (in-place navigation).
+ */
+function replaceActiveTab(noteId: string, title: string): void {
+  const group = getActiveGroup();
+  if (!group?.activeTabId) return;
+  const tab = group.tabs.find((t) => t.id === group.activeTabId);
+  if (!tab) return;
+  tab.noteId = noteId;
+  tab.title = title;
+  tab.isDirty = false;
+}
+
+/**
  * Sync tab state with the current route.
  * Opens or activates the tab for the given noteId.
  */
 export function syncTabWithRoute(noteId: string, title: string): void {
   if (!initialized) return;
 
+  const wantNewTab = pendingNewTab;
+  pendingNewTab = false;
+
+  // 1. Tab for this note already exists → activate it (regardless of flag)
   const existing = findTabByNoteId(noteId);
   if (existing) {
     existing.tab.title = title || existing.tab.title;
@@ -438,10 +462,27 @@ export function syncTabWithRoute(noteId: string, title: string): void {
       '— total tabs:',
       getTabs().length
     );
-  } else {
+    persistTabs();
+    return;
+  }
+
+  const group = getActiveGroup();
+  const hasTabs = group ? group.tabs.length > 0 : false;
+
+  if (!hasTabs || wantNewTab) {
+    // No tabs yet (first start) or explicit new-tab request → create tab
     openTab(noteId, title);
     console.log(
       '[tabs] syncTabWithRoute: opened new tab for',
+      noteId,
+      '— total tabs:',
+      getTabs().length
+    );
+  } else {
+    // Default: replace the active tab's content
+    replaceActiveTab(noteId, title);
+    console.log(
+      '[tabs] syncTabWithRoute: replaced active tab with',
       noteId,
       '— total tabs:',
       getTabs().length
@@ -675,5 +716,6 @@ export function _resetForTests(): void {
   initialized = false;
   preferencesLoaded = false;
   isHydrating = false;
+  pendingNewTab = false;
   lastPersistedJSON = '';
 }

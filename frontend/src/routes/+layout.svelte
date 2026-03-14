@@ -119,11 +119,25 @@
   });
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/about', '/recovery'];
+  const publicRoutes = ['/about'];
+
+  // TEMPORARY: Landing page only mode — disable all routes except /about.
+  // Set to false to re-enable the full app.
+  const landingPageOnly = true;
+
   // Navigation guard: Only runs when URL changes (not when auth state changes)
   // This prevents race conditions during login/register operations
   $effect(() => {
     const currentPath = page.url.pathname;
+
+    // Landing page only: redirect everything to /about immediately
+    if (landingPageOnly) {
+      if (!currentPath.startsWith('/about')) {
+        goto('/about', { replaceState: true });
+      }
+      return;
+    }
+
     const isPublicRoute = publicRoutes.some((route) => currentPath.startsWith(route));
 
     // Don't redirect before auth is initialized - initAuth() restores session from cookies
@@ -143,7 +157,7 @@
         isPublicRoute,
       })
     ) {
-      goto('/login', { replaceState: true });
+      goto('/about', { replaceState: true });
     }
 
     // Note: We don't redirect authenticated users away from login/register pages here
@@ -507,6 +521,9 @@
     publicRoutes.some((route) => page.url.pathname.startsWith(route)) || !auth.isAuthenticated()
   );
 
+  // TEMPORARY: Check if we're on the about page (for landing page only mode)
+  const isAboutPage = $derived(page.url.pathname.startsWith('/about'));
+
   // iOS Safari (non-PWA): use body-level scrolling so Safari toolbar auto-hides
   const useBodyScroll = $derived(ui.getIsMobile() && ui.getIsIOS() && !ui.getIsStandalone());
 
@@ -761,6 +778,9 @@
         <p style="color: var(--color-muted-foreground, #888);">{$_('common.loading')}</p>
       </div>
     </div>
+  {:else if landingPageOnly && !isAboutPage}
+    <!-- TEMPORARY: Landing page only mode — don't render anything, redirect is in progress -->
+    <div class="flex-1"></div>
   {:else if isPublic}
     <!-- Public pages (login/register) - no sidebar -->
     <div class="flex-1 overflow-auto">

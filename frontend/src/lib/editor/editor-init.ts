@@ -6,7 +6,7 @@ export interface InitEditorDeps {
   getDoc: () => string;
   onChange: (content: string) => void;
   onSave: () => void;
-  onWikilinkClick: (title: string) => void;
+  onWikilinkClick: (title: string, newTab?: boolean) => void;
   onToggleTaskByLine: (lineNumber: number, checked: boolean) => void;
   onColorPicker: () => void;
   onInsertTable?: () => void;

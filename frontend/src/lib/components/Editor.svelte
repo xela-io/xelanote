@@ -108,6 +108,7 @@
   import * as notes from '$lib/stores/notes.svelte';
   import { composeEditorContent, decomposeEditorContent } from '$lib/stores/notes/state-updates';
   import * as settings from '$lib/stores/settings.svelte';
+  import * as tabs from '$lib/stores/tabs.svelte';
   import * as toast from '$lib/stores/toast.svelte';
   import * as trash from '$lib/stores/trash.svelte';
   import * as tree from '$lib/stores/tree.svelte';
@@ -400,7 +401,7 @@
       notes.scheduleAutoSave();
     },
     onSave: handleSave,
-    onWikilinkClick: handleWikilinkClick,
+    onWikilinkClick: (title, newTab) => handleWikilinkClick(title, newTab),
     onToggleTaskByLine: (lineNumber, checked) => {
       toggleTask(-1, checked, lineNumber);
     },
@@ -726,7 +727,8 @@
     });
   }
 
-  async function handleWikilinkClick(title: string) {
+  async function handleWikilinkClick(title: string, newTab?: boolean) {
+    if (newTab) tabs.requestNewTab();
     await handleWikilinkAction(title, {
       goto,
       confirm: dialog.confirm,
@@ -750,7 +752,7 @@
       setLastTaskClickTime: (value) => {
         lastTaskClickTime = value;
       },
-      onWikilink: (title) => handleWikilinkClick(title),
+      onWikilink: (title, ctrlKey) => handleWikilinkClick(title, ctrlKey),
       onToggleTask: (index, checked, lineNumber) => toggleTask(index, checked, lineNumber),
       log: console.log,
     });

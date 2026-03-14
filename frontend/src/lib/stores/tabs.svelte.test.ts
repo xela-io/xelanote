@@ -439,11 +439,13 @@ describe('syncTabWithRoute', () => {
     tabs.resolveTabTitles((id) => (id === 'note-1' ? { title: 'Note 1' } : undefined));
   });
 
-  it('opens a new tab for an unknown noteId', () => {
+  it('replaces active tab by default for an unknown noteId', () => {
     tabs.syncTabWithRoute('note-2', 'Note 2');
 
-    expect(tabs.getTabs()).toHaveLength(2);
+    // Default behavior: replace, not create
+    expect(tabs.getTabs()).toHaveLength(1);
     expect(tabs.getActiveTab()?.noteId).toBe('note-2');
+    expect(tabs.getActiveTab()?.title).toBe('Note 2');
   });
 
   it('activates an existing tab for a known noteId', () => {
@@ -458,6 +460,47 @@ describe('syncTabWithRoute', () => {
     tabs._resetForTests(); // not initialized
     tabs.syncTabWithRoute('note-1', 'Note 1');
     expect(tabs.getTabs()).toHaveLength(0);
+  });
+
+  it('creates new tab when requestNewTab() was called', () => {
+    tabs.requestNewTab();
+    tabs.syncTabWithRoute('note-2', 'Note 2');
+
+    expect(tabs.getTabs()).toHaveLength(2);
+    expect(tabs.getActiveTab()?.noteId).toBe('note-2');
+  });
+
+  it('consumes pendingNewTab flag after use', () => {
+    tabs.requestNewTab();
+    tabs.syncTabWithRoute('note-2', 'Note 2');
+
+    // Flag consumed — next sync should replace
+    tabs.syncTabWithRoute('note-3', 'Note 3');
+    expect(tabs.getTabs()).toHaveLength(2); // replaced note-2, not added
+    expect(tabs.getActiveTab()?.noteId).toBe('note-3');
+  });
+
+  it('activates existing tab even with pendingNewTab', () => {
+    tabs.openTab('note-2', 'Note 2');
+
+    tabs.requestNewTab();
+    tabs.syncTabWithRoute('note-1', 'Note 1');
+
+    // Should activate existing tab, not create duplicate
+    expect(tabs.getTabs()).toHaveLength(2);
+    expect(tabs.getActiveTab()?.noteId).toBe('note-1');
+  });
+
+  it('creates first tab when no tabs exist', () => {
+    // Start with 0 tabs
+    const tab = tabs.getTabs()[0];
+    tabs.closeTab(tab.id);
+    expect(tabs.getTabs()).toHaveLength(0);
+
+    // Without requestNewTab, should still create (0-tab case)
+    tabs.syncTabWithRoute('note-2', 'Note 2');
+    expect(tabs.getTabs()).toHaveLength(1);
+    expect(tabs.getActiveTab()?.noteId).toBe('note-2');
   });
 
   it('triggers debounced persistence', () => {

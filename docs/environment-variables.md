@@ -53,6 +53,12 @@ Complete reference for all environment variables used by xelanote.
 | `FORGEJO_REPO` | — | Forgejo repo in `owner/name` format for error reporting issues. |
 | `FORGEJO_API_TOKEN` | — | Forgejo API token for creating issues/comments. |
 
+## Optional - Maintenance
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LANDING_PAGE_ONLY` | `false` | Set to `true` to enable landing page only mode. Disables all API endpoints (returns 503) except `/health`, `/api/config`, and `/api/changelog`. Frontend redirects all routes to `/about`. |
+
 ## Optional - Development/Debugging
 
 | Variable | Default | Description |

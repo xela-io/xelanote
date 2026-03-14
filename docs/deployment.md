@@ -1,47 +1,37 @@
 # XelaNote Deployment Guide
 
-## Production Deployment (Docker)
+## Production Deployment (Static SPA)
 
 ### Environment
 
-- **Target**: `<STAGING_USER>@<STAGING_IP>`
-- **Port**: 8081 (external) → 8080 (internal)
-- **Public URL**: https://<STAGING_URL> (via nginx-proxy-manager)
-- **Internal URL**: http://<STAGING_IP>:8081
-- **Database**: SQLite with persistent Docker volume
-- **Repository**: https://<FORGEJO_URL>/xela/xelanote (Forgejo, primary) / https://github.com/xela-io/xelanote (GitHub, mirror)
-- **CI/CD**: Forgejo Actions (Staging: auto-deploy auf Push zu `main`, Production: Tag-basiert `v*` oder manuell)
-- **Network**: `nginx_default` (für nginx-proxy-manager Integration)
+- **Server**: `xela@46.224.208.7`
+- **App-Verzeichnis**: `~/xelanote.com/`
+- **Public URL**: https://xelanote.com
+- **Container**: `xelanote-landing` (nginx:alpine, Static-only SPA)
+- **Repository**: https://github.com/xela-io/xelanote (GitHub)
+- **CI/CD**: GitHub Actions (`ci.yml`, `quality.yml`, `security.yml`) — nur Checks, kein Auto-Deploy
+- **Network**: `matrix_matrix-external` (Caddy Reverse Proxy)
+- **Deploy-Art**: Manuell (Frontend bauen → rsync → docker compose rebuild)
+
+> **Hinweis (2026-03):** Die Production laeuft aktuell als reine Static SPA (nur Frontend, kein Backend/API). Der Go-Backend-Server wird hier nicht deployed. Forgejo wird nicht mehr als Git-Remote verwendet.
 
 ---
 
 ## Quick Deploy (TL;DR)
 
-**Staging (automatisch):** Jeder Push auf `forgejo main` deployed automatisch via Forgejo Actions. Kein manueller Eingriff noetig.
-
 ```bash
-# Commit & Push - Staging-Deploy startet automatisch
-git add . && git commit -m "fix: description" && git push forgejo main
+# 1. Frontend bauen (lokal)
+cd frontend && npm run build
 
-# Verify (nach ~1-2 Minuten)
-curl https://<STAGING_URL>/health
+# 2. Build auf Server synchronisieren
+rsync -avz --delete frontend/build/ xela@46.224.208.7:~/xelanote.com/build/
+
+# 3. Container neu bauen und starten
+ssh xela@46.224.208.7 "cd ~/xelanote.com && docker compose up -d --build"
+
+# 4. Verify
+ssh xela@46.224.208.7 "docker ps --format '{{.Names}} {{.Status}}' | grep xelanote"
 ```
-
-**Hetzner Production (automatisch via Tag):**
-
-```bash
-# Nach erfolgreichem Staging-Test: Tag erstellen und pushen
-git tag v1.2.3
-git push forgejo v1.2.3
-
-# Production-Deploy startet automatisch
-# Verify (nach ~1-2 Minuten)
-curl https://xelanote.com/health
-```
-
-Alternativ manueller Trigger via Forgejo UI oder [Quick Deploy auf Hetzner](#quick-deploy-auf-hetzner) als Fallback.
-
-**Wichtig:** Secrets werden aus `~/.xelanote.env` geladen (chmod 600). Niemals Secrets in der Command-Line!
 
 ---
 

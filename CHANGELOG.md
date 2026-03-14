@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Landing page only mode: temporarily disable all routes except /about via `LANDING_PAGE_ONLY=true` env var (frontend redirect + backend 503 middleware)
 - Open notes in new tab via Ctrl/Cmd+click, middle-click, or context menu "Open in new tab" in the sidebar tree, wikilinks, and quick switcher
 - Default tab navigation now replaces the active tab instead of always opening new tabs
 - Landing page: dynamic animated landing page with scroll-reveal, parallax hero, terminal typing effect, and full DE/EN localization

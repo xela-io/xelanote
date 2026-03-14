@@ -2,15 +2,17 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// TEMPORARY: Landing page only mode — set to true to disable all API endpoints
-// except /health and /api/config. Set to false to re-enable the full API.
-const landingPageOnly = true
+// TEMPORARY: Landing page only mode — disables all API endpoints except
+// /health, /api/config and /api/changelog. Activate by setting the environment
+// variable LANDING_PAGE_ONLY=true. Remove this block to re-enable the full API.
+var landingPageOnly = os.Getenv("LANDING_PAGE_ONLY") == "true"
 
 // maintenanceMiddleware returns 503 for all requests when landing page only mode is active.
 func maintenanceMiddleware(next http.Handler) http.Handler {

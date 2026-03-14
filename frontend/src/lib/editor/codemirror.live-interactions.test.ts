@@ -110,7 +110,7 @@ describe('codemirror live interactions', () => {
 
     wikilink?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(onWikilinkClick).toHaveBeenCalledTimes(1);
-    expect(onWikilinkClick).toHaveBeenCalledWith('Target Note');
+    expect(onWikilinkClick).toHaveBeenCalledWith('Target Note', false);
 
     view.destroy();
   });

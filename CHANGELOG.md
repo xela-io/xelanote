@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed wikilink click test for newTab parameter after Ctrl/Cmd+click support was added
 - Fixed table of contents scroll not jumping to the correct heading position on mobile and desktop: replaced `scrollIntoView()` (which scrolls all ancestor containers) with targeted `scrollTo()` on the specific scroll container; fixed live-mode scroll using `EditorView.scrollIntoView` with `y: 'start'` positioning; fixed heading extraction and slug lookup to skip fenced code blocks
 - Fixed kebab menu (editor "more" menu) having transparent background on desktop — `mobile-glass-sheet` was unsetting `backdrop-filter`, now scoped to mobile only so `ui-panel` blur applies
 - Fixed tabs not persisting across page refresh: CORS config was missing PATCH method, silently blocking all tab persist API calls
